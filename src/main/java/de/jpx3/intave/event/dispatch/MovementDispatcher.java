@@ -57,6 +57,42 @@ public final class MovementDispatcher implements PacketEventSubscriber, Listener
     movementData.pastPlayerAttackPhysics = 0;
   }
 
+//  @PacketSubscription(
+//    priority = ListenerPriority.HIGH,
+//    packets = {
+//      @PacketDescriptor(sender = Sender.CLIENT, packetName = "FLYING"),
+//    }
+//  )
+//  public void f(PacketEvent event) {
+//    Player player = event.getPlayer();
+//    User user = UserRepository.userOf(player);
+//    player.sendMessage("flying");
+//    if (player.getName().equals("vento")) {
+//      System.out.println("flying - now");
+//    }
+//  }
+
+  @PacketSubscription(
+    priority = ListenerPriority.HIGH,
+    packets = {
+      @PacketDescriptor(sender = Sender.SERVER, packetName = "EXPLOSION"),
+    }
+  )
+  public void sentExplosion(PacketEvent event) {
+    Player player = event.getPlayer();
+    PacketContainer packet = event.getPacket();
+    plugin.eventService().transactionFeedbackService().requestPong(player, packet.getFloat(), (player1, floats) -> {
+      User user = UserRepository.userOf(player1);
+      UserMetaMovementData movementData = user.meta().movementData();
+      Float motionX = floats.read(1);
+      Float motionY = floats.read(2);
+      Float motionZ = floats.read(3);
+      movementData.physicsLastMotionX += motionX;
+      movementData.physicsLastMotionY += motionY;
+      movementData.physicsLastMotionZ += motionZ;
+    });
+  }
+
   @PacketSubscription(
     priority = ListenerPriority.HIGH,
     packets = {

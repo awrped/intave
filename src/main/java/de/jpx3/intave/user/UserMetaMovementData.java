@@ -2,15 +2,19 @@ package de.jpx3.intave.user;
 
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.reflect.StructureModifier;
+import de.jpx3.intave.detect.checks.movement.Physics;
 import de.jpx3.intave.tools.client.PlayerEffectHelper;
 import de.jpx3.intave.tools.client.PlayerMovementHelper;
 import de.jpx3.intave.tools.client.PlayerMovementLocaleHelper;
+import de.jpx3.intave.tools.client.PlayerRotationHelper;
 import de.jpx3.intave.tools.wrapper.WrappedAxisAlignedBB;
 import de.jpx3.intave.detect.checks.movement.physics.CollisionHelper;
 import de.jpx3.intave.reflect.Reflection;
+import de.jpx3.intave.tools.wrapper.WrappedVector;
 import de.jpx3.intave.world.BlockLiquidHelper;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import org.bukkit.util.Vector;
 
 public final class UserMetaMovementData {
   private final Player player;
@@ -25,6 +29,8 @@ public final class UserMetaMovementData {
   public boolean collidedHorizontally, collidedVertically;
   public double gravity;
 
+  public Physics.PhysicsProcessorContext physicsProcessorContext = new Physics.PhysicsProcessorContext();
+  public Vector lookVector;
   public double verifiedPositionX, verifiedPositionY, verifiedPositionZ;
   public double thirdPositionX, thirdPositionY, thirdPositionZ;
   public double lastPositionX, lastPositionY, lastPositionZ;
@@ -102,9 +108,9 @@ public final class UserMetaMovementData {
 
     if (hasMovement) {
       StructureModifier<Double> modifier = packet.getDoubles();
-      thirdPositionX = positionX;
-      thirdPositionY = positionY;
-      thirdPositionZ = positionZ;
+      thirdPositionX = lastPositionX;
+      thirdPositionY = lastPositionY;
+      thirdPositionZ = lastPositionZ;
       lastPositionX = positionX;
       lastPositionY = positionY;
       lastPositionZ = positionZ;
@@ -126,6 +132,8 @@ public final class UserMetaMovementData {
       StructureModifier<Float> modifier = packet.getFloat();
       lastRotationYaw = rotationYaw = modifier.read(0);
       lastRotationPitch = rotationPitch = modifier.read(1);
+
+      lookVector = PlayerRotationHelper.vectorForRotation(rotationPitch, rotationYaw);
     }
   }
 

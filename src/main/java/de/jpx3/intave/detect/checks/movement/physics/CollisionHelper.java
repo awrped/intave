@@ -3,7 +3,11 @@ package de.jpx3.intave.detect.checks.movement.physics;
 import de.jpx3.intave.tools.wrapper.WrappedAxisAlignedBB;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserMetaMovementData;
+import de.jpx3.intave.world.collision.CollisionFactory;
 import org.bukkit.Location;
+import org.bukkit.entity.Player;
+
+import java.util.List;
 
 public final class CollisionHelper {
   private final static float PLAYER_HEIGHT = 1.8f;
@@ -33,5 +37,64 @@ public final class CollisionHelper {
       positionX - HALF_WIDTH, positionY, positionZ - HALF_WIDTH,
       positionX + HALF_WIDTH, positionY + PLAYER_HEIGHT, positionZ + HALF_WIDTH
     );
+  }
+
+  public static CollisionResult resolveQuickCollisions(
+    Player player,
+    double positionX, double positionY, double positionZ,
+    double motionX, double motionY, double motionZ
+  ) {
+    WrappedAxisAlignedBB boundingBox = CollisionHelper.entityBoundingBoxOf(positionX, positionY, positionZ);
+    List<WrappedAxisAlignedBB> collisionBoxes = CollisionFactory.getCollisionBoxes(
+      player,
+      boundingBox.addCoord(motionX, motionY, motionZ)
+    );
+    double startMotionY = motionY;
+    for (WrappedAxisAlignedBB collisionBox : collisionBoxes) {
+      motionY = collisionBox.calculateYOffset(boundingBox, motionY);
+    }
+    boundingBox = (boundingBox.offset(0.0D, motionY, 0.0D));
+    boolean onGround = startMotionY != motionY && startMotionY < 0.0D;
+    for (WrappedAxisAlignedBB collisionBox : collisionBoxes) {
+      motionX = collisionBox.calculateXOffset(boundingBox, motionX);
+    }
+    boundingBox = boundingBox.offset(motionX, 0.0D, 0.0D);
+    for (WrappedAxisAlignedBB collisionBox : collisionBoxes) {
+      motionZ = collisionBox.calculateZOffset(boundingBox, motionZ);
+    }
+    return new CollisionResult(motionX, motionY, motionZ, onGround, startMotionY != motionY);
+  }
+
+  public static class CollisionResult {
+    private final double motionX, motionY, motionZ;
+    private final boolean onGround, collidedVertically;
+
+    public CollisionResult(double motionX, double motionY, double motionZ, boolean onGround, boolean collidedVertically) {
+      this.motionX = motionX;
+      this.motionY = motionY;
+      this.motionZ = motionZ;
+      this.onGround = onGround;
+      this.collidedVertically = collidedVertically;
+    }
+
+    public double motionX() {
+      return motionX;
+    }
+
+    public double motionY() {
+      return motionY;
+    }
+
+    public double motionZ() {
+      return motionZ;
+    }
+
+    public boolean onGround() {
+      return onGround;
+    }
+
+    public boolean collidedVertically() {
+      return collidedVertically;
+    }
   }
 }
