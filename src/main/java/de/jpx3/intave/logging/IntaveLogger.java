@@ -16,8 +16,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public final class IntaveLogger {
-  private final static String LOG_PATH = "plugins/Intave/logs";
-
+  private final static String LOG_PATH = "plugins" + File.separator + "Intave" + File.separator + "logs";
   private final IntavePlugin plugin;
   private final FileArchiver archiver;
   private long lastNameCheck;
@@ -30,6 +29,10 @@ public final class IntaveLogger {
     this.plugin = plugin;
     this.archiver = new FileArchiver();
     setup();
+  }
+
+  public void shutdown() {
+    printWriter.close();
   }
 
   public void info(String s) {
@@ -86,23 +89,15 @@ public final class IntaveLogger {
 
   @SuppressWarnings("ResultOfMethodCallIgnored")
   private void setup() {
-    File file = activeFile();
-
-    if (!file.exists()) {
-      try {
-        file.mkdirs();
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-    }
+    this.activeFileName = activeFileName();
 
     try {
       File activeFile = activeFile();
       if (!activeFile.exists()) {
+        activeFile.getParentFile().mkdirs();
         activeFile.createNewFile();
       }
       this.printWriter = new PrintWriter(new FileWriter(activeFile, true));
-      this.activeFileName = activeFileName();
     } catch (IOException e) {
       e.printStackTrace();
     }
@@ -149,7 +144,7 @@ public final class IntaveLogger {
   }
 
   private File[] pendingLogFiles() {
-    File folder = new File("plugins/Intave/logs");
+    File folder = new File(LOG_PATH);
     return folder.listFiles((dir, name) -> checkIfCompressionNeeded(name));
   }
 
@@ -161,10 +156,11 @@ public final class IntaveLogger {
   }
 
   private File activeFile() {
-    return new File("plugins" + File.separator + "Intave" + File.separator + "logs", activeFileName);
+    return new File(LOG_PATH, activeFileName);
   }
 
   private final static ThreadLocal<Format> dateFormat = ThreadLocal.withInitial(() -> new SimpleDateFormat("yyyy_MM_dd"));
+
   private String activeFileName() {
     String timestamp = dateFormat.get().format(AccessHelper.now());
     return "intave" + timestamp + ".log";
