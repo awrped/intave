@@ -107,9 +107,7 @@ public final class IntavePlugin extends JavaPlugin {
   @Natify
   @Override
   public void onDisable() {
-
     logger.shutdown();
-
   }
 
   public IntaveLogger logger() {

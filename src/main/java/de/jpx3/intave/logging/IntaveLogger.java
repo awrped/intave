@@ -31,10 +31,6 @@ public final class IntaveLogger {
     setup();
   }
 
-  public void shutdown() {
-    printWriter.close();
-  }
-
   public void info(String s) {
     System.out.println("[Intave] " + s);
     logToFile("(INF) " + s);
@@ -97,9 +93,18 @@ public final class IntaveLogger {
         activeFile.getParentFile().mkdirs();
         activeFile.createNewFile();
       }
+      if(printWriter != null) {
+        printWriter.close();
+      }
       this.printWriter = new PrintWriter(new FileWriter(activeFile, true));
     } catch (IOException e) {
       e.printStackTrace();
+    }
+  }
+
+  public void shutdown() {
+    if(printWriter != null) {
+      printWriter.close();
     }
   }
 
