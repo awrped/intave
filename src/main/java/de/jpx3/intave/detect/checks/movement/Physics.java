@@ -106,8 +106,6 @@ public final class Physics extends IntaveCheck {
     double positionX = movementData.verifiedPositionX;
     double positionY = movementData.verifiedPositionY;
     double positionZ = movementData.verifiedPositionZ;
-    boolean inventoryOpen = inventoryData.inventoryOpen();
-
     float friction = resolveFriction(player, movementData, positionX, positionY, positionZ);
 
     boolean sneaking;
@@ -122,14 +120,7 @@ public final class Physics extends IntaveCheck {
     float rotationYaw = movementData.rotationYaw;
     float yawSine = SinusCache.sin(rotationYaw * (float) Math.PI / 180.0F, false);
     float yawCosine = SinusCache.cos(rotationYaw * (float) Math.PI / 180.0F, false);
-
     boolean sprinting = movementData.sprinting;
-    if (sprinting && sneaking && !clientData.sprintWhenSneaking()) {
-      sprinting = false;
-    }
-    if (inventoryOpen) {
-      sprinting = false;
-    }
 
     int lastForwardKey = movementData.keyForward;
     int lastStrafeKey = movementData.keyStrafe;
@@ -141,7 +132,6 @@ public final class Physics extends IntaveCheck {
      */
     context.flyingPacketAccurate = false;
     PreciseCollisionResult predictedMovement = physicsFast(user, friction, sprinting, sneaking, yawSine, yawCosine);
-
     Vector moveVector = predictedMovement.moveVector;
     double differenceX = moveVector.getX() - receivedMotionX;
     double differenceY = moveVector.getY() - receivedMotionY;
@@ -300,6 +290,11 @@ public final class Physics extends IntaveCheck {
 
     int keyForward = movementData.keyForward;
     int keyStrafe = movementData.keyStrafe;
+
+    if (inventoryData.inventoryOpen()) {
+      keyForward = 0;
+      keyStrafe = 0;
+    }
 
     double positionX = movementData.verifiedPositionX;
     double positionY = movementData.verifiedPositionY;
@@ -627,7 +622,7 @@ public final class Physics extends IntaveCheck {
       if (violationLevelIncrease > 0) {
         violationLevelIncrease = Math.max(violationLevelIncrease, 1.0);
       }
-      violationLevelIncrease *= 2.5;
+      violationLevelIncrease *= 9.5;
     }
 
     if (violationLevelIncrease == 0 && violationLevelData.physicsVL > 0) {
@@ -748,7 +743,7 @@ public final class Physics extends IntaveCheck {
     }
 
     double abuseVertically = Math.max(0, differenceY - legitimateDeviation);
-    double multiplier = abuseVertically > 0.3 ? 45.0 : 25.0;
+    double multiplier = abuseVertically > 1e-5 ? 45.0 : 25.0;
 
     if (movementData.pastWaterMovement < 5 || movementData.inLava()) {
       multiplier *= 0.4;
@@ -768,6 +763,7 @@ public final class Physics extends IntaveCheck {
       movementData.positionX, movementData.positionZ,
       movementData.verifiedPositionX, movementData.verifiedPositionZ
     );
+    double predictedDistanceMoved = Math.hypot(predictedX, predictedZ);
 
     boolean pushedByWaterFlow = movementData.pastPushedByWaterFlow <= 20;
 
@@ -798,7 +794,11 @@ public final class Physics extends IntaveCheck {
 
     double distance = MathHelper.resolveHorizontalDistance(predictedX, predictedZ, motionX, motionZ);
     double abuseHorizontally = Math.max(0, distance - legitimateDeviation);
-    return abuseHorizontally * (abuseHorizontally > 0.1 ? 20.0 : 10.0);
+    boolean movedTooQuickly = distanceMoved > predictedDistanceMoved * 1.005;
+    if (movedTooQuickly && distanceMoved > 0.2) {
+      return Math.max(abuseHorizontally, 0.05) * 60.0;
+    }
+    return abuseHorizontally * ((abuseHorizontally > 0.1) ? 20.0 : 10.0);
   }
 
   private final static double RIPTIDE_TOLERANCE = 3.005;

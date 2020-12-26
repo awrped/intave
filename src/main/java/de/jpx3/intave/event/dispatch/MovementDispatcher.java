@@ -251,7 +251,9 @@ public final class MovementDispatcher implements PacketEventSubscriber, Listener
     EnumWrappers.PlayerAction playerAction = packet.getPlayerActions().read(0);
     switch (playerAction) {
       case START_SPRINTING:
-        movementData.sprinting = true;
+        if (allowSprinting(player)) {
+          movementData.sprinting = true;
+        }
         break;
       case STOP_SPRINTING:
         movementData.sprinting = false;
@@ -263,5 +265,16 @@ public final class MovementDispatcher implements PacketEventSubscriber, Listener
         movementData.sneaking = false;
         break;
     }
+  }
+
+  private boolean allowSprinting(Player player) {
+    User user = UserRepository.userOf(player);
+    User.UserMeta meta = user.meta();
+    UserMetaInventoryData inventoryData = meta.inventoryData();
+    UserMetaMovementData movementData = meta.movementData();
+    if (movementData.sneaking && !user.meta().clientData().sprintWhenSneaking()) {
+      return false;
+    }
+    return !inventoryData.inventoryOpen();
   }
 }
