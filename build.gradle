@@ -8,7 +8,16 @@ group 'de.jpx3'
 version = '14.0.0'
 description = 'Intave is an event- & packetbased, hyper-threaded & polyheuristic cheat detection software, providing fair play'
 
-def stable_version = false
+def stableVersion = false
+def fileName = "INTAVE-"
+if (stableVersion) {
+  fileName += "STABLE"
+} else {
+  fileName += "LATEST"
+}
+fileName += "-PROD"
+
+def outputDirectory = "directory..."
 
 repositories {
   mavenCentral()
@@ -28,15 +37,17 @@ test {
   useJUnitPlatform()
 }
 
-jar {
-  def name = "INTAVE-"
-  if (stable_version) {
-    name += "STABLE"
-  } else {
-    name += "LATEST"
+task compileIntave(dependsOn: build) {
+  doLast {
+    copy {
+      from "build/libs/" + fileName + "-" + project.version + ".jar"
+      into outputDirectory
+    }
   }
-  name += "-PROD"
-  baseName name
+}
+
+jar {
+  baseName fileName
 }
 
 processResources {
