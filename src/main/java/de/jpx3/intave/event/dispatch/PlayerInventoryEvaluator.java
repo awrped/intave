@@ -74,7 +74,10 @@ public final class PlayerInventoryEvaluator implements PacketEventSubscriber, Bu
   public void receiveClientCommand(PacketEvent event) {
     Player player = event.getPlayer();
     User user = UserRepository.userOf(player);
-    openInventory(player, user);
+    EnumWrappers.ClientCommand clientCommand = event.getPacket().getClientCommands().read(0);
+    if (clientCommand == EnumWrappers.ClientCommand.OPEN_INVENTORY_ACHIEVEMENT) {
+      openInventory(player, user);
+    }
   }
 
   private void openInventory(Player player, User user) {

@@ -17,6 +17,7 @@ import de.jpx3.intave.tools.sync.Synchronizer;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserRepository;
 import de.jpx3.intave.user.UserMetaMovementData;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
@@ -84,7 +85,7 @@ public final class TeleportPositionObserver implements PacketEventSubscriber {
       teleportLocation.getX(), teleportLocation.getY(), teleportLocation.getZ()
     );
     if (TELEPORTATION_DEBUG) {
-      System.out.println("[Intave] Checking potential legacy teleportation accept of " + player.getName() + ": " + MathHelper.formatPosition(positionX, positionY, positionZ));
+      Bukkit.broadcastMessage("[Intave] Checking potential legacy teleportation accept of " + player.getName() + ": " + MathHelper.formatPosition(positionX, positionY, positionZ));
     }
     boolean validPosition = positionDeviation < 1e-5;
 //    boolean validRotation = validTeleportRotation(teleportLocation, movementData.rotationYaw, movementData.rotationPitch);
@@ -92,11 +93,11 @@ public final class TeleportPositionObserver implements PacketEventSubscriber {
       releaseAwaitTeleportLock(player);
       applyPositionConfirmationUpdate(player, positionX, positionY, positionZ);
       if (TELEPORTATION_DEBUG) {
-        System.out.println("[Intave] " + player.getName() + " accepted teleportation request");
+        Bukkit.broadcastMessage("[Intave] " + player.getName() + " accepted teleportation request");
       }
     } else {
       if (TELEPORTATION_DEBUG) {
-        System.out.println("[Intave] Potential teleportation requested of " + player.getName() + "was evaluated as invalid");
+        Bukkit.broadcastMessage("[Intave] Potential teleportation requested of " + player.getName() + "was evaluated as invalid");
       }
     }
   }

@@ -21,10 +21,7 @@ public final class BlockLiquidHelper {
     return (STATIONARY_WATER != null && material == STATIONARY_WATER) || material == Material.WATER;
   }
 
-  public static boolean isLavaInBB(
-    World world,
-    WrappedAxisAlignedBB boundingBox
-  ) {
+  public static boolean isLavaInBB(World world, WrappedAxisAlignedBB boundingBox) {
     int minX = WrappedMathHelper.floor(boundingBox.minX);
     int minY = WrappedMathHelper.floor(boundingBox.minY);
     int minZ = WrappedMathHelper.floor(boundingBox.minZ);
@@ -34,7 +31,7 @@ public final class BlockLiquidHelper {
     for (int x = minX; x < maxX; ++x) {
       for (int y = minY; y < maxY; ++y) {
         for (int z = minZ; z < maxZ; ++z) {
-          if (BlockLiquidHelper.isLiquid(BlockAccessor.blockAccess(world, x, y, z).getType())) {
+          if (BlockLiquidHelper.isLava(BlockAccessor.blockAccess(world, x, y, z).getType())) {
             return true;
           }
         }

@@ -47,6 +47,7 @@ public final class UserMetaMovementData {
   public boolean inWeb;
   public int pastPushedByWaterFlow;
   public int pastElytraFlying, pastVelocity = 100;
+  public boolean onLadderLast;
 
   public boolean invalidMovement;
   public double physicsLastMotionX, physicsLastMotionY, physicsLastMotionZ;
