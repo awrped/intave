@@ -1,5 +1,8 @@
 package de.jpx3.intave.detect.checks.combat;
 
+import com.comphenix.protocol.events.PacketContainer;
+import com.comphenix.protocol.events.PacketEvent;
+import com.comphenix.protocol.wrappers.EnumWrappers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -55,7 +58,9 @@ public final class Heuristics extends IntaveMetaCheck<Heuristics.HeuristicMeta> 
   }
 
   public void setupSubChecks() {
-    appendCheckPart(new ExampleHeuristic(this));
+//    appendCheckPart(new ExampleHeuristic(this));
+    appendCheckPart(new ReshapedJumpHeuristic(this));
+    appendCheckPart(new RotationStandardDeviationHeuristic(this));
   }
 
   public void saveAnomaly(Player player, Anomaly anomaly) {
@@ -89,19 +94,8 @@ public final class Heuristics extends IntaveMetaCheck<Heuristics.HeuristicMeta> 
 
       }
 
-      double percentage = resolveConfidencePercentage(overallConfidence.level());
-      String confidence = MathHelper.formatDouble(percentage, 2) + "%" + overallConfidence.output();
-
-      plugin.retributionService().markPlayer(player, -1, this.name(), "is fighting suspiciously (confidence: " + confidence + ")");
+      plugin.retributionService().markPlayer(player, -1, this.name(), "is fighting suspiciously (confidence: " + overallConfidence.output() + ")");
     }
-  }
-
-  private double resolveConfidencePercentage(double confidenceOutput) {
-    double percentage = confidenceOutput >= 800 ? 100.0 : confidenceOutput / 800.0 * 100.0;
-    if (percentage < 50) {
-      percentage += 50;
-    }
-    return percentage;
   }
 
   // this implementation is pure garbage, please get some experience with this check and refactor this method

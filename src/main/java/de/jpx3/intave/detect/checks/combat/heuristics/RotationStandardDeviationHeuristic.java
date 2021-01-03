@@ -23,7 +23,6 @@ import java.util.List;
 public final class RotationStandardDeviationHeuristic extends IntaveMetaCheckPart<Heuristics, RotationStandardDeviationHeuristic.RotationStandardDeviationMeta> {
   public RotationStandardDeviationHeuristic(Heuristics parentCheck) {
     super(parentCheck, RotationStandardDeviationMeta.class);
-    IntavePlugin.singletonInstance().packetSubscriptionLinker().linkSubscriptionsIn(this);
   }
 
   public static class RotationStandardDeviationMeta extends UserCustomCheckMeta {
@@ -65,7 +64,7 @@ public final class RotationStandardDeviationHeuristic extends IntaveMetaCheckPar
     double standardDeviation = RotationMathHelper.calculateStandardDeviationFloat(heuristicMeta.distancesToPerfectYaw);
     if (standardDeviation < 1.0) {
       if (heuristicMeta.rotationBalance++ >= 2) {
-        Heuristics.Anomaly anomaly = new Heuristics.Anomaly("rx", Heuristics.Confidence.UNCERTAIN, Heuristics.MiningStrategy.EMULATION_MODERATE);
+        Heuristics.Anomaly anomaly = new Heuristics.Anomaly("rx", Heuristics.Confidence.PROBABLE, Heuristics.MiningStrategy.EMULATION_MODERATE);
         parentCheck().saveAnomaly(player, anomaly);
         heuristicMeta.rotationBalance--;
       }
