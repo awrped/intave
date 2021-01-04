@@ -758,7 +758,7 @@ public final class Physics extends IntaveCheck {
       }
 
       String finalDebug = debug;
-      Synchronizer.packetSynchronize(() -> player.sendMessage(finalDebug));
+      Synchronizer.synchronize(() -> player.sendMessage(finalDebug));
     }
   }
 

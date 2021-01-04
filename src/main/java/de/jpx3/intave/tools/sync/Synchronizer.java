@@ -7,7 +7,7 @@ import org.bukkit.scheduler.BukkitScheduler;
 public final class Synchronizer {
   private final static BukkitScheduler scheduler = Bukkit.getScheduler();
 
-  public static void packetSynchronize(Runnable runnable) {
+  public static void synchronize(Runnable runnable) {
     scheduler.runTask(IntavePlugin.singletonInstance(), runnable);
   }
 

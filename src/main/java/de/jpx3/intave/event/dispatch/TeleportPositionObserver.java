@@ -60,7 +60,7 @@ public final class TeleportPositionObserver implements PacketEventSubscriber {
 //      event.setCancelled(true);
       if (movementData.teleportResendCountdown-- < 0) {
         System.out.println("[Intave] UPDATE POSITION BECAUSE OLD IS OUTDATED");
-        Synchronizer.packetSynchronize(() -> {
+        Synchronizer.synchronize(() -> {
           Location location = movementData.teleportLocation;
           player.teleport(location);
         });

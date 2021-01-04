@@ -90,6 +90,9 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
           playerLocation, isPlacement ? InteractionType.PLACE : InteractionType.INTERACT
         )
       );
+      Synchronizer.synchronize(() -> {
+        player.sendMessage("");
+      });
       event.setCancelled(true);
     }
   }
@@ -202,11 +205,11 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
             Location placedBlock = targetLocation.clone().add(direction.getDirectionVec().convertToBukkitVec());
             refreshBlock(player, placedBlock);
           }
-          Synchronizer.packetSynchronize(() -> receiveExcludedPacket(player, packet));
+          Synchronizer.synchronize(() -> receiveExcludedPacket(player, packet));
         }
       } else {
         if (!invalid) {
-          Synchronizer.packetSynchronize(() -> receiveExcludedPacket(event.getPlayer(), traceReport.thePacket));
+          Synchronizer.synchronize(() -> receiveExcludedPacket(event.getPlayer(), traceReport.thePacket));
         } else {
           player.updateInventory();
           refreshBlock(player, targetLocation);
