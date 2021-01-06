@@ -8,14 +8,7 @@ group 'de.jpx3'
 version = '14.0.0'
 description = 'Intave is an event- & packetbased, hyper-threaded & polyheuristic cheat detection software, providing fair play'
 
-def stableVersion = false
-def fileName = "INTAVE-"
-if (stableVersion) {
-  fileName += "STABLE"
-} else {
-  fileName += "LATEST"
-}
-fileName += "-PROD"
+def fileName = "Intave"
 
 def outputDirectory = "C:\\Users\\Richard\\Desktop\\Minecraft Plugins\\bungeecort system\\AAC\\plugins\\"
 
@@ -23,7 +16,7 @@ repositories {
   mavenCentral()
   maven { url = 'https://oss.sonatype.org/content/repositories/snapshots' }
   maven { url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
-  maven { url "https://repo.dmulloy2.net/nexus/repository/public/" }
+  maven { url = "https://repo.dmulloy2.net/nexus/repository/public/" }
 }
 
 dependencies {
