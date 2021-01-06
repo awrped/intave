@@ -1,7 +1,12 @@
 package de.jpx3.intave.adapter;
 
 import com.comphenix.protocol.ProtocolLibrary;
+import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.utility.MinecraftVersion;
+import com.comphenix.protocol.wrappers.EnumWrappers;
+import de.jpx3.intave.access.InvalidDependencyException;
+
+import java.util.Arrays;
 
 public final class ProtocolLibAdapter {
   public static final MinecraftVersion NETHER_UPDATE = new MinecraftVersion("1.16");
@@ -21,5 +26,14 @@ public final class ProtocolLibAdapter {
 
   public static MinecraftVersion serverVersion() {
     return ProtocolLibrary.getProtocolManager().getMinecraftVersion();
+  }
+
+  public static void checkIfOutdated() {
+    boolean temporaryPlayer = Arrays.stream(PacketEvent.class.getMethods()).anyMatch(method -> method.getName().equalsIgnoreCase("isPlayerTemporary"));
+    boolean specifiedEnumModifier = Arrays.stream(EnumWrappers.class.getMethods()).anyMatch(method -> method.getName().equalsIgnoreCase("getGenericConverter") && method.getParameterCount() == 2);
+
+    if(!specifiedEnumModifier) {
+      throw new InvalidDependencyException("Your version of ProtocolLib is outdated");
+    }
   }
 }

@@ -14,6 +14,7 @@ public final class LocalPacketAdapter implements Comparable<LocalPacketAdapter> 
       .anyMatch(method -> method.getName().equalsIgnoreCase("isPlayerTemporary"));
   }
 
+  private int exceptions;
   private final String methodName;
   private final ListenerPriority priority;
   private final PacketEventSubscriber subscriber;
@@ -37,6 +38,9 @@ public final class LocalPacketAdapter implements Comparable<LocalPacketAdapter> 
     if(!validateEvent(event)) {
       return;
     }
+    if(exceptions > 50) {
+      return;
+    }
     try {
 //      Timings.packetProcessing.start();
       if (TEMP_PLAYER_CHECK) {
@@ -53,6 +57,10 @@ public final class LocalPacketAdapter implements Comparable<LocalPacketAdapter> 
       processException(exception);
     } catch (RuntimeException exception) {
       processException(exception);
+
+      if(exceptions++ >= 50) {
+        System.out.println(subscriber.getClass().getSimpleName()+"."+methodName + " has been deactivated due to too many exceptions");
+      }
     }
   }
 
@@ -68,6 +76,9 @@ public final class LocalPacketAdapter implements Comparable<LocalPacketAdapter> 
         return;
       }
     }
+    if(exceptions > 50) {
+      return;
+    }
     try {
       executor.invoke(subscriber, event);
     }/* catch (UnsupportedOperationException exception) {
@@ -76,7 +87,9 @@ public final class LocalPacketAdapter implements Comparable<LocalPacketAdapter> 
     } */catch (RuntimeException exception) {
       exception.fillInStackTrace();
       processException(exception);
-      throw exception;
+      if(exceptions++ >= 50) {
+        System.out.println(subscriber.getClass().getSimpleName()+"."+methodName + " has been deactivated due to too many exceptions");
+      }
     }
   }
 

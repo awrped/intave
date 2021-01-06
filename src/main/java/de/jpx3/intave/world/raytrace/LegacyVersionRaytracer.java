@@ -1,5 +1,6 @@
 package de.jpx3.intave.world.raytrace;
 
+import de.jpx3.dynref.annotate.DynRefAutoTranslation;
 import de.jpx3.intave.tools.wrapper.WrappedMovingObjectPosition;
 import de.jpx3.intave.tools.wrapper.WrappedVector;
 import net.minecraft.server.v1_8_R3.MovingObjectPosition;
@@ -11,6 +12,7 @@ import org.bukkit.entity.Player;
 
 public final class LegacyVersionRaytracer implements VersionRaytracer {
   @Override
+  @DynRefAutoTranslation
   public WrappedMovingObjectPosition raytrace(World world, Player player, WrappedVector eyeVector, WrappedVector targetVector) {
     WorldServer handle = ((CraftWorld) world).getHandle();
     MovingObjectPosition movingObjectPosition = handle.rayTrace((Vec3D) eyeVector.convertToNativeVec3(), (Vec3D) targetVector.convertToNativeVec3());

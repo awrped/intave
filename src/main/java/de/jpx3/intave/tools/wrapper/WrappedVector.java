@@ -8,6 +8,8 @@ import org.bukkit.util.Vector;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
+import java.util.Arrays;
 
 public class WrappedVector {
   public static final WrappedVector ZERO = new WrappedVector(0.0D, 0.0D, 0.0D);
@@ -58,14 +60,18 @@ public class WrappedVector {
     }
   }
 
+  private static Field[] VEC3D_FIELDS;
+
   public static WrappedVector fromVec3D(Object obj) {
     try {
-      Field[] fields = obj.getClass().getFields();
+      if(VEC3D_FIELDS == null) {
+        VEC3D_FIELDS = Arrays.stream(obj.getClass().getFields()).filter(field -> !Modifier.isStatic(field.getModifiers())).toArray(Field[]::new);
+      }
 
       return new WrappedVector(
-        (double) fields[0].get(obj),
-        (double) fields[1].get(obj),
-        (double) fields[2].get(obj)
+        (double) VEC3D_FIELDS[0].get(obj),
+        (double) VEC3D_FIELDS[1].get(obj),
+        (double) VEC3D_FIELDS[2].get(obj)
       );
     } catch (IllegalAccessException e) {
       throw new ReflectionFailureException(e);

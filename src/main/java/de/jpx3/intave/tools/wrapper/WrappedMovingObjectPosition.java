@@ -62,6 +62,9 @@ public class WrappedMovingObjectPosition {
   }
 
   public static WrappedMovingObjectPosition fromNativeMovingObjectPosition(Object movingObjectPosition) {
+    if(movingObjectPosition == null) {
+      return null;
+    }
     try {
       Class<?> movingObjectPositionClass = Reflection.lookupServerClass("MovingObjectPosition");
       Field eField = movingObjectPositionClass.getDeclaredField("e");

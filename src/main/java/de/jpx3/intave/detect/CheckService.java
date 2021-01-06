@@ -31,7 +31,7 @@ public final class CheckService {
     addCheck(InteractionRaytrace.class);
     addCheck(Heuristics.class);
     addCheck(AttackRaytrace.class);
-    addCheck(WorkspaceCheck.class);
+//    addCheck(WorkspaceCheck.class);
 
     bakeQuickAccess();
     linkBukkitEventSubscriptions();

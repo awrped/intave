@@ -1,6 +1,7 @@
 package de.jpx3.intave;
 
 import de.jpx3.intave.adapter.ComponentLoader;
+import de.jpx3.intave.adapter.ProtocolLibAdapter;
 import de.jpx3.intave.adapter.ViaVersionAdapter;
 import de.jpx3.intave.config.ConfigurationService;
 import de.jpx3.intave.detect.CheckService;
@@ -74,6 +75,8 @@ public final class IntavePlugin extends JavaPlugin {
     // stage 6
 
 //    BlockBoxResolver.setup();
+
+    ProtocolLibAdapter.checkIfOutdated();
 
     Raytracer.setup();
     SinusCache.setup();
