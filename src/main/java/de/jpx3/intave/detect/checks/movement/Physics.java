@@ -804,7 +804,7 @@ public final class Physics extends IntaveCheck {
     }
 
     if (movementData.pastFlyingPacketAccurate <= 3) {
-      legitimateDeviation = 0.03;
+      legitimateDeviation = Math.max(legitimateDeviation, 0.03);
     }
 
     double abuseVertically = Math.max(0, differenceY - legitimateDeviation);
@@ -1321,7 +1321,7 @@ public final class Physics extends IntaveCheck {
       context.motionY = collisionBox.calculateYOffset(entityBoundingBox, context.motionY);
     }
     entityBoundingBox = (entityBoundingBox.offset(0.0D, context.motionY, 0.0D));
-    boolean flag1 = movementData.lastOnGround || startMotionY != context.motionY && startMotionY < 0.0D;
+    boolean flag1 = movementData.onGround || startMotionY != context.motionY && startMotionY < 0.0D;
 
     for (WrappedAxisAlignedBB collisionBox : collisionBoxes) {
       context.motionX = collisionBox.calculateXOffset(entityBoundingBox, context.motionX);
@@ -1342,7 +1342,7 @@ public final class Physics extends IntaveCheck {
       context.motionY = STEP_HEIGHT;
       List<WrappedAxisAlignedBB> list = CollisionFactory.getCollisionBoxes(
         player,
-        entityBoundingBox.addCoord(startMotionX, context.motionY, startMotionZ)
+        entityBoundingBox.addCoord(startMotionX, startMotionY, startMotionZ)
       );
       WrappedAxisAlignedBB axisalignedbb4 = entityBoundingBox;
       WrappedAxisAlignedBB axisalignedbb5 = axisalignedbb4.addCoord(startMotionX, 0.0D, startMotionZ);
