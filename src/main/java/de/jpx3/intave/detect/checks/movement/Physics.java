@@ -670,14 +670,28 @@ public final class Physics extends IntaveCheck {
 
 
     Location verifiedLocation = movementData.verifiedLocation();
-    boolean boundingBoxIntersectionLast = CollisionHelper.checkBoundingBoxIntersection(user, CollisionHelper.boundingBoxOf(user, verifiedLocation.getX(), verifiedLocation.getY(), verifiedLocation.getZ()));
-    boolean boundingBoxIntersectionCurrent = CollisionHelper.checkBoundingBoxIntersection(user, CollisionHelper.boundingBoxOf(user, receivedPositionX, receivedPositionY, receivedPositionZ));
+
+    List<WrappedAxisAlignedBB> intersectionBoundingBoxesLast = Collision.resolve(user.player(), CollisionHelper.boundingBoxOf(user, verifiedLocation.getX(), verifiedLocation.getY(), verifiedLocation.getZ()));
+    List<WrappedAxisAlignedBB> intersectionBoundingBoxesCurrent = Collision.resolve(user.player(), CollisionHelper.boundingBoxOf(user, receivedPositionX, receivedPositionY, receivedPositionZ));
+
+    boolean boundingBoxIntersectionLast = !intersectionBoundingBoxesLast.isEmpty();//CollisionHelper.checkBoundingBoxIntersection(user, CollisionHelper.boundingBoxOf(user, verifiedLocation.getX(), verifiedLocation.getY(), verifiedLocation.getZ()));
+    boolean boundingBoxIntersectionCurrent = !intersectionBoundingBoxesCurrent.isEmpty();//CollisionHelper.checkBoundingBoxIntersection(user, CollisionHelper.boundingBoxOf(user, receivedPositionX, receivedPositionY, receivedPositionZ));
     boolean movedIntoBlock = !boundingBoxIntersectionLast && boundingBoxIntersectionCurrent;
 
     if (boundingBoxIntersectionCurrent && !spectator) {
       if (movedIntoBlock) {
         movementData.invalidMovement = true;
-        String message = "moved into block";
+
+        String boundingBoxOutput;
+        if(intersectionBoundingBoxesCurrent.size() > 1) {
+          boundingBoxOutput = String.valueOf(intersectionBoundingBoxesCurrent);
+        } else {
+          boundingBoxOutput = String.valueOf(intersectionBoundingBoxesCurrent.get(0));
+        }
+
+        String message = "moved into block (" + boundingBoxOutput + ")";
+
+        user.boundingBoxAccess().invalidate();
 
         plugin.retributionService().markPlayer(player, 0, "Physics", message);
         Vector emulationMotion = new Vector(predictedX, predictedY, predictedZ);
@@ -704,6 +718,8 @@ public final class Physics extends IntaveCheck {
       violationLevelIncrease = Math.min(60.0, violationLevelIncrease);
       violationLevelIncrease = Math.max(1, violationLevelIncrease);
       violationLevelData.physicsVL += violationLevelIncrease;
+
+      user.boundingBoxAccess().invalidate();
     }
 
     if (!spectator && !movedIntoBlock && violationLevelData.physicsVL > 20 && violationLevelIncrease > 0) {

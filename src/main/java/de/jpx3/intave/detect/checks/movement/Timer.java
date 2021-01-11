@@ -64,14 +64,14 @@ public final class Timer extends IntaveMetaCheck<Timer.TimerData> {
       timerData.timerBalance += 10;
     }
 
-    int allowedLagInSeconds = 8;
+    int allowedLagInSeconds = trustFactorSetting("buffer-size", player);
     int packetLimit = allowedLagInSeconds * -(20 * 10);
 
     timerData.timerBalance = MathHelper.minmax(packetLimit, timerData.timerBalance, 200);
 
     if(delta > 500) {
       timerData.lastLagSpike = AccessHelper.now();
-      player.sendMessage(String.valueOf(timerData.timerBalance));
+//      player.sendMessage(String.valueOf(timerData.timerBalance));
     }
 
     // fast recover

@@ -14,7 +14,6 @@ import de.jpx3.intave.event.packet.ListenerPriority;
 import de.jpx3.intave.event.packet.PacketDescriptor;
 import de.jpx3.intave.event.packet.PacketSubscription;
 import de.jpx3.intave.event.packet.Sender;
-import de.jpx3.intave.tools.MathHelper;
 import de.jpx3.intave.tools.sync.Synchronizer;
 import de.jpx3.intave.tools.wrapper.WrappedBlockPosition;
 import de.jpx3.intave.tools.wrapper.WrappedEnumDirection;
@@ -23,9 +22,11 @@ import de.jpx3.intave.tools.wrapper.WrappedVector;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserCustomCheckMeta;
 import de.jpx3.intave.user.UserMetaMovementData;
-import de.jpx3.intave.world.BlockAccessor;
+import de.jpx3.intave.world.collision.BoundingBoxAccess;
 import de.jpx3.intave.world.raytrace.Raytracer;
-import org.bukkit.*;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 
@@ -34,6 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static com.comphenix.protocol.wrappers.EnumWrappers.PlayerDigType.START_DESTROY_BLOCK;
 import static com.comphenix.protocol.wrappers.EnumWrappers.PlayerDigType.STOP_DESTROY_BLOCK;
 
 public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytrace.InteractionMeta> {
@@ -52,7 +54,6 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
 
   // place
   // 1st invalid -> save raytrace and queue packet for 2nd move packet (--> raytrace override)
-
 
   @PacketSubscription(
     priority = ListenerPriority.LOW,
@@ -79,41 +80,33 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
     User user = userOf(player);
     InteractionMeta interactionMeta = metaOf(user);
     UserMetaMovementData movementData = user.meta().movementData();
-    World world = player.getWorld();
-    Location targetLocation = blockPosition.toLocation(world);
-//    Location blockPlacementLocation = blockPosition.toLocation(world).add(WrappedEnumDirection.getFront(enumDirection).getDirectionVec().convertToBukkitVec());
+
     Location playerLocation = movementData.verifiedLocation().clone();
     playerLocation.setYaw(movementData.rotationYaw);
     playerLocation.setPitch(movementData.rotationPitch);
-    WrappedMovingObjectPosition raycastResult = Raytracer.blockRayTrace(player, playerLocation);
-    boolean hitMiss = raycastResult == null || raycastResult.hitVec == WrappedVector.ZERO;
-    WrappedBlockPosition raycastVector = hitMiss ? WrappedBlockPosition.ORIGIN : raycastResult.getBlockPos();
-    Location raycastLocation = raycastVector.toLocation(world);
     Material itemTypeInHand = player.getItemInHand().getType();
     boolean isPlacement = itemTypeInHand != Material.AIR && itemTypeInHand.isBlock();
 
-    InteractionType type = isPlacement ? InteractionType.PLACE : InteractionType.INTERACT;
-    if((raycastResult == null || enumDirection != raycastResult.sideHit.getIndex()) || raycastLocation.distance(targetLocation) > 0) {
-      boolean cancel = processViolation(player, type);
-      // cancel if placement impossible
+    Interaction interaction = new Interaction(
+      player.getWorld(), player, blockPosition, enumDirection, packet.deepClone(),
+      isPlacement ? InteractionType.PLACE : InteractionType.INTERACT
+    );
+    interactionMeta.interactionList.add(interaction);
+    event.setCancelled(true);
 
-      if(BlockAccessor.blockAccess(raycastLocation).getType() == Material.AIR) {
-        cancel = true;
-      }
+    // when nothing is sent
+    Synchronizer.synchronize(() -> {
+      Location location = new Location(player.getWorld(), movementData.lastPositionX, movementData.lastPositionY, movementData.lastPositionZ);
+      location.setYaw(movementData.rotationYaw);
+      location.setPitch(movementData.rotationPitch);
 
-      interactionMeta.traceReportList.add(
-        new TraceReport(
-          raycastResult, blockPosition, enumDirection, packet.deepClone(),
-          playerLocation, type,
-          cancel
-        )
-      );
-      if(cancel) {
-        event.setCancelled(true);
-      }
-    } else {
-      lowerViolation(player, type);
-    }
+      Location mouseDelayPlayerLocation = location.clone();
+      mouseDelayPlayerLocation.setYaw(movementData.lastRotationYaw);
+
+      WrappedMovingObjectPosition raycastResult = Raytracer.blockRayTrace(player, location);
+      WrappedMovingObjectPosition raycastResultmdf = Raytracer.blockRayTrace(player, mouseDelayPlayerLocation);
+      processTraceReport(interaction, raycastResult, raycastResultmdf, true);
+    });
   }
 
   @PacketSubscription(
@@ -129,43 +122,41 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
     if(blockPosition == null) {
       return;
     }
+
     EnumWrappers.PlayerDigType playerDigType = packet.getPlayerDigTypes().readSafely(0);
-    if(!(/*playerDigType == START_DESTROY_BLOCK || */playerDigType == STOP_DESTROY_BLOCK)) {
+    if(!(playerDigType == START_DESTROY_BLOCK || playerDigType == STOP_DESTROY_BLOCK)) {
       return;
     }
+
     EnumWrappers.Direction direction = packet.getDirections().readSafely(0);
     int enumDirection = direction == null ? 255 : direction.ordinal();
     if(enumDirection == 255) {
       return;
     }
+
     User user = userOf(player);
     InteractionMeta interactionMeta = metaOf(user);
-
     UserMetaMovementData movementData = user.meta().movementData();
-    World world = player.getWorld();
-    Location targetLocation = blockPosition.toLocation(world);
-    Location playerLocation = movementData.verifiedLocation().clone();
-    playerLocation.setYaw(movementData.rotationYaw);
-    playerLocation.setPitch(movementData.rotationPitch);
-    WrappedMovingObjectPosition raycastResult = Raytracer.blockRayTrace(player, playerLocation);
-    boolean hitMiss = raycastResult == null || raycastResult.hitVec == WrappedVector.ZERO;
-    WrappedBlockPosition raycastVector = hitMiss ? WrappedBlockPosition.ORIGIN : raycastResult.getBlockPos();
-    Location raycastLocation = raycastVector.toLocation(world);
-    if((raycastResult == null || enumDirection != raycastResult.sideHit.getIndex()) || raycastLocation.distance(targetLocation) > 0) {
-      boolean cancel = processViolation(player, InteractionType.BREAK);
-      interactionMeta.traceReportList.add(
-        new TraceReport(
-          raycastResult, blockPosition, playerDigType.ordinal(),
-          packet.deepClone(), playerLocation, InteractionType.BREAK,
-          cancel
-        )
-      );
-      if(cancel) {
-        event.setCancelled(true);
-      }
-    } else {
-      lowerViolation(player, InteractionType.BREAK);
-    }
+
+    Interaction interaction = new Interaction(
+      player.getWorld(), player, blockPosition, enumDirection, packet.deepClone(), InteractionType.BREAK
+    );
+    interactionMeta.interactionList.add(interaction);
+    event.setCancelled(true);
+
+    // when nothing is sent
+    Synchronizer.synchronize(() -> {
+      Location location = new Location(player.getWorld(), movementData.lastPositionX, movementData.lastPositionY, movementData.lastPositionZ);
+      location.setYaw(movementData.rotationYaw);
+      location.setPitch(movementData.rotationPitch);
+
+      Location mouseDelayPlayerLocation = location.clone();
+      mouseDelayPlayerLocation.setYaw(movementData.lastRotationYaw);
+
+      WrappedMovingObjectPosition raycastResult = Raytracer.blockRayTrace(player, location);
+      WrappedMovingObjectPosition raycastResultmdf = Raytracer.blockRayTrace(player, mouseDelayPlayerLocation);
+      processTraceReport(interaction, raycastResult, raycastResultmdf, true);
+    });
   }
 
   @PacketSubscription(
@@ -183,9 +174,9 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
     User user = userOf(player);
     UserMetaMovementData movementData = user.meta().movementData();
     InteractionMeta interactionMeta = metaOf(user);
-    List<TraceReport> traceReportList = interactionMeta.traceReportList;
+    List<Interaction> interactionList = interactionMeta.interactionList;
 
-    if(traceReportList.isEmpty()) {
+    if(interactionList.isEmpty()) {
       return;
     }
 
@@ -193,127 +184,176 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
     playerLocation.setYaw(movementData.rotationYaw);
     playerLocation.setPitch(movementData.rotationPitch);
 
+    Location playerLocationmdf = playerLocation.clone();
+    playerLocationmdf.setYaw(movementData.lastRotationYaw);
+
     WrappedMovingObjectPosition raycastResult = Raytracer.blockRayTrace(player, playerLocation);
-    boolean hitMiss = raycastResult == null || raycastResult.hitVec == WrappedVector.ZERO;
+    WrappedMovingObjectPosition raycastResultmdf = Raytracer.blockRayTrace(player, playerLocationmdf);
+
+    for (Interaction interaction : interactionList) {
+      processTraceReport(interaction, raycastResult, raycastResultmdf, false);
+    }
+    interactionList.clear();
+  }
+
+  private void processTraceReport(
+    Interaction interaction,
+    WrappedMovingObjectPosition raycastResult,
+    WrappedMovingObjectPosition raycastResultmdf,
+    boolean delayed
+  ) {
+    if(interaction.entered()) {
+      return;
+    }
+    interaction.enter();
+
+    World world = interaction.world();
+    Player player = interaction.player();
+    InteractionMeta interactionMeta = metaOf(player);
+
+    boolean hitMiss = interactionMeta.estimateMouseDelayFix ? raycastResultmdf == null || raycastResultmdf.hitVec == WrappedVector.ZERO : raycastResult == null || raycastResult.hitVec == WrappedVector.ZERO;
     WrappedBlockPosition raycastVector = hitMiss ? WrappedBlockPosition.ORIGIN : raycastResult.getBlockPos();
     Location raycastLocation = raycastVector.toLocation(world);
+    Location targetLocation = interaction.targetBlock.toLocation(world);
 
+    boolean invalid = hitMiss ||
+      raycastLocation.distance(targetLocation) > 0 ||
+      interaction.targetDirection != raycastResult.sideHit.getIndex();
 
-    Location mouseDelayPlayerLocation = playerLocation.clone();
-    mouseDelayPlayerLocation.setYaw(movementData.lastRotationYaw);
+    // mouse delay fix (on/off)
+    if(invalid) {
+      boolean hitMiss2 = interactionMeta.estimateMouseDelayFix ? raycastResultmdf == null || raycastResultmdf.hitVec == WrappedVector.ZERO : raycastResultmdf == null || raycastResultmdf.hitVec == WrappedVector.ZERO;
+      WrappedBlockPosition raycastVector2 = hitMiss2 ? WrappedBlockPosition.ORIGIN : raycastResultmdf.getBlockPos();
+      Location raycastLocation2 = raycastVector2.toLocation(world);
 
-    WrappedMovingObjectPosition raycastResult2 = Raytracer.blockRayTrace(player, mouseDelayPlayerLocation);
-    boolean hitMiss2 = raycastResult2 == null || raycastResult2.hitVec == WrappedVector.ZERO;
-    WrappedBlockPosition raycastVector2 = hitMiss2 ? WrappedBlockPosition.ORIGIN : raycastResult2.getBlockPos();
-    Location raycastLocation2 = raycastVector2.toLocation(world);
-
-    for (TraceReport traceReport : traceReportList) {
-      Location targetLocation = traceReport.targetBlock.toLocation(world);
-
-      boolean invalid = hitMiss ||
-          raycastLocation.distance(targetLocation) > 0 ||
-          traceReport.targetDirection != raycastResult.sideHit.getIndex();
+      invalid = hitMiss2 ||
+        raycastLocation2.distance(targetLocation) > 0 ||
+        interaction.targetDirection != raycastResultmdf.sideHit.getIndex();
 
       if(invalid) {
-        // mouse delay fix
-        invalid = hitMiss2 ||
-          raycastLocation2.distance(targetLocation) > 0 ||
-          traceReport.targetDirection != raycastResult2.sideHit.getIndex();
+        raycastResult = raycastResultmdf;
+        hitMiss = hitMiss2;
+        raycastLocation = raycastLocation2;
       }
 
-//      player.sendMessage(ChatColor.GOLD + "SERVER: (yaw: " + movementData.rotationYaw + " / " + movementData.lastRotationYaw + ") (pitch: " + movementData.rotationPitch + " / " + movementData.lastRotationPitch +")");
+      interactionMeta.estimateMouseDelayFix = !invalid;
+    }
 
-      InteractionType type = traceReport.type();
-      boolean flagMessage = !type.bufferAvailable || interactionMeta.violationLevel.get(type) > 3;
+    boolean flag = invalid && performFlag(interaction, raycastResult, targetLocation, raycastLocation, hitMiss, delayed);
+    emulatePacket(interaction, raycastResult, targetLocation, raycastLocation, hitMiss, flag);
+  }
 
-      if(invalid && flagMessage) {
-        if(type == InteractionType.BREAK) {
-          String typeName = targetLocation.getBlock().getType().name().toLowerCase().replace("_", "").replace("block", "");
-          String append = "";
+  private void emulatePacket(
+    Interaction interaction,
+    WrappedMovingObjectPosition raycastResult,
+    Location targetLocation,
+    Location raycastLocation,
+    boolean hitMiss,
+    boolean punishment
+  ) {
+    Player player = interaction.player();
+    ResponseType response = interaction.type().response();
+    BoundingBoxAccess boundingBoxAccess = userOf(player).boundingBoxAccess();
 
-          if (hitMiss || (raycastLocation.getBlockX() == 0 && raycastLocation.getBlockY() == 0 && raycastLocation.getBlockZ() == 0)) {
-            append = " (looking in air)";
-          } else if(raycastLocation.distance(targetLocation) > 0 && raycastLocation.getBlock().getType() != Material.AIR) {
-            String blockName = raycastLocation.getBlock().getType().name().toLowerCase().replace("_", "").replace("block", "");
+//    if(punishment) {
+//      boundingBoxAccess.identityInvalidate();
+//    }
 
-            if(raycastLocation.getBlock().getType() == targetLocation.getBlock().getType()) {
-              blockName = "a different " + blockName;
-            }
-            append = " (looking at " + blockName + " block)";
-          } else if (traceReport.targetDirection != raycastResult.sideHit.getIndex()){
-            append = " (invalid block face)";
-          }
 
-          plugin.retributionService().markPlayer(player, 0, name(), "broke a " + typeName + " block out of sight" + append);
-        } else if(type == InteractionType.PLACE) {
-          String typeAgainstName = targetLocation.getBlock().getType().name().toLowerCase().replace("_", "").replace("block", "");
-          String typeName = player.getItemInHand().getType().name().toLowerCase().replace("_", "").replace("block", "");
+    if(response == ResponseType.RAYTRACE_CAST) {
+      if(hitMiss) {
+        player.sendMessage("Emulation " + raycastLocation + " " + targetLocation);
+        refreshBlocksAround(player, targetLocation);
+        boundingBoxAccess.invalidateOverride(interaction.world, targetLocation.getBlockX(), targetLocation.getBlockY(), targetLocation.getBlockZ());
+      } else {
+        PacketContainer packet = interaction.thePacket();
 
-          plugin.retributionService().markPlayer(player, 0, name(), "tried to placed a " + typeName + " block against a "+typeAgainstName+" block out of sight");
-        } else if(type == InteractionType.INTERACT) {
-          String typeAgainstName = targetLocation.getBlock().getType().name().toLowerCase().replace("_", "").replace("block", "");
-          plugin.retributionService().markPlayer(player, 0, name(), "tried to interact with a " + typeAgainstName + " block out of sight");
-        }
-      }
-
-      if(!invalid) {
-        lowerViolation(player, type);
-        lowerViolation(player, type);
-      }
-
-      ResponseType response = type.response();
-
-      if(response == ResponseType.RAYTRACE_CAST) {
-        if(hitMiss) {
-          player.updateInventory();
-          refreshBlock(player, targetLocation);
-          for (WrappedEnumDirection direction : WrappedEnumDirection.values()) {
-            Location placedBlock = targetLocation.clone().add(direction.getDirectionVec().convertToBukkitVec());
-            refreshBlock(player, placedBlock);
-          }
-        } else if(traceReport.wasCanceled()) {
-          PacketContainer packet = traceReport.thePacket();
-          BlockPosition blockPosition1 = new BlockPosition(raycastLocation.getBlockX(), raycastLocation.getBlockY(), raycastLocation.getBlockZ());
-
+        if(punishment) {
           if(packet.getDirections().size() > 0) {
             packet.getDirections().write(0, raycastResult.sideHit.toDirection());
           } else {
             packet.getIntegers().write(0, raycastResult.sideHit.getIndex());
           }
+          packet.getBlockPositionModifier().write(
+            0,
+            new BlockPosition(raycastLocation.getBlockX(), raycastLocation.getBlockY(), raycastLocation.getBlockZ())
+          );
 
-          packet.getBlockPositionModifier().write(0, blockPosition1);
-          refreshBlock(player, targetLocation);
-          for (WrappedEnumDirection direction : WrappedEnumDirection.values()) {
-            Location placedBlock = targetLocation.clone().add(direction.getDirectionVec().convertToBukkitVec());
-            refreshBlock(player, placedBlock);
-          }
-          Synchronizer.synchronize(() -> receiveExcludedPacket(player, packet));
-        }
-      } else {
-        if (!invalid && traceReport.wasCanceled()) {
-          Synchronizer.synchronize(() -> receiveExcludedPacket(event.getPlayer(), traceReport.thePacket));
+          boundingBoxAccess.invalidate(targetLocation.getBlockX(), targetLocation.getBlockY(), targetLocation.getBlockZ());
+          boundingBoxAccess.invalidateOverride(interaction.world, targetLocation.getBlockX(), targetLocation.getBlockY(), targetLocation.getBlockZ());
         } else {
-          player.updateInventory();
-          refreshBlock(player, targetLocation);
-          for (WrappedEnumDirection direction : WrappedEnumDirection.values()) {
-            Location placedBlock = targetLocation.clone().add(direction.getDirectionVec().convertToBukkitVec());
-            refreshBlock(player, placedBlock);
-          }
+          boundingBoxAccess.invalidate(targetLocation.getBlockX(), targetLocation.getBlockY(), targetLocation.getBlockZ());
         }
+
+        receiveExcludedPacket(player, packet);
+        Synchronizer.synchronize(() -> refreshBlocksAround(player, targetLocation));
+      }
+    } else {
+      if (punishment) {
+        refreshBlocksAround(player, targetLocation);
+        boundingBoxAccess.invalidateOverride(interaction.world, targetLocation.getBlockX(), targetLocation.getBlockY(), targetLocation.getBlockZ());
+      } else {
+        Synchronizer.synchronize(() -> receiveExcludedPacket(player, interaction.thePacket));
       }
     }
-
-    traceReportList.clear();
   }
 
-  @PacketSubscription(
-    priority = ListenerPriority.MONITOR, // last one to work with position
-    packets = {
-      @PacketDescriptor(sender = Sender.SERVER, packetName = "LOOK")
+  private void refreshBlocksAround(Player player, Location targetLocation) {
+    player.updateInventory();
+    refreshBlock(player, targetLocation);
+    for (WrappedEnumDirection direction : WrappedEnumDirection.values()) {
+      Location placedBlock = targetLocation.clone().add(direction.getDirectionVec().convertToBukkitVec());
+      refreshBlock(player, placedBlock);
     }
-  )
-  public void sentBlockUpdate(PacketEvent event) {
+  }
 
+  private boolean performFlag(
+    Interaction interaction,
+    WrappedMovingObjectPosition raycastResult,
+    Location targetLocation,
+    Location raycastLocation,
+    boolean hitMiss,
+    boolean delayed
+  ) {
+    Player player = interaction.player();
+    InteractionType type = interaction.type();
+
+    String flagMessage;
+    if(type == InteractionType.BREAK) {
+      String typeName = targetLocation.getBlock().getType().name().toLowerCase().replace("_", "").replace("block", "");
+      String append = "";
+      if (hitMiss || (raycastLocation.getBlockX() == 0 && raycastLocation.getBlockY() == 0 && raycastLocation.getBlockZ() == 0)) {
+        append = " (looking in air)";
+      } else if(raycastLocation.distance(targetLocation) > 0 && raycastLocation.getBlock().getType() != Material.AIR) {
+        String blockName = raycastLocation.getBlock().getType().name().toLowerCase().replace("_", "").replace("block", "");
+        if(raycastLocation.getBlock().getType() == targetLocation.getBlock().getType()) {
+          blockName = "a different " + blockName;
+        }
+        append = " (looking at " + blockName + " block)";
+      } else if (interaction.targetDirection != raycastResult.sideHit.getIndex()){
+        append = " (invalid block face)";
+      }
+      flagMessage = "broke a " + typeName + " block out of sight" + append;
+    } else if(type == InteractionType.PLACE) {
+      String typeAgainstName = shortenTypeName(targetLocation.getBlock().getType());
+      String typeName = shortenTypeName(player.getItemInHand().getType());
+      flagMessage = "tried to placed a " + typeName + " block against a " + typeAgainstName + " block out of sight";
+    } else {
+      String typeAgainstName = shortenTypeName(targetLocation.getBlock().getType());
+      flagMessage = "tried to interact with a " + typeAgainstName + " block out of sight";
+    }
+
+    flagMessage += " (mdf: "+metaOf(player).estimateMouseDelayFix+")";
+
+    if(delayed) {
+      flagMessage += " (timeout)";
+    }
+
+    return plugin.retributionService().markPlayer(player, 0, name(), flagMessage);
+  }
+
+  private String shortenTypeName(Material type) {
+    return type.name().toLowerCase().replace("_", "").replace("block", "");
   }
 
   private void refreshBlock(Player player, Location location) {
@@ -339,7 +379,7 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
     }
   }
 
-  public boolean processViolation(Player player, InteractionType type) {
+/*  public boolean processViolation(Player player, InteractionType type) {
     boolean cancel = false;
     InteractionMeta interactionMeta = metaOf(player);
     if(type.bufferAvailable) {
@@ -364,11 +404,14 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
     int vl = interactionMeta.violationLevel.computeIfAbsent(type, x -> 0);
     vl = MathHelper.minmax(0, vl - 1,8);
     interactionMeta.violationLevel.put(type, vl);
-  }
+  }*/
 
   public static class InteractionMeta extends UserCustomCheckMeta {
-    final List<TraceReport> traceReportList = new ArrayList<>();
+    final List<Interaction> interactionList = new ArrayList<>();
     final Map<InteractionType, Integer> violationLevel = Maps.newEnumMap(InteractionType.class);
+
+    public long lastPlacement;
+    public boolean estimateMouseDelayFix = false;
   }
 
   public enum InteractionType {
@@ -394,57 +437,52 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
     CANCEL
   }
 
-  public static class TraceReport {
-    private final WrappedMovingObjectPosition raytraceResult;
+  public static class Interaction {
+    private final World world;
+    private final Player player;
     private final BlockPosition targetBlock;
     private final int targetDirection;
     private final PacketContainer thePacket;
-    private final Location contextPosition;
     private final InteractionType type;
-    private final boolean canceled;
+    private boolean entered = false;
 
-    public TraceReport(
-      WrappedMovingObjectPosition raytraceResult,
-      BlockPosition targetBlock, int targetDirection, PacketContainer thePacket,
-      Location contextPosition,
-      InteractionType type,
-      boolean canceled
+    public Interaction(
+      World world, Player player,
+      BlockPosition targetBlock,
+      int targetDirection,
+      PacketContainer thePacket,
+      InteractionType type
     ) {
-      this.raytraceResult = raytraceResult;
+      this.world = world;
+      this.player = player;
       this.targetBlock = targetBlock;
       this.targetDirection = targetDirection;
       this.thePacket = thePacket;
-      this.contextPosition = contextPosition.clone();
       this.type = type;
-      this.canceled = canceled;
-    }
-
-    public WrappedMovingObjectPosition raytraceResult() {
-      return raytraceResult;
-    }
-
-    public BlockPosition targetBlock() {
-      return targetBlock;
-    }
-
-    public int targetDirection() {
-      return targetDirection;
     }
 
     public PacketContainer thePacket() {
       return thePacket;
     }
 
-    public Location contextPosition() {
-      return contextPosition;
-    }
-
     public InteractionType type() {
       return type;
     }
 
-    public boolean wasCanceled() {
-      return canceled;
+    public World world() {
+      return world;
+    }
+
+    public Player player() {
+      return player;
+    }
+
+    public void enter() {
+      entered = true;
+    }
+
+    public boolean entered() {
+      return entered;
     }
   }
 }

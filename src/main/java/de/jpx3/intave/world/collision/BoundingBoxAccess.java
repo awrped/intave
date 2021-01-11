@@ -97,6 +97,16 @@ public final class BoundingBoxAccess {
     localReplacements.clear();
   }
 
+  public void identityInvalidate() {
+    invalidate();
+    localReplacements.clear();
+    globalReplacements.clear();
+  }
+
+  public void invalidate() {
+    blockCache.clear();
+  }
+
   public void invalidate(int posX, int posY, int posZ) {
     int chunkX = this.chunkXPos;
     int chunkZ = this.chunkZPos;

@@ -7,7 +7,6 @@ import de.jpx3.intave.user.UserMetaMovementData;
 import de.jpx3.intave.world.BlockAccessor;
 import de.jpx3.intave.world.collision.Collision;
 import org.bukkit.Location;
-import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 
@@ -91,22 +90,7 @@ public final class CollisionHelper {
   }
 
   public static boolean checkBoundingBoxIntersection(User user, WrappedAxisAlignedBB boundingBox) {
-    Player player = user.player();
-    World world = player.getWorld();
-    List<WrappedAxisAlignedBB> collisionBoxes = Collision.resolve(user.player(), boundingBox);
-    return !collisionBoxes.isEmpty();
-
-/*    for (WrappedAxisAlignedBB collisionBox : collisionBoxes) {
-      double positionX = (collisionBox.minX + collisionBox.maxX) / 2.0;
-      double positionY = (collisionBox.minY + collisionBox.maxY) / 2.0;
-      double positionZ = (collisionBox.minZ + collisionBox.maxZ) / 2.0;
-      Block block = BlockAccessor.blockAccess(world, positionX, positionY, positionZ);
-      Material type = block.getType();
-      if (!GlobalCollisionResolver.blockIntersectionExclusionNames().contains(type.name())) {
-        return true;
-      }
-    }
-    return false;*/
+    return !Collision.resolve(user.player(), boundingBox).isEmpty();
   }
 
   public static class CollisionResult {

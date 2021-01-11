@@ -1,6 +1,7 @@
 package de.jpx3.intave.user;
 
 import de.jpx3.intave.access.IntaveInternalException;
+import de.jpx3.intave.access.TrustFactor;
 import de.jpx3.intave.permission.PermissionCache;
 import de.jpx3.intave.reflect.Reflection;
 import de.jpx3.intave.tools.AccessHelper;
@@ -21,6 +22,7 @@ public final class User {
   private final BoundingBoxAccess boundingBoxAccess;
   private final boolean hasPlayer;
   private boolean ignoreNextPacket;
+  private TrustFactor trustFactor;
 
   private User(Player player) {
     this.playerRef = new WeakReference<>(player);
@@ -83,6 +85,14 @@ public final class User {
 
   public BoundingBoxAccess boundingBoxAccess() {
     return boundingBoxAccess;
+  }
+
+  public TrustFactor trustFactor() {
+    return trustFactor;
+  }
+
+  public void setTrustFactor(TrustFactor trustFactor) {
+    this.trustFactor = trustFactor;
   }
 
   public static User empty() {

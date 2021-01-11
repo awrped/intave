@@ -18,6 +18,7 @@ import de.jpx3.intave.tools.sync.Synchronizer;
 import de.jpx3.intave.tools.wrapper.WrappedEnumDirection;
 import de.jpx3.intave.user.UserRepository;
 import de.jpx3.intave.world.BlockAccessor;
+import de.jpx3.intave.world.block.BlockDamage;
 import de.jpx3.intave.world.collision.BoundingBoxAccess;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -124,9 +125,9 @@ public final class BlockActionDispatcher implements EventProcessor {
       return;
     }
 
-    if(event.isCancelled()) {
+/*    if(event.isCancelled()) {
       return;
-    }
+    }*/
 
     World world = player.getWorld();
     Location blockAgainstLocation = blockPosition.toLocation(world).clone();
@@ -163,9 +164,9 @@ public final class BlockActionDispatcher implements EventProcessor {
 
 //      player.sendMessage("Block-placement confirmation for " + MathHelper.formatPosition(blockPlacementLocation));
       if(access) {
-        // add to future bounding boxes
         BoundingBoxAccess boundingBoxAccess = UserRepository.userOf(player).boundingBoxAccess();
         boundingBoxAccess.override(world, blockX, blockY, blockZ, id, shape);
+        Synchronizer.synchronize(() -> boundingBoxAccess.invalidateOverride(world, blockX, blockY, blockZ));
       }
     } else {
       // wooden doors and trapdoors
@@ -225,7 +226,12 @@ public final class BlockActionDispatcher implements EventProcessor {
       return;
     }
     EnumWrappers.PlayerDigType playerDigType = packet.getPlayerDigTypes().readSafely(0);
-    if(!(playerDigType == STOP_DESTROY_BLOCK)) {
+    player.sendMessage(String.valueOf(playerDigType));
+
+    boolean instantBreak = BlockDamage.blockDamage(player, player.getItemInHand(), blockPosition) >= 1.0f;
+    boolean breakBlock = playerDigType == STOP_DESTROY_BLOCK;
+
+    if(!breakBlock) {
       return;
     }
     EnumWrappers.Direction direction = packet.getDirections().readSafely(0);
@@ -255,8 +261,6 @@ public final class BlockActionDispatcher implements EventProcessor {
       int blockZ = blockBreakLocation.getBlockZ();
 
       // add to future bounding boxes
-
-
       BoundingBoxAccess boundingBoxAccess = UserRepository.userOf(player).boundingBoxAccess();
       boundingBoxAccess.override(world, blockX, blockY, blockZ, 0, (byte) 0);
     }

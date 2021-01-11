@@ -129,6 +129,10 @@ public final class IntavePlugin extends JavaPlugin {
     eventLinker.performShutdown();
   }
 
+  public TrustFactorService trustFactorService() {
+    return trustFactorService;
+  }
+
   public IntaveLogger logger() {
     return logger;
   }
