@@ -17,7 +17,7 @@ public final class AsyncIntaveViolationEvent extends AbstractIntaveExternalEvent
   private String details;
   private double vlBefore;
   private double vlAfter;
-  private boolean cancelled;
+  private SuggestiveResponse response = SuggestiveResponse.INTERRUPT_AND_REPORT;
 
   private AsyncIntaveViolationEvent(
     Player punished,
@@ -77,13 +77,22 @@ public final class AsyncIntaveViolationEvent extends AbstractIntaveExternalEvent
 
   @Override
   public boolean isCancelled() {
-    return cancelled;
+    return response != SuggestiveResponse.INTERRUPT_AND_REPORT;
   }
 
   @Override
   @Deprecated
   public void setCancelled(boolean cancelled) {
-    this.cancelled = cancelled;
+    this.response = cancelled ? SuggestiveResponse.IGNORE : SuggestiveResponse.INTERRUPT_AND_REPORT;
+  }
+
+  @Deprecated
+  public void suggestResponse(SuggestiveResponse response) {
+    this.response = response;
+  }
+
+  public SuggestiveResponse suggestedResponse() {
+    return response;
   }
 
   public void renew(Player punished, int legacyProtocolVersion, String modulename, String message, String details, double vlBefore, double vlAfter) {
@@ -98,7 +107,7 @@ public final class AsyncIntaveViolationEvent extends AbstractIntaveExternalEvent
   }
 
   @Override
-  public void __INTERNAL__clearPlayerReference() {
+  public void clearPlayerReference() {
     punished = null;
   }
 
@@ -111,6 +120,12 @@ public final class AsyncIntaveViolationEvent extends AbstractIntaveExternalEvent
       return null;
     }
     return new AsyncIntaveViolationEvent(punished, legacyProtocolVersion, modulename, category, message, vlBefore, vlAfter);
+  }
+
+  public enum SuggestiveResponse {
+    IGNORE,
+    ONLY_INTERRUPT,
+    INTERRUPT_AND_REPORT
   }
 
   public enum MessageSpecifier {

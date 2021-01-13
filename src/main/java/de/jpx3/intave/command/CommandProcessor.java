@@ -1,6 +1,7 @@
 package de.jpx3.intave.command;
 
 import de.jpx3.intave.command.stages.IntaveCommandStage;
+import de.jpx3.intave.command.stages.IntaveInternalsStage;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -15,6 +16,11 @@ import java.util.stream.Collectors;
 
 public final class CommandProcessor implements CommandExecutor, TabCompleter {
   private final CommandStage rootCommandStage = IntaveCommandStage.singletonInstance();
+
+  static {
+    IntaveCommandStage.singletonInstance();
+    IntaveInternalsStage.singletonInstance();
+  }
 
   @Override
   public boolean onCommand(CommandSender commandSender, Command command, String s, String[] strings) {

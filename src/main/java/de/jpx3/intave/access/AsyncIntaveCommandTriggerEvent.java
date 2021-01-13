@@ -12,13 +12,13 @@ import org.bukkit.event.Cancellable;
 public final class AsyncIntaveCommandTriggerEvent extends AbstractIntaveExternalEvent implements Cancellable {
   private Player punished;
   private String command;
-  private boolean isWaveExecuted;
+  private boolean delayedExecution;
   private boolean cancelled;
 
-  private AsyncIntaveCommandTriggerEvent(Player punished, String command, boolean isWaveExecuted) {
+  private AsyncIntaveCommandTriggerEvent(Player punished, String command, boolean delayedExecution) {
     this.punished = punished;
     this.command = command;
-    this.isWaveExecuted = isWaveExecuted;
+    this.delayedExecution = delayedExecution;
     this.setCancelled(false);
   }
 
@@ -36,8 +36,8 @@ public final class AsyncIntaveCommandTriggerEvent extends AbstractIntaveExternal
     this.command = command;
   }
 
-  public boolean waveExecuted() {
-    return isWaveExecuted;
+  public boolean delayedExecute() {
+    return delayedExecution;
   }
 
   @Override
@@ -51,14 +51,14 @@ public final class AsyncIntaveCommandTriggerEvent extends AbstractIntaveExternal
   }
 
   @Override
-  public void __INTERNAL__clearPlayerReference() {
+  public void clearPlayerReference() {
     punished = null;
   }
 
-  public void __INTERNAL__renew(Player punished, String command, boolean isWaveExecuted) {
+  public void renew(Player punished, String command, boolean delayedExecute) {
     this.punished = punished;
     this.command = command;
-    this.isWaveExecuted = isWaveExecuted;
+    this.delayedExecution = delayedExecute;
     this.setCancelled(false);
   }
 

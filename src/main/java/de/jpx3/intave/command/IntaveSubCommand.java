@@ -20,6 +20,7 @@ public final class IntaveSubCommand {
   private final CommandStage stage;
   private String[] selectors;
   private String usage, description, permission;
+  private boolean hideInHelp;
 
   private final Method targetMethod;
 
@@ -46,6 +47,7 @@ public final class IntaveSubCommand {
     usage = subCommand.usage();
     description = subCommand.description();
     permission = subCommand.permission();
+    hideInHelp = subCommand.hideInHelp();
 
     Forward forward = targetMethod.getDeclaredAnnotation(Forward.class);
 
@@ -92,12 +94,12 @@ public final class IntaveSubCommand {
 
   private final static String NO_PERMISSION_MESSAGE = ChatColor.RED + "I'm sorry, but you do not have permission to perform this command. Please contact the server administrators if you believe that this is in error.";
 
-  public CommandStage execute(CommandSender commandSender, String executedCommand) {
+  public CommandStage execute(CommandSender sender, String executedCommand) {
     String prefix = IntavePlugin.prefix();
     String[] args = executedCommand.split(" ");
 
-    if(!permission.equals("none") && !PermissionCheck.permissionCheck(commandSender, permission)) {
-      commandSender.sendMessage(NO_PERMISSION_MESSAGE);
+    if(sender instanceof Player && !permission.equals("none") && !PermissionCheck.permissionCheck(sender, permission)) {
+      sender.sendMessage(NO_PERMISSION_MESSAGE);
       return null;
     }
 
@@ -113,28 +115,31 @@ public final class IntaveSubCommand {
       } while ((currentStage = currentStage.parent()) != null);
       command.append(selectors[0]);
 
-      commandSender.sendMessage(prefix + "Usage: " + command + " " + usage);
+      sender.sendMessage(prefix + "Usage: " + command + " " + usage);
       return null;
     }
 
     List<Object> parameterTypes = new ArrayList<>();
     if(requiresCommandSenderParameter) {
-      parameterTypes.add(commandSender);
+      parameterTypes.add(sender);
     } else if(requiresUserParameter) {
-      if(commandSender instanceof Player) {
-        parameterTypes.add(UserRepository.userOf((Player) commandSender));
+      if(sender instanceof Player) {
+        parameterTypes.add(UserRepository.userOf((Player) sender));
       } else {
-        commandSender.sendMessage(prefix + ChatColor.RED + "This action requires you to be a player");
+        sender.sendMessage(prefix + ChatColor.RED + "This action requires you to be a player");
         return null;
       }
     }
 
     int i = 0;
     for (String arg : args) {
+      if(allTypes.length <= i) {
+        continue;
+      }
       Class<?> expectedType = allTypes[i];
-      Object output = TypeTranslators.tryTranslate(commandSender, expectedType, arg, executedCommand);
+      Object output = TypeTranslators.tryTranslate(sender, expectedType, arg, executedCommand);
       if(output instanceof String) {
-        commandSender.sendMessage(prefix + ChatColor.RED + "Invalid parameter \"" + arg + "\": " + output);
+        sender.sendMessage(prefix + ChatColor.RED + "Invalid parameter \"" + arg + "\": " + output);
         return null;
       }
       if(output == null) {
@@ -162,7 +167,6 @@ public final class IntaveSubCommand {
     String[] args = executedCommand.split(" ");
 
     if(!permission.equals("none") && !PermissionCheck.permissionCheck(commandSender, permission)) {
-      commandSender.sendMessage(NO_PERMISSION_MESSAGE);
       return null;
     }
 
@@ -176,6 +180,10 @@ public final class IntaveSubCommand {
     }
 
     return null;
+  }
+
+  public boolean hideInHelp() {
+    return hideInHelp;
   }
 
   public String permission() {

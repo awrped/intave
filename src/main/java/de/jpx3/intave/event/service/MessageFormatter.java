@@ -26,15 +26,26 @@ public final class MessageFormatter {
     return output;
   }
 
-  public static String resolveNotifyMessage(Player player, TextContext textContext) {
-    String messageLayout = resolveLayout("verbose");
-    User user = UserRepository.userOf(player);
+  public static String resolveNotifyReplacements(TextContext textContext) {
+    String messageLayout = resolveLayout("notify");
     String output = Placeholders.replacePlaceholders(
       messageLayout,
       Placeholders.PLUGIN_CONTEXT,
       Placeholders.SERVER_CONTEXT,
-      user.placeholderContext(),
       textContext
+    );
+    output = ChatColor.translateAlternateColorCodes('&', output);
+    output = output.trim().replace("  ", " ");
+    return output;
+  }
+
+  public static String resolveCommandReplacements(Player player, String command) {
+    User user = UserRepository.userOf(player);
+    String output = Placeholders.replacePlaceholders(
+      command,
+      Placeholders.PLUGIN_CONTEXT,
+      Placeholders.SERVER_CONTEXT,
+      user.placeholderContext()
     );
     output = ChatColor.translateAlternateColorCodes('&', output);
     output = output.trim().replace("  ", " ");

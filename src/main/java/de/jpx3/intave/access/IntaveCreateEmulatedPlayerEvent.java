@@ -35,7 +35,7 @@ public final class IntaveCreateEmulatedPlayerEvent extends IntaveCreateEmulatedE
   }
 
   @Override
-  public void __INTERNAL__clearPlayerReference() {
+  public void clearPlayerReference() {
     this.observer = null;
   }
 

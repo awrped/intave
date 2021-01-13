@@ -1,6 +1,7 @@
 package de.jpx3.intave.event.service;
 
 import de.jpx3.intave.IntavePlugin;
+import de.jpx3.intave.access.AsyncIntaveCommandTriggerEvent;
 import de.jpx3.intave.access.AsyncIntaveViolationEvent;
 import de.jpx3.intave.detect.IntaveCheck;
 import de.jpx3.intave.tools.MathHelper;
@@ -10,8 +11,11 @@ import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserMessageChannel;
 import de.jpx3.intave.user.UserRepository;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -32,28 +36,76 @@ public final class ViolationService {
     checkName = checkName.toLowerCase(Locale.ROOT);
 
     User detectedUser = UserRepository.userOf(detectedPlayer);
+    if(!detectedUser.hasOnlinePlayer()) {
+      return true;
+    }
 
-    String thresholdsConfigKey = "checks." + checkName + "." + thresholdsKey;
     IntaveCheck check = plugin.checkService().searchCheck(checkName);
 
     double oldVl = violationMapOf(detectedPlayer).computeIfAbsent(checkName, s -> 0d);
     double newVl = MathHelper.minmax(0, oldVl + vl, 1000);
+    double preventionActivation = resolvePreventionActivationThreshold(checkName, detectedPlayer);
 
     int protocolVersion = detectedUser.meta().clientData().protocolVersion();
 
     String finalCheckName = checkName;
-    AsyncIntaveViolationEvent asyncIntaveViolationEvent = plugin.customEventService().invokeEvent(AsyncIntaveViolationEvent.class, event ->
-      event.renew(detectedPlayer, protocolVersion, finalCheckName, message, details, oldVl, newVl));
+    AsyncIntaveViolationEvent violationEvent = plugin.customEventService().invokeEvent(
+      AsyncIntaveViolationEvent.class,
+      event -> event.renew(detectedPlayer, protocolVersion, finalCheckName, message, details, oldVl, newVl)
+    );
 
-    double preventionActivation = resolvePreventionActivationThreshold(checkName, detectedPlayer);
+    violationEvent.suggestResponse(AsyncIntaveViolationEvent.SuggestiveResponse.INTERRUPT_AND_REPORT);
 
+    if(violationEvent.isCancelled()) {
+      AsyncIntaveViolationEvent.SuggestiveResponse response = violationEvent.suggestedResponse();
+      return response == AsyncIntaveViolationEvent.SuggestiveResponse.ONLY_INTERRUPT && preventionActivation <= newVl;
+    }
+
+    performVerbose(detectedUser, checkName, oldVl, newVl, message, details);
+    violationMapOf(detectedPlayer).put(checkName, newVl);
+
+    List<String> resolvedCommands = null;
+    Map<Integer, List<String>> thresholds = check.checkConfiguration.settings().thresholdsBy(thresholdsKey);
+
+    for (int i = (int) oldVl + 1; i <= newVl; i++) {
+      List<String> commands = thresholds.get(i);
+      if(commands != null) {
+        for (String command : commands) {
+          String executedCommand = MessageFormatter.resolveCommandReplacements(detectedPlayer, command);
+          AsyncIntaveCommandTriggerEvent commandTriggerEvent = plugin.customEventService().invokeEvent(
+            AsyncIntaveCommandTriggerEvent.class,
+            event -> event.renew(detectedPlayer, executedCommand, false)
+          );
+          if(!commandTriggerEvent.isCancelled()) {
+            if(resolvedCommands == null) {
+              resolvedCommands = new ArrayList<>();
+            }
+            resolvedCommands.add(commandTriggerEvent.command());
+          }
+        }
+      }
+    }
+
+    if(resolvedCommands != null) {
+      for (String resolvedCommand : resolvedCommands) {
+        Synchronizer.synchronize(() -> {
+          System.out.println("[Intave] Executing \"" + ChatColor.stripColor(resolvedCommand) + "\"");
+          plugin.logger().commandExecution(resolvedCommand);
+          Bukkit.dispatchCommand(Bukkit.getConsoleSender(), resolvedCommand);
+        });
+      }
+    }
+
+    return preventionActivation <= newVl;
+  }
+
+  private void performVerbose(User detectedUser, String checkName, double oldVl, double newVl, String message, String details) {
+    Player detectedPlayer = detectedUser.player();
     ViolationContext compactViolationContext = new ViolationContext(checkName, message, "", oldVl, newVl);
     ViolationContext fullViolationContext = new ViolationContext(checkName, message, details, oldVl, newVl);
-
+    String trustFactorStringOutput = detectedUser.trustFactor().name().toLowerCase().replace("_", "");
+    plugin.logger().violation(detectedPlayer.getName() + "/" +trustFactorStringOutput + " " + message + " (" + details +") (+"+(newVl - oldVl) + " -> " + newVl+" on "+checkName+")");
     broadcastVerbose(detectedPlayer, fullViolationContext, compactViolationContext);
-
-    violationMapOf(detectedPlayer).put(checkName, newVl);
-    return preventionActivation <= newVl;
   }
 
   private void broadcastVerbose(Player player, ViolationContext full, ViolationContext compact) {
@@ -65,7 +117,9 @@ public final class ViolationService {
         User user = UserRepository.userOf(onlinePlayer);
         if(user.receives(UserMessageChannel.VERBOSE)) {
           if(user.hasChannelConstraint(UserMessageChannel.VERBOSE)) {
-            onlinePlayer.sendMessage(fullMessage);
+            if(user.channelPlayerConstraint(UserMessageChannel.VERBOSE).appliesTo(onlinePlayer)) {
+              onlinePlayer.sendMessage(fullMessage);
+            }
           } else {
             onlinePlayer.sendMessage(compactMessage);
           }

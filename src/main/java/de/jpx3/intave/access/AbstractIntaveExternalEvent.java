@@ -14,7 +14,7 @@ public abstract class AbstractIntaveExternalEvent extends Event {
     super(true);
   }
 
-  public abstract void __INTERNAL__clearPlayerReference();
+  public abstract void clearPlayerReference();
 
   public HandlerList getHandlers() {
     return handlers;

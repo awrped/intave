@@ -31,14 +31,23 @@ public final class IntaveLogger {
     setup();
   }
 
-  public void info(String s) {
-    System.out.println("[Intave] " + s);
-    logToFile("(INF) " + s);
+  public void info(String infoMessage) {
+    System.out.println("[Intave] " + infoMessage);
+    logToFile("(INF) " + infoMessage);
   }
 
-  public void error(String s) {
-    System.out.println("[Intave] ERROR: " + s);
-    logToFile("(ERR) " + s);
+  public void error(String errorMessage) {
+    System.out.println("[Intave] ERROR: " + errorMessage);
+    logToFile("(ERR) " + errorMessage);
+  }
+
+  public void violation(String violation) {
+    logToFile("(DET) " + violation);
+  }
+
+  public void commandExecution(String command) {
+    command = ChatColor.stripColor(command);
+    logToFile("(EXE) " + command);
   }
 
   public void exception(Throwable throwable) {

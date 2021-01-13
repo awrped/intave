@@ -20,7 +20,7 @@ permissions:
     default: false
 
   intave.trust.darkgreen:
-    default: false
+    default: op
 
   intave.trust.green:
     default: false
@@ -38,10 +38,27 @@ permissions:
     default: false
 
   intave.command:
-    default: false
+    default: op
 
   intave.command.notify:
     default: op
 
   intave.command.verbose:
     default: op
+
+  intave.command.internals.*:
+    default: false
+
+    children:
+      intave.command.internals.delay: true
+      intave.command.internals.rejoinblock: true
+      intave.command.internals.sendnotify: true
+
+  intave.command.internals.delay:
+    default: false
+
+  intave.command.internals.rejoinblock:
+    default: false
+
+  intave.command.internals.sendnotify:
+    default: false

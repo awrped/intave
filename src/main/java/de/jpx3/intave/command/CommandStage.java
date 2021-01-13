@@ -2,7 +2,9 @@ package de.jpx3.intave.command;
 
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.permission.PermissionCheck;
+import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 
 import java.lang.reflect.Method;
 import java.util.*;
@@ -34,6 +36,8 @@ public abstract class CommandStage {
     }
   }
 
+  private final static String NO_PERMISSION_MESSAGE = ChatColor.RED + "I'm sorry, but you do not have permission to perform this command. Please contact the server administrators if you believe that this is in error.";
+
   public void execute(CommandSender sender, String currentCommand) {
     if(currentCommand.isEmpty()) {
       showInfo(sender);
@@ -51,6 +55,11 @@ public abstract class CommandStage {
     String leftCommand = command.length > 1 ? command[1] : "";
 
     if(link.forwardClass() != null) {
+      String permission = link.permission();
+      if(sender instanceof Player && !permission.equals("none") && !PermissionCheck.permissionCheck(sender, permission)) {
+        sender.sendMessage(NO_PERMISSION_MESSAGE);
+        return;
+      }
       CommandStage commandStage = globalInstances.get(link.forwardClass());
       commandStage.execute(sender, leftCommand);
     } else {
@@ -82,6 +91,7 @@ public abstract class CommandStage {
   private List<String> subcommandCompletions(CommandSender player) {
     return subCommandList.stream()
       .filter(subCommand -> PermissionCheck.permissionCheck(player, subCommand.permission()))
+      .filter(subCommandList -> !subCommandList.hideInHelp())
       .map(intaveSubCommand -> intaveSubCommand.selectors()[0]).collect(Collectors.toList());
   }
 
@@ -94,6 +104,9 @@ public abstract class CommandStage {
     } while ((currentStage = currentStage.parent()) != null);
 
     for (IntaveSubCommand intaveSubCommand : subCommandList) {
+      if(intaveSubCommand.hideInHelp()) {
+        continue;
+      }
       sender.sendMessage(IntavePlugin.prefix() + commandPath + intaveSubCommand.selectors()[0] + ": " + intaveSubCommand.description());
     }
   }

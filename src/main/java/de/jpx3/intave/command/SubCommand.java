@@ -17,4 +17,5 @@ public @interface SubCommand {
   String usage() default "invalid";
   String permission() default "none";
   String description() default "none";
+  boolean hideInHelp() default false;
 }

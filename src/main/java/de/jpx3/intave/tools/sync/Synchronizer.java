@@ -42,7 +42,7 @@ public final class Synchronizer {
   }
 
   public static void synchronize(Runnable runnable) {
-    runnable = provideTaskEnvironment(runnable);
+    runnable = bindToContext(runnable);
 
     if(useScheduler) {
       scheduler.runTask(IntavePlugin.singletonInstance(), runnable);
@@ -52,7 +52,7 @@ public final class Synchronizer {
   }
 
   public static void packetSynchronize(Runnable runnable) {
-    Runnable wrappedRunnable = provideTaskEnvironment(runnable);
+    Runnable wrappedRunnable = bindToContext(runnable);
     try {
       postToMainThreadMethodHandle.invoke(minecraftServer, wrappedRunnable);
     } catch (Throwable throwable) {
@@ -64,7 +64,7 @@ public final class Synchronizer {
     scheduler.runTaskLater(IntavePlugin.singletonInstance(), runnable, ticks);
   }
 
-  private static Runnable provideTaskEnvironment(Runnable runnable) {
+  private static Runnable bindToContext(Runnable runnable) {
     return () -> {
       try {
         runnable.run();

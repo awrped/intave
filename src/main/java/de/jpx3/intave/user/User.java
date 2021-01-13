@@ -9,6 +9,7 @@ import de.jpx3.intave.permission.PermissionCheck;
 import de.jpx3.intave.reflect.Reflection;
 import de.jpx3.intave.tools.AccessHelper;
 import de.jpx3.intave.tools.placeholder.PlayerContext;
+import de.jpx3.intave.tools.sync.Synchronizer;
 import de.jpx3.intave.world.collision.BoundingBoxAccess;
 import org.bukkit.entity.Player;
 
@@ -42,7 +43,7 @@ public final class User {
     this.permissionCache = new PermissionCache();
     this.boundingBoxAccess = new BoundingBoxAccess(hasOnlinePlayer() ? player() : null);
     if(hasPlayer) {
-      this.setDefaultMessagingChannel();
+      Synchronizer.synchronize(this::setDefaultMessagingChannel);
     }
   }
 
@@ -139,6 +140,10 @@ public final class User {
 
   public boolean hasChannelConstraint(UserMessageChannel channel) {
     return receiveWhitelist.containsKey(channel);
+  }
+
+  public UserMessageChannelPlayerConstraint channelPlayerConstraint(UserMessageChannel channel) {
+    return receiveWhitelist.get(channel);
   }
 
   public void removeChannelConstraint(UserMessageChannel channel) {

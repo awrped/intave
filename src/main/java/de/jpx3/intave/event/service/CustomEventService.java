@@ -31,7 +31,7 @@ public final class CustomEventService {
     T eventInstance = activeInstanceOf(eventClass);
     applier.accept(eventInstance);
     callEvent(eventInstance);
-    eventInstance.__INTERNAL__clearPlayerReference();
+    eventInstance.clearPlayerReference();
     return eventInstance;
   }
 

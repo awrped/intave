@@ -10,6 +10,8 @@ import de.jpx3.intave.detect.checks.movement.Timer;
 import de.jpx3.intave.detect.checks.world.InteractionRaytrace;
 import de.jpx3.intave.event.bukkit.BukkitEventLinker;
 import de.jpx3.intave.event.packet.PacketSubscriptionLinker;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.util.*;
 
@@ -159,5 +161,17 @@ public final class CheckService {
     }
     //noinspection unchecked
     return (T) check;
+  }
+
+  public void enterConfiguration(CheckConfiguration checkConfiguration) {
+    YamlConfiguration configuration = plugin.configurationService().configuration();
+    String checkSectionPath = "check." + checkConfiguration.check().configurationKey();
+    ConfigurationSection checkSection = configuration.getConfigurationSection(checkSectionPath);
+    Map<String, Object> mappings = new HashMap<>();
+    Set<String> keys = checkSection.getKeys(true);
+    for (String key : keys) {
+      mappings.putIfAbsent(key, checkSection.get(key));
+    }
+    checkConfiguration.setSettings(mappings);
   }
 }

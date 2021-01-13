@@ -1,21 +1,58 @@
 check:
   physics:
 
+    thresholds:
+      50: "intave internals sendnotify &c{player}&7/{trust-color}&7 is moving incorrectly"
+      100:
+        - "intave internals sendnotify &c{player}&7/{trust-color}&7 has been removed for moving incorrectly"
+        - "kick {player} &cYou have been removed from the game based on data that was collected by the anti-cheat"
+
+  timer:
+
+    thresholds:
+      50: "intave internals sendnotify &c{player}&7/{trust-color}&7 is moving too frequently / is lagging"
+      100:
+        - "intave internals sendnotify &c{player}&7/{trust-color}&7 is moving too frequently / is lagging for a long period"
 
   heuristics:
 
+    confidence-thresholds:
+
+      "??":
+
+      "?":
+
+      "?!":
+
+      "!":
+
+      "!!":
 
   attackRaytrace:
 
+    thresholds:
+      50: "intave internals sendnotify &c{player}&7/{trust-color}&7 is attacking suspiciously (hitbox)"
+      100:
+        - "intave internals sendnotify &c{player}&7/{trust-color}&7 has been removed for attacking suspiciously (hitbox)"
+        - "intave internals delay kick &c{player}&7/{trust-color}&7 &cYou have been removed from the game based on data that was collected by the anti-cheat"
 
   interactionRaytrace:
 
-
-  abilitySpeedLimiter:
-
+    thresholds:
+      50: "intave internals sendnotify &c{player}&7/{trust-color}&7 is interacting suspiciously"
+      100:
+        - "intave internals sendnotify &c{player}&7/{trust-color}&7 has been removed for interacting suspiciously"
+        - "kick {player} &cYou have been removed from the game based on data that was collected by the anti-cheat"
 
   protocolScanner:
 
+    thresholds:
+      50: "intave internals sendnotify &c{player}&7/{trust-color}&7 is moving incorrectly"
+      100:
+        - "intave internals sendnotify &c{player}&7/{trust-color}&7 has been removed for moving incorrectly"
+        - "kick {player} &cYou have been removed from the game based on data that was collected by the anti-cheat"
+
+  abilitySpeedLimiter:
 
   chat:
 
@@ -24,7 +61,7 @@ layout:
 
   verbose: "{prefix} &c{player}&7/{trust-color}&7 {message} {details} (+{vladded} -> {vl})"
 
-  notify: "{prefix} &cWARNING&7: &c{player}&7/{trust-color}&7 {text}"
+  notify: "{prefix} &7{text}"
 
   prefix: "&8[&c&lIntave&8]&7 "
 

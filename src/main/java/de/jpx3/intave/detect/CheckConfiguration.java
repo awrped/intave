@@ -1,22 +1,16 @@
-package de.jpx3.intave.config;
+package de.jpx3.intave.detect;
 
 import com.google.common.collect.ImmutableMap;
 import de.jpx3.intave.access.IntaveException;
-import de.jpx3.intave.detect.IntaveCheck;
 import de.jpx3.intave.tools.MathHelper;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.InvalidConfigurationException;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public final class CheckConfiguration {
   private final IntaveCheck check;
   private volatile CheckSettings settingsAccess;
-  private Map<Integer, List<String>> thresholdCommands = ImmutableMap.of();
-  private String trustFactorPreventionAccessKey;
 
   public CheckConfiguration(IntaveCheck check) {
     this.check = check;
@@ -34,29 +28,10 @@ public final class CheckConfiguration {
     this.settingsAccess = new CheckSettings(settings, this);
   }
 
-  public Map<Integer, List<String>> thresholdCommands() {
-    return thresholdCommands;
-  }
-
-  public void setThresholdCommands(Map<Integer, List<String>> thresholdCommands) {
-    this.thresholdCommands = thresholdCommands;
-  }
-
-  public String trustFactorPreventionLevelKey() {
-    return trustFactorPreventionAccessKey;
-  }
-
-  public void setTrustFactorPreventionAccessKey(String trustFactorPreventionAccessKey) {
-    this.trustFactorPreventionAccessKey = trustFactorPreventionAccessKey;
-  }
-
-  public void deleteCaches() {
-    thresholdCommands = ImmutableMap.of();
-  }
-
   public static class CheckSettings {
     private final Map<String, Object> access;
     private final CheckConfiguration configurationCache;
+    private final Map<String, Map<Integer, List<String>>> thresholds = new HashMap<>();
 
     public CheckSettings(
       Map<String, Object> access,
@@ -67,12 +42,15 @@ public final class CheckConfiguration {
     }
 
     public Map<Integer, List<String>> defaultThresholds() {
-      return thresholdsBy("def-threshold");
+      return thresholdsBy("thresholds");
     }
 
     public Map<Integer, List<String>> thresholdsBy(String key) {
+      if(thresholds.containsKey(key)) {
+        return thresholds.get(key);
+      }
       ConfigurationSection configurationSection = (ConfigurationSection) access.get(key);
-      Map<Integer, List<String>> thresholdMap = new HashMap<>();
+      Map<Integer, List<String>> thresholdMap = new LinkedHashMap<>();
       for (String configurationSectionKey : configurationSection.getKeys(false)) {
         List<String> output = new ArrayList<>();
         if (configurationSection.isList(configurationSectionKey)) {
@@ -82,6 +60,7 @@ public final class CheckConfiguration {
         }
         thresholdMap.put(Integer.parseInt(configurationSectionKey), output);
       }
+      thresholds.put(key, thresholdMap);
       return thresholdMap;
     }
 

@@ -2,6 +2,7 @@ package de.jpx3.intave.command.stages;
 
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.command.CommandStage;
+import de.jpx3.intave.command.Forward;
 import de.jpx3.intave.command.Optional;
 import de.jpx3.intave.command.SubCommand;
 import de.jpx3.intave.permission.PermissionCheck;
@@ -79,6 +80,20 @@ public final class IntaveCommandStage extends CommandStage {
   public void versionCommand(User user) {
     Player player = user.player();
     sendVersionMessage(player);
+  }
+
+  @SubCommand(
+    selectors = "internals",
+    usage = "",
+    description = "",
+    permission = "intave.command.internals.*",
+    hideInHelp = true
+  )
+  @Forward(
+    target = IntaveInternalsStage.class
+  )
+  public void internalCommand(CommandSender commandSender) {
+    // not executed
   }
 
   @Override
