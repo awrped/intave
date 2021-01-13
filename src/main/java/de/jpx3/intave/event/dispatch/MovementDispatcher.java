@@ -5,10 +5,12 @@ import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.reflect.StructureModifier;
 import com.comphenix.protocol.wrappers.EnumWrappers;
 import de.jpx3.intave.IntavePlugin;
+import de.jpx3.intave.adapter.ProtocolLibAdapter;
 import de.jpx3.intave.detect.EventProcessor;
 import de.jpx3.intave.detect.checks.movement.Physics;
 import de.jpx3.intave.event.bukkit.BukkitEventSubscription;
 import de.jpx3.intave.event.packet.*;
+import de.jpx3.intave.reflect.Reflection;
 import de.jpx3.intave.tools.MathHelper;
 import de.jpx3.intave.tools.client.PlayerMovementLocaleHelper;
 import de.jpx3.intave.tools.sync.Synchronizer;
@@ -16,14 +18,21 @@ import de.jpx3.intave.tools.wrapper.WrappedAxisAlignedBB;
 import de.jpx3.intave.user.*;
 import de.jpx3.intave.world.collision.Collision;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.util.Vector;
+
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 
 public final class MovementDispatcher implements EventProcessor {
   private final TeleportPositionObserver teleportPositionObserver = new TeleportPositionObserver();
 
   private final IntavePlugin plugin;
   private final Physics physicsCheck;
+  private MethodHandle fallDamageInvokeMethod;
 
   public MovementDispatcher(IntavePlugin plugin) {
     this.plugin = plugin;
@@ -31,11 +40,29 @@ public final class MovementDispatcher implements EventProcessor {
     this.plugin.eventLinker().registerEventsIn(this);
     this.physicsCheck = plugin.checkService().searchCheck(Physics.class);
     linkTeleportObserver(plugin);
+    linkFallDamageInvokeMethod();
   }
 
   private void linkTeleportObserver(IntavePlugin plugin) {
     PacketSubscriptionLinker subscriptionLinker = plugin.packetSubscriptionLinker();
     subscriptionLinker.linkSubscriptionsIn(teleportPositionObserver);
+  }
+
+  private void linkFallDamageInvokeMethod() {
+    Class<?> entityLivingClass = Reflection.lookupServerClass("EntityLiving");
+    String methodName = "e";
+    if (ProtocolLibAdapter.VILLAGE_UPDATE.atOrAbove()) {
+      methodName = "b";
+    } else if (ProtocolLibAdapter.AQUATIC_UPDATE.atOrAbove()) {
+      methodName = "c";
+    }
+    try {
+      this.fallDamageInvokeMethod = MethodHandles
+        .publicLookup()
+        .findVirtual(entityLivingClass, methodName, MethodType.methodType(Void.TYPE, Float.TYPE, Float.TYPE));
+    } catch (NoSuchMethodException | IllegalAccessException e) {
+      throw new IllegalStateException(e);
+    }
   }
 
   @BukkitEventSubscription
@@ -122,7 +149,7 @@ public final class MovementDispatcher implements EventProcessor {
       movementData.verifiedPositionX, movementData.verifiedPositionY, movementData.verifiedPositionZ,
       movementData.positionX, movementData.positionY, movementData.positionZ
     );
-    if(distance > 10) {
+    if (distance > 10) {
       event.setCancelled(true);
       Vector vector = new Vector(movementData.physicsLastMotionX, movementData.physicsLastMotionY, movementData.physicsLastMotionZ);
       plugin.eventService().emulationEngine().emulationSetBack(player, vector, 10);
@@ -136,21 +163,19 @@ public final class MovementDispatcher implements EventProcessor {
       return;
     }
 
-
-    if(
+    if (
       !movementData.isTeleportConfirmationPacket &&
-      movementData.canResetMotion &&
-      movementData.physicsLastMotionX == 0 &&
-      movementData.physicsLastMotionY == 0 &&
-      movementData.physicsLastMotionZ == 0 &&
-      movementData.motionX() == 0 &&
-      movementData.motionY() == 0 &&
-      movementData.motionZ() == 0
+        movementData.canResetMotion &&
+        movementData.physicsLastMotionX == 0 &&
+        movementData.physicsLastMotionY == 0 &&
+        movementData.physicsLastMotionZ == 0 &&
+        movementData.motionX() == 0 &&
+        movementData.motionY() == 0 &&
+        movementData.motionZ() == 0
     ) {
       movementData.canResetMotion = false;
       return;
     }
-
 
     if (!movementData.isTeleportConfirmationPacket) {
       physicsCheck.receiveMovement(user, hasMovement);
@@ -191,6 +216,7 @@ public final class MovementDispatcher implements EventProcessor {
     UserMetaMovementData movementData = meta.movementData();
     UserMetaAbilityData abilityData = meta.abilityData();
     UserMetaInventoryData inventoryData = meta.inventoryData();
+    UserMetaViolationLevelData violationLevelData = meta.violationLevelData();
 
     boolean hasMovement = packet.getBooleans().read(1);
 
@@ -198,8 +224,27 @@ public final class MovementDispatcher implements EventProcessor {
       return;
     }
 
+    // onGround == true -> falldamage
+
     if (!event.isCancelled() && !movementData.isTeleportConfirmationPacket) {
       physicsCheck.endMovement(user, hasMovement);
+    }
+
+    if (!violationLevelData.isInActiveTeleportBundle && !movementData.lastOnGround && movementData.motionY() < 0) {
+      movementData.artificialFallDistance += -movementData.motionY();
+    }
+
+    if (movementData.onGround) {
+      try {
+        if (movementData.artificialFallDistance > 3.4) {
+          movementData.allowFallDamage = true;
+          fallDamageInvokeMethod.invoke(user.playerHandle(), movementData.artificialFallDistance, 1.0f);
+          movementData.allowFallDamage = false;
+        }
+      } catch (Throwable throwable) {
+        throwable.printStackTrace();
+      }
+      movementData.artificialFallDistance = 0;
     }
 
     if (!movementData.isTeleportConfirmationPacket) {
@@ -221,6 +266,13 @@ public final class MovementDispatcher implements EventProcessor {
     movementData.pastWaterMovement++;
     movementData.pastVelocity++;
 
+    if (!event.isCancelled() && !movementData.isTeleportConfirmationPacket) {
+      movementData.lastOnGround = movementData.onGround;
+      movementData.verifiedPositionX = movementData.positionX;
+      movementData.verifiedPositionY = movementData.positionY;
+      movementData.verifiedPositionZ = movementData.positionZ;
+    }
+
     if (inventoryData.handActive()) {
       inventoryData.handActiveTicks++;
     } else {
@@ -233,6 +285,18 @@ public final class MovementDispatcher implements EventProcessor {
     }
 
     updateSize(user);
+  }
+
+  @BukkitEventSubscription(priority = EventPriority.LOWEST)
+  public void preventVanillaFallDamage(EntityDamageEvent event) {
+    if (!(event.getEntity() instanceof Player)) {
+      return;
+    }
+    User user = UserRepository.userOf((Player) event.getEntity());
+    UserMetaMovementData movementData = user.meta().movementData();
+    if (event.getCause() == EntityDamageEvent.DamageCause.FALL && !movementData.allowFallDamage) {
+      event.setCancelled(true);
+    }
   }
 
   private void updatePotionEffects(User user) {

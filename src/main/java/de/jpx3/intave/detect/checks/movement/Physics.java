@@ -734,6 +734,14 @@ public final class Physics extends IntaveCheck {
     violationLevelData.physicsVL = Math.max(0, violationLevelData.physicsVL);
     violationLevelData.physicsVL = Math.min(100, violationLevelData.physicsVL);
 
+    if (movementData.inWater || movementData.onLadderLast) {
+      movementData.artificialFallDistance = 0;
+    }
+
+    if (movementData.inLava()) {
+      movementData.artificialFallDistance *= 0.5;
+    }
+
     if (IntaveControl.DEBUG_MOVEMENT) {
       ChatColor chatColor = violationLevelIncrease == 0 ? ChatColor.GRAY : ChatColor.YELLOW;
       String motion = MathHelper.formatPositionAsInt(positionX, positionY, positionZ);
@@ -995,11 +1003,6 @@ public final class Physics extends IntaveCheck {
 
     updateAquatics(user);
 
-    movementData.verifiedPositionX = positionX;
-    movementData.verifiedPositionY = positionY;
-    movementData.verifiedPositionZ = positionZ;
-
-    movementData.lastOnGround = movementData.onGround;
     movementData.lastSprinting = movementData.sprinting;
     movementData.lastSneaking = movementData.sneaking;
     movementData.pastPlayerAttackPhysics++;
@@ -1038,6 +1041,8 @@ public final class Physics extends IntaveCheck {
         // blockPosition = blockPosition.down();
       }
     }
+
+    collisionRepository.fallenUpon(user, block.getType());
 
     // onLanded
     if (movementData.collidedVertically) {

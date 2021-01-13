@@ -31,6 +31,7 @@ public final class User {
   private final List<UserMessageChannel> receivingUserChannels = new ArrayList<>();
   private final Map<UserMessageChannel, UserMessageChannelPlayerConstraint> receiveWhitelist = Maps.newEnumMap(UserMessageChannel.class);
   private boolean ignoreNextPacket;
+  private long birthTimestamp = AccessHelper.now();
 
   private final PlayerContext playerPlaceholderContext = new PlayerContext(this);
   private TrustFactor trustFactor = TrustFactor.DARK_RED;
@@ -61,6 +62,10 @@ public final class User {
       throw new IntaveInternalException("Unable to reference player through service repo: Fallback user lacks reference");
     }
     return player;
+  }
+
+  public boolean justJoined() {
+    return AccessHelper.now() - birthTimestamp < 2000;
   }
 
   public boolean hasOnlinePlayer() {

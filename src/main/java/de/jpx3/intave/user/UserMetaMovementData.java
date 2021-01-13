@@ -27,6 +27,8 @@ public final class UserMetaMovementData {
 
   public boolean onGround, lastOnGround;
   public boolean collidedHorizontally, collidedVertically;
+  public float artificialFallDistance;
+  public boolean allowFallDamage;
   public double gravity;
 
   public Physics.PhysicsProcessorContext physicsProcessorContext = new Physics.PhysicsProcessorContext();
@@ -83,6 +85,7 @@ public final class UserMetaMovementData {
       location = new Location(Bukkit.getWorlds().get(0), 0, 0, 0);
     } else {
       location = player.getLocation();
+      artificialFallDistance = player.getFallDistance();
     }
     verifiedLocation = location.clone();
     positionX = location.getX();
@@ -91,7 +94,6 @@ public final class UserMetaMovementData {
     verifiedPositionX = positionX;
     verifiedPositionY = positionY;
     verifiedPositionZ = positionZ;
-    //  entityBoundingBox = CollisionHelper.entityBoundingBoxOf(location.getX(), location.getY(), location.getZ());
   }
 
   private void applyPlayerStats() {

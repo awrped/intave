@@ -37,6 +37,9 @@ public abstract class PhysicsCollision {
     return null;
   }
 
+  public void fallenUpon(User user) {
+  }
+
   public boolean supportedOnServerVersion() {
     return true;
   }

@@ -18,6 +18,14 @@ final class PhysicsCollisionSlime extends PhysicsCollision {
   }
 
   @Override
+  public void fallenUpon(User user) {
+    UserMetaMovementData movementData = user.meta().movementData();
+    if (!movementData.sneaking) {
+      movementData.artificialFallDistance = 0;
+    }
+  }
+
+  @Override
   public Vector landed(User user, double motionX, double motionY, double motionZ) {
     UserMetaMovementData movementData = user.meta().movementData();
     if (motionY < 0.0 && !movementData.sneaking) {

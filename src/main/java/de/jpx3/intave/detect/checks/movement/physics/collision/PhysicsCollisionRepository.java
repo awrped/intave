@@ -80,6 +80,13 @@ public final class PhysicsCollisionRepository {
     return collision != null ? collision.speedFactor(user, motionX, motionY, motionZ) : null;
   }
 
+  public void fallenUpon(User user, Material material) {
+    PhysicsCollision collision = findPotentialCollision(material);
+    if (collision != null) {
+      collision.fallenUpon(user);
+    }
+  }
+
   private PhysicsCollision findPotentialCollision(Material material) {
     for (PhysicsCollision blockCollision : blockCollisions) {
       if (blockCollision.supportedOnServerVersion() && blockCollision.materials().contains(material)) {

@@ -3,6 +3,7 @@ package de.jpx3.intave.detect.checks.movement.physics.collision;
 import com.comphenix.protocol.utility.MinecraftVersion;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserMetaClientData;
+import de.jpx3.intave.user.UserMetaMovementData;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.util.Vector;
@@ -24,14 +25,17 @@ final class PhysicsCollisionWeb extends PhysicsCollision {
 
   @Override
   public Vector entityCollidedWithBlock(User user, Location location, Location from, double motionX, double motionY, double motionZ) {
-    user.meta().movementData().inWeb = true;
-    UserMetaClientData clientData = user.meta().clientData();
+    UserMetaMovementData movementData = user.meta().movementData();
+    movementData.inWeb = true;
+    movementData.artificialFallDistance = 0;
 
+    UserMetaClientData clientData = user.meta().clientData();
     if (clientData.protocolVersion() >= PROTOCOL_VERSION_BEE_UPDATE) {
       return new Vector(motionX * 0.25, motionY * 0.05f, motionZ * 0.25);
     }
     return null;
   }
+
 
   @Override
   public List<Material> materials() {

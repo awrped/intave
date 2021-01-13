@@ -33,7 +33,7 @@ public final class ViolationService {
     checkName = checkName.toLowerCase(Locale.ROOT);
 
     User detectedUser = UserRepository.userOf(detectedPlayer);
-    if(!detectedUser.hasOnlinePlayer()) {
+    if(detectedUser.justJoined() || !detectedUser.hasOnlinePlayer()) {
       return true;
     }
 

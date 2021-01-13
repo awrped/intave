@@ -159,6 +159,11 @@ public final class MovementEmulationEngine {
       motion = motionProceed(motion, user, boundingBox, startingTicks > ticks);
     }
 
+    // add y motion to falldistance
+    if (motion.getY() < 0) {
+      movementData.artificialFallDistance += -motion.getY();
+    }
+
     futurePosition = futurePosition.clone().add(motion);
     futurePosition.setYaw(movementData.rotationYaw);
     futurePosition.setPitch(movementData.rotationPitch);
@@ -204,7 +209,7 @@ public final class MovementEmulationEngine {
 //      movementData.physicsLastMotionZ = futureMotion.getZ();
       movementData.willReceiveSetbackVelocity = true;
       movementData.setbackOverrideVelocity = futureMotion;
-      player.setVelocity(new Vector(0,0,0));
+      player.setVelocity(new Vector(0, 0, 0));
     }
   }
 
@@ -212,7 +217,7 @@ public final class MovementEmulationEngine {
     Player player = user.player();
     UserMetaMovementData movementData = user.meta().movementData();
     double motionY = lastMotion.getY();
-    if(applyPhysics) {
+    if (applyPhysics) {
       // TODO: 01/07/21 ladder/vines
 
       if (movementData.inWater) {
@@ -226,7 +231,7 @@ public final class MovementEmulationEngine {
     boolean onGround = motionY != collisionVector.getY() && motionY < 0.0;
     motionY = collisionVector.getY();
     double multiplier;
-    if(applyPhysics) {
+    if (applyPhysics) {
       if (movementData.inWater) {
         multiplier = 0.8f;
       } else {
@@ -282,10 +287,10 @@ public final class MovementEmulationEngine {
           internalTeleport.setAccessible(true);
         }
         Location dest = event.getTo();
-        if(dest == null) {
+        if (dest == null) {
           throw new IntaveException("Setback location can't be null");
         }
-        if(Math.abs(nativeYaw) > 360f) {
+        if (Math.abs(nativeYaw) > 360f) {
           internalTeleport.invoke(playerConnection, dest.getX(), dest.getY(), dest.getZ(), nativeYaw % 360f, nativePitch, Collections.emptySet());
         } else {
           Class<?> entityClass = Reflection.lookupServerClass("Entity");
