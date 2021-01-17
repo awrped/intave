@@ -9,12 +9,11 @@ import org.bukkit.util.Vector;
 
 import java.util.List;
 
-public abstract class PhysicsCollision {
-  public void setup(MinecraftVersion serverVersion) {
-  }
+public interface PhysicsBlockCollision {
+  void setup(MinecraftVersion serverVersion);
 
   @Nullable
-  public Vector entityCollidedWithBlock(
+  default Vector entityCollidedWithBlock(
     User user,
     Location location, Location from,
     double motionX, double motionY, double motionZ
@@ -23,26 +22,26 @@ public abstract class PhysicsCollision {
   }
 
   @Nullable
-  public Vector entityCollidedWithBlock(User user, double motionX, double motionY, double motionZ) {
+  default Vector entityCollidedWithBlock(User user, double motionX, double motionY, double motionZ) {
     return null;
   }
 
   @Nullable
-  public Vector landed(User user, double motionX, double motionY, double motionZ) {
+  default Vector landed(User user, double motionX, double motionY, double motionZ) {
     return null;
   }
 
   @Nullable
-  public Vector speedFactor(User user, double motionX, double motionY, double motionZ) {
+  default Vector speedFactor(User user, double motionX, double motionY, double motionZ) {
     return null;
   }
 
-  public void fallenUpon(User user) {
+  default void fallenUpon(User user) {
   }
 
-  public boolean supportedOnServerVersion() {
+  default boolean supportedOnServerVersion() {
     return true;
   }
 
-  public abstract List<Material> materials();
+  List<Material> materials();
 }

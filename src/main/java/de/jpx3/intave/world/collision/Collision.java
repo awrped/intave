@@ -2,6 +2,7 @@ package de.jpx3.intave.world.collision;
 
 import de.jpx3.intave.tools.wrapper.WrappedAxisAlignedBB;
 import de.jpx3.intave.tools.wrapper.WrappedMathHelper;
+import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserRepository;
 import org.bukkit.Chunk;
 import org.bukkit.World;
@@ -28,9 +29,9 @@ public final class Collision {
     World world = player.getWorld();
 
     // this looks 1000x slower than it actually is
-    for(int chunkx = i >> 4; chunkx <= j - 1 >> 4; ++chunkx) {
+    for (int chunkx = i >> 4; chunkx <= j - 1 >> 4; ++chunkx) {
       int chunkXPos = chunkx << 4;
-      for(int chunkz = i1 >> 4; chunkz <= j1 - 1 >> 4; ++chunkz) {
+      for (int chunkz = i1 >> 4; chunkz <= j1 - 1 >> 4; ++chunkz) {
         if (world.isChunkLoaded(chunkx, chunkz)) {
           Chunk chunk = world.getChunkAt(chunkx, chunkz);
           int chunkZPos = chunkz << 4;
@@ -38,12 +39,12 @@ public final class Collision {
           int zstart = Math.max(i1, chunkZPos);
           int xend = Math.min(j, chunkXPos + 16);
           int zend = Math.min(j1, chunkZPos + 16);
-          for(int x = xstart; x < xend; ++x) {
-            for(int z = zstart; z < zend; ++z) {
-              for(int y = ystart; y < l; ++y) {
+          for (int x = xstart; x < xend; ++x) {
+            for (int z = zstart; z < zend; ++z) {
+              for (int y = ystart; y < l; ++y) {
                 List<WrappedAxisAlignedBB> resolve = boundingBoxAccess.resolve(chunk, x, y, z);
-                if(resolve != null && !resolve.isEmpty()) {
-                  if(resolvedBoundingBoxes == null) {
+                if (resolve != null && !resolve.isEmpty()) {
+                  if (resolvedBoundingBoxes == null) {
                     resolvedBoundingBoxes = new ArrayList<>(resolve);
                   } else {
                     resolvedBoundingBoxes.addAll(resolve);
@@ -55,7 +56,7 @@ public final class Collision {
         }
       }
     }
-    if(resolvedBoundingBoxes == null) {
+    if (resolvedBoundingBoxes == null) {
       resolvedBoundingBoxes = Collections.emptyList();
     } else {
       // filter invalid
@@ -67,5 +68,9 @@ public final class Collision {
       }
     }
     return resolvedBoundingBoxes;
+  }
+
+  public static boolean hasNoCollisions(Player player, WrappedAxisAlignedBB playerBoundingBox) {
+    return resolve(player, playerBoundingBox).isEmpty();
   }
 }

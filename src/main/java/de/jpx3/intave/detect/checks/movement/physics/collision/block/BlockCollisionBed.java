@@ -1,7 +1,8 @@
-package de.jpx3.intave.detect.checks.movement.physics.collision;
+package de.jpx3.intave.detect.checks.movement.physics.collision.block;
 
 import com.comphenix.protocol.utility.MinecraftVersion;
 import de.jpx3.intave.adapter.ProtocolLibAdapter;
+import de.jpx3.intave.detect.checks.movement.physics.collision.PhysicsBlockCollision;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserMetaClientData;
 import de.jpx3.intave.user.UserMetaMovementData;
@@ -15,7 +16,7 @@ import java.util.stream.Collectors;
 
 import static de.jpx3.intave.user.UserMetaClientData.PROTOCOL_VERSION_COLOR_UPDATE;
 
-final class PhysicsCollisionBed extends PhysicsCollision {
+final class BlockCollisionBed implements PhysicsBlockCollision {
   private List<Material> materials;
 
   @Override

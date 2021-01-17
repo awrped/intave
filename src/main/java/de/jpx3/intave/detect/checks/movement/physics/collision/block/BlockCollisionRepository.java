@@ -1,8 +1,9 @@
-package de.jpx3.intave.detect.checks.movement.physics.collision;
+package de.jpx3.intave.detect.checks.movement.physics.collision.block;
 
 import com.comphenix.protocol.utility.MinecraftVersion;
 import com.google.common.collect.Lists;
 import de.jpx3.intave.adapter.ProtocolLibAdapter;
+import de.jpx3.intave.detect.checks.movement.physics.collision.PhysicsBlockCollision;
 import de.jpx3.intave.tools.annotate.Nullable;
 import de.jpx3.intave.user.User;
 import org.bukkit.Location;
@@ -11,11 +12,11 @@ import org.bukkit.util.Vector;
 
 import java.util.List;
 
-public final class PhysicsCollisionRepository {
+public final class BlockCollisionRepository {
   private final static MinecraftVersion MINECRAFT_VERSION = ProtocolLibAdapter.serverVersion();
-  private final List<PhysicsCollision> blockCollisions = Lists.newArrayList();
+  private final List<PhysicsBlockCollision> blockCollisions = Lists.newArrayList();
 
-  public PhysicsCollisionRepository() {
+  public BlockCollisionRepository() {
     try {
       initializeBlocks();
       setupBlocks();
@@ -25,16 +26,16 @@ public final class PhysicsCollisionRepository {
   }
 
   private void initializeBlocks() {
-    blockCollisions.add(new PhysicsCollisionBed());
-    blockCollisions.add(new PhysicsCollisionSlime());
-    blockCollisions.add(new PhysicsCollisionWeb());
-    blockCollisions.add(new PhysicsCollisionSoulSand());
-    blockCollisions.add(new PhysicsCollisionBerryBush());
-    blockCollisions.add(new PhysicsCollisionWeb());
+    blockCollisions.add(new BlockCollisionBed());
+    blockCollisions.add(new BlockCollisionSlime());
+    blockCollisions.add(new BlockCollisionWeb());
+    blockCollisions.add(new BlockCollisionSoulSand());
+    blockCollisions.add(new BlockCollisionBerryBush());
+    blockCollisions.add(new BlockCollisionWeb());
   }
 
   private void setupBlocks() {
-    for (PhysicsCollision blockCollision : blockCollisions) {
+    for (PhysicsBlockCollision blockCollision : blockCollisions) {
       blockCollision.setup(MINECRAFT_VERSION);
     }
   }
@@ -46,7 +47,7 @@ public final class PhysicsCollisionRepository {
     Location location, Location from,
     double motionX, double motionY, double motionZ
   ) {
-    PhysicsCollision collision = findPotentialCollision(material);
+    PhysicsBlockCollision collision = findPotentialCollision(material);
     return collision != null ? collision.entityCollidedWithBlock(user, location, from, motionX, motionY, motionZ) : null;
   }
 
@@ -56,7 +57,7 @@ public final class PhysicsCollisionRepository {
     Material material,
     double motionX, double motionY, double motionZ
   ) {
-    PhysicsCollision collision = findPotentialCollision(material);
+    PhysicsBlockCollision collision = findPotentialCollision(material);
     return collision != null ? collision.entityCollidedWithBlock(user, motionX, motionY, motionZ) : null;
   }
 
@@ -66,7 +67,7 @@ public final class PhysicsCollisionRepository {
     Material material,
     double motionX, double motionY, double motionZ
   ) {
-    PhysicsCollision collision = findPotentialCollision(material);
+    PhysicsBlockCollision collision = findPotentialCollision(material);
     return collision != null ? collision.landed(user, motionX, motionY, motionZ) : null;
   }
 
@@ -76,19 +77,19 @@ public final class PhysicsCollisionRepository {
     Material material,
     double motionX, double motionY, double motionZ
   ) {
-    PhysicsCollision collision = findPotentialCollision(material);
+    PhysicsBlockCollision collision = findPotentialCollision(material);
     return collision != null ? collision.speedFactor(user, motionX, motionY, motionZ) : null;
   }
 
   public void fallenUpon(User user, Material material) {
-    PhysicsCollision collision = findPotentialCollision(material);
+    PhysicsBlockCollision collision = findPotentialCollision(material);
     if (collision != null) {
       collision.fallenUpon(user);
     }
   }
 
-  private PhysicsCollision findPotentialCollision(Material material) {
-    for (PhysicsCollision blockCollision : blockCollisions) {
+  private PhysicsBlockCollision findPotentialCollision(Material material) {
+    for (PhysicsBlockCollision blockCollision : blockCollisions) {
       if (blockCollision.supportedOnServerVersion() && blockCollision.materials().contains(material)) {
         return blockCollision;
       }

@@ -34,6 +34,11 @@ public final class UserMetaClientData {
     return protocolVersion <= PROTOCOL_VERSION_BOUNTIFUL_UPDATE;
   }
 
+  public boolean applyNewEntityCollisions() {
+    // >= 1.14
+    return protocolVersion >= PROTOCOL_VERSION_VILLAGE_UPDATE;
+  }
+
   public boolean sprintWhenSneaking() {
     // >= 1.14
     return protocolVersion >= PROTOCOL_VERSION_VILLAGE_UPDATE;
