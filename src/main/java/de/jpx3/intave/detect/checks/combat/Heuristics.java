@@ -4,6 +4,7 @@ import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.wrappers.EnumWrappers;
 import com.google.common.collect.Lists;
+import de.jpx3.intave.IntaveControl;
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.detect.IntaveMetaCheck;
 import de.jpx3.intave.detect.checks.combat.heuristics.*;
@@ -60,6 +61,11 @@ public final class Heuristics extends IntaveMetaCheck<Heuristics.HeuristicMeta> 
       .collect(Collectors.toList());
     Confidence overallConfidence = computeOverallConfidence(confidences);
     String message = ChatColor.RED + "[HEUR] [DEB] " + player.getName() + "(" + overallConfidence + "): " + description;
+
+    if (IntaveControl.DEBUG_HEURISTICS && !plugin.sibylIntegrationService().isAuthenticated(player)) {
+      player.sendMessage(message);
+    }
+
     for (Player authenticatedPlayer : Bukkit.getOnlinePlayers()) {
       if (plugin.sibylIntegrationService().isAuthenticated(authenticatedPlayer)) {
         authenticatedPlayer.sendMessage(message);
