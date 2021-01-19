@@ -48,18 +48,23 @@ public final class Heuristics extends IntaveMetaCheck<Heuristics.HeuristicMeta> 
   }
 
   public void saveAnomaly(Player player, Anomaly anomaly) {
-    Synchronizer.synchronize(() -> {
-      for (Player otherPlayer : Bukkit.getOnlinePlayers()) {
-        if (plugin.sibylIntegrationService().isAuthenticated(otherPlayer)) {
-          otherPlayer.sendMessage(ChatColor.RED + "[HEUR] [DEB] " + player.getName() + ": " + anomaly.description() + " (" + anomaly.confidence() + ")");
-        }
-      }
-    });
-
-    player.sendMessage(ChatColor.RED + "[HEUR] [DEB] " + player.getName() + ": " + anomaly.description() + " (" +
-     anomaly.confidence() + ")");
-
     metaOf(player).anomalies.add(anomaly);
+    Synchronizer.synchronize(() -> debug(player, anomaly.description()));
+  }
+
+  private void debug(Player player, String description) {
+    HeuristicMeta heuristicMeta = metaOf(player);
+    List<Confidence> confidences = heuristicMeta.anomalies
+      .stream()
+      .map(Anomaly::confidence)
+      .collect(Collectors.toList());
+    Confidence overallConfidence = computeOverallConfidence(confidences);
+    String message = ChatColor.RED + "[HEUR] [DEB] " + player.getName() + "(" + overallConfidence + "): " + description;
+    for (Player authenticatedPlayer : Bukkit.getOnlinePlayers()) {
+      if (plugin.sibylIntegrationService().isAuthenticated(authenticatedPlayer)) {
+        authenticatedPlayer.sendMessage(message);
+      }
+    }
   }
 
   private void evaluateAll() {

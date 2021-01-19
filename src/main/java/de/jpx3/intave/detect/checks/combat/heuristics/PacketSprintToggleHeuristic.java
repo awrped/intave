@@ -1,6 +1,8 @@
 package de.jpx3.intave.detect.checks.combat.heuristics;
 
+import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
+import com.comphenix.protocol.wrappers.EnumWrappers;
 import de.jpx3.intave.detect.IntaveMetaCheckPart;
 import de.jpx3.intave.detect.checks.combat.Heuristics;
 import de.jpx3.intave.event.packet.PacketDescriptor;
@@ -43,6 +45,13 @@ public final class PacketSprintToggleHeuristic extends IntaveMetaCheckPart<Heuri
     UserMetaMovementData movementData = meta.movementData();
     UserMetaClientData clientData = meta.clientData();
     PacketSprintToggleHeuristicMeta heuristicMeta = metaOf(user);
+
+    PacketContainer packet = event.getPacket();
+    EnumWrappers.PlayerAction playerAction = packet.getPlayerActions().read(0);
+
+    if (playerAction != EnumWrappers.PlayerAction.START_SPRINTING && playerAction != EnumWrappers.PlayerAction.STOP_SPRINTING) {
+      return;
+    }
 
     if (heuristicMeta.sprintTogglesInTick++ >= 1) {
       boolean flyingPacketStream = clientData.flyingPacketStream();
