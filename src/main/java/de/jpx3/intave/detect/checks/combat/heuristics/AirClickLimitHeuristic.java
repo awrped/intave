@@ -16,12 +16,12 @@ import de.jpx3.intave.tools.wrapper.WrappedVector;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserCustomCheckMeta;
 import de.jpx3.intave.detect.checks.combat.Heuristics;
+import de.jpx3.intave.user.UserMetaClientData;
 import de.jpx3.intave.user.UserMetaMovementData;
 import de.jpx3.intave.world.raytrace.Raytracer;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
-import org.bukkit.projectiles.BlockProjectileSource;
 
 import java.lang.reflect.InvocationTargetException;
 
@@ -30,6 +30,25 @@ public class AirClickLimitHeuristic extends IntaveMetaCheckPart<Heuristics, AirC
   public AirClickLimitHeuristic(Heuristics parentCheck) {
     super(parentCheck, AirClickLimitHeuristic.AirClickLimitHeuristicMeta.class);
   }
+
+  @PacketSubscription(
+    priority = ListenerPriority.HIGH,
+    packets = {
+      @PacketDescriptor(sender = Sender.CLIENT, packetName = "USE_ENTITY")
+    }
+  )
+  public void entityHit(PacketEvent event) {
+    Player player = event.getPlayer();
+    User user = userOf(player);
+    AirClickLimitHeuristicMeta meta = metaOf(user);
+
+    EnumWrappers.EntityUseAction entityUseAction = event.getPacket().getEntityUseActions().read(0);
+
+    if(entityUseAction == EnumWrappers.EntityUseAction.ATTACK) {
+      meta.attackedThisTick = true;
+    }
+  }
+
 
   @PacketSubscription(
     priority = ListenerPriority.HIGH,
@@ -127,6 +146,10 @@ public class AirClickLimitHeuristic extends IntaveMetaCheckPart<Heuristics, AirC
       }
     }
 
+    if(meta.attackedThisTick) {
+      meta.removeClickFromTickArray();
+    }
+
     if(meta.blockPlacedThisTick) {
       meta.removeClickFromTickArray();
     }
@@ -142,7 +165,7 @@ public class AirClickLimitHeuristic extends IntaveMetaCheckPart<Heuristics, AirC
 
 //    player.sendMessage("cps: " + sum);
 
-    if(sum > 13) {
+    if(sum > 13 && user.meta().clientData().protocolVersion() <= UserMetaClientData.PROTOCOL_VERSION_BOUNTIFUL_UPDATE) {
       parentCheck().saveAnomaly(player,
         Anomaly.anomalyOf(
           sum > 14 ? Confidence.VERY_LIKELY : Confidence.MAYBE,
@@ -160,6 +183,7 @@ public class AirClickLimitHeuristic extends IntaveMetaCheckPart<Heuristics, AirC
     meta.startBreakThisTick = false;
     meta.stopBreakThisTick = false;
     meta.blockPlacedThisTick = false;
+    meta.attackedThisTick = false;
   }
 
   @PacketSubscription(
@@ -196,6 +220,7 @@ public class AirClickLimitHeuristic extends IntaveMetaCheckPart<Heuristics, AirC
 
     public boolean stopBreakThisTick;
     public boolean blockPlacedThisTick;
+    public boolean attackedThisTick;
     boolean isBreakingClientSide;
     boolean isBreakingServerSide;
 
