@@ -750,7 +750,7 @@ public final class Physics extends IntaveCheck {
       violationLevelIncrease = Math.max(1, violationLevelIncrease);
       violationLevelData.physicsVL += violationLevelIncrease;
 
-//      user.boundingBoxAccess().invalidate();
+      user.boundingBoxAccess().invalidate();
     }
 
     if ((!spectator && !movedIntoBlock && violationLevelData.physicsVL > 20 && violationLevelIncrease > 0)) {
@@ -762,7 +762,7 @@ public final class Physics extends IntaveCheck {
       String message = "moved incorrectly";
       String details = received + " e: " + expected;
 
-      boolean setback = plugin.retributionService().processViolation(player, violationLevelIncrease / 10d, "Physics", message, details);
+      boolean setback = plugin.retributionService().processViolation(player, violationLevelIncrease / 20d, "Physics", message, details);
       if (setback) {
         plugin.eventService().emulationEngine().emulationSetBack(player, emulationMotion, 8);
       }
