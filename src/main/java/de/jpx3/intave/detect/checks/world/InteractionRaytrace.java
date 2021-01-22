@@ -10,6 +10,7 @@ import com.comphenix.protocol.wrappers.EnumWrappers;
 import com.comphenix.protocol.wrappers.WrappedBlockData;
 import com.google.common.collect.Maps;
 import de.jpx3.intave.IntavePlugin;
+import de.jpx3.intave.detect.CheckViolationLevelDecrementer;
 import de.jpx3.intave.detect.IntaveMetaCheck;
 import de.jpx3.intave.event.packet.ListenerPriority;
 import de.jpx3.intave.event.packet.PacketDescriptor;
@@ -46,9 +47,12 @@ import static com.comphenix.protocol.wrappers.EnumWrappers.PlayerDigType.STOP_DE
 public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytrace.InteractionMeta> {
   private final IntavePlugin plugin;
 
+  private final CheckViolationLevelDecrementer decrementer;
+
   public InteractionRaytrace(IntavePlugin plugin) {
     super("InteractionRaytrace", "interactionraytrace", InteractionMeta.class);
     this.plugin = plugin;
+    this.decrementer = new CheckViolationLevelDecrementer(this, 1);
   }
 
   @PacketSubscription(
@@ -110,7 +114,7 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
   }
 
   @PacketSubscription(
-    priority = ListenerPriority.LOW,
+    priority = ListenerPriority.NORMAL,
     packets = {
       @PacketDescriptor(sender = Sender.CLIENT, packetName = "BLOCK_DIG")
     }
@@ -203,7 +207,9 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
 
     World world = interaction.world();
     Player player = interaction.player();
+    User user = UserRepository.userOf(player);
     InteractionMeta interactionMeta = metaOf(player);
+    UserMetaMovementData movementData = user.meta().movementData();
 
     boolean estimateMouseDelayFix = interactionMeta.estimateMouseDelayFix;
 
@@ -215,7 +221,7 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
     Location targetLocation = interaction.targetBlock.toLocation(world);
     boolean invalidFacing = interaction.facingVector() != null &&
       firstRaytraceResult != null &&
-      validateFacingVector(UserRepository.userOf(player), interaction.targetBlock, firstRaytraceResult.hitVec, interaction.facingVector(), interaction.type());
+      validateFacingVector(user, interaction.targetBlock, firstRaytraceResult.hitVec, interaction.facingVector(), interaction.type());
     boolean invalid = hitMiss ||
       raycastLocation.distance(targetLocation) > 0 ||
       interaction.targetDirection != firstRaytraceResult.sideHit.getIndex() ||
@@ -230,13 +236,17 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
       Location raycastLocation2 = raycastVector2.toLocation(world);
       invalidFacing = interaction.facingVector() != null &&
         secondRaytraceResult != null &&
-        validateFacingVector(UserRepository.userOf(player), interaction.targetBlock, secondRaytraceResult.hitVec, interaction.facingVector(), interaction.type());
+        validateFacingVector(user, interaction.targetBlock, secondRaytraceResult.hitVec, interaction.facingVector(), interaction.type());
       invalid = hitMiss2 ||
         raycastLocation2.distance(targetLocation) > 0 ||
         interaction.targetDirection != secondRaytraceResult.sideHit.getIndex() ||
         invalidFacing;
 
       interactionMeta.estimateMouseDelayFix = invalid == interactionMeta.estimateMouseDelayFix;
+    }
+
+    if(!invalid) {
+      decrementer.decrement(user, 0.25);
     }
 
     boolean flag = invalid && performFlag(interaction, raycastResult, targetLocation, raycastLocation, hitMiss, invalidFacing);
@@ -362,6 +372,8 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
     boolean invalidFacing
   ) {
     Player player = interaction.player();
+    User user = userOf(player);
+    UserMetaMovementData movementData = user.meta().movementData();
     InteractionType type = interaction.type();
 
     Block targetLocationBlock = BlockAccessor.blockAccess(targetLocation);
@@ -371,6 +383,7 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
     }
 
     double vl = 0;
+    boolean mustFlag = false;
 
     String message, details;
     if(type == InteractionType.BREAK) {
@@ -395,24 +408,40 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
       details = typeName + " block, " + append;
     } else if(type == InteractionType.PLACE) {
       String typeAgainstName = shortenTypeName(targetLocationBlock.getType());
-      String typeName = shortenTypeName(userOf(player).meta().inventoryData().heldItemType());
+      String typeName = shortenTypeName(user.meta().inventoryData().heldItemType());
+
+      String append = "";
+      if (hitMiss || (raycastLocation.getBlockX() == 0 && raycastLocation.getBlockY() == 0 && raycastLocation.getBlockZ() == 0)) {
+        append = "looking in air";
+        vl = 2.5;
+      } else if(raycastLocation.distance(targetLocation) > 0 && raycastLocationBlock.getType() != Material.AIR) {
+        String blockName = shortenTypeName(raycastLocationBlock.getType());
+        if(raycastLocationBlock.getType() == targetLocationBlock.getType()) {
+          blockName = "a different " + blockName;
+        }
+        append = "looking at " + blockName + " block";
+        vl = 5;
+      } else if (interaction.targetDirection != raycastResult.sideHit.getIndex()){
+        append = "invalid block face";
+        vl = 2.5;
+      }
+
       message = "performed invalid placement";
-      details = typeName + " block on " + typeAgainstName + " block";
-      vl = 2.5;
+      details = typeName + " block on " + typeAgainstName + " block, " + append;
     } else {
       String typeAgainstName = shortenTypeName(targetLocationBlock.getType());
       message = "invalid interaction";
       details = typeAgainstName + " block";
+      mustFlag = true;
       vl = 0;
 //      return true;
     }
 
-    if(invalidFacing) {
-      vl = 0;
-    }
+//    if(invalidFacing) {
+//      vl = 0;
+//    }
 
-    plugin.retributionService().processViolation(player, vl, name(), message, details);
-    return true;
+    return plugin.retributionService().processViolation(player, vl, name(), message, details) || mustFlag;
   }
 
   private String shortenTypeName(Material type) {

@@ -46,7 +46,7 @@ public final class RotationSensitivityHeuristic extends IntaveMetaCheckPart<Heur
 
     // old liquidbounce gcd patch
     // detects a few clients
-    if (pitchDifference > 0 && yawDifference > 0) {
+    if (pitchDifference > 0 && yawDifference > 0 && user.meta().attackData().recentlyAttacked(16000)) {
       int yawDecimal = decimalPlacesOf(rotationYaw);
       int pitchDecimal = decimalPlacesOf(rotationPitch);
 

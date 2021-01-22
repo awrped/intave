@@ -101,7 +101,6 @@ public final class BlockActionDispatcher implements EventProcessor {
 //    player.sendMessage(clickedType + " " + isPlacement);
 
     if(isPlacement) {
-
       int blockX = blockPlacementLocation.getBlockX();
       int blockY = blockPlacementLocation.getBlockY();
       int blockZ = blockPlacementLocation.getBlockZ();
@@ -145,7 +144,7 @@ public final class BlockActionDispatcher implements EventProcessor {
 
         Synchronizer.synchronizeDelayed(() -> {
           boundingBoxAccess.invalidateOverride(world, blockX, blockY, blockZ);
-        }, 1);
+        }, 2);
       } else {
         event.setCancelled(true);
         refreshBlocksAround(player, blockPlacementLocation);
@@ -227,7 +226,7 @@ public final class BlockActionDispatcher implements EventProcessor {
 
       Synchronizer.synchronizeDelayed(() -> {
         boundingBoxAccess.invalidateOverride(world, blockX, blockY, blockZ);
-      }, 1);
+      }, 2);
     } else {
       refreshBlocksAround(player, blockBreakLocation);
       event.setCancelled(true);
