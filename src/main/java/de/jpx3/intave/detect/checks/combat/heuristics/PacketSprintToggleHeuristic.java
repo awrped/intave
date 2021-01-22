@@ -2,12 +2,13 @@ package de.jpx3.intave.detect.checks.combat.heuristics;
 
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
-import com.comphenix.protocol.wrappers.EnumWrappers;
 import de.jpx3.intave.detect.IntaveMetaCheckPart;
 import de.jpx3.intave.detect.checks.combat.Heuristics;
 import de.jpx3.intave.event.packet.PacketDescriptor;
 import de.jpx3.intave.event.packet.PacketSubscription;
 import de.jpx3.intave.event.packet.Sender;
+import de.jpx3.intave.tools.vehicle.PlayerAction;
+import de.jpx3.intave.tools.vehicle.PlayerActionResolver;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserCustomCheckMeta;
 import de.jpx3.intave.user.UserMetaClientData;
@@ -47,9 +48,9 @@ public final class PacketSprintToggleHeuristic extends IntaveMetaCheckPart<Heuri
     PacketSprintToggleHeuristicMeta heuristicMeta = metaOf(user);
 
     PacketContainer packet = event.getPacket();
-    EnumWrappers.PlayerAction playerAction = packet.getPlayerActions().read(0);
+    PlayerAction playerAction = PlayerActionResolver.resolveActionFromPacket(packet);
 
-    if (playerAction != EnumWrappers.PlayerAction.START_SPRINTING && playerAction != EnumWrappers.PlayerAction.STOP_SPRINTING) {
+    if (playerAction != PlayerAction.START_SPRINTING && playerAction != PlayerAction.STOP_SPRINTING) {
       return;
     }
 

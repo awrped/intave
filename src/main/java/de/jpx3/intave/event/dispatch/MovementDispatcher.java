@@ -3,7 +3,6 @@ package de.jpx3.intave.event.dispatch;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.reflect.StructureModifier;
-import com.comphenix.protocol.wrappers.EnumWrappers;
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.adapter.ProtocolLibAdapter;
 import de.jpx3.intave.detect.EventProcessor;
@@ -14,6 +13,8 @@ import de.jpx3.intave.reflect.ReflectiveAccess;
 import de.jpx3.intave.tools.MathHelper;
 import de.jpx3.intave.tools.client.PlayerMovementPoseHelper;
 import de.jpx3.intave.tools.sync.Synchronizer;
+import de.jpx3.intave.tools.vehicle.PlayerAction;
+import de.jpx3.intave.tools.vehicle.PlayerActionResolver;
 import de.jpx3.intave.tools.wrapper.WrappedAxisAlignedBB;
 import de.jpx3.intave.user.*;
 import de.jpx3.intave.world.collision.Collision;
@@ -434,7 +435,7 @@ public final class MovementDispatcher implements EventProcessor {
     User user = UserRepository.userOf(player);
     UserMetaMovementData movementData = user.meta().movementData();
     PacketContainer packet = event.getPacket();
-    EnumWrappers.PlayerAction playerAction = packet.getPlayerActions().read(0);
+    PlayerAction playerAction = PlayerActionResolver.resolveActionFromPacket(packet);
     switch (playerAction) {
       case START_SPRINTING:
         if (allowSprinting(player)) {
