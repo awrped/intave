@@ -1,5 +1,7 @@
-package de.jpx3.intave.detect.checks.movement.physics.water;
+package de.jpx3.intave.detect.checks.movement.physics.water.aquatics;
 
+import de.jpx3.intave.detect.checks.movement.physics.water.AquaticWaterMovementBase;
+import de.jpx3.intave.detect.checks.movement.physics.water.WaterMovementLegacyResolver;
 import de.jpx3.intave.tools.wrapper.WrappedAxisAlignedBB;
 import de.jpx3.intave.tools.wrapper.WrappedBlockPosition;
 import de.jpx3.intave.tools.wrapper.WrappedMathHelper;
@@ -15,12 +17,6 @@ import org.bukkit.entity.Player;
 import static de.jpx3.intave.detect.checks.movement.physics.water.WaterMovementLegacyResolver.resolveLiquidLevel;
 
 public final class AquaticUnknownMovementResolver extends AquaticWaterMovementBase {
-  private final WaterMovementLegacyResolver movementLegacyResolver;
-
-  public AquaticUnknownMovementResolver(WaterMovementLegacyResolver movementLegacyResolver) {
-    this.movementLegacyResolver = movementLegacyResolver;
-  }
-
   @Override
   public boolean fluidStateEmpty(User user, double x, double y, double z) {
     World world = user.player().getWorld();
@@ -55,7 +51,7 @@ public final class AquaticUnknownMovementResolver extends AquaticWaterMovementBa
               inWater = true;
               d0 = Math.max(d1 - wrappedAxisAlignedBB.minY, d0);
               WrappedBlockPosition blockPosition = new WrappedBlockPosition(x, y, z);
-              WrappedVector flowVector = movementLegacyResolver.resolveWaterFlowVector(world, blockPosition);
+              WrappedVector flowVector = WaterMovementLegacyResolver.resolveWaterFlowVector(world, blockPosition);
               if (d0 < 0.4) {
                 flowVector = flowVector.scale(d0);
               }

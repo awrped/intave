@@ -12,7 +12,7 @@ import org.bukkit.block.BlockState;
 import org.bukkit.entity.Player;
 
 public final class WaterMovementLegacyResolver {
-  public boolean handleMaterialAcceleration(User user, WrappedAxisAlignedBB boundingBox) {
+  public static boolean handleMaterialAcceleration(User user, WrappedAxisAlignedBB boundingBox) {
     Player player = user.player();
     UserMetaMovementData movementData = user.meta().movementData();
     int minX = WrappedMathHelper.floor(boundingBox.minX);
@@ -51,7 +51,7 @@ public final class WaterMovementLegacyResolver {
     return inWater;
   }
 
-  public WrappedVector resolveWaterFlowVector(
+  public static WrappedVector resolveWaterFlowVector(
     World world,
     WrappedBlockPosition pos
   ) {
@@ -117,7 +117,7 @@ public final class WaterMovementLegacyResolver {
     return vec3.normalize();
   }
 
-  private int resolveLevel(World world, WrappedBlockPosition pos) {
+  private static int resolveLevel(World world, WrappedBlockPosition pos) {
     Location location = new Location(world, pos.xCoord, pos.yCoord, pos.zCoord);
     Block blockAccess = BlockAccessor.blockAccess(location);
     if (!BlockLiquidHelper.isWater(blockAccess.getType())) {
@@ -139,7 +139,7 @@ public final class WaterMovementLegacyResolver {
     return state.getData().getData();
   }
 
-  private int resolveEffectiveFlowDecay(World world, WrappedBlockPosition pos) {
+  public static int resolveEffectiveFlowDecay(World world, WrappedBlockPosition pos) {
     int i = resolveLevel(world, pos);
     return i >= 8 ? 0 : i;
   }

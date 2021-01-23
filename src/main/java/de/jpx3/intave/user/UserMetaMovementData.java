@@ -4,6 +4,7 @@ import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.reflect.StructureModifier;
 import de.jpx3.intave.detect.checks.movement.Physics;
 import de.jpx3.intave.detect.checks.movement.physics.CollisionHelper;
+import de.jpx3.intave.detect.checks.movement.physics.pose.PhysicsMovementPoseType;
 import de.jpx3.intave.reflect.ReflectiveAccess;
 import de.jpx3.intave.tools.client.PlayerEffectHelper;
 import de.jpx3.intave.tools.client.PlayerMovementHelper;
@@ -39,6 +40,7 @@ public final class UserMetaMovementData {
   public boolean sprinting, lastSprinting, sneaking, lastSneaking;
   public float rotationYaw, rotationPitch;
   public float lastRotationYaw, lastRotationPitch;
+  private PhysicsMovementPoseType movementPoseType = PhysicsMovementPoseType.PHYSICS_NORMAL_MOVEMENT;
 
   private volatile WrappedAxisAlignedBB boundingBox;
   public Vector emulationVelocity;
@@ -270,6 +272,10 @@ public final class UserMetaMovementData {
     return pastFlyingPacketAccurate;
   }
 
+  public PhysicsMovementPoseType movementPoseType() {
+    return movementPoseType;
+  }
+
   public void setBoundingBox(WrappedAxisAlignedBB entityBoundingBox) {
     this.boundingBox = entityBoundingBox;
   }
@@ -280,5 +286,17 @@ public final class UserMetaMovementData {
       Bukkit.broadcastMessage(ChatColor.DARK_RED + "Position was set into a block: " + reason);
     }*/
     this.verifiedLocation = verifiedLocation;
+  }
+
+  public void setJumpMovementFactor(float jumpMovementFactor) {
+    this.jumpMovementFactor = jumpMovementFactor;
+  }
+
+  public void setAiMoveSpeed(float aiMoveSpeed) {
+    this.aiMoveSpeed = aiMoveSpeed;
+  }
+
+  public void setMovementPoseType(PhysicsMovementPoseType movementPoseType) {
+    this.movementPoseType = movementPoseType;
   }
 }

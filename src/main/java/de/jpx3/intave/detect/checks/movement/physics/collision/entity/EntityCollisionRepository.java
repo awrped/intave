@@ -9,7 +9,11 @@ public final class EntityCollisionRepository {
   private PhysicsEntityCollision legacyCollisionResolver;
   private PhysicsEntityCollision newCollisionResolver;
 
-  public void setup() {
+  public EntityCollisionRepository() {
+    setup();
+  }
+
+  private void setup() {
     legacyCollisionResolver = new EntityCollisionLegacyResolver();
     newCollisionResolver = new EntityCollisionNewResolver();
   }

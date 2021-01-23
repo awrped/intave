@@ -1,7 +1,8 @@
-package de.jpx3.intave.detect.checks.movement.physics.water;
+package de.jpx3.intave.detect.checks.movement.physics.water.aquatics;
 
 import com.comphenix.protocol.utility.MinecraftVersion;
 import de.jpx3.intave.adapter.ProtocolLibAdapter;
+import de.jpx3.intave.detect.checks.movement.physics.water.AquaticWaterMovementBase;
 import de.jpx3.intave.reflect.ReflectiveAccess;
 import de.jpx3.intave.reflect.ReflectionFailureException;
 import de.jpx3.intave.tools.wrapper.WrappedMathHelper;

@@ -2,10 +2,7 @@ package de.jpx3.intave.tools.client;
 
 import de.jpx3.intave.tools.wrapper.WrappedAxisAlignedBB;
 import de.jpx3.intave.tools.wrapper.WrappedMathHelper;
-import de.jpx3.intave.user.User;
-import de.jpx3.intave.user.UserMetaClientData;
-import de.jpx3.intave.user.UserMetaPotionData;
-import de.jpx3.intave.user.UserRepository;
+import de.jpx3.intave.user.*;
 import de.jpx3.intave.world.BlockAccessor;
 import de.jpx3.intave.world.BlockLiquidHelper;
 import de.jpx3.intave.world.collision.Collision;
@@ -51,6 +48,26 @@ public final class PlayerMovementHelper {
       }
     }
     return blockSlipperiness * 0.91f;
+  }
+
+  public static float resolveFriction(User user, double positionX, double positionY, double positionZ) {
+    UserMetaMovementData movementData = user.meta().movementData();
+    World world = user.player().getWorld();
+    float speed;
+    if (movementData.lastOnGround) {
+      Location location = new Location(
+        world,
+        WrappedMathHelper.floor(positionX),
+        WrappedMathHelper.floor(positionY - 1.0),
+        WrappedMathHelper.floor(positionZ)
+      );
+      float slipperiness = PlayerMovementHelper.resolveSlipperiness(location);
+      float var4 = 0.16277136f / (slipperiness * slipperiness * slipperiness);
+      speed = movementData.aiMoveSpeed() * var4;
+    } else {
+      speed = movementData.jumpMovementFactor();
+    }
+    return speed;
   }
 
   public static boolean isOffsetPositionInLiquid(

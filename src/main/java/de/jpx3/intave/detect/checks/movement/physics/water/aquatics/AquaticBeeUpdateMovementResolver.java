@@ -1,7 +1,8 @@
-package de.jpx3.intave.detect.checks.movement.physics.water;
+package de.jpx3.intave.detect.checks.movement.physics.water.aquatics;
 
 import com.comphenix.protocol.utility.MinecraftVersion;
 import de.jpx3.intave.adapter.ProtocolLibAdapter;
+import de.jpx3.intave.detect.checks.movement.physics.water.AquaticWaterMovementBase;
 import de.jpx3.intave.reflect.ReflectiveAccess;
 import de.jpx3.intave.reflect.ReflectionFailureException;
 import de.jpx3.intave.tools.wrapper.WrappedMathHelper;
@@ -14,7 +15,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.InvocationTargetException;
 
-public final class AquaticVillageUpdateMovementResolver extends AquaticWaterMovementBase {
+public final class AquaticBeeUpdateMovementResolver extends AquaticWaterMovementBase {
   private MethodHandle fluidMethodHandle;
   private MethodHandle fluidTaggedMethodHandle;
   private MethodHandle fluidHeightMethodHandle;
@@ -23,7 +24,7 @@ public final class AquaticVillageUpdateMovementResolver extends AquaticWaterMove
   private Object fluidTagWater;
   private Class<?> blockPositionClass;
 
-  public AquaticVillageUpdateMovementResolver() {
+  public AquaticBeeUpdateMovementResolver() {
     try {
       setup();
     } catch (Exception e) {
