@@ -130,22 +130,23 @@ public class AttackRaytrace extends IntaveMetaCheck<AttackRaytrace.AttackRaytrac
     float lastRotationYaw = movementData.lastRotationYaw % 360;
     float rotationYaw = movementData.rotationYaw % 360;
     boolean alternativePositionY = clientData.protocolVersion() == UserMetaClientData.PROTOCOL_VERSION_BOUNTIFUL_UPDATE;
+    boolean hasAlwaysMouseDelayFix = clientData.protocolVersion() >= 314;
 
-    // normal
+    // mouse delay fix
     double reach = distanceOf(
       player,
       entity, alternativePositionY,
       movementData.lastPositionX, movementData.lastPositionY, movementData.lastPositionZ,
-      lastRotationYaw, movementData.rotationPitch
+      rotationYaw, movementData.rotationPitch
     );
 
-    if (reach > blockReachDistance) {
-      // mouse delay fix
+    if (hasAlwaysMouseDelayFix && reach > blockReachDistance) {
+      // normal
       reach = distanceOf(
         player,
-        entity, alternativePositionY,
+        entity, true,
         movementData.lastPositionX, movementData.lastPositionY, movementData.lastPositionZ,
-        rotationYaw, movementData.rotationPitch
+        lastRotationYaw, movementData.rotationPitch
       );
     }
 
@@ -199,6 +200,7 @@ public class AttackRaytrace extends IntaveMetaCheck<AttackRaytrace.AttackRaytrac
     float lastRotationYaw = movementData.lastRotationYaw % 360;
     float rotationYaw = movementData.rotationYaw % 360;
     boolean alternativePositionY = clientData.protocolVersion() == UserMetaClientData.PROTOCOL_VERSION_BOUNTIFUL_UPDATE;
+    boolean hasAlwaysMouseDelayFix = clientData.protocolVersion() >= 314;
 
     double minReach = 10;
     double maxReach = 0;
@@ -221,25 +223,25 @@ public class AttackRaytrace extends IntaveMetaCheck<AttackRaytrace.AttackRaytrac
       double maxReachInItr = 0;
 
       for (int i = 0; i < 4; i++) {
-        // normal
+        // mouse delay fix
         double reach = distanceOf(
           player,
           entity.entityBoundingBox().grow(0.15),
           entity.position, entity.alternativePosition,
           alternativePositionY,
           movementData.lastPositionX, movementData.lastPositionY, movementData.lastPositionZ,
-          lastRotationYaw, movementData.rotationPitch
+          rotationYaw, movementData.rotationPitch
         );
 
-        if (reach > blockReachDistance) {
-          // mouse delay fix
+        if (hasAlwaysMouseDelayFix && reach > blockReachDistance) {
+          // normal
           reach = distanceOf(
             player,
             entity.entityBoundingBox().grow(0.15),
             entity.position, entity.alternativePosition,
-            alternativePositionY,
+            true,
             movementData.lastPositionX, movementData.lastPositionY, movementData.lastPositionZ,
-            rotationYaw, movementData.rotationPitch
+            lastRotationYaw, movementData.rotationPitch
           );
         }
 
