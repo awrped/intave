@@ -23,17 +23,61 @@ public final class EntityCollisionLegacyResolver implements PhysicsEntityCollisi
       context.motionZ *= 0.25D;
     }
 
-    if (movementData.onGround && movementData.sneaking) {
-      calculateBackOffFromEdge(user, 1.0, context);
-    }
-
     double startMotionX = context.motionX;
     double startMotionY = context.motionY;
     double startMotionZ = context.motionZ;
 
-    List<WrappedAxisAlignedBB> collisionBoxes = Collision.resolve(
-      player, movementData.boundingBox().addCoord(context.motionX, context.motionY, context.motionZ)
-    );
+    boolean safewalk = //movementData.lastLastOnGround && !movementData.onGround && !movementData.lastOnGround ||
+      movementData.onGround;
+
+    if (safewalk && movementData.sneaking) {
+      movementData.physicsSneakEdge = true;
+
+      WrappedAxisAlignedBB boundingBox = movementData.boundingBox();
+      double d6;
+
+      for (d6 = 0.05D; context.motionX != 0.0D && Collision.resolve(player, boundingBox.offset(context.motionX, -1.0D, 0.0D)).isEmpty(); startMotionX = context.motionX) {
+        if (context.motionX < d6 && context.motionX >= -d6) {
+          context.motionX = 0.0D;
+        } else if (context.motionX > 0.0D) {
+          context.motionX -= d6;
+        } else {
+          context.motionX += d6;
+        }
+      }
+
+      for (; context.motionZ != 0.0D && Collision.resolve(player, boundingBox.offset(0.0D, -1.0D, context.motionZ)).isEmpty(); startMotionZ = context.motionZ) {
+        if (context.motionZ < d6 && context.motionZ >= -d6) {
+          context.motionZ = 0.0D;
+        } else if (context.motionZ > 0.0D) {
+          context.motionZ -= d6;
+        } else {
+          context.motionZ += d6;
+        }
+      }
+
+      for (; context.motionX != 0.0D && context.motionZ != 0.0D && Collision.resolve(player, boundingBox.offset(context.motionX, -1.0D, context.motionZ)).isEmpty(); startMotionZ = context.motionZ) {
+        if (context.motionX < d6 && context.motionX >= -d6) {
+          context.motionX = 0.0D;
+        } else if (context.motionX > 0.0D) {
+          context.motionX -= d6;
+        } else {
+          context.motionX += d6;
+        }
+
+        startMotionX = context.motionX;
+
+        if (context.motionZ < d6 && context.motionZ >= -d6) {
+          context.motionZ = 0.0D;
+        } else if (context.motionZ > 0.0D) {
+          context.motionZ -= d6;
+        } else {
+          context.motionZ += d6;
+        }
+      }
+    }
+
+    List<WrappedAxisAlignedBB> collisionBoxes = Collision.resolve(player, movementData.boundingBox().addCoord(context.motionX, context.motionY, context.motionZ));
     WrappedAxisAlignedBB startBoundingBox = movementData.boundingBox();
     WrappedAxisAlignedBB entityBoundingBox = movementData.boundingBox();
 
@@ -60,10 +104,7 @@ public final class EntityCollisionLegacyResolver implements PhysicsEntityCollisi
       WrappedAxisAlignedBB axisalignedbb3 = entityBoundingBox;
       entityBoundingBox = startBoundingBox;
       context.motionY = STEP_HEIGHT;
-      List<WrappedAxisAlignedBB> list = Collision.resolve(
-        player,
-        entityBoundingBox.addCoord(startMotionX, context.motionY, startMotionZ)
-      );
+      List<WrappedAxisAlignedBB> list = Collision.resolve(player, entityBoundingBox.addCoord(startMotionX, context.motionY, startMotionZ));
       WrappedAxisAlignedBB axisalignedbb4 = entityBoundingBox;
       WrappedAxisAlignedBB axisalignedbb5 = axisalignedbb4.addCoord(startMotionX, 0.0D, startMotionZ);
       double d9 = context.motionY;
@@ -151,10 +192,6 @@ public final class EntityCollisionLegacyResolver implements PhysicsEntityCollisi
     context.motionY = newPositionY - positionY;
     context.motionZ = newPositionZ - positionZ;
 
-    return new EntityCollisionResult(
-      Physics.PhysicsProcessorContext.from(context), onGround,
-      collidedHorizontally, collidedVertically,
-      moveResetX, moveResetZ
-    );
+    return new EntityCollisionResult(Physics.PhysicsProcessorContext.from(context), onGround, collidedHorizontally, collidedVertically, moveResetX, moveResetZ);
   }
 }

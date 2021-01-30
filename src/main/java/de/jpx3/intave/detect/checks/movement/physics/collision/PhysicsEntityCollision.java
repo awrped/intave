@@ -22,48 +22,48 @@ public interface PhysicsEntityCollision {
     UserMetaMovementData movementData = user.meta().movementData();
     WrappedAxisAlignedBB boundingBox = movementData.boundingBox();
 
-    double x = context.motionX;
-    double z = context.motionZ;
+    double motionX = context.motionX;
+    double motionZ = context.motionZ;
 
-    while (x != 0.0D && Collision.hasNoCollisions(player, boundingBox.offset(x, -length, 0.0D))) {
-      if (x < 0.05D && x >= -0.05D) {
-        x = 0.0D;
-      } else if (x > 0.0D) {
-        x -= 0.05D;
+    while (motionX != 0.0D && Collision.hasNoCollisions(player, boundingBox.offset(motionX, -length, 0.0D))) {
+      if (motionX < 0.05D && motionX >= -0.05D) {
+        motionX = 0.0D;
+      } else if (motionX > 0.0D) {
+        motionX -= 0.05D;
       } else {
-        x += 0.05D;
+        motionX += 0.05D;
       }
     }
 
-    while (z != 0.0D && Collision.hasNoCollisions(player, boundingBox.offset(0.0D, -length, z))) {
-      if (z < 0.05D && z >= -0.05D) {
-        z = 0.0D;
-      } else if (z > 0.0D) {
-        z -= 0.05D;
+    while (motionZ != 0.0D && Collision.hasNoCollisions(player, boundingBox.offset(0.0D, -length, motionZ))) {
+      if (motionZ < 0.05D && motionZ >= -0.05D) {
+        motionZ = 0.0D;
+      } else if (motionZ > 0.0D) {
+        motionZ -= 0.05D;
       } else {
-        z += 0.05D;
+        motionZ += 0.05D;
       }
     }
 
-    while (x != 0.0D && z != 0.0D && Collision.hasNoCollisions(player, boundingBox.offset(x, -length, z))) {
-      if (x < 0.05D && x >= -0.05D) {
-        x = 0.0D;
-      } else if (x > 0.0D) {
-        x -= 0.05D;
+    while (motionX != 0.0D && motionZ != 0.0D && Collision.hasNoCollisions(player, boundingBox.offset(motionX, -length, motionZ))) {
+      if (motionX < 0.05D && motionX >= -0.05D) {
+        motionX = 0.0D;
+      } else if (motionX > 0.0D) {
+        motionX -= 0.05D;
       } else {
-        x += 0.05D;
+        motionX += 0.05D;
       }
 
-      if (z < 0.05D && z >= -0.05D) {
-        z = 0.0D;
-      } else if (z > 0.0D) {
-        z -= 0.05D;
+      if (motionZ < 0.05D && motionZ >= -0.05D) {
+        motionZ = 0.0D;
+      } else if (motionZ > 0.0D) {
+        motionZ -= 0.05D;
       } else {
-        z += 0.05D;
+        motionZ += 0.05D;
       }
     }
 
-    context.motionX = x;
-    context.motionZ = z;
+    context.motionX = motionX;
+    context.motionZ = motionZ;
   }
 }
