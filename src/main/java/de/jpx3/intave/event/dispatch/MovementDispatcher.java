@@ -499,13 +499,10 @@ public final class MovementDispatcher implements EventProcessor {
       User user = UserRepository.userOf(player);
       User.UserMeta meta = user.meta();
       UserMetaMovementData movementData = meta.movementData();
-      UserMetaViolationLevelData violationLevelData = meta.violationLevelData();
-      boolean isInActiveTeleportBundle = violationLevelData.isInActiveTeleportBundle;
 
       if (movementData.willReceiveSetbackVelocity && velocity.length() < 0.001) {
         movementData.willReceiveSetbackVelocity = false;
         velocity = movementData.setbackOverrideVelocity;
-
         integers.writeSafely(1, (int) (velocity.getX() * 8000d));
         integers.writeSafely(2, (int) (velocity.getY() * 8000d));
         integers.writeSafely(3, (int) (velocity.getZ() * 8000d));
@@ -513,22 +510,18 @@ public final class MovementDispatcher implements EventProcessor {
       }
 
 //      Bukkit.broadcastMessage(player.getName() + ": motion update force: " + MathHelper.formatMotion(velocity) + " " + isInActiveTeleportBundle);
-
-      //if(isInActiveTeleportBundle) {
-      //}
       movementData.emulationVelocity = velocity.clone();
 //      movementData.pastOutgoingVelocity = 0;
-
-      VelocityCallBackData velocityCallBackData = new VelocityCallBackData(isInActiveTeleportBundle, velocity);
-      plugin.eventService().transactionFeedbackService().requestPong(player, velocityCallBackData, this::receiveVelocity);
+      plugin.eventService().transactionFeedbackService().requestPong(player, velocity, this::receiveVelocity);
     }
   }
 
-  private void receiveVelocity(Player player, VelocityCallBackData velocityCallBackData) {
+  private void receiveVelocity(Player player, Vector velocity) {
     User user = UserRepository.userOf(player);
-    UserMetaMovementData movementData = user.meta().movementData();
-    Vector velocity = velocityCallBackData.velocity;
-    if (!velocityCallBackData.isInActiveTeleportBundle) {
+    User.UserMeta meta = user.meta();
+    UserMetaViolationLevelData violationLevelData = meta.violationLevelData();
+    UserMetaMovementData movementData = meta.movementData();
+    if (!violationLevelData.isInActiveTeleportBundle) {
       movementData.physicsMotionXBeforeVelocity = movementData.physicsLastMotionX;
       movementData.physicsMotionYBeforeVelocity = movementData.physicsLastMotionY;
       movementData.physicsMotionZBeforeVelocity = movementData.physicsLastMotionZ;
@@ -537,7 +530,10 @@ public final class MovementDispatcher implements EventProcessor {
       movementData.physicsLastMotionZ = velocity.getZ();
       movementData.lastVelocity = velocity.clone();
 
-      movementData.pastExternalVelocity = 0;
+      if (!movementData.willReceiveSetbackVelocity) {
+        movementData.pastExternalVelocity = 0;
+      }
+      movementData.willReceiveSetbackVelocity = false;
     }
     Synchronizer.synchronize(() -> movementData.emulationVelocity = null);
     movementData.pastVelocity = 0;
@@ -582,15 +578,5 @@ public final class MovementDispatcher implements EventProcessor {
 //      return false;
 //    }
     return !inventoryData.inventoryOpen();
-  }
-
-  private static final class VelocityCallBackData {
-    private final boolean isInActiveTeleportBundle;
-    private final Vector velocity;
-
-    public VelocityCallBackData(boolean isInActiveTeleportBundle, Vector velocity) {
-      this.isInActiveTeleportBundle = isInActiveTeleportBundle;
-      this.velocity = velocity;
-    }
   }
 }

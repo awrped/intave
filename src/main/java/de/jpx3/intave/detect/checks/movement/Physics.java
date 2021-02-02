@@ -363,7 +363,7 @@ public final class Physics extends IntaveCheck {
 
       boolean setback = plugin.retributionService().processViolation(player, violationLevelIncrease / 20d, "Physics", message, details) || violationLevelData.physicsVL >= 60;
       if (setback) {
-        plugin.eventService().emulationEngine().emulationSetBack(player, emulationMotion, user.meta().movementData().pastExternalVelocity <= 8 ? 8 : 1);
+        plugin.eventService().emulationEngine().emulationSetBack(player, emulationMotion, movementData.pastExternalVelocity <= 8 ? 8 : 1);
       }
       if (setback) {
         movementData.invalidMovement = true;
