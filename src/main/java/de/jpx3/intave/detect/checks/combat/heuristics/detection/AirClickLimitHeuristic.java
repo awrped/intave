@@ -6,6 +6,7 @@ import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.wrappers.BlockPosition;
 import com.comphenix.protocol.wrappers.EnumWrappers;
+import de.jpx3.intave.adapter.ProtocolLibAdapter;
 import de.jpx3.intave.detect.IntaveMetaCheckPart;
 import de.jpx3.intave.detect.checks.combat.Heuristics;
 import de.jpx3.intave.detect.checks.combat.heuristics.Anomaly;
@@ -18,8 +19,11 @@ import de.jpx3.intave.tools.sync.Synchronizer;
 import de.jpx3.intave.tools.wrapper.WrappedMovingObjectPosition;
 import de.jpx3.intave.tools.wrapper.WrappedVector;
 import de.jpx3.intave.user.*;
+import de.jpx3.intave.world.BlockAccessor;
+import de.jpx3.intave.world.block.BlockDataAccess;
 import de.jpx3.intave.world.raytrace.Raytracer;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 
@@ -38,6 +42,10 @@ public class AirClickLimitHeuristic extends IntaveMetaCheckPart<Heuristics, AirC
     }
   )
   public void entityHit(PacketEvent event) {
+    if (ProtocolLibAdapter.serverVersion().isAtLeast(ProtocolLibAdapter.COMBAT_UPDATE)) {
+      return;
+    }
+
     Player player = event.getPlayer();
     User user = userOf(player);
     AirClickLimitHeuristicMeta meta = metaOf(user);
@@ -45,7 +53,7 @@ public class AirClickLimitHeuristic extends IntaveMetaCheckPart<Heuristics, AirC
     EnumWrappers.EntityUseAction entityUseAction = event.getPacket().getEntityUseActions().read(0);
 
     if(entityUseAction == EnumWrappers.EntityUseAction.ATTACK) {
-      meta.attackedThisTick = true;
+      meta.resetedLeftClickCounterThisTick = true;
     }
   }
 
@@ -56,6 +64,10 @@ public class AirClickLimitHeuristic extends IntaveMetaCheckPart<Heuristics, AirC
     }
   )
   public void blockPlace(PacketEvent event) {
+    if (ProtocolLibAdapter.serverVersion().isAtLeast(ProtocolLibAdapter.COMBAT_UPDATE)) {
+      return;
+    }
+
     Player player = event.getPlayer();
     User user = userOf(player);
     AirClickLimitHeuristicMeta meta = metaOf(user);
@@ -64,14 +76,16 @@ public class AirClickLimitHeuristic extends IntaveMetaCheckPart<Heuristics, AirC
     // TODO: 01/28/21 Warning by Richy: The block-place is empty for native server versions from 1.9! Use the USE_ITEM packet instead
     BlockPosition blockPosition = event.getPacket().getBlockPositionModifier().read(0);
 
-//    player.sendMessage("" + blockPosition);
-
     if(blockPosition != null) {
       if (blockPosition.getX() != -1 && blockPosition.getY() != -1 && blockPosition.getZ() != -1 && inventoryData.heldItem() != null) {
-        meta.blockPlacedThisTick = true;
+        meta.resetedLeftClickCounterThisTick = true;
       } else {
-        meta.blockPlacedThisTick = false;
-        meta.usedItemThisTick = true;
+        Material clickedType = BlockAccessor.blockAccess(blockPosition.toLocation(player.getWorld())).getType();
+        boolean clickable = BlockDataAccess.isClickable(clickedType);
+
+        if(clickable) {
+          meta.resetedLeftClickCounterThisTick = true;
+        }
       }
     }
   }
@@ -83,6 +97,10 @@ public class AirClickLimitHeuristic extends IntaveMetaCheckPart<Heuristics, AirC
     }
   )
   public void blockDig(PacketEvent event) {
+    if (ProtocolLibAdapter.serverVersion().isAtLeast(ProtocolLibAdapter.COMBAT_UPDATE)) {
+      return;
+    }
+
     Player player = event.getPlayer();
     User user = userOf(player);
     AirClickLimitHeuristicMeta meta = metaOf(user);
@@ -90,18 +108,15 @@ public class AirClickLimitHeuristic extends IntaveMetaCheckPart<Heuristics, AirC
     EnumWrappers.PlayerDigType digType = event.getPacket().getPlayerDigTypes().read(0);
 
     if(digType == EnumWrappers.PlayerDigType.START_DESTROY_BLOCK) {
-      meta.currentDiggedBlock = event.getPacket().getBlockPositionModifier().read(0);
-
-      meta.startBreakThisTick = true;
       meta.isBreakingClientSide = true;
-    } else {
-      meta.stopBreakThisTick = true;
-      meta.isBreakingClientSide = false;
-      meta.isBreakingServerSide = false;
-    }
 
-    if(digType == EnumWrappers.PlayerDigType.STOP_DESTROY_BLOCK) {
+      BlockPosition blockPosition = event.getPacket().getBlockPositionModifier().read(0);
+      meta.currentDiggedBlock = blockPosition;
+    } else if(digType == EnumWrappers.PlayerDigType.ABORT_DESTROY_BLOCK) {
+      meta.isBreakingClientSide = false;
+    } else if(digType == EnumWrappers.PlayerDigType.STOP_DESTROY_BLOCK) {
       meta.currentDiggedBlock = null;
+      meta.isBreakingClientSide = false;
     }
   }
 
@@ -115,16 +130,25 @@ public class AirClickLimitHeuristic extends IntaveMetaCheckPart<Heuristics, AirC
     }
   )
   public void clientTickUpdate(PacketEvent event) {
+    if (ProtocolLibAdapter.serverVersion().isAtLeast(ProtocolLibAdapter.COMBAT_UPDATE)) {
+      return;
+    }
+
     Player player = event.getPlayer();
     User user = userOf(player);
     AirClickLimitHeuristicMeta meta = metaOf(user);
 
-    if(meta.getRealClicksPerTick() == 0 || meta.attackedThisTick) {
-      meta.isBreakingServerSide = false;
-      meta.isBreakingClientSide = false;
+    if(meta.isBreakingClientSide) {
+      meta.resetedLeftClickCounterThisTick = true;
     }
 
-    if(meta.currentDiggedBlock != null && !meta.isBreakingClientSide && meta.getRealClicksPerTick() > 0 && meta.getRealClicksOfLastTick() == 0) {
+    if(meta.swingsThisTick > 0 && !meta.resetedLeftClickCounterThisTick) {
+      /*TODO: Überprüfen ob der Spieler im letztem Tick auch ein Swing-packet gesendet hat
+         oder er ein Stop-break Packet im Tick davor gesendet hat. (Um so wenig Raytracing wie
+         möglich zu machen)
+
+         Gibt auch ein Minecraft Bug bei dem man nach dem man ein Block abgebaut hat für 5 Ticks noch Swing-packets sendet.
+      **/
       World world = event.getPlayer().getWorld();
       UserMetaMovementData movementData = user.meta().movementData();
 
@@ -136,31 +160,13 @@ public class AirClickLimitHeuristic extends IntaveMetaCheckPart<Heuristics, AirC
         // TODO: check if meta.lastDiggedBlock is the same as from the raycastResult
 
 //        player.sendMessage("Is digging client side but not server side");
-        meta.isBreakingServerSide = true;
+        meta.resetedLeftClickCounterThisTick = true;
         Synchronizer.synchronize(() -> sendStopDig(player, meta));
       }
     }
 
-    String out = "";
-
-    if(meta.attackedThisTick) {
-      out += "| attackedThisTick ";
-      meta.removeClickFromTickArray();
-    }
-
-    if(meta.blockPlacedThisTick) {
-      out += "| blockPlacedThisTick ";
-      meta.removeClickFromTickArray();
-    }
-
-    if(meta.startBreakThisTick && !meta.stopBreakThisTick) {
-      out += "| start break this tick";
-      meta.removeClickFromTickArray();
-    }
-
-    if((meta.isBreakingClientSide || meta.isBreakingServerSide) && !(meta.blockPlacedThisTick || meta.usedItemThisTick)) {
-      out += "| break client or server side ";
-      meta.removeClickFromTickArray();
+    if(!meta.resetedLeftClickCounterThisTick) {
+      meta.tickArray[meta.tickIndex] = meta.swingsThisTick;
     }
 
     int sum = 0;
@@ -169,13 +175,13 @@ public class AirClickLimitHeuristic extends IntaveMetaCheckPart<Heuristics, AirC
     }
 
 //    if(sum != 0)
-//    player.sendMessage("cps: " + sum + out);
+//      player.sendMessage("cps: " + sum);
 
     if(sum > 13 && user.meta().clientData().protocolVersion() <= UserMetaClientData.PROTOCOL_VERSION_BOUNTIFUL_UPDATE) {
       parentCheck().saveAnomaly(player,
-                                Anomaly.anomalyOf(
+        Anomaly.anomalyOf(
           "40",
-          sum > 14 ? Confidence.VERY_LIKELY : Confidence.MAYBE,
+          sum > 14 ? Confidence.VERY_LIKELY : Confidence.PROBABLE,
           Anomaly.Type.AUTOCLICKER,
           "too many swing packets in air " + sum, Anomaly.AnomalyOption.DELAY_128s
         ));
@@ -185,13 +191,15 @@ public class AirClickLimitHeuristic extends IntaveMetaCheckPart<Heuristics, AirC
   }
 
   private void prepareNextTick(AirClickLimitHeuristicMeta meta) {
-    meta.nextTick();
+    meta.resetedLeftClickCounterThisTick = false;
+    meta.swingsThisTick = 0;
 
-    meta.startBreakThisTick = false;
-    meta.stopBreakThisTick = false;
-    meta.blockPlacedThisTick = false;
-    meta.attackedThisTick = false;
-    meta.usedItemThisTick = false;
+    meta.tickIndex++;
+    if(meta.tickIndex > 19) {
+      meta.tickIndex = 0;
+    }
+
+    meta.tickArray[meta.tickIndex] = 0;
   }
 
   @PacketSubscription(
@@ -205,7 +213,7 @@ public class AirClickLimitHeuristic extends IntaveMetaCheckPart<Heuristics, AirC
     User user = userOf(player);
     AirClickLimitHeuristicMeta meta = metaOf(user);
 
-    meta.addClickToTick();
+    meta.swingsThisTick++;
   }
 
   private void sendStopDig(Player player, AirClickLimitHeuristicMeta meta) {
@@ -224,46 +232,13 @@ public class AirClickLimitHeuristic extends IntaveMetaCheckPart<Heuristics, AirC
   }
 
   public static class AirClickLimitHeuristicMeta extends UserCustomCheckMeta {
-    private boolean startBreakThisTick;
-    private boolean stopBreakThisTick;
-    private boolean blockPlacedThisTick;
-    private boolean usedItemThisTick;
-    private boolean attackedThisTick;
+    BlockPosition currentDiggedBlock;
+    private int tickIndex;
+    private int[] tickArray = new int[20];
+    private int swingsThisTick = 0;
+
     private boolean isBreakingClientSide;
     private boolean isBreakingServerSide;
-
-    private int tickIndex = 0;
-    private int lastIndex;
-    private int[] realTickArray = new int[20];
-    private int[] tickArray = new int[20];
-    private BlockPosition currentDiggedBlock;
-
-    private void addClickToTick() {
-      realTickArray[tickIndex]++;
-      tickArray[tickIndex]++;
-    }
-
-    private void removeClickFromTickArray() {
-      tickArray[tickIndex]--;
-    }
-
-    private int getRealClicksPerTick() {
-      return realTickArray[tickIndex];
-    }
-
-    private int getRealClicksOfLastTick() {
-      return realTickArray[lastIndex];
-    }
-
-    private void nextTick() {
-      lastIndex = tickIndex;
-      tickIndex++;
-      if(tickIndex > 19) {
-        tickIndex = 0;
-      }
-
-      realTickArray[tickIndex] = 0;
-      tickArray[tickIndex] = 0;
-    }
+    private boolean resetedLeftClickCounterThisTick;
   }
 }
