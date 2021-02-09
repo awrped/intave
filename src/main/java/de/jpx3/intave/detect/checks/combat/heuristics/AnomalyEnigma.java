@@ -1,6 +1,5 @@
 package de.jpx3.intave.detect.checks.combat.heuristics;
 
-import com.google.common.collect.Lists;
 import de.jpx3.intave.tools.annotate.Native;
 
 import java.security.SecureRandom;
@@ -68,43 +67,5 @@ public final class AnomalyEnigma {
       patternStringBuilder.append(garbage);
     }
     return patternStringBuilder.toString();
-  }
-
-  @Native
-  public static String decryptPatterns(String patterns) {
-    patterns = decryptWithPadding(patterns);
-    int size = patterns.length() / 2;
-    List<String> decryptedPatterns = Lists.newArrayList();
-    while (patterns.length() > 0) {
-      if (patterns.length() % 2 == 0) {
-        String pattern = patterns.substring(0, 2);
-        String decrypted = decryptPattern(pattern, size);
-        decryptedPatterns.add("p[" + decrypted + "]");
-      }
-      patterns = patterns.substring(1);
-    }
-    return String.join(",", decryptedPatterns);
-  }
-
-  @Native
-  private static String decryptWithPadding(String pattern) {
-    String paddingLength = pattern.substring(0, 2);
-    int paddingKey = (Base64.getDecoder().decode(paddingLength)[0]) ^ pattern.charAt(2);
-    return pattern.substring(2, paddingKey > 0 ? pattern.length() - paddingKey + 2 : pattern.length());
-  }
-
-  @Native
-  private static String decryptPattern(String pattern, int size) {
-    byte[] encode = Base64.getDecoder().decode(pattern);
-    int checkCombined = encode[0];
-    for (int i = 0; i < size * 2; i++) {
-      checkCombined ^= size * 28037423 * i;
-      checkCombined ^= 928344123 * size;
-      checkCombined ^= i * 4203874;
-    }
-    checkCombined ^= 452938422 ^ 987509231 ^ size;
-    int subCheck = checkCombined & 0b111;
-    int mainCheck = (checkCombined & 0b11111000) >> 3;
-    return mainCheck + String.valueOf(subCheck);
   }
 }

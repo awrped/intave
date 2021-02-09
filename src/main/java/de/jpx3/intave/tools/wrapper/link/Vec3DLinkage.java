@@ -17,6 +17,7 @@ public final class Vec3DLinkage {
     return atLeastCombatUpdate ? new Vec3DCombatUpdateResolver() : new Vec3DLegacyResolver();
   }
 
+  @PatchyAutoTranslation
   public static final class Vec3DLegacyResolver implements ClassLinker<WrappedVector> {
     @PatchyAutoTranslation
     @Override
@@ -26,6 +27,7 @@ public final class Vec3DLinkage {
     }
   }
 
+  @PatchyAutoTranslation
   public static final class Vec3DCombatUpdateResolver implements ClassLinker<WrappedVector> {
     @PatchyAutoTranslation
     @Override

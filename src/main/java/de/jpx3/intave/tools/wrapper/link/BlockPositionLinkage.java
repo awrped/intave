@@ -13,6 +13,7 @@ public final class BlockPositionLinkage {
     return new BlockPositionResolver();
   }
 
+  @PatchyAutoTranslation
   public static final class BlockPositionResolver implements ClassLinker<WrappedBlockPosition> {
     @PatchyAutoTranslation
     @Override

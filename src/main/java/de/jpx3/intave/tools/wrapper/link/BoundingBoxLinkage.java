@@ -17,6 +17,7 @@ public final class BoundingBoxLinkage {
     return atLeastAquaticUpdate ? new BoundingBoxLinkage.BoundingBoxAquaticResolver() : new BoundingBoxLinkage.BoundingBoxLegacyResolver();
   }
 
+  @PatchyAutoTranslation
   public static final class BoundingBoxLegacyResolver implements ClassLinker<WrappedAxisAlignedBB> {
     @PatchyAutoTranslation
     @Override
@@ -29,6 +30,7 @@ public final class BoundingBoxLinkage {
     }
   }
 
+  @PatchyAutoTranslation
   public static final class BoundingBoxAquaticResolver implements ClassLinker<WrappedAxisAlignedBB> {
     @PatchyAutoTranslation
     @Override

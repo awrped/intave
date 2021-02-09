@@ -142,9 +142,11 @@ public final class Heuristics extends IntaveMetaCheck<Heuristics.HeuristicMeta> 
 
     if (overallConfidence.level() >= Confidence.LIKELY.level()) {
       Anomaly.Type type = findDominantType(anomalies);
-      String identifier = resolveIdentifier(anomalies);
+      String identifier;
       if (IntaveControl.DEBUG_HEURISTICS) {
-        identifier = AnomalyEnigma.decryptPatterns(identifier);
+        identifier = anomaliesForId(anomalies).stream().map(anomaly -> "p[" + anomaly.key() + "]").collect(Collectors.joining(","));
+      } else {
+        identifier = resolveIdentifier(anomalies);
       }
       String details = type.details() + overallConfidence.output() + ", " + identifier;
       plugin.retributionService().processViolation(player, 25, this.name(), "is fighting suspiciously", details, "confidence-thresholds." + overallConfidence.output());
@@ -153,6 +155,10 @@ public final class Heuristics extends IntaveMetaCheck<Heuristics.HeuristicMeta> 
 
   @Native
   private String resolveIdentifier(List<Anomaly> anomalies) {
+    return AnomalyEnigma.encryptAnomalies(anomaliesForId(anomalies));
+  }
+
+  private List<Anomaly> anomaliesForId(List<Anomaly> anomalies) {
     // Remove anomalies without effect
     anomalies.removeIf(anomaly -> anomaly.confidence() == Confidence.NONE);
 
@@ -179,8 +185,7 @@ public final class Heuristics extends IntaveMetaCheck<Heuristics.HeuristicMeta> 
       }
       anomalies = reducedAnomalies;
     }
-
-    return AnomalyEnigma.encryptAnomalies(anomalies);
+    return anomalies;
   }
 
   private Anomaly.Type findDominantType(List<Anomaly> anomalies) {
