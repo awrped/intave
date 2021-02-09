@@ -71,15 +71,13 @@ public class AirClickLimitHeuristic extends IntaveMetaCheckPart<Heuristics, AirC
     Player player = event.getPlayer();
     User user = userOf(player);
     AirClickLimitHeuristicMeta meta = metaOf(user);
-    UserMetaInventoryData inventoryData = user.meta().inventoryData();
 
     // TODO: 01/28/21 Warning by Richy: The block-place is empty for native server versions from 1.9! Use the USE_ITEM packet instead
     BlockPosition blockPosition = event.getPacket().getBlockPositionModifier().read(0);
+    int blockPlaceDirection = event.getPacket().getIntegers().read(0);
 
     if(blockPosition != null) {
-      if (blockPosition.getX() != -1 && blockPosition.getY() != -1 && blockPosition.getZ() != -1 && inventoryData.heldItem() != null) {
-        meta.resetedLeftClickCounterThisTick = true;
-      } else {
+      if (blockPlaceDirection != 255) {
         Material clickedType = BlockAccessor.blockAccess(blockPosition.toLocation(player.getWorld())).getType();
         boolean clickable = BlockDataAccess.isClickable(clickedType);
 
@@ -157,7 +155,7 @@ public class AirClickLimitHeuristic extends IntaveMetaCheckPart<Heuristics, AirC
       playerLocation.setPitch(movementData.rotationPitch);
       WrappedMovingObjectPosition raycastResult = Raytracer.blockRayTrace(player, playerLocation);
       if(raycastResult != null && raycastResult.hitVec != WrappedVector.ZERO) {
-        // TODO: check if meta.lastDiggedBlock is the same as from the raycastResult
+        // TODO: check if meta.lastDiggedBlock is the same as from the raycastResult (geht nur wenn man den mc bug fixt der für 5 ticks flaggt wenn man ein block abgebaut hat)
 
 //        player.sendMessage("Is digging client side but not server side");
         meta.resetedLeftClickCounterThisTick = true;
@@ -176,8 +174,8 @@ public class AirClickLimitHeuristic extends IntaveMetaCheckPart<Heuristics, AirC
       sum += clickOfTick;
     }
 
-//    if(sum != 0)
-//      player.sendMessage("cps: " + sum);
+    if(sum != 0)
+      player.sendMessage("cps: " + sum);
 
     if(sum > 13 && user.meta().clientData().protocolVersion() <= UserMetaClientData.PROTOCOL_VERSION_BOUNTIFUL_UPDATE) {
       parentCheck().saveAnomaly(player,
@@ -240,7 +238,6 @@ public class AirClickLimitHeuristic extends IntaveMetaCheckPart<Heuristics, AirC
     private int swingsThisTick = 0;
 
     private boolean isBreakingClientSide;
-    private boolean isBreakingServerSide;
     private boolean resetedLeftClickCounterThisTick;
   }
 }
