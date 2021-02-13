@@ -141,7 +141,7 @@ public final class MovementEmulationEngine {
 
     // check motion status (velocity?)
     Location futurePosition = movementData.verifiedLocation();
-    WrappedAxisAlignedBB boundingBox = CollisionHelper.boundingBoxOf(user, futurePosition);
+    WrappedAxisAlignedBB boundingBox = CollisionHelper.exactBoundingBoxOf(user, futurePosition);
 
     Vector emulationVelocity = movementData.emulationVelocity;
     if (emulationVelocity != null) {
@@ -178,7 +178,7 @@ public final class MovementEmulationEngine {
 
 
       if (IntaveControl.DEBUG_EMULATION) {
-        player.sendMessage("[E-] (" + ticks + " ticks remaining)");
+        player.sendMessage("[E-] (" + ticks + " ticks remaining) onGround " + movementData.onGround + ", " + movementData.lastOnGround);
       }
 
     } else {
@@ -220,15 +220,12 @@ public final class MovementEmulationEngine {
         motionY = (lastMotion.getY() - 0.08) * 0.98f;
       }
     }
-    Vector collisionVector = resolveCollisionVector(player, boundingBox, lastMotion.getX(), motionY, lastMotion.getZ());
-    boolean onGround = motionY != collisionVector.getY() && motionY < 0.0;
-    motionY = collisionVector.getY();
     double multiplier;
     if (applyPhysics) {
       if (movementData.inWater) {
         multiplier = 0.8f;
       } else {
-        multiplier = onGround ? 0.546f : 0.91f;
+        multiplier = movementData.onGround ? 0.546f : 0.91f;
       }
     } else {
       multiplier = 1;
@@ -242,7 +239,13 @@ public final class MovementEmulationEngine {
         motionZ *= 0.25D;
       }
     }
-    collisionVector = resolveCollisionVector(player, boundingBox, motionX, motionY, motionZ);
+    Vector collisionVector = resolveCollisionVector(player, boundingBox, motionX, motionY, motionZ);
+
+    boolean onGround = motionY != collisionVector.getY() && motionY < 0.0;
+    if (applyPhysics) {
+      movementData.onGround = movementData.lastOnGround;
+      movementData.onGround = onGround;
+    }
 
     // webs, water
 

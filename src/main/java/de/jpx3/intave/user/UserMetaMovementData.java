@@ -214,6 +214,13 @@ public final class UserMetaMovementData {
   private void updateMovementMetaData() {
     UserMetaAbilityData abilityData = user.meta().abilityData();
     UserMetaPotionData potionData = user.meta().potionData();
+    UserMetaClientData clientData = user.meta().clientData();
+
+    // Sprinting conditions
+    sprinting = sprinting && !collidedHorizontally;
+
+    // Sneaking conditions
+    sneaking = sneaking && (clientData.sprintWhenSneaking() || !sprinting);
 
     aiMoveSpeed = abilityData.walkSpeed();
     jumpMovementFactor = 0.02f;
