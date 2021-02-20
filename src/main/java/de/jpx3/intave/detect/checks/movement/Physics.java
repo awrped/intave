@@ -546,8 +546,13 @@ public final class Physics extends IntaveCheck {
       && movementData.pastExternalVelocity != 0;
 
     if (movementData.inWeb) {
-      legitimateDeviation = criticalWeb ? 1e-6 : 0.03;
+      legitimateDeviation = criticalWeb ? 1e-6 : 0.13;
     }
+
+    if (movementData.pastInWeb < 10 && !movementData.inWeb && differenceY < 0.1) {
+      legitimateDeviation = 0.1;
+    }
+
     double abuseVertically = Math.max(0, differenceY - legitimateDeviation);
 
     // Jump out of water
