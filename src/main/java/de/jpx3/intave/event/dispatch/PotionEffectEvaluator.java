@@ -13,6 +13,9 @@ import org.bukkit.entity.Player;
 import java.util.Objects;
 
 public final class PotionEffectEvaluator implements PacketEventSubscriber {
+  public static final int POTION_EFFECT_SPEED = 1;
+  public static final int POTION_EFFECT_SLOWNESS = 2;
+  public static final int POTION_EFFECT_JUMP_BOOST = 8;
   private final IntavePlugin plugin;
 
   public PotionEffectEvaluator(IntavePlugin plugin) {
@@ -81,20 +84,17 @@ public final class PotionEffectEvaluator implements PacketEventSubscriber {
     User user = UserRepository.userOf(player);
     UserMetaPotionData potionData = user.meta().potionData();
     switch (potionEffectType) {
-      // 1 = speed
-      case 1: {
+      case POTION_EFFECT_SPEED: {
         potionData.potionEffectSpeedAmplifier(0);
         potionData.potionEffectSpeedDuration = 0;
         break;
       }
-      // 2 = slowness
-      case 2: {
+      case POTION_EFFECT_SLOWNESS: {
         potionData.potionEffectSlownessAmplifier(0);
         potionData.potionEffectSlownessDuration = 0;
         break;
       }
-      // 8 = jump boost
-      case 8: {
+      case POTION_EFFECT_JUMP_BOOST: {
         potionData.potionEffectJumpAmplifier(0);
         potionData.potionEffectJumpDuration = 0;
         break;
@@ -110,20 +110,17 @@ public final class PotionEffectEvaluator implements PacketEventSubscriber {
     int effectDuration = effectOutput.potionEffectDuration;
 
     switch (effectOutput.potionEffectType) {
-      // 1 = speed
-      case 1: {
+      case POTION_EFFECT_SPEED: {
         potionData.potionEffectSpeedAmplifier(effectAmplifier + 1);
         potionData.potionEffectSpeedDuration = effectDuration - 1;
         break;
       }
-      // 2 = slowness
-      case 2: {
+      case POTION_EFFECT_SLOWNESS: {
         potionData.potionEffectSlownessAmplifier(effectAmplifier + 1);
         potionData.potionEffectSlownessDuration = effectDuration - 1;
         break;
       }
-      // 8 = jump boost
-      case 8: {
+      case POTION_EFFECT_JUMP_BOOST: {
         potionData.potionEffectJumpAmplifier(effectAmplifier);
         potionData.potionEffectJumpDuration = effectDuration - 1;
         break;

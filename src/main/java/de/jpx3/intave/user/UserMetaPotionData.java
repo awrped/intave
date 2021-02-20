@@ -1,5 +1,12 @@
 package de.jpx3.intave.user;
 
+import org.bukkit.entity.Player;
+import org.bukkit.potion.PotionEffect;
+
+import java.util.Collection;
+
+import static de.jpx3.intave.event.dispatch.PotionEffectEvaluator.*;
+
 public final class UserMetaPotionData {
   private int potionEffectSpeedAmplifier = 0;
   public int potionEffectSpeedDuration = 0;
@@ -9,6 +16,49 @@ public final class UserMetaPotionData {
 
   private int potionEffectJumpAmplifier = 0;
   public int potionEffectJumpDuration = 0;
+
+  public UserMetaPotionData(Player player) {
+    if (player != null) {
+      loadPotionEffectsFrom(player.getActivePotionEffects());
+    }
+  }
+
+  private void loadPotionEffectsFrom(Collection<PotionEffect> potionEffects) {
+    for (PotionEffect potionEffect : potionEffects) {
+      inspectEffect(potionEffect);
+    }
+  }
+
+  private void inspectEffect(PotionEffect potionEffect) {
+    int duration = potionEffect.getDuration();
+    int amplifier = potionEffect.getAmplifier();
+    switch (potionEffect.getType().getId()) {
+      case POTION_EFFECT_SPEED: {
+        potionEffectSpeedDuration = duration;
+        potionEffectSpeedAmplifier = amplifier;
+        break;
+      }
+      case POTION_EFFECT_SLOWNESS: {
+        potionEffectSlownessDuration = duration;
+        potionEffectSlownessAmplifier = amplifier;
+        break;
+      }
+      case POTION_EFFECT_JUMP_BOOST: {
+        potionEffectJumpDuration = duration;
+        potionEffectJumpAmplifier = amplifier;
+        break;
+      }
+    }
+  }
+
+  public void clearPotionEffects() {
+    potionEffectSpeedDuration = 0;
+    potionEffectSpeedAmplifier = 0;
+    potionEffectSlownessDuration = 0;
+    potionEffectSlownessAmplifier = 0;
+    potionEffectJumpDuration = 0;
+    potionEffectJumpAmplifier = 0;
+  }
 
   public int potionEffectSpeedAmplifier() {
     return potionEffectSpeedAmplifier;

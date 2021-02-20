@@ -219,7 +219,7 @@ public final class User {
       this.violationLevelData = new UserMetaViolationLevelData();
       this.clientData = new UserMetaClientData(player);
       this.abilityData = new UserMetaAbilityData(player);
-      this.potionData = new UserMetaPotionData();
+      this.potionData = new UserMetaPotionData(player);
       this.inventoryData = new UserMetaInventoryData(player);
       this.synchronizeData = new UserMetaSynchronizeData();
       this.movementData = new UserMetaMovementData(player, user);

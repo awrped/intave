@@ -251,6 +251,19 @@ public final class UserMetaMovementData {
     return pastVelocity == 0 && physicsJumpedOverrideVL >= trustFactorSetting;
   }
 
+  public double baseMoveSpeed() {
+    UserMetaPotionData potionData = user.meta().potionData();
+    int speedAmplifier = potionData.potionEffectSpeedAmplifier();
+    double baseSpeed = 0.271;
+    if (speedAmplifier != 0) {
+      baseSpeed *= 1.0 + (0.2 * speedAmplifier);
+    }
+    if (sneaking) {
+      baseSpeed *= 0.2;
+    }
+    return baseSpeed;
+  }
+
   public void resetFlyingPacketAccurate() {
     pastFlyingPacketAccurate = 0;
   }

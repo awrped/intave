@@ -27,10 +27,7 @@ import de.jpx3.intave.tools.wrapper.WrappedMathHelper;
 import de.jpx3.intave.user.*;
 import de.jpx3.intave.world.BlockAccessor;
 import de.jpx3.intave.world.collision.Collision;
-import org.bukkit.ChatColor;
-import org.bukkit.GameMode;
-import org.bukkit.Location;
-import org.bukkit.Material;
+import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
@@ -633,11 +630,12 @@ public final class Physics extends IntaveCheck {
 
     boolean recentlySentFlying = movementData.recentlyEncounteredFlyingPacket(2);
     boolean recentlyVelocity = movementData.pastVelocity <= 1;
+    double baseMoveSpeed = movementData.baseMoveSpeed();
 
     if (recentlySentFlying) {
       boolean lessThanExpected = distanceMoved <= predictedDistanceMoved;
-      if (lessThanExpected || distanceMoved < 0.2) {
-        legitimateDeviation = Math.max(legitimateDeviation, distanceMoved);
+      if (lessThanExpected || distanceMoved < baseMoveSpeed * 0.7) {
+        legitimateDeviation = Math.max(legitimateDeviation, baseMoveSpeed * 0.7);
       }
     }
 
@@ -660,8 +658,8 @@ public final class Physics extends IntaveCheck {
     }
 
     double abuseHorizontally = Math.max(0, distance - legitimateDeviation);
-    boolean movedTooQuickly = distanceMoved > predictedDistanceMoved * 1.0005;
-    boolean movedTooQuicklyCheckable = distanceMoved > 0.15 || violationLevelData.physicsInvalidMovementsInRow >= 3;
+    boolean movedTooQuickly = distanceMoved > predictedDistanceMoved * 1.0005 && distanceMoved > baseMoveSpeed;
+    boolean movedTooQuicklyCheckable = distanceMoved > 0.15 || violationLevelData.physicsInvalidMovementsInRow >= 8;
 
     if (movedTooQuickly && movedTooQuicklyCheckable && abuseHorizontally > 0 && !recentlyVelocity) {
 //      double vl = Math.max(abuseHorizontally, 0.3) * 100.0;
