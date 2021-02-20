@@ -10,6 +10,7 @@ import de.jpx3.intave.event.packet.PacketSubscription;
 import de.jpx3.intave.event.packet.Sender;
 import de.jpx3.intave.executor.IntaveThreadFactory;
 import de.jpx3.intave.tools.MathHelper;
+import de.jpx3.intave.tools.wrapper.WrappedMathHelper;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserCustomCheckMeta;
 import de.jpx3.intave.user.UserMetaAttackData;
@@ -78,10 +79,11 @@ public class LinearRegressionHeuristic extends IntaveMetaCheckPart<Heuristics, L
       return false;
     }
 
-    double x = MathHelper.distanceInDegrees(attackData.perfectYaw(), movementData.rotationYaw);
-    double y = MathHelper.distanceInDegrees(movementData.rotationYaw, movementData.lastRotationYaw);//Math.abs(movementData.rotationPitch - attackData.perfectPitch());
+    double x = Math.abs(WrappedMathHelper.wrapAngleTo180_double(attackData.perfectYaw() - movementData.rotationYaw + 90));
+    double y = Math.abs(WrappedMathHelper.wrapAngleTo180_double(movementData.rotationYaw - movementData.lastRotationYaw + 90));//Math.abs(movementData.rotationPitch - attackData.perfectPitch());
 
-    if (x > 0 && y > 0 && x < 15 && y < 15) {
+//    if ()
+    {
       if (x > meta.highestVectorX)
         meta.highestVectorX = x;
 
@@ -93,7 +95,7 @@ public class LinearRegressionHeuristic extends IntaveMetaCheckPart<Heuristics, L
       return true;
     }
 
-    return false;
+//    return false;
   }
 
   private void linearRegression(Player player, LinearRegressionHeuristicMeta meta) {
