@@ -19,6 +19,7 @@ public final class UserMetaInventoryData {
   public int pastItemUsageTransition;
   public int pastHotBarSlotChange;
   public int awaitingSlotSet = -1;
+  public boolean forceInventoryOnClickOpen;
 
   public UserMetaInventoryData(Player player) {
     this.player = player;
@@ -89,7 +90,12 @@ public final class UserMetaInventoryData {
     this.handActive = handActive;
   }
 
-  public void setInventoryOpen(boolean inventoryOpen) {
+  public void updateInventoryOpenState(boolean inventoryOpen) {
+    User user = UserRepository.userOf(player);
+    UserMetaClientData clientData = user.meta().clientData();
+    if (!inventoryOpen && clientData.inventoryAchievementPacket()) {
+      this.forceInventoryOnClickOpen = true;
+    }
     deactivateHand();
     this.inventoryOpen = inventoryOpen;
   }

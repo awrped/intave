@@ -4,6 +4,7 @@ import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.reflect.StructureModifier;
 import com.comphenix.protocol.wrappers.EnumWrappers;
+import com.comphenix.protocol.wrappers.WrappedChatComponent;
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.adapter.ProtocolLibAdapter;
 import de.jpx3.intave.event.bukkit.BukkitEventSubscriber;
@@ -55,9 +56,21 @@ public final class PlayerInventoryEvaluator implements PacketEventSubscriber, Bu
   public void sentOpenInventory(PacketEvent event) {
     Player player = event.getPlayer();
     User user = UserRepository.userOf(player);
-    plugin.eventService()
-      .transactionFeedbackService()
-      .requestPong(player, user, this::openInventory);
+    UserMetaInventoryData inventoryData = user.meta().inventoryData();
+    PacketContainer packet = event.getPacket();
+
+    WrappedChatComponent chatComponent = packet.getChatComponents().read(0);
+    String json = chatComponent.getJson();
+    boolean clientDoesNotSendCloseWindow = json.contains("container.beacon");
+
+    if (!clientDoesNotSendCloseWindow) {
+      plugin.eventService()
+        .transactionFeedbackService()
+        .requestPong(player, user, this::openInventory);
+      inventoryData.forceInventoryOnClickOpen = true;
+    } else {
+      inventoryData.forceInventoryOnClickOpen = false;
+    }
   }
 
   @PacketSubscription(
@@ -77,7 +90,7 @@ public final class PlayerInventoryEvaluator implements PacketEventSubscriber, Bu
 
   private void openInventory(Player player, User user) {
     UserMetaInventoryData inventoryData = user.meta().inventoryData();
-    inventoryData.setInventoryOpen(true);
+    inventoryData.updateInventoryOpenState(true);
   }
 
   @PacketSubscription(
@@ -108,7 +121,7 @@ public final class PlayerInventoryEvaluator implements PacketEventSubscriber, Bu
 
   private void closeInventory(Player player, User user) {
     UserMetaInventoryData inventoryData = user.meta().inventoryData();
-    inventoryData.setInventoryOpen(false);
+    inventoryData.updateInventoryOpenState(false);
   }
 
   @PacketSubscription(
@@ -155,7 +168,7 @@ public final class PlayerInventoryEvaluator implements PacketEventSubscriber, Bu
     if (entityID == player.getEntityId()) {
       // sure this is correct? getItemInHand() might needs to be synchronized
 //      ItemStack itemInHand = player.getItemInHand();
-//      inventoryData.setHeldItem(itemInHand);
+//      inventoryData.heldItemType(itemInHand);
     }
   }
 

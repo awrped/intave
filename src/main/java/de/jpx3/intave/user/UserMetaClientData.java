@@ -34,6 +34,10 @@ public final class UserMetaClientData {
     return protocolVersion <= PROTOCOL_VERSION_BOUNTIFUL_UPDATE;
   }
 
+  public boolean inventoryAchievementPacket() {
+    return protocolVersion <= PROTOCOL_VERSION_BOUNTIFUL_UPDATE;
+  }
+
   public boolean applyNewEntityCollisions() {
     // >= 1.14
     return protocolVersion >= PROTOCOL_VERSION_VILLAGE_UPDATE;

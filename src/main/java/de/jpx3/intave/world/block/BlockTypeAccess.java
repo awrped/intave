@@ -1,12 +1,22 @@
 package de.jpx3.intave.world.block;
 
+import de.jpx3.intave.access.IntaveInternalException;
 import org.bukkit.Material;
 
 public final class BlockTypeAccess {
-  public static final Material WEB;
+  public static final Material WEB = resolveFrom("WEB", "COBWEB");
+  public static final Material SNOW_LAYER = resolveFrom("SNOW", "SNOW_LAYER");
 
-  static {
-    Material legacyWeb = Material.getMaterial("WEB");
-    WEB = legacyWeb != null ? legacyWeb : Material.getMaterial("COBWEB");
+  private static Material resolveFrom(String name, String alternativeName) {
+    Material material = Material.getMaterial(name);
+    if (material != null) {
+      return material;
+    }
+    Material alternativeMaterial = Material.getMaterial(alternativeName);
+    if (alternativeMaterial != null) {
+      return alternativeMaterial;
+    } else {
+      throw new IntaveInternalException("Unable to find block " + name + " or " + alternativeName);
+    }
   }
 }
