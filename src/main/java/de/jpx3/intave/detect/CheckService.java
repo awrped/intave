@@ -5,10 +5,10 @@ import com.google.common.collect.ImmutableMap;
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.access.IntaveInternalException;
 import de.jpx3.intave.detect.checks.combat.AttackRaytrace;
+import de.jpx3.intave.detect.checks.combat.ClickSpeedLimiter;
 import de.jpx3.intave.detect.checks.combat.Heuristics;
 import de.jpx3.intave.detect.checks.movement.Physics;
 import de.jpx3.intave.detect.checks.movement.Timer;
-import de.jpx3.intave.detect.checks.other.InventoryClickAnalysis;
 import de.jpx3.intave.detect.checks.world.BreakSpeedLimiter;
 import de.jpx3.intave.detect.checks.world.InteractionRaytrace;
 import de.jpx3.intave.event.bukkit.BukkitEventLinker;
@@ -37,7 +37,8 @@ public final class CheckService {
     addCheck(Timer.class);
     addCheck(BreakSpeedLimiter.class);
 //    addCheck(PlacementAnalysis.class);
-    addCheck(InventoryClickAnalysis.class);
+//    addCheck(InventoryClickAnalysis.class);
+    addCheck(ClickSpeedLimiter.class);
 //    addCheck(WorkspaceCheck.class);
 
     bakeQuickAccess();
