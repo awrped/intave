@@ -97,6 +97,11 @@ public final class PhysicsSimulator {
       jumped = Math.abs(motionY - 0.2) < 1e-5 || motionY == movementData.jumpUpwardsMotion();
     }
 
+    if (movementData.sprinting && keyForward != 1) {
+      keyForward = 0;
+      keyStrafe = 0;
+    }
+
     if (inventoryData.inventoryOpen()) {
       keyForward = 0;
       keyStrafe = 0;
@@ -153,7 +158,7 @@ public final class PhysicsSimulator {
 
         for (int keyForward = 1; keyForward > -2; keyForward--) {
           for (int keyStrafe = -1; keyStrafe <= 1; keyStrafe++) {
-            if (movementData.sprintingAllowed() && keyForward != 1) {
+            if (movementData.sprinting && keyForward != 1) {
               continue;
             }
             if (inventoryOpen) {
