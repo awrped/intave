@@ -644,9 +644,15 @@ public final class Physics extends IntaveCheck {
     boolean recentlyVelocity = movementData.pastVelocity <= 1;
     double baseMoveSpeed = movementData.baseMoveSpeed();
 
+    boolean useBaseMoveSpeed = true;
+
+    if (movementData.pastWaterMovement < 20 || movementData.inWeb || movementData.inLava()) {
+      useBaseMoveSpeed = false;
+    }
+
     if (recentlySentFlying) {
       boolean lessThanExpected = distanceMoved <= predictedDistanceMoved;
-      if (lessThanExpected || ((distanceMoved < baseMoveSpeed * 0.7) && movementData.pastWaterMovement > 20)) {
+      if (lessThanExpected || ((distanceMoved < baseMoveSpeed * 0.7) && useBaseMoveSpeed)) {
         legitimateDeviation = Math.max(legitimateDeviation, baseMoveSpeed * 0.7);
       }
     }
@@ -670,7 +676,12 @@ public final class Physics extends IntaveCheck {
     }
 
     double abuseHorizontally = Math.max(0, distance - legitimateDeviation);
-    boolean movedTooQuickly = distanceMoved > predictedDistanceMoved * 1.0005 && distanceMoved > baseMoveSpeed;
+    boolean movedTooQuickly = distanceMoved > predictedDistanceMoved * 1.0005;
+
+    if (useBaseMoveSpeed) {
+      movedTooQuickly = movedTooQuickly && distanceMoved > baseMoveSpeed;
+    }
+
     boolean movedTooQuicklyCheckable = distanceMoved > 0.15 || violationLevelData.physicsInvalidMovementsInRow >= 8;
 
     if (movedTooQuickly && movedTooQuicklyCheckable && abuseHorizontally > 0 && !recentlyVelocity) {
