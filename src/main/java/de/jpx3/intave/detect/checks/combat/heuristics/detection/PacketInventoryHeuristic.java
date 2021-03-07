@@ -56,7 +56,7 @@ public final class PacketInventoryHeuristic extends IntaveMetaCheckPart<Heuristi
     if (clientData.flyingPacketStream() && meta.inventoryTicks <= 1 && meta.performedInventoryOpenOperation) {
       int options = Anomaly.AnomalyOption.SUGGEST_MINING | Anomaly.AnomalyOption.DELAY_128s;
       String details = "closed inventory too quickly (" + meta.inventoryTicks + ")";
-      Anomaly anomaly = Anomaly.anomalyOf("131", Confidence.CERTAIN, Anomaly.Type.KILLAURA, details, options);
+      Anomaly anomaly = Anomaly.anomalyOf("131", Confidence.PROBABLE, Anomaly.Type.KILLAURA, details, options);
       parentCheck().saveAnomaly(player, anomaly);
       plugin.eventService().attackCancelService().requestDamageCancel(user, AttackCancelType.DCRM);
     }

@@ -14,6 +14,7 @@ import de.jpx3.intave.event.punishment.AttackCancelType;
 import de.jpx3.intave.tools.client.SinusCache;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserCustomCheckMeta;
+import de.jpx3.intave.user.UserMetaAttackData;
 import de.jpx3.intave.user.UserMetaMovementData;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
@@ -39,6 +40,11 @@ public final class ReshapedJumpHeuristic extends IntaveMetaCheckPart<Heuristics,
     User user = userOf(player);
     ReshapedJumpHeuristicMeta heuristicMeta = metaOf(user);
     UserMetaMovementData movementData = user.meta().movementData();
+    UserMetaAttackData attackData = user.meta().attackData();
+
+    if (!attackData.recentlyAttacked(1000)) {
+      return;
+    }
 
     boolean jump = Math.abs(movementData.jumpUpwardsMotion() - movementData.motionY()) < 1e-5;
     if (jump && movementData.sprinting && movementData.suspiciousMovement && movementData.lastTeleport > 5) {
@@ -59,7 +65,7 @@ public final class ReshapedJumpHeuristic extends IntaveMetaCheckPart<Heuristics,
         if (heuristicMeta.balance++ >= 1) {
           String description = "player performed rotation hop";
           int options = Anomaly.AnomalyOption.LIMIT_2 | Anomaly.AnomalyOption.DELAY_128s | Anomaly.AnomalyOption.SUGGEST_MINING;
-          Anomaly anomaly = Anomaly.anomalyOf("61", Confidence.VERY_LIKELY, Anomaly.Type.KILLAURA, description, options);
+          Anomaly anomaly = Anomaly.anomalyOf("61", Confidence.LIKELY, Anomaly.Type.KILLAURA, description, options);
           parentCheck().saveAnomaly(player, anomaly);
           plugin.eventService().attackCancelService().requestDamageCancel(user, AttackCancelType.DCRM);
         }

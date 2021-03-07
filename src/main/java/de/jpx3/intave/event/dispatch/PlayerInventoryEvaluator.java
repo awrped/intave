@@ -10,11 +10,9 @@ import de.jpx3.intave.adapter.ProtocolLibAdapter;
 import de.jpx3.intave.event.bukkit.BukkitEventSubscriber;
 import de.jpx3.intave.event.bukkit.BukkitEventSubscription;
 import de.jpx3.intave.event.packet.*;
+import de.jpx3.intave.tools.AccessHelper;
 import de.jpx3.intave.tools.items.InventoryUseItemHelper;
-import de.jpx3.intave.user.User;
-import de.jpx3.intave.user.UserMetaInventoryData;
-import de.jpx3.intave.user.UserMetaMovementData;
-import de.jpx3.intave.user.UserRepository;
+import de.jpx3.intave.user.*;
 import de.jpx3.intave.world.collision.Collision;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -207,13 +205,20 @@ public final class PlayerInventoryEvaluator implements PacketEventSubscriber, Bu
   public void receiveBlockPlace(PacketEvent event) {
     Player player = event.getPlayer();
     User user = UserRepository.userOf(player);
-    UserMetaInventoryData inventoryData = user.meta().inventoryData();
+    User.UserMeta meta = user.meta();
+    UserMetaInventoryData inventoryData = meta.inventoryData();
+    UserMetaPunishmentData punishmentData = meta.punishmentData();
 
     PacketContainer packet = event.getPacket();
     ItemStack heldItem = inventoryData.heldItem();
 
     boolean requestedItemUse = requestedItemUse(packet);
     boolean useItem = InventoryUseItemHelper.isUseItem(player, heldItem);
+
+    if (requestedItemUse && AccessHelper.now() - punishmentData.timeLastBlockCancel < 5000) {
+      event.setCancelled(true);
+      return;
+    }
 
     if (requestedItemUse && useItem) {
       inventoryData.activateHand();

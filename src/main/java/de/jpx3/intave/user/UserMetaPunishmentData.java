@@ -23,6 +23,9 @@ public final class UserMetaPunishmentData {
   public int damageTicksBefore = -1;
   public int attackCount;
 
+  public long timeLastBlockCancel;
+  public long timeLastBowCancel;
+
   public UserMetaPunishmentData(Player player) {
     this.damageCancels = Lists.newArrayList(
       new DamageCancel(AttackCancelType.DCRH, DAMAGE_CANCEL_HEAVY_DURATION, (event) -> event.setCancelled(true)),

@@ -13,8 +13,12 @@ import de.jpx3.intave.event.packet.PacketDescriptor;
 import de.jpx3.intave.event.packet.PacketSubscription;
 import de.jpx3.intave.event.packet.Sender;
 import de.jpx3.intave.event.punishment.AttackCancelType;
+import de.jpx3.intave.reflect.ReflectiveDataWatcherAccess;
+import de.jpx3.intave.tools.AccessHelper;
+import de.jpx3.intave.tools.sync.Synchronizer;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserCustomCheckMeta;
+import de.jpx3.intave.user.UserMetaPunishmentData;
 import de.jpx3.intave.user.UserRepository;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -59,6 +63,7 @@ public final class BlockingHeuristic extends IntaveMetaCheckPart<Heuristics, Blo
   public void receiveInteractionPacket(PacketEvent event) {
     Player player = event.getPlayer();
     User user = UserRepository.userOf(player);
+    UserMetaPunishmentData punishmentData = user.meta().punishmentData();
     BlockingMeta meta = metaOf(user);
     PacketContainer packet = event.getPacket();
 
@@ -79,7 +84,10 @@ public final class BlockingHeuristic extends IntaveMetaCheckPart<Heuristics, Blo
           Anomaly anomaly = Anomaly.anomalyOf("143", Confidence.CERTAIN, Anomaly.Type.KILLAURA, description, options);
           parentCheck().saveAnomaly(player, anomaly);
           plugin.eventService().attackCancelService().requestDamageCancel(user, AttackCancelType.DCRB);
+          punishmentData.timeLastBlockCancel = AccessHelper.now();
+          Synchronizer.synchronize(() -> ReflectiveDataWatcherAccess.setDataWatcherFlag(player, ReflectiveDataWatcherAccess.DATA_WATCHER_BLOCKING_ID, false));
         }
+
       }
     } else { // BLOCK_PLACE
       ItemStack itemInHand = packet.getItemModifier().readSafely(0);
