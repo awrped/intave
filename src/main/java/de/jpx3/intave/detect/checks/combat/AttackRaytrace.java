@@ -80,6 +80,11 @@ public class AttackRaytrace extends IntaveMetaCheck<AttackRaytrace.AttackRaytrac
     UserMetaMovementData movementData = meta.movementData();
     UserMetaViolationLevelData violationLevelData = meta.violationLevelData();
 
+    if(movementData.lastTeleport == 0) {
+      attackRaytraceMeta.remainingAttacks.clear();
+      return;
+    }
+
     List<Attack> remainingAttacks = attackRaytraceMeta.remainingAttacks;
     if(!remainingAttacks.isEmpty()) {
       for (Attack remainingAttack : remainingAttacks) {
