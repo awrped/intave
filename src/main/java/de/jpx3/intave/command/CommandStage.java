@@ -95,22 +95,25 @@ public abstract class CommandStage {
   private List<String> subcommandCompletions(CommandSender player) {
     return subCommandList.stream()
       .filter(subCommand -> PermissionCheck.permissionCheck(player, subCommand.permission()))
-      .filter(subCommandList -> !subCommandList.hideInHelp())
-      .map(intaveSubCommand -> intaveSubCommand.selectors()[0]).collect(Collectors.toList());
+      .filter(subCommandList1 -> !subCommandList1.hideInHelp())
+      .map(intaveSubCommand -> intaveSubCommand.selectors()[0])
+      .collect(Collectors.toList());
   }
 
   protected void showInfo(CommandSender sender) {
     sender.sendMessage(IntavePlugin.prefix() + "Available subcommands:");
-    StringBuilder commandPath = new StringBuilder();
+    List<String> commandPath = new ArrayList<>();
     CommandStage currentStage = this;
     do {
-      commandPath.append(currentStage.name()).append(" ");
+      commandPath.add(currentStage.name());
     } while ((currentStage = currentStage.parent()) != null);
+    Collections.reverse(commandPath);
+    String commandPathAsString = commandPath.stream().map(s -> s + " ").collect(Collectors.joining());
     for (IntaveSubCommand intaveSubCommand : subCommandList) {
       if(intaveSubCommand.hideInHelp()) {
         continue;
       }
-      sender.sendMessage(IntavePlugin.prefix() + commandPath + intaveSubCommand.selectors()[0] + ": " + intaveSubCommand.description());
+      sender.sendMessage(IntavePlugin.prefix() + commandPathAsString + intaveSubCommand.selectors()[0] + ": " + intaveSubCommand.description());
     }
   }
 

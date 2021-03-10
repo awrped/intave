@@ -131,7 +131,7 @@ public final class IntaveCommandStage extends CommandStage {
   @SubCommand(
     selectors = "diagnostics",
     usage = "",
-    description = "Intave statistics",
+    description = "Runtime and performance data output",
     permission = "intave.command.diagnostics.*"
   )
   @Forward(

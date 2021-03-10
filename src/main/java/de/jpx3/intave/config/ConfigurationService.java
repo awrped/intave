@@ -1,7 +1,9 @@
 package de.jpx3.intave.config;
 
+import de.jpx3.intave.IntaveControl;
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.access.IntaveException;
+import de.jpx3.intave.tools.AccessHelper;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -47,10 +49,16 @@ public final class ConfigurationService {
   }
 
   public void setupConfiguration(String requiredState) {
+    if(IntaveControl.DISABLE_LICENSE_CHECK) {
+      if (AccessHelper.now() - loader().configurationCache().lastModified() > 1000 * 60 * 60 * 2) {
+        loader.loadConfigurationUpdatedForcefully();
+        return;
+      }
+    }
+
 //    String hash = loader.precomputeConfigurationHash();
     int latestKnownState = loader().latestState();
-    if(/*latestKnownState == 0 || *//* we don't have a configuration */
-      requiredState == null ||  /* no connection to our servers */
+    if(requiredState == null ||  /* no connection to our servers */
       requiredState.equalsIgnoreCase(String.valueOf(latestKnownState)) /* configuration is up to date */
     ) {
       loader.loadConfiguration();

@@ -48,7 +48,7 @@ public final class CommandProcessor implements CommandExecutor, TabCompleter {
       return null;
     }
     List<String> completions = new ArrayList<>();
-    StringUtil.copyPartialMatches(arguments[0], tabCompletions, completions);
+    StringUtil.copyPartialMatches(arguments[arguments.length - 1], tabCompletions, completions);
     return completions;
   }
 }

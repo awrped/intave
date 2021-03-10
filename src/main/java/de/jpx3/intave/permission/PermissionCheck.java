@@ -2,6 +2,7 @@ package de.jpx3.intave.permission;
 
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.tools.annotate.Native;
+import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserRepository;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.Permissible;
@@ -13,7 +14,6 @@ public final class PermissionCheck {
       if(permission.equalsIgnoreCase("sibyl") && IntavePlugin.singletonInstance().sibylIntegrationService().isAuthenticated((Player) permissible)) {
         return true;
       }
-
       return playerPermissionCheck((Player) permissible, permission);
     } else {
       return permissible.hasPermission(permission);
@@ -22,9 +22,13 @@ public final class PermissionCheck {
 
   private static boolean playerPermissionCheck(Player player, String permission) {
     if(!UserRepository.hasUser(player)) {
+      return player.hasPermission(permission);
+    }
+    User user = UserRepository.userOf(player);
+    if(!user.hasOnlinePlayer()) {
       return false;
     }
-    PermissionCache permissionCache = UserRepository.userOf(player).permissionCache();
+    PermissionCache permissionCache = user.permissionCache();
     if(permissionCache.inCache(permission)) {
       return permissionCache.permissionCheck(permission);
     } else {

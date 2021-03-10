@@ -59,7 +59,9 @@ public final class IntaveLogger {
 
   public void exception(Throwable throwable) {
     globalPrintLn("[Intave] Caught an "+throwable.getClass().getSimpleName()+" exception");
-    throwable.printStackTrace();
+    for (PrintStream outputStream : outputStreams) {
+      throwable.printStackTrace(outputStream);
+    }
   }
 
   public void globalPrintLn(Object object) {

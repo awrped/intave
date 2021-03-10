@@ -46,6 +46,19 @@ permissions:
   intave.command.restart:
     default: op
 
+  intave.command.diagnostics:
+    default: op
+
+    children:
+      intave.command.diagnostics.performance: true
+      intave.command.diagnostics.statistics: true
+
+  intave.command.diagnostics.performance:
+    default: op
+
+  intave.command.diagnostics.statistics:
+    default: op
+
   intave.command.internals.*:
     default: false
 

@@ -13,8 +13,8 @@ import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 
 public final class IntaveDiagnosticsStage extends CommandStage {
   private static IntaveDiagnosticsStage singletonInstance;
@@ -34,27 +34,23 @@ public final class IntaveDiagnosticsStage extends CommandStage {
   public void timingsCommand(User user) {
     Player player = user.player();
     player.sendMessage(IntavePlugin.prefix() + "Service status");
-    if (plugin.sibylIntegrationService().authentication().isAuthenticated(player)) {
-      List<Timing> timings = new ArrayList<>(Timings.timingPool());
-      timings.sort(Timing::compareTo);
+    List<Timing> timings = new ArrayList<>(Timings.timingPool());
+    timings.sort(Timing::compareTo);
 
-      timings.forEach(timing -> {
-        boolean suspicious = timing.getAverageCallDurationInMillis() > 0.5d;
-        boolean dumping = timing.getAverageCallDurationInMillis() > 1.5d;
-
-        String type;
-        if (suspicious) {
-          type = ChatColor.GOLD + "SUSPICIOUS";
-        } else if (dumping) {
-          type = ChatColor.RED + "CRITICAL";
-        } else {
-          type = ChatColor.GREEN + "HEALTHY";
-        }
-
-        String message = type + " " + ChatColor.GRAY + timing.getTimingName();
-        player.sendMessage(message);
-      });
-    }
+    timings.forEach(timing -> {
+      boolean suspicious = timing.getAverageCallDurationInMillis() > 0.5d;
+      boolean dumping = timing.getAverageCallDurationInMillis() > 1.5d;
+      String type;
+      if (suspicious) {
+        type = ChatColor.GOLD + "SUSPICIOUS";
+      } else if (dumping) {
+        type = ChatColor.RED + "CRITICAL";
+      } else {
+        type = ChatColor.GREEN + "HEALTHY";
+      }
+      String message = type + " " + ChatColor.GRAY + timing.getTimingName();
+      player.sendMessage(message);
+    });
   }
 
   @SubCommand(
@@ -66,16 +62,18 @@ public final class IntaveDiagnosticsStage extends CommandStage {
   public void checkStatisticsCommand(User user) {
     Player player = user.player();
     player.sendMessage(IntavePlugin.prefix() + "Loading check statistics...");
-    for (IntaveCheck check : plugin.checkService().checks()) {
+    List<IntaveCheck> checks = new ArrayList<>(plugin.checkService().checks());
+    checks.sort(Comparator.comparing(check -> check.statistics().totalFails()));
+    for (IntaveCheck check : checks) {
       CheckStatistics statistics = check.statistics();
-      double processed = statistics.totalProcessed();
-      double violations = statistics.totalViolations();
+      long processed = statistics.totalProcessed();
+      long violations = statistics.totalViolations();
       if (processed == 0 || !check.enabled()) {
         continue;
       }
-      String violatedRate = MathHelper.formatDouble(violations / processed * 100, 5);
-      String checkFormat = ChatColor.RED + check.name().toUpperCase(Locale.ROOT);
-      String message = checkFormat + ChatColor.GRAY + ": " + (int) processed + " processed / " + violatedRate + "% violated";
+      String violatedRate = MathHelper.formatDouble((((double) violations / (double) processed)) * 100d, 5);
+      String checkFormat = ChatColor.RED + check.name();
+      String message = checkFormat + ChatColor.GRAY + ": " + violations + " detections in " + processed + " processes (" + violatedRate + "%)";
       player.sendMessage(message);
     }
   }

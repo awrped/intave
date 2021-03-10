@@ -206,4 +206,11 @@ public final class IntaveSubCommand {
   public String description() {
     return description;
   }
+
+  @Override
+  public String toString() {
+    return "IntaveSubCommand{" +
+      "selectors=" + Arrays.toString(selectors) +
+      '}';
+  }
 }

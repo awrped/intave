@@ -263,7 +263,7 @@ public final class ConfigurationLoader {
     return configurationCache().exists();
   }
 
-  private File configurationCache() {
+  public File configurationCache() {
     String fileName = new UUID(((long)configurationKey.length() << 8) | (configurationKey.hashCode() >>> 1),  ~configurationKey.hashCode()).toString();
     fileName = fileName/*.substring(0, fileName.length() - 1)*/ + CONF_CACHE_FILE_SUFFIX;
     return new File(intaveTempDirectory(), fileName);
