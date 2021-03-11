@@ -12,6 +12,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class WrappedEntity implements Cloneable {
   private final static boolean NEW_POSITION_PROCESSING = ProtocolLibAdapter.serverVersion().isAtLeast(ProtocolLibAdapter.COMBAT_UPDATE);
   private final String entityName;
+  private final int entityId;
 
   public boolean isEntityLiving;
   public final HitBoxBoundaries hitBoxBoundaries;
@@ -45,12 +46,14 @@ public class WrappedEntity implements Cloneable {
 
   public WrappedEntity(
     String entityName,
+    int entityId,
     boolean isEntityLiving,
     HitBoxBoundaries hitBoxBoundaries
   ) {
+    this.entityName = entityName;
+    this.entityId = entityId;
     this.isEntityLiving = isEntityLiving;
     this.hitBoxBoundaries = hitBoxBoundaries;
-    this.entityName = entityName;
 
     this.position = new EntityPositionContext();
     this.alternativePosition = new EntityPositionContext();
@@ -246,6 +249,10 @@ public class WrappedEntity implements Cloneable {
     return entityName;
   }
 
+  public int entityId() {
+    return entityId;
+  }
+
   /**
    * Returns whether the entity is checkable.
    */
@@ -267,7 +274,7 @@ public class WrappedEntity implements Cloneable {
 
   @Override
   public WrappedEntity clone()  {
-    WrappedEntity clone = new WrappedEntity(entityName, isEntityLiving, hitBoxBoundaries);
+    WrappedEntity clone = new WrappedEntity(entityName, entityId, isEntityLiving, hitBoxBoundaries);
 
     clone.isClone = true;
     clone.position = position.clone();

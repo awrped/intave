@@ -354,7 +354,7 @@ public final class ClientSideEntityService implements PacketEventSubscriber {
   ) {
     UserMetaSynchronizeData synchronizeData = user.meta().synchronizeData();
     Map<Integer, WrappedEntity> synchronizedEntityMap = synchronizeData.synchronizedEntityMap();
-    WrappedEntity entity = new WrappedEntity(entityName, isEntityLiving, boundaries);
+    WrappedEntity entity = new WrappedEntity(entityName, entityId, isEntityLiving, boundaries);
     entity.serverPosX = WrappedMathHelper.floor(posX * 32d);
     entity.serverPosY = WrappedMathHelper.floor(posY * 32d);
     entity.serverPosZ = WrappedMathHelper.floor(posZ * 32d);
@@ -373,7 +373,7 @@ public final class ClientSideEntityService implements PacketEventSubscriber {
     double posX = serverPosX / 32d;
     double posY = serverPosY / 32d;
     double posZ = serverPosZ / 32d;
-    WrappedEntity entity = new WrappedEntity(entityName, isEntityLiving, boundaries);
+    WrappedEntity entity = new WrappedEntity(entityName, entityId, isEntityLiving, boundaries);
     entity.serverPosX = serverPosX;
     entity.serverPosY = serverPosY;
     entity.serverPosZ = serverPosZ;
