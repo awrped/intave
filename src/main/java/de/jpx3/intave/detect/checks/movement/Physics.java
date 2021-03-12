@@ -27,10 +27,7 @@ import de.jpx3.intave.tools.wrapper.WrappedMathHelper;
 import de.jpx3.intave.user.*;
 import de.jpx3.intave.world.BlockAccessor;
 import de.jpx3.intave.world.collision.Collision;
-import org.bukkit.ChatColor;
-import org.bukkit.GameMode;
-import org.bukkit.Location;
-import org.bukkit.Material;
+import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
@@ -384,9 +381,8 @@ public final class Physics extends IntaveCheck {
           String details = (multipleBoxes ? intersectionBoundingBoxesCurrent.size() : "one") + " box" + (multipleBoxes ? "es" : "");
 
           plugin.violationProcessor().processViolation(player, 0, "Physics", message, details);
-          Location phaseStartLocation = new Location(player.getWorld(), blockPositionX, blockPositionY, blockPositionZ);
-          WrappedAxisAlignedBB startPhaseBoundingBox = Collision.boundingBoxOf(user, phaseStartLocation);
-          plugin.eventService().emulationEngine().emulationPushOutOfBlock(player, startPhaseBoundingBox);
+          WrappedAxisAlignedBB startPhaseBoundingBox = Collision.boundingBoxOf(user, movementData.verifiedLocation());
+          plugin.eventService().emulationEngine().emulationPushOutOfBlock(player, startPhaseBoundingBox, predictedX, predictedY, predictedZ);
         }
       }
     }

@@ -73,7 +73,10 @@ public final class MovementEmulationEngine {
     proceedEmulationTick(player, motion, ticks, ticks);
   }
 
-  public void emulationPushOutOfBlock(Player player, WrappedAxisAlignedBB boundingBox) {
+  public void emulationPushOutOfBlock(
+    Player player, WrappedAxisAlignedBB boundingBox,
+    double motionX, double motionY, double motionZ
+  ) {
     User user = UserRepository.userOf(player);
     UserMetaViolationLevelData violationLevelData = user.meta().violationLevelData();
 
@@ -82,8 +85,11 @@ public final class MovementEmulationEngine {
     }
 
     violationLevelData.isInActiveTeleportBundle = true;
-
-    user.meta().movementData().setBoundingBox(boundingBox);
+    UserMetaMovementData movementData = user.meta().movementData();
+    movementData.physicsMotionX = motionX;
+    movementData.physicsMotionY = motionY;
+    movementData.physicsMotionZ = motionZ;
+    movementData.setBoundingBox(boundingBox);
     proceedPushOutOfBlockEmulationTick(player);
   }
 
@@ -104,10 +110,11 @@ public final class MovementEmulationEngine {
 
     boolean boundingBoxIntersection = Collision.checkBoundingBoxIntersection(user, boundingBox);
     if (boundingBoxIntersection) {
-      double positionX = (boundingBox.minX + boundingBox.maxX) / 2.0;
-      double positionY = (boundingBox.minY + boundingBox.maxY) / 2.0;
-      double positionZ = (boundingBox.minZ + boundingBox.maxZ) / 2.0;
-      Vector pushVector = resolvePushVector(player, positionX, positionY, positionZ);
+      double motionX = (boundingBox.minX + boundingBox.maxX) / 2.0;
+      double motionY = (boundingBox.minY + boundingBox.maxY) / 2.0;
+      double motionZ = (boundingBox.minZ + boundingBox.maxZ) / 2.0;
+      Vector pushVector = resolvePushVector(player, motionX, motionY, motionZ);
+      pushVector.setY(Math.min(0, pushVector.getY()));
 
       Location location = movementData.verifiedLocation().clone().add(pushVector);
       teleport(player, location);
