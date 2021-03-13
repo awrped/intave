@@ -22,6 +22,7 @@ import de.jpx3.intave.tools.MathHelper;
 import de.jpx3.intave.tools.annotate.DispatchCrossCall;
 import de.jpx3.intave.tools.client.PlayerMovementHelper;
 import de.jpx3.intave.tools.client.PlayerMovementPoseHelper;
+import de.jpx3.intave.tools.sync.Synchronizer;
 import de.jpx3.intave.tools.wrapper.WrappedAxisAlignedBB;
 import de.jpx3.intave.tools.wrapper.WrappedMathHelper;
 import de.jpx3.intave.user.*;
@@ -114,7 +115,21 @@ public final class Physics extends IntaveCheck {
     return aquaticWaterMovement;
   }
 
-  public void dealFallDamage(Object playerHandle, float fallDistance) {
+  public void applyFallDamageUpdate(User user) {
+    UserMetaMovementData movementData = user.meta().movementData();
+    if (movementData.artificialFallDistance > 3.0F) {
+      float fallDistance = movementData.artificialFallDistance;
+      Synchronizer.synchronize(() -> {
+        Object playerHandle = user.playerHandle();
+        movementData.allowFallDamage = true;
+        dealFallDamage(playerHandle, fallDistance);
+        movementData.allowFallDamage = false;
+      });
+      movementData.artificialFallDistance = 0F;
+    }
+  }
+
+  private void dealFallDamage(Object playerHandle, float fallDistance) {
     try {
       fallDamageInvokeMethod.invoke(playerHandle, fallDistance, 1.0f);
     } catch (Throwable throwable) {

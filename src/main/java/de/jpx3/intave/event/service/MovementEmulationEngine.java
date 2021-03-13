@@ -4,6 +4,7 @@ import de.jpx3.intave.IntaveControl;
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.access.IntaveException;
 import de.jpx3.intave.access.IntaveInternalException;
+import de.jpx3.intave.detect.checks.movement.Physics;
 import de.jpx3.intave.reflect.ReflectiveAccess;
 import de.jpx3.intave.reflect.caller.CallerResolver;
 import de.jpx3.intave.reflect.caller.PluginInvocation;
@@ -35,9 +36,11 @@ import java.util.Set;
 
 public final class MovementEmulationEngine {
   private final IntavePlugin plugin;
+  private final Physics physicsCheck;
 
   public MovementEmulationEngine(IntavePlugin plugin) {
     this.plugin = plugin;
+    this.physicsCheck = plugin.checkService().searchCheck(Physics.class);
   }
 
   public void emulationSetBack(Player player, Vector motion, int ticks) {
@@ -184,6 +187,10 @@ public final class MovementEmulationEngine {
       movementData.physicsMotionY = futureMotion.getY();
       movementData.physicsMotionZ = futureMotion.getZ();
 
+      if (movementData.onGround) {
+        physicsCheck.applyFallDamageUpdate(user);
+        movementData.artificialFallDistance = 0;
+      }
 
       if (IntaveControl.DEBUG_EMULATION) {
         player.sendMessage("[E-] (" + ticks + " ticks remaining)");
@@ -225,7 +232,7 @@ public final class MovementEmulationEngine {
         motionY = lastMotion.getY() * 0.8f;
         motionY -= 0.02;
       } else {
-        motionY = (lastMotion.getY() - 0.08) * 0.98f;
+        motionY = (lastMotion.getY() - movementData.gravity) * 0.98f;
       }
     }
     Vector collisionVector = resolveCollisionVector(player, boundingBox, lastMotion.getX(), motionY, lastMotion.getZ());
@@ -249,6 +256,8 @@ public final class MovementEmulationEngine {
         motionY *= 0.05f;
         motionZ *= 0.25D;
       }
+      movementData.lastOnGround = movementData.onGround;
+      movementData.onGround = onGround;
     }
     collisionVector = resolveCollisionVector(player, boundingBox, motionX, motionY, motionZ);
 

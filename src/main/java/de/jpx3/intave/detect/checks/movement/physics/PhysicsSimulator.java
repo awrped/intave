@@ -163,7 +163,7 @@ public final class PhysicsSimulator {
               continue;
             }
             if (inventoryOpen) {
-              if ((keyForward != 0 && keyStrafe != 0) || jumped) {
+              if ((keyForward != 0 || keyStrafe != 0) || jumped) {
                 continue;
               }
             }
@@ -197,6 +197,10 @@ public final class PhysicsSimulator {
           }
         }
       }
+    }
+
+    if (predictedMovement == null) {
+      predictedMovement = simulateMovementWithoutKeyPress(user);
     }
 
     if (movementData.pastPlayerAttackPhysics == 0 && movementData.sprinting && !reduceOnPlayerAttack) {

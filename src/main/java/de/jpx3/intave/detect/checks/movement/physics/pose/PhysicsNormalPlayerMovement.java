@@ -6,7 +6,6 @@ import de.jpx3.intave.tools.client.PlayerEffectHelper;
 import de.jpx3.intave.tools.client.PlayerMovementHelper;
 import de.jpx3.intave.tools.client.PlayerMovementPoseHelper;
 import de.jpx3.intave.tools.items.PlayerEnchantmentHelper;
-import de.jpx3.intave.tools.sync.Synchronizer;
 import de.jpx3.intave.tools.wrapper.WrappedAxisAlignedBB;
 import de.jpx3.intave.tools.wrapper.WrappedMathHelper;
 import de.jpx3.intave.user.User;
@@ -355,16 +354,8 @@ public class PhysicsNormalPlayerMovement extends PhysicsCalculationPart {
       physics().updateAquatics(user);
     }
     if (onGround) {
-      if (movementData.artificialFallDistance > 0.0F) {
-        float fallDistance = movementData.artificialFallDistance;
-        Synchronizer.synchronize(() -> {
-          Object playerHandle = user.playerHandle();
-          movementData.allowFallDamage = true;
-          physics().dealFallDamage(playerHandle, fallDistance);
-          movementData.allowFallDamage = false;
-        });
-        movementData.artificialFallDistance = 0.0F;
-      }
+      physics().applyFallDamageUpdate(user);
+      movementData.artificialFallDistance = 0;
     } else if (motionY < 0.0D) {
       movementData.artificialFallDistance += -motionY;
     }
