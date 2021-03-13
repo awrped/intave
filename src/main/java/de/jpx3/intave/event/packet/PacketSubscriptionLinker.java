@@ -181,7 +181,7 @@ public final class PacketSubscriptionLinker {
     Class<PacketSubscriptionMethodExecutor> executorClass = IRXFactory.assembleCallerClass(
       PacketSubscriptionLinker.class.getClassLoader(),
       PacketSubscriptionMethodExecutor.class,
-      "Generic method pointer for packet subscriptions (" + identifier + ")",
+      "<generated>",
       "invoke",
       "(L"+packetSubscriberSuperClassPath+";L"+packetEventClassPath+";)V",
       "(L"+packetSubscriberClassPath+";L"+packetEventClassPath+";)V",

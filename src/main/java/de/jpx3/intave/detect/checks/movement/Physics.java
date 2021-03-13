@@ -51,7 +51,7 @@ public final class Physics extends IntaveCheck {
   private MethodHandle fallDamageInvokeMethod;
 
   private final SimulationProcessor simulationService;
-  private final AbstractWaterflow abstractWaterflow;
+  private final AbstractWaterflow waterflow;
   private final CustomBlocks customBlocks;
 
   public Physics(IntavePlugin plugin) {
@@ -60,7 +60,7 @@ public final class Physics extends IntaveCheck {
     this.decrementer = new CheckViolationLevelDecrementer(this, VL_DECREMENT_PER_VALID_MOVE * 20);
     this.simulationService = new SimulationProcessor();
     this.customBlocks = new CustomBlocks();
-    this.abstractWaterflow = Waterflow.engine();
+    this.waterflow = Waterflow.engine();
     searchFallDamageApplier();
     linkCheckToPoseSimulators();
   }
@@ -199,7 +199,7 @@ public final class Physics extends IntaveCheck {
 
   private void updateEyesInWater(User user) {
     UserMetaMovementData movementData = user.meta().movementData();
-    movementData.eyesInWater = abstractWaterflow.areEyesInFluid(user, movementData.positionX, movementData.positionY, movementData.positionZ);
+    movementData.eyesInWater = waterflow.areEyesInFluid(user, movementData.positionX, movementData.positionY, movementData.positionZ);
   }
 
   private void updateInWater(User user) {
@@ -207,7 +207,7 @@ public final class Physics extends IntaveCheck {
     UserMetaClientData clientData = meta.clientData();
     UserMetaMovementData movementData = meta.movementData();
     if (clientData.protocolVersion() >= PROTOCOL_VERSION_AQUATIC_UPDATE) {
-      movementData.inWater = abstractWaterflow.handleFluidAcceleration(user, movementData.boundingBox());
+      movementData.inWater = waterflow.handleFluidAcceleration(user, movementData.boundingBox());
     } else {
       WrappedAxisAlignedBB entityBoundingBox = movementData.boundingBox();
       WrappedAxisAlignedBB checkableBoundingBox = entityBoundingBox
@@ -719,7 +719,7 @@ public final class Physics extends IntaveCheck {
   }
 
   public AbstractWaterflow aquaticWaterMovementBase() {
-    return abstractWaterflow;
+    return waterflow;
   }
 
   public CustomBlocks blockCollisionRepository() {

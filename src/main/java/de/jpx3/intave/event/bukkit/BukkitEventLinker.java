@@ -99,7 +99,7 @@ public final class BukkitEventLinker {
         Class<EventExecutor> executorClass = IRXFactory.assembleCallerClass(
           BukkitEventLinker.class.getClassLoader(),
           EventExecutor.class,
-          "Generic method pointer for " + eventClass.getSimpleName() + "s",
+          "<generated>",
           "execute",
           "(Lorg/bukkit/event/Listener;Lorg/bukkit/event/Event;)V",
           "(L"+listenerClassPath+";L"+ eventClassPath +";)V",
