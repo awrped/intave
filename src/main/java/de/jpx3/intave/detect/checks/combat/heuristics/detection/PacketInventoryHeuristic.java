@@ -78,12 +78,11 @@ public final class PacketInventoryHeuristic extends IntaveMetaCheckPart<Heuristi
     PacketContainer packet = event.getPacket();
     boolean hasRotation = packet.getBooleans().read(2);
 
-
     UserMetaInventoryData inventoryData = user.meta().inventoryData();
     UserMetaMovementData movementData = user.meta().movementData();
     UserMetaClientData clientData = user.meta().clientData();
 
-    if (!clientData.flyingPacketStream()) {
+    if (!clientData.flyingPacketStream() || movementData.inVehicle()) {
       return;
     }
 
