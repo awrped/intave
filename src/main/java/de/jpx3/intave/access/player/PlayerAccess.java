@@ -21,6 +21,8 @@ public interface PlayerAccess {
   void resetViolationLevel(String check, String threshold);
 
   TrustFactor trustFactor();
+  @Deprecated
+  void setTrustFactor(TrustFactor factor);
 
   PlayerClicks clicks();
   PlayerConnection connection();

@@ -299,10 +299,10 @@ public final class MovementEmulationEngine {
   private final static Set<Object> teleportFlags = new HashSet<>();
 
   private synchronized void rotationlessTeleport(Player player, Location to, float nativeYaw, float nativePitch) {
-    PlayerTeleportEvent event = new PlayerTeleportEvent(player, player.getLocation().clone(), to.clone(), PlayerTeleportEvent.TeleportCause.SPECTATE) {
+    PlayerTeleportEvent event = new PlayerTeleportEvent(player, player.getLocation().clone(), to.clone(), PlayerTeleportEvent.TeleportCause.NETHER_PORTAL) {
       @Override
       public void setCancelled(boolean cancel) {
-        if(cancel) {
+        if(IntaveControl.DEBUG_INTAVE_TELEPORT_EVENT_CANCELS && cancel) {
           PluginInvocation pluginInvocation = CallerResolver.callerPluginInfo();
           if(pluginInvocation == null) {
             System.out.println("[Intave] Intaves teleport event was cancelled by an unknown struct");

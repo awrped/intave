@@ -7,6 +7,7 @@ import de.jpx3.intave.detect.IntaveMetaCheck;
 import de.jpx3.intave.event.packet.PacketDescriptor;
 import de.jpx3.intave.event.packet.PacketSubscription;
 import de.jpx3.intave.event.packet.Sender;
+import de.jpx3.intave.logging.IntaveLogger;
 import de.jpx3.intave.tools.AccessHelper;
 import de.jpx3.intave.tools.MathHelper;
 import de.jpx3.intave.tools.sync.Synchronizer;
@@ -21,10 +22,16 @@ public final class Timer extends IntaveMetaCheck<Timer.TimerData> {
   private final IntavePlugin plugin;
   private final CheckViolationLevelDecrementer decrementer;
 
+  private final boolean highToleranceMode;
+
   public Timer(IntavePlugin plugin) {
     super("Timer", "timer", TimerData.class);
     this.plugin = plugin;
     this.decrementer = new CheckViolationLevelDecrementer(this, 0.2);
+    highToleranceMode = configuration().settings().boolBy("high-tolerance", false);
+    if(highToleranceMode) {
+      IntaveLogger.logger().info("Enabled high ping tolerance");
+    }
   }
 
   @PacketSubscription(
@@ -88,7 +95,10 @@ public final class Timer extends IntaveMetaCheck<Timer.TimerData> {
 //    player.sendMessage(String.valueOf(timerData.timerBalance));
 
     statistics().increaseTotal();
-    if (timerData.timerBalance > 10) {
+
+    int overflowLimit = highToleranceMode ? 150 : 10;
+
+    if (timerData.timerBalance > overflowLimit) {
       String balanceAsString = MathHelper.formatDouble(timerData.timerBalance / 10, 2);
       statistics().increaseFails();
       if (plugin.violationProcessor().processViolation(player, 0.5, "Timer", "moved too frequently", balanceAsString + " packets ahead")) {
@@ -107,7 +117,7 @@ public final class Timer extends IntaveMetaCheck<Timer.TimerData> {
     } else {
       statistics().increasePasses();
       if (timerData.timerBalance > 0) {
-        timerData.timerBalance -= 0.025;
+        timerData.timerBalance -= highToleranceMode ? 0.075 : 0.025;
       }
       if (AccessHelper.now() - timerData.lastTimerFlag > 10000) {
         decrementer.decrement(user, 0.01);

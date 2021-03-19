@@ -19,16 +19,15 @@ public final class LegacyVersionRaytracer implements VersionRaytracer {
     WorldServer handle = ((CraftWorld) world).getHandle();
     Vec3D nativeEyeVector = (Vec3D) eyeVector.convertToNativeVec3();
     Vec3D nativeTargetVector = (Vec3D) targetVector.convertToNativeVec3();
-    MovingObjectPosition movingObjectPosition = performRaytrace(player, handle, nativeEyeVector, nativeTargetVector, false, false, false);
+    MovingObjectPosition movingObjectPosition = performRaytrace(player, handle, nativeEyeVector, nativeTargetVector);
     return WrappedMovingObjectPosition.fromNativeMovingObjectPosition(movingObjectPosition);
   }
 
   @PatchyAutoTranslation
   @PatchyTranslateParameters
-  public MovingObjectPosition performRaytrace(
+  private MovingObjectPosition performRaytrace(
     Player player, WorldServer world,
-    Vec3D lookVector, Vec3D position,
-    boolean stopOnLiquid, boolean ignoreBlockWithoutBoundingBox, boolean returnLastUncollidableBlock
+    Vec3D lookVector, Vec3D position
   ) {
     if (includesInvalidCoordinate(lookVector) || includesInvalidCoordinate(position)) {
       return null;
@@ -44,22 +43,20 @@ public final class LegacyVersionRaytracer implements VersionRaytracer {
     BlockPosition blockposition = new BlockPosition(lookX, lookY, lookZ);
     IBlockData iblockdata = typeOf(player, world, blockposition);//world.getType(blockposition);
     Block block = iblockdata.getBlock();
-    if ((!ignoreBlockWithoutBoundingBox || block.a(world, blockposition, iblockdata) != null) &&
-      block.a(iblockdata, stopOnLiquid) &&
+    if (block.a(iblockdata, false) &&
       (movingobjectposition = block.a(world, blockposition, lookVector, position)) != null
     ) {
       return movingobjectposition;
     }
 
-    MovingObjectPosition movingobjectposition1 = null;
-    int k1 = 200;
+    int k1 = 50;
     while (k1-- >= 0) {
       EnumDirection enumdirection;
       if (includesInvalidCoordinate(lookVector)) {
         return null;
       }
       if (lookX == positionX && lookY == positionY && lookZ == positionZ) {
-        return returnLastUncollidableBlock ? movingobjectposition1 : null;
+        return null;
       }
       boolean flag3 = true;
       boolean flag4 = true;
@@ -130,19 +127,15 @@ public final class LegacyVersionRaytracer implements VersionRaytracer {
       Block block1 = iblockdata1.getBlock();
 
       // block1.a refers to getCollisionBoundingBox
-      if (ignoreBlockWithoutBoundingBox && block1.a(world, blockposition, iblockdata1) == null) {
-        continue;
-      }
-      if (block1.a(iblockdata1, stopOnLiquid)) {
+      if (block1.a(iblockdata1, false)) {
         MovingObjectPosition movingobjectposition2 = block1.a(world, blockposition, lookVector, position);
         if (movingobjectposition2 == null) {
           continue;
         }
         return movingobjectposition2;
       }
-      movingobjectposition1 = new MovingObjectPosition(MovingObjectPosition.EnumMovingObjectType.MISS, lookVector, enumdirection, blockposition);
     }
-    return returnLastUncollidableBlock ? movingobjectposition1 : null;
+    return null;
   }
 
   @PatchyAutoTranslation
@@ -151,10 +144,10 @@ public final class LegacyVersionRaytracer implements VersionRaytracer {
     BoundingBoxAccess boundingBoxAccess = UserRepository.userOf(player).boundingBoxAccess();
     BoundingBoxAccess.CacheEntry cacheEntry = boundingBoxAccess.overrideOf(blockPosition.getX(), blockPosition.getY(), blockPosition.getZ());
     if(cacheEntry != null) {
-//      player.sendMessage("Suggested cache-replace " + cacheEntry.type() + " at " + blockPosition);
+      return Block.getById(cacheEntry.type().getId()).fromLegacyData(cacheEntry.data());
     } else {
+      return world.getType(blockPosition);
     }
-    return world.getType(blockPosition);
   }
 
   @PatchyAutoTranslation

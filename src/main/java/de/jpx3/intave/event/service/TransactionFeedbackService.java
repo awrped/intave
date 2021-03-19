@@ -9,6 +9,7 @@ import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.event.packet.*;
 import de.jpx3.intave.event.service.transaction.TransactionCallBackData;
 import de.jpx3.intave.event.service.transaction.TransactionFeedbackCallback;
+import de.jpx3.intave.logging.IntaveLogger;
 import de.jpx3.intave.tools.AccessHelper;
 import de.jpx3.intave.tools.sync.Synchronizer;
 import de.jpx3.intave.user.User;
@@ -17,11 +18,12 @@ import de.jpx3.intave.user.UserRepository;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
+import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Locale;
 import java.util.Map;
 
 public final class TransactionFeedbackService implements PacketEventSubscriber {
-
   private final static long TRANSACTION_TIMEOUT = 4000;
   private final static long TRANSACTION_TIMEOUT_KICK = 8000;
   public final static short TRANSACTION_MIN_CODE = -32768;
@@ -30,6 +32,8 @@ public final class TransactionFeedbackService implements PacketEventSubscriber {
 
   public TransactionFeedbackService(IntavePlugin plugin) {
     plugin.packetSubscriptionLinker().linkSubscriptionsIn(this);
+
+//    plugin.getServer().getScheduler().scheduleAsyncRepeatingTask(plugin, this::nettyThreadDump, 20 * 10, 20 * 10);
   }
 
   @PacketSubscription(
@@ -89,10 +93,27 @@ public final class TransactionFeedbackService implements PacketEventSubscriber {
     User user = UserRepository.userOf(player);
     if (oldestPendingTransaction(user) > TRANSACTION_TIMEOUT_KICK) {
       System.out.println("[Intave] " + player.getName() + " is not responding to ");
+
       Synchronizer.synchronize(() -> {
         player.kickPlayer("Missing transaction response");
       });
     }
+  }
+
+  private void nettyThreadDump() {
+    Thread.getAllStackTraces().forEach((thread, stackTraceElements) -> {
+      if(thread.getName().toLowerCase(Locale.ROOT).contains("netty")) {
+        Exception exception = new Exception();
+        System.out.println("[Intave/ThreadDump] Thread " + thread.getName() + " " + thread.getState() + " at execution point");
+        exception.setStackTrace(stackTraceElements);
+        exception.printStackTrace(new PrintStream(System.err) {
+          @Override
+          public void println(String x) {
+            super.println("[Intave/ThreadDump] " + x);
+          }
+        });
+      }
+    });
   }
 
   @PacketSubscription(
@@ -172,6 +193,8 @@ public final class TransactionFeedbackService implements PacketEventSubscriber {
 
   private void sendTransactionPacket(Player receiver, short id) {
     if(!Bukkit.isPrimaryThread()) {
+      IntaveLogger.logger().error("Can't perform transaction-validation off main thread.");
+      IntaveLogger.logger().error("Please check if you sent a packet / performed a bukkit player action asynchronously in the following trace:");
       Thread.dumpStack();
       Synchronizer.synchronize(() -> sendTransactionPacket(receiver, id));
       return;

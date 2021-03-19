@@ -80,8 +80,8 @@ public final class BlockingHeuristic extends IntaveMetaCheckPart<Heuristics, Blo
         int ticksBetweenBlockAndUnblock = meta.ticksBetweenBlockAndUnblock;
         if (ticksBetweenBlockAndUnblock == 0) {
           String description = "unblocked too quickly (" + ticksBetweenBlockAndUnblock + ")";
-          int options = Anomaly.AnomalyOption.DELAY_128s;
-          Anomaly anomaly = Anomaly.anomalyOf("143", Confidence.CERTAIN, Anomaly.Type.KILLAURA, description, options);
+          int options = Anomaly.AnomalyOption.DELAY_128s | Anomaly.AnomalyOption.LIMIT_2;
+          Anomaly anomaly = Anomaly.anomalyOf("143", Confidence.MAYBE, Anomaly.Type.KILLAURA, description, options);
           parentCheck().saveAnomaly(player, anomaly);
           plugin.eventService().attackCancelService().requestDamageCancel(user, AttackCancelType.DCRB);
           punishmentData.timeLastBlockCancel = AccessHelper.now();

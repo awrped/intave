@@ -13,6 +13,8 @@ check:
 
   timer:
 
+    high-tolerance: false
+
     thresholds:
       50: "intave internals sendnotify &c{player}&7/{trust-color}&7 is moving too frequently / is lagging"
       100:

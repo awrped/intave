@@ -75,7 +75,7 @@ public final class MovementDispatcher implements EventProcessor {
     Player player = event.getPlayer();
     User user = UserRepository.userOf(player);
     PlayerTeleportEvent.TeleportCause cause = event.getCause();
-    if (cause == PlayerTeleportEvent.TeleportCause.SPECTATE || cause == PlayerTeleportEvent.TeleportCause.UNKNOWN) {
+    if (cause == PlayerTeleportEvent.TeleportCause.NETHER_PORTAL || cause == PlayerTeleportEvent.TeleportCause.UNKNOWN) {
       return;
     }
     UserMetaMovementData movementData = user.meta().movementData();

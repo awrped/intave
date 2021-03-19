@@ -31,6 +31,20 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\src\main\java\de\jpx3\intave\detect\checks\combat\heuristics\detection\RotationSensitivityHeuristic.java">
+          <value>
+            <Attribute>
+              <option name="separator" value=";" />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\src\main\java\de\jpx3\intave\detect\checks\movement\Timer.java">
+          <value>
+            <Attribute>
+              <option name="separator" value=";" />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="\src\main\java\de\jpx3\intave\detect\checks\movement\physics\collision\block\BlockCollisionRepository.java">
           <value>
             <Attribute>

@@ -57,18 +57,18 @@ public final class RotationSensitivityHeuristic extends IntaveMetaCheckPart<Heur
       int pitchDecimal = decimalPlacesOf(rotationPitch);
 
       if (yawDecimal <= 3 && pitchDecimal <= 2) {
-        heuristicMeta.decimalVL += 16;
+        heuristicMeta.decimalVL += 4;
         // vl+
-        if (heuristicMeta.decimalVL > 70) {
+        if (heuristicMeta.decimalVL > 80) {
           heuristicMeta.decimalVL = 0;
           parentCheck().saveAnomaly(
             player,
             Anomaly.anomalyOf(
               "111",
-              Confidence.PROBABLE,
+              Confidence.MAYBE,
               Anomaly.Type.KILLAURA,
               "rotations have too few decimals",
-              LIMIT_1 | LIMIT_2 | DELAY_16s | SUGGEST_MINING
+              LIMIT_2 | DELAY_16s | SUGGEST_MINING
             )
           );
           plugin.eventService().attackCancelService().requestDamageCancel(user, AttackCancelType.DCRM);

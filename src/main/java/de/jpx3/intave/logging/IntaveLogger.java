@@ -15,7 +15,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public final class IntaveLogger {
 
-  public static boolean FILE_OUTPUT;
+  public static boolean FILE_OUTPUT = true;
   public static boolean CONSOLE_OUTPUT;
 
   private final static String LOG_PATH = "plugins" + File.separator + "Intave" + File.separator + "logs";
@@ -111,8 +111,11 @@ public final class IntaveLogger {
 
       String timestamp = "[" + LocalDateTime.now().format(MESSAGE_DATE_FORMATTER) + "] ";
       String clearMessage = ChatColor.stripColor(message);
-      printWriter.println(timestamp + clearMessage);
-      printWriter.flush();
+
+      BackgroundExecutor.execute(() -> {
+        printWriter.println(timestamp + clearMessage);
+        printWriter.flush();
+      });
 
       if(compressLogsLater) {
         BackgroundExecutor.execute(this::performCompression);

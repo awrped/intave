@@ -47,13 +47,16 @@ import static com.comphenix.protocol.wrappers.EnumWrappers.PlayerDigType.STOP_DE
 
 public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytrace.InteractionMeta> {
   private final IntavePlugin plugin;
-
   private final CheckViolationLevelDecrementer decrementer;
+
+  private boolean enabled;
 
   public InteractionRaytrace(IntavePlugin plugin) {
     super("InteractionRaytrace", "interactionraytrace", InteractionMeta.class);
     this.plugin = plugin;
     this.decrementer = new CheckViolationLevelDecrementer(this, 1);
+
+
   }
 
   @PacketSubscription(
@@ -70,9 +73,6 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
     UserMetaMovementData movementData = user.meta().movementData();
     PacketContainer packet = event.getPacket();
 
-    // 1.8 - 1.13 server
-
-    // perform check please
     BlockPosition blockPosition = packet.getBlockPositionModifier().readSafely(0);
     if (blockPosition == null || movementData.inVehicle()) {
       return;
@@ -84,7 +84,6 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
     if (enumDirection == 255) {
       return;
     }
-
     if (event.isCancelled()) {
       return;
     }
@@ -154,13 +153,10 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
     EnumWrappers.Direction direction = packet.getDirections().readSafely(0);
     int enumDirection = direction == null ? 255 : direction.ordinal();
     boolean blocking = blockPosition.getX() == 0 && blockPosition.getY() == 0 &&  blockPosition.getZ() == 0 && enumDirection == 0;
-
     if (enumDirection == 255 || blocking) {
       return;
     }
-
     InteractionMeta interactionMeta = metaOf(user);
-
     Interaction interaction = new Interaction(
       player.getWorld(), player, blockPosition, enumDirection, packet.deepClone(), InteractionType.BREAK,
       null
@@ -169,15 +165,6 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
     event.setCancelled(true);
   }
 
-//  @PacketSubscription(
-//    priority = ListenerPriority.HIGHEST, // last one to work with position
-//    packets = {
-//      @PacketDescriptor(sender = Sender.CLIENT, packetName = "LOOK"),
-//      @PacketDescriptor(sender = Sender.CLIENT, packetName = "FLYING"),
-//      @PacketDescriptor(sender = Sender.CLIENT, packetName = "POSITION"),
-//      @PacketDescriptor(sender = Sender.CLIENT, packetName = "POSITION_LOOK")
-//    }
-//  )
   @DispatchCrossCall
   public void receiveMovement(PacketEvent event) {
     Player player = event.getPlayer();
@@ -204,18 +191,15 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
     WrappedMovingObjectPosition raycastResultmdf = Raytracer.blockRayTrace(player, playerLocationmdf);
 
     for (Interaction interaction : interactionList) {
-      processTraceReport(interaction, raycastResult, raycastResultmdf, false);
+      processTraceReport(interaction, raycastResult, raycastResultmdf);
     }
     interactionList.clear();
-
-//    player.sendMessage("B");
   }
 
   private void processTraceReport(
     Interaction interaction,
     WrappedMovingObjectPosition raycastResult,
-    WrappedMovingObjectPosition raycastResultmdf,
-    boolean delayed
+    WrappedMovingObjectPosition raycastResultmdf
   ) {
     if (interaction.entered()) {
       return;
@@ -226,7 +210,6 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
     Player player = interaction.player();
     User user = UserRepository.userOf(player);
     InteractionMeta interactionMeta = metaOf(player);
-    UserMetaMovementData movementData = user.meta().movementData();
 
     boolean estimateMouseDelayFix = interactionMeta.estimateMouseDelayFix;
 
@@ -238,7 +221,7 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
     Location targetLocation = interaction.targetBlock.toLocation(world);
     boolean invalidFacing = interaction.facingVector() != null &&
       firstRaytraceResult != null &&
-      validateFacingVector(user, interaction.targetBlock, firstRaytraceResult.hitVec, interaction.facingVector(), interaction.type());
+      validateFacingVector(interaction.targetBlock, firstRaytraceResult.hitVec, interaction.facingVector(), interaction.type());
     boolean invalid = hitMiss ||
       raycastLocation.distance(targetLocation) > 0 ||
       interaction.targetDirection != firstRaytraceResult.sideHit.getIndex() ||
@@ -253,7 +236,7 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
       Location raycastLocation2 = raycastVector2.toLocation(world);
       invalidFacing = interaction.facingVector() != null &&
         secondRaytraceResult != null &&
-        validateFacingVector(user, interaction.targetBlock, secondRaytraceResult.hitVec, interaction.facingVector(), interaction.type());
+        validateFacingVector(interaction.targetBlock, secondRaytraceResult.hitVec, interaction.facingVector(), interaction.type());
       invalid = hitMiss2 ||
         raycastLocation2.distance(targetLocation) > 0 ||
         interaction.targetDirection != secondRaytraceResult.sideHit.getIndex() ||
@@ -271,7 +254,7 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
     emulatePacket(interaction, raycastResult, targetLocation, raycastLocation, hitMiss, flag, invalidFacing);
   }
 
-  private boolean validateFacingVector(User user, BlockPosition blockPosition, WrappedVector hitVec, Vector sent, InteractionType interactionType) {
+  private boolean validateFacingVector(BlockPosition blockPosition, WrappedVector hitVec, Vector sent, InteractionType interactionType) {
     float f = (float) (hitVec.xCoord - (double) blockPosition.getX());
     float f1 = (float) (hitVec.yCoord - (double) blockPosition.getY());
     float f2 = (float) (hitVec.zCoord - (double) blockPosition.getZ());
@@ -315,7 +298,6 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
     boolean canRefreshBlocks = interaction.type != InteractionType.INTERACT;
     if (response == ResponseType.RAYTRACE_CAST) {
       if (hitMiss || raycastResult == null) {
-//        player.sendMessage("Emulation " + raycastLocation + " " + targetLocation);
         if (canRefreshBlocks) {
           refreshBlocksAround(player, targetLocation);
           boundingBoxAccess.invalidateOverride(interaction.world, targetLocation.getBlockX(), targetLocation.getBlockY(), targetLocation.getBlockZ());
@@ -350,8 +332,6 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
             0,
             new BlockPosition(raycastLocation.getBlockX(), raycastLocation.getBlockY(), raycastLocation.getBlockZ())
           );
-//          boundingBoxAccess.invalidate(targetLocation.getBlockX(), targetLocation.getBlockY(), targetLocation.getBlockZ());
-//          boundingBoxAccess.invalidateOverride(interaction.world, targetLocation.getBlockX(), targetLocation.getBlockY(), targetLocation.getBlockZ());
         }
         receiveExcludedPacket(player, packet);
         if (canRefreshBlocks) {
@@ -363,7 +343,6 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
         if (canRefreshBlocks) {
           refreshBlocksAround(player, targetLocation);
         }
-//        boundingBoxAccess.invalidateOverride(interaction.world, targetLocation.getBlockX(), targetLocation.getBlockY(), targetLocation.getBlockZ());
       } else {
         receiveExcludedPacket(player, interaction.thePacket);
       }
@@ -493,35 +472,9 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
     }
   }
 
-/*  public boolean processViolation(Player player, InteractionType type) {
-    boolean cancel = false;
-    InteractionMeta interactionMeta = metaOf(player);
-    if(type.bufferAvailable) {
-      int vl = interactionMeta.violationLevel.computeIfAbsent(type, x -> 0);
-      vl = MathHelper.minmax(0, vl + 1,8);
-//      player.sendMessage(type + ": " + vl);
-      if(vl > 3) {
-        cancel = true;
-      }
-      interactionMeta.violationLevel.put(type, vl);
-    } else {
-      cancel = true;
-    }
-    return cancel;
-  }
-
-  public void lowerViolation(Player player, InteractionType type) {
-    if(!type.bufferAvailable) {
-      return;
-    }
-    InteractionMeta interactionMeta = metaOf(player);
-    int vl = interactionMeta.violationLevel.computeIfAbsent(type, x -> 0);
-    vl = MathHelper.minmax(0, vl - 1,8);
-    interactionMeta.violationLevel.put(type, vl);
-  }*/
-
   @Override
   public boolean enabled() {
+    this.enabled = super.enabled();
     return false;
   }
 

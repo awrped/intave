@@ -1,8 +1,10 @@
 package de.jpx3.intave.event.service;
 
+import de.jpx3.intave.IntaveControl;
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.access.check.event.IntaveCommandExecutionEvent;
 import de.jpx3.intave.access.check.event.IntaveViolationEvent;
+import de.jpx3.intave.access.player.trust.TrustFactor;
 import de.jpx3.intave.detect.IntaveCheck;
 import de.jpx3.intave.logging.IntaveLogger;
 import de.jpx3.intave.tools.MathHelper;
@@ -47,6 +49,10 @@ public final class ViolationService {
     IntaveCheck check = plugin.checkService().searchCheck(checkName);
 
     if(!check.enabled()) {
+      return false;
+    }
+
+    if(detectedUser.trustFactor().atLeast(TrustFactor.BYPASS)) {
       return false;
     }
 
@@ -119,7 +125,7 @@ public final class ViolationService {
     broadcastVerbose(detectedPlayer, fullViolationContext, compactViolationContext);
   }
 
-  public final static UserMessageChannel NOTIFY_MESSAGE_CHANNEL = UserMessageChannel.NOTIFY;
+  private final static UserMessageChannel NOTIFY_MESSAGE_CHANNEL = UserMessageChannel.NOTIFY;
 
   public void broadcastNotify(String fullMessage) {
     String notifyMessage = MessageFormatter.resolveNotifyReplacements(new TextContext(fullMessage));
@@ -128,6 +134,7 @@ public final class ViolationService {
       User user = UserRepository.userOf(onlinePlayer);
       if(user.receives(NOTIFY_MESSAGE_CHANNEL)) {
         if(user.hasChannelConstraint(NOTIFY_MESSAGE_CHANNEL)) {
+          // Sinn?!
           if(user.channelPlayerConstraint(NOTIFY_MESSAGE_CHANNEL).appliesTo(onlinePlayer)) {
             onlinePlayer.sendMessage(notifyMessage);
           }
@@ -142,21 +149,26 @@ public final class ViolationService {
 
   public void broadcastVerbose(Player player, ViolationContext full, ViolationContext compact) {
     String fullMessage = MessageFormatter.resolveVerboseMessage(player, full);
-
-    Synchronizer.synchronize(() -> {
-      for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
-        User user = UserRepository.userOf(onlinePlayer);
-        if(user.receives(VERBOSE_MESSAGE_CHANNEL)) {
-          if(user.hasChannelConstraint(VERBOSE_MESSAGE_CHANNEL)) {
-            if(user.channelPlayerConstraint(VERBOSE_MESSAGE_CHANNEL).appliesTo(player)) {
+    for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+      User user = UserRepository.userOf(onlinePlayer);
+      if(user.receives(VERBOSE_MESSAGE_CHANNEL)) {
+        if(user.hasChannelConstraint(VERBOSE_MESSAGE_CHANNEL)) {
+          if(user.channelPlayerConstraint(VERBOSE_MESSAGE_CHANNEL).appliesTo(player)) {
+            if(IntaveControl.GOMME_MODE) {
+              Synchronizer.synchronize(() -> onlinePlayer.sendMessage(fullMessage));
+            } else {
               onlinePlayer.sendMessage(fullMessage);
             }
+          }
+        } else {
+          if(IntaveControl.GOMME_MODE) {
+            Synchronizer.synchronize(() -> onlinePlayer.sendMessage(fullMessage));
           } else {
             onlinePlayer.sendMessage(fullMessage);
           }
         }
       }
-    });
+    }
   }
 
   private Map<String, Map<String, Double>> violationMapOf(Player player) {

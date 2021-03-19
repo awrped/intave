@@ -14,7 +14,6 @@ import de.jpx3.intave.event.packet.Sender;
 import de.jpx3.intave.event.service.ViolationService;
 import de.jpx3.intave.reflect.ReflectiveEntityAccess;
 import de.jpx3.intave.tools.AccessHelper;
-import de.jpx3.intave.tools.MathHelper;
 import de.jpx3.intave.user.*;
 import de.jpx3.intave.world.block.BlockDataAccess;
 import org.bukkit.entity.Player;
@@ -88,7 +87,9 @@ public final class BreakSpeedFinishCheck extends IntaveMetaCheckPart<BreakSpeedL
           float blockDamageDealt = meta.curBlockDamageMP;
           if (blockDamageDealt < 1) {
             String message = "finished breaking-process too quickly";
-            String details = "damaged " + MathHelper.formatDouble(blockDamageDealt, 2) + " expected 1";
+            String percentage = (int)(blockDamageDealt * 100d) + "%";
+            String details = "at " + percentage;
+
             ViolationService violationService = IntavePlugin.singletonInstance().violationProcessor();
             violationService.processViolation(player, 10, "BreakSpeedLimiter", message, details);
           }

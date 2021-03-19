@@ -65,7 +65,7 @@ public final class TeleportPositionObserver implements PacketEventSubscriber {
         }
         Synchronizer.synchronize(() -> {
           Location location = movementData.teleportLocation;
-          player.teleport(location, PlayerTeleportEvent.TeleportCause.SPECTATE);
+          player.teleport(location, PlayerTeleportEvent.TeleportCause.NETHER_PORTAL);
         });
       }
     }

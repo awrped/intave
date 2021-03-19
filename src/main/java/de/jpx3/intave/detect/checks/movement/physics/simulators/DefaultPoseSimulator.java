@@ -15,6 +15,7 @@ import de.jpx3.intave.user.UserMetaMovementData;
 import de.jpx3.intave.user.UserMetaViolationLevelData;
 import de.jpx3.intave.world.BlockAccessor;
 import de.jpx3.intave.world.collision.Collision;
+import de.jpx3.intave.world.waterflow.Waterflow;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -76,7 +77,7 @@ public class DefaultPoseSimulator extends PoseSimulator {
     if (waterUpdate && swimming) {
       double d3 = movementData.lookVector.getY();
       double d4 = d3 < -0.2D ? 0.085D : 0.06D;
-      boolean fluidStateEmpty = waterflow().fluidStateEmpty(user, positionX, positionY + 1.0 - 0.1, positionZ);
+      boolean fluidStateEmpty = Waterflow.engine().fluidStateEmpty(user, positionX, positionY + 1.0 - 0.1, positionZ);
       if (d3 <= 0.0D || jumped || !fluidStateEmpty) {
         context.motionY += (d3 - context.motionY) * d4;
       }

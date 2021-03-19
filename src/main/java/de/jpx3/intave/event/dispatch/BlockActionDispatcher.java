@@ -80,35 +80,28 @@ public final class BlockActionDispatcher implements EventProcessor {
       return;
     }
 
-/*    if(event.isCancelled()) {
-      return;
-    }*/
-
-    // distance check
-
     World world = player.getWorld();
     Location blockAgainstLocation = blockPosition.toLocation(world).clone();
 
-    // air check
-
-//    if(BlockAccessor.blockAccess(blockAgainstLocation).getType() == Material.AIR) {
-//      event.setCancelled(true);
-//      refreshBlocksAround(player, blockAgainstLocation);
-//      return;
-//    }
-
-    boolean replace = BlockDataAccess.replacementPlace(world, new BlockPosition(blockAgainstLocation.toVector()));
-    Location finalBlockLocation = blockAgainstLocation.clone().add(WrappedEnumDirection.getFront(enumDirection).getDirectionVec().convertToBukkitVec());
-    Location blockPlacementLocation = replace ? blockAgainstLocation : finalBlockLocation;
-
     User user = UserRepository.userOf(player);
-    Material itemTypeInHand = user.meta().inventoryData().heldItemType();
 
+
+    // context resolve
     Block clickedBlock = BlockAccessor.blockAccess(blockAgainstLocation);
     Material clickedType = clickedBlock.getType();
-
     boolean targetBlockClickable = BlockDataAccess.isClickable(clickedType);
+    Location defaultPlacementLocation = blockAgainstLocation.clone().add(WrappedEnumDirection.getFront(enumDirection).getDirectionVec().convertToBukkitVec());
+    boolean replace = BlockDataAccess.replacementPlace(world, new BlockPosition(blockAgainstLocation.toVector()));
+    Location blockPlacementLocation = replace ? blockAgainstLocation : defaultPlacementLocation;
+
+    // precache
+    Material itemTypeInHand = user.meta().inventoryData().heldItemType();
     boolean placeableBlockInHand = itemTypeInHand != Material.AIR && (itemTypeInHand.isBlock());
+    EnumWrappers.Hand hand = packet.getHands().readSafely(0);
+    int replacementId = itemTypeInHand.getId();
+    byte shape = 0;
+
+
     boolean isPlacement = placeableBlockInHand && !targetBlockClickable;
 
     if(isPlacement) {
@@ -117,11 +110,10 @@ public final class BlockActionDispatcher implements EventProcessor {
       int blockZ = blockPlacementLocation.getBlockZ();
 
       // we need to check if a player is on 1.16 and ViaVersion emulates a placement packet invalid
-      Material material = user.meta().inventoryData().heldItemType();
       int dat = 0;
       boolean raytraceCollidesWithPosition = Collision.playerInImaginaryBlock(
         user, world, blockX, blockY, blockZ,
-        material.getId(),
+        itemTypeInHand.getId(),
         dat
       );
 
@@ -131,11 +123,6 @@ public final class BlockActionDispatcher implements EventProcessor {
         return;
       }
 
-      EnumWrappers.Hand hand = packet.getHands().readSafely(0);
-
-      int id = itemTypeInHand.getId();
-      byte shape = 0;
-
       boolean access = plugin.interactionPermissionService()
         .blockPlacePermissionCheck()
         .hasPermission(
@@ -144,28 +131,26 @@ public final class BlockActionDispatcher implements EventProcessor {
           hand == null || hand == EnumWrappers.Hand.MAIN_HAND,
           blockX, blockY, blockZ,
           enumDirection,
-          id,
+          replacementId,
           (byte) 0
         );
 
       if(access) {
         if (IntaveControl.DEBUG_BLOCK_CACHING) {
-//          Synchronizer.synchronize(() -> {
-            player.sendMessage("Internal place emulation at " + MathHelper.formatPosition(blockPlacementLocation) + " with " + Material.getMaterial(id));
-//          });
+          player.sendMessage("Internal place emulation at " + MathHelper.formatPosition(blockPlacementLocation) + " with " + Material.getMaterial(replacementId));
         }
 
         BoundingBoxAccess boundingBoxAccess = UserRepository.userOf(player).boundingBoxAccess();
-        boundingBoxAccess.override(world, blockX, blockY, blockZ, id, shape);
-//        boundingBoxAccess.invalidate(blockX, blockY, blockZ);
+        boundingBoxAccess.override(world, blockX, blockY, blockZ, replacementId, shape);
 
+        // enforce block reset later
         Synchronizer.packetSynchronize(() -> {
           Synchronizer.synchronize(() -> boundingBoxAccess.invalidateOverride(world, blockX, blockY, blockZ));
         });
       } else {
         if (IntaveControl.DEBUG_BLOCK_CACHING) {
           Synchronizer.synchronize(() -> {
-            player.sendMessage("Internal place emulation denied at " + MathHelper.formatPosition(blockPlacementLocation) + " with " + Material.getMaterial(id));
+            player.sendMessage("Internal place emulation denied at " + MathHelper.formatPosition(blockPlacementLocation) + " with " + Material.getMaterial(replacementId));
           });
         }
 
@@ -173,6 +158,8 @@ public final class BlockActionDispatcher implements EventProcessor {
         refreshBlocksAround(player, blockPlacementLocation);
       }
     } else {
+      // ->
+
       if(clickedType == Material.WOODEN_DOOR) {
 
       } else if(clickedType == Material.TRAP_DOOR) {
@@ -181,20 +168,12 @@ public final class BlockActionDispatcher implements EventProcessor {
         int bitMask = 4;
         byte newData = (byte) (!newOpen ? (data | bitMask) : (data & ~bitMask));
 
-//        player.sendMessage("Currently open: " + newOpen + " " + Integer.toBinaryString(data) + " -> " + Integer.toBinaryString(newData));
-
         int id = clickedBlock.getType().getId();
         BoundingBoxAccess boundingBoxAccess = UserRepository.userOf(player).boundingBoxAccess();
         boundingBoxAccess.override(world, clickedBlock.getX(), clickedBlock.getY(), clickedBlock.getZ(), id, newData);
 
         Synchronizer.packetSynchronize(() ->
           boundingBoxAccess.invalidateOverride(world, clickedBlock.getX(), clickedBlock.getY(), clickedBlock.getZ()));
-      } else {
-        BoundingBoxAccess boundingBoxAccess = UserRepository.userOf(player).boundingBoxAccess();
-
-//        Synchronizer.synchronizeDelayed(() ->
-//          boundingBoxAccess.invalidateInteraction(finalBlockLocation.getBlockX(), finalBlockLocation.getBlockY(), finalBlockLocation.getBlockZ()),
-//        30);
       }
     }
   }
@@ -352,11 +331,6 @@ public final class BlockActionDispatcher implements EventProcessor {
   private double distance(Location playerLocation, BlockPosition blockPosition) {
     return NumberConversions.square(playerLocation.getBlockX() - blockPosition.getX()) + NumberConversions.square(playerLocation.getBlockY() - blockPosition.getY()) + NumberConversions.square(playerLocation.getBlockZ() - blockPosition.getZ());
   }
-
-//  @BukkitEventSubscription(ignoreCancelled = true)
-//  public void on(BlockBreakEvent event) {
-//    Raytracer.clearIgnoreBlock(event.getPlayer(), event.getBlock().getLocation());
-//  }
 
   private void refreshBlocksAround(Player player, Location targetLocation) {
     Location targetLocationClone = targetLocation.clone();

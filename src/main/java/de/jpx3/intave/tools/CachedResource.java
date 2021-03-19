@@ -99,7 +99,8 @@ public final class CachedResource {
       cipher.init(Cipher.DECRYPT_MODE, secretKey, parameterSpec);
       return new ByteArrayInputStream(cipher.doFinal(cipherBytes));
     } catch (Exception | Error e) {
-      throw new IllegalStateException();
+      fileStore().delete();
+      return new ByteArrayInputStream(new byte[0]);
     }
   }
 
