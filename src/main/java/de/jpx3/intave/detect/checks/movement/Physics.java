@@ -652,7 +652,7 @@ public final class Physics extends IntaveCheck {
 
     boolean useBaseMoveSpeed = true;
 
-    if (movementData.pastWaterMovement < 20 || movementData.inWeb || movementData.inLava()) {
+    if ((movementData.pastWaterMovement < 20 && movementData.pastPushedByWaterFlow > 5) || movementData.inWeb || movementData.inLava()) {
       useBaseMoveSpeed = false;
     }
 
