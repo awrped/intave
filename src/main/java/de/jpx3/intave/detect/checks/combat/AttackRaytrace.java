@@ -15,7 +15,9 @@ import de.jpx3.intave.event.packet.Sender;
 import de.jpx3.intave.event.service.entity.WrappedEntity;
 import de.jpx3.intave.tools.MathHelper;
 import de.jpx3.intave.tools.sync.Synchronizer;
+import de.jpx3.intave.tools.wrapper.WrappedVector;
 import de.jpx3.intave.user.*;
+import de.jpx3.intave.world.raytrace.Raytracer;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
@@ -172,7 +174,7 @@ public class AttackRaytrace extends IntaveMetaCheck<AttackRaytrace.AttackRaytrac
     boolean hasAlwaysMouseDelayFix = clientData.protocolVersion() >= 314;
 
     // mouse delay fix
-    double reach = distanceOf(
+    Raytracer.DistanceOfResult distanceOfResult = distanceOf(
       player,
       entity, alternativePositionY,
       movementData.lastPositionX, movementData.lastPositionY, movementData.lastPositionZ,
@@ -180,9 +182,9 @@ public class AttackRaytrace extends IntaveMetaCheck<AttackRaytrace.AttackRaytrac
       expandHitbox
     );
 
-    if (!hasAlwaysMouseDelayFix && reach > blockReachDistance) {
+    if (!hasAlwaysMouseDelayFix && distanceOfResult.reach > blockReachDistance) {
       // normal
-      reach = distanceOf(
+      distanceOfResult = distanceOf(
         player,
         entity, true,
         movementData.lastPositionX, movementData.lastPositionY, movementData.lastPositionZ,
@@ -228,20 +230,20 @@ public class AttackRaytrace extends IntaveMetaCheck<AttackRaytrace.AttackRaytrac
 //      }
 //    }
 
-    attackData.setLastReach(reach);
+    attackData.setLastReach(distanceOfResult.reach);
     String message;
     String details;
     String thresholdKey;
-    int vl;
 
-    AttackRaytraceResult.ResultType attackRaytraceResult = AttackRaytraceResult.raytraceResultOf(blockReachDistance, reach);
+    AttackRaytraceResult.ResultType attackRaytraceResult = AttackRaytraceResult.raytraceResultOf(blockReachDistance, distanceOfResult.reach);
+    final int vl = handleViolation(attackRaytraceResult, distanceOfResult, user, expandHitbox);
+
     String entityName = entity.entityName();
     switch (attackRaytraceResult) {
       case MISS: {
         message = "attacked " + resolveIndefArticle(entityName) + " " + entityName.toLowerCase() + " out of sight";
         details = "";
         thresholdKey = "applicable-thresholds.hitbox";
-        vl = 2;
         Synchronizer.synchronize(() -> {
           String sibylMessage = ChatColor.RED + "[R] " + player.getName() + " missed hit on " + entityName.toLowerCase();
           if(IntaveControl.GOMME_MODE) {
@@ -261,18 +263,13 @@ public class AttackRaytrace extends IntaveMetaCheck<AttackRaytrace.AttackRaytrac
         break;
       }
       case REACH: {
-        if (reach < 3.6 && attackRaytraceMeta.confidence++ == 0) {
+        if (distanceOfResult.reach < 3.6 && attackRaytraceMeta.confidence++ == 0) {
           return false;
         }
-        String displayReach = MathHelper.formatDouble(reach, 4);
+        String displayReach = MathHelper.formatDouble(distanceOfResult.reach, 4);
         message = "attacked " + resolveIndefArticle(entityName) + " " + entityName.toLowerCase() + " from too far away";
         details = displayReach + " blocks";
         thresholdKey = "applicable-thresholds.reach";
-        vl = 20;
-        if(expandHitbox > 0.1f) {
-          vl /= 2;
-        }
-
         Synchronizer.synchronize(() -> {
           String sibylMessage = ChatColor.RED + "[R] " + player.getName() + " attacked " + entityName.toLowerCase() +
             " from " + displayReach;
@@ -299,14 +296,45 @@ public class AttackRaytrace extends IntaveMetaCheck<AttackRaytrace.AttackRaytrac
       }
     }
 
+    attackRaytraceMeta.lastHitVec = distanceOfResult.hitVec;
+
     if (movementData.inVehicle()) {
-      vl = 0;
       message += " (vehicle)";
     }
 
    plugin.violationProcessor().processViolation(player, vl, "AttackRaytrace", message, details, thresholdKey);
 //    player.sendMessage("§6s:" + reach);
     return true;
+  }
+
+  private int handleViolation(AttackRaytraceResult.ResultType attackRaytraceResult, Raytracer.DistanceOfResult distanceOfResult, User user, double expandHitbox) {
+    AttackRaytraceMeta attackRaytraceMeta = metaOf(user);
+    UserMetaMovementData movementData = user.meta().movementData();
+
+    int vl = 0;
+    switch (attackRaytraceResult) {
+      case MISS: {
+        vl = 4;
+      break;
+      }
+      case REACH: {
+        vl = 20;
+      break;
+      }
+      default: {
+      break;
+      }
+    }
+    if(expandHitbox > 0.1f) {
+      vl /= 2;
+    }
+    if(movementData.inVehicle()) {
+      vl = 0;
+    } else if(distanceOfResult.hitVec != null && attackRaytraceMeta.lastHitVec != null && distanceOfResult.hitVec.distanceTo(attackRaytraceMeta.lastHitVec) == 0) {
+      vl = 0;
+    }
+
+    return vl;
   }
 
   private Player playerByWrappedEntity(WrappedEntity wrappedEntity) {
@@ -345,7 +373,7 @@ public class AttackRaytrace extends IntaveMetaCheck<AttackRaytrace.AttackRaytrac
 
       for (int loopRotationIncrement = 0; loopRotationIncrement < 4; loopRotationIncrement++) {
         // mouse delay fix
-        double reach = distanceOf(
+        Raytracer.DistanceOfResult result = distanceOf(
           player,
           clonedEntity,
           false,
@@ -354,9 +382,9 @@ public class AttackRaytrace extends IntaveMetaCheck<AttackRaytrace.AttackRaytrac
           0.13f
         );
 
-        if (!hasAlwaysMouseDelayFix && reach > blockReachDistance) {
+        if (!hasAlwaysMouseDelayFix && result.reach > blockReachDistance) {
           // normal
-          reach = distanceOf(
+          result = distanceOf(
             player,
             clonedEntity,
             false,
@@ -366,7 +394,7 @@ public class AttackRaytrace extends IntaveMetaCheck<AttackRaytrace.AttackRaytrac
           );
         }
 
-        minReachInItr = Math.min(minReachInItr, reach);
+        minReachInItr = Math.min(minReachInItr, result.reach);
 
         clonedEntity.onLivingUpdate();
       }
@@ -432,6 +460,7 @@ public class AttackRaytrace extends IntaveMetaCheck<AttackRaytrace.AttackRaytrac
     public int lastFlyPacketCounterReach = 0;
     public List<Attack> remainingAttacks = new ArrayList<>();
     public int confidence;
+    public WrappedVector lastHitVec;
   }
 
   public static class Attack {

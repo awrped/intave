@@ -49,7 +49,7 @@ public final class Raytracer {
   /**
    * @param expandBoundingBox should be "0.1f" for a default hitbox
    */
-  public static double distanceOf(
+  public static DistanceOfResult distanceOf(
     Player player, WrappedEntity entity,
     boolean useAlternativePositionY,
     double prevPosX, double prevPosY, double prevPosZ,
@@ -74,7 +74,7 @@ public final class Raytracer {
    * @return distance the distance between the entity and the eyes of the player 0 means the player is inside of the
    * entity -1 means the player hit outside of the hitbox of the entity >0 means the reach of the player
    */
-  private static double distanceOf(
+  private static DistanceOfResult distanceOf(
     Player player,
     WrappedAxisAlignedBB entityBoundingBox,
     WrappedEntity.EntityPositionContext position,
@@ -88,6 +88,7 @@ public final class Raytracer {
     double blockReachDistance = 6d;
     double attackReachDistance = AttackRaytrace.reachDistance(player.getGameMode() == GameMode.CREATIVE);
     double lastReach = 10;
+    WrappedVector lastHitVec = null;
     for(boolean fastMath : BOOLEANSTATES) {
       if(lastReach < attackReachDistance)
         break;
@@ -117,11 +118,21 @@ public final class Raytracer {
 //          Bukkit.broadcastMessage("" + (lastReach - reach));
         if(reach < lastReach) {
           lastReach = reach;
+          lastHitVec = movingObjectPosition.hitVec;
         }
       }
     }
 
-    return lastReach;
+    return new DistanceOfResult(lastHitVec, lastReach);
+  }
+
+  public static class DistanceOfResult {
+    public final WrappedVector hitVec;
+    public final double reach;
+    public DistanceOfResult(WrappedVector hitVec, double distance) {
+      this.hitVec = hitVec;
+      this.reach = distance;
+    }
   }
 
   private static WrappedVector positionEyes(Player player, double prevPosX, double prevPosY, double prevPosZ) {

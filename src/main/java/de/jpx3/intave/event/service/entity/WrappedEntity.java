@@ -141,7 +141,7 @@ public class WrappedEntity implements Cloneable {
   }
 
   /**
-   * Handles relative movement. Packets: REL_ENTITY_MOVE, REL_ENTITY_MOVE_LOOK
+   * Handles relative movement. Packets: REL_ENTITY_MOVE, REL_ENTITY_MOVE_LOOK or ENTITY_LOOK
    *
    * @param packet contains information about the entity movement
    */
