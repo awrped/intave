@@ -14,7 +14,7 @@ public class WrappedEntity implements Cloneable {
   private final String entityName;
   private final int entityId;
 
-  public boolean isEntityLiving;
+  final public boolean isEntityLiving;
   public final HitBoxBoundaries hitBoxBoundaries;
 
   /**

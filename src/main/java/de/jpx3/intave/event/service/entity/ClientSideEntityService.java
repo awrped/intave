@@ -211,7 +211,8 @@ public final class ClientSideEntityService implements PacketEventSubscriber {
     packets = {
       @PacketDescriptor(sender = Sender.SERVER, packetName = "ENTITY_TELEPORT"),
       @PacketDescriptor(sender = Sender.SERVER, packetName = "REL_ENTITY_MOVE"),
-      @PacketDescriptor(sender = Sender.SERVER, packetName = "REL_ENTITY_MOVE_LOOK")
+      @PacketDescriptor(sender = Sender.SERVER, packetName = "REL_ENTITY_MOVE_LOOK"),
+      @PacketDescriptor(sender = Sender.SERVER, packetName = "ENTITY_LOOK")
     }
   )
   public void receiveTeleport(PacketEvent event) {
@@ -223,21 +224,30 @@ public final class ClientSideEntityService implements PacketEventSubscriber {
     if (entity == null) {
       registerEntity(event);
       entity = entityByIdentifier(user, entityId);
-    }
-    if (entity != null) {
-      if (entity.isEntityLiving && entity.tracingEnabled()) {
-        WrappedEntity finalEntity = entity;
-        plugin.eventService().transactionFeedbackService().requestPong(player, event, (player1, event1) -> {
-          processEntityTeleport(player1, event1, true);
-          finalEntity.clientSynchronized = true;
-        });
-      } else {
-        processEntityTeleport(player, event, false);
-        entity.clientSynchronized = false;
+      if(entity == null) {
+        throw new NullPointerException("entity could not be created");
       }
     }
+    if (entity.isEntityLiving && entity.tracingEnabled()) {
+      WrappedEntity finalEntity = entity;
+      plugin.eventService().transactionFeedbackService().requestPong(player, event, (player1, event1) -> {
+        processEntityTeleport(event1, finalEntity);
+        if(event1.getPacketType() == PacketType.Play.Server.ENTITY_TELEPORT) {
+          finalEntity.clientSynchronized = true;
+        }
+      });
+    } else {
+      processEntityTeleport(event, entity);
+      entity.clientSynchronized = false;
+    }
   }
-
+  private void processEntityTeleport(PacketEvent event, WrappedEntity entity) {
+    if (event.getPacketType() == PacketType.Play.Server.ENTITY_TELEPORT) {
+      entity.handleEntityTeleport(event.getPacket());
+    } else {
+      entity.handleEntityMovement(event.getPacket());
+    }
+  }
 /*
   private boolean suitableDistanceForSynchronization(Player player, WrappedEntity entity) {
     WrappedEntity.EntityPositionContext positions = entity.positions;
@@ -248,21 +258,6 @@ public final class ClientSideEntityService implements PacketEventSubscriber {
     return Math.sqrt(diffX * diffX + diffY * diffY + diffZ * diffZ) < 7.0;
   }
 */
-
-  private void processEntityTeleport(Player player, PacketEvent event, boolean clientTickSync) {
-    PacketType packetType = event.getPacketType();
-    User user = UserRepository.userOf(player);
-    PacketContainer packet = event.getPacket();
-    WrappedEntity entity = entityByIdentifier(user, packet.getIntegers().read(0));
-    if (entity != null) {
-      if (packetType == PacketType.Play.Server.ENTITY_TELEPORT) {
-        entity.handleEntityTeleport(packet);
-      } else {
-        entity.handleEntityMovement(packet);
-      }
-    }
-  }
-
   private void registerEntity(PacketEvent event) {
     Player player = event.getPlayer();
     PacketContainer packet = event.getPacket();
