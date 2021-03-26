@@ -3,7 +3,7 @@ package de.jpx3.intave.tools.client;
 import de.jpx3.intave.tools.wrapper.WrappedAxisAlignedBB;
 import de.jpx3.intave.tools.wrapper.WrappedMathHelper;
 import de.jpx3.intave.user.*;
-import de.jpx3.intave.world.BlockAccessor;
+import de.jpx3.intave.world.blockaccess.BukkitBlockAccess;
 import de.jpx3.intave.world.collision.Collision;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -30,7 +30,7 @@ public final class PlayerMovementHelper {
   }
 
   public static float resolveSlipperiness(User user, Location location) {
-    Material type = BlockAccessor.cacheAppliedTypeAccess(user, location);
+    Material type = BukkitBlockAccess.cacheAppliedTypeAccess(user, location);
     float blockSlipperiness;
     switch (type) {
       case PACKED_ICE:
@@ -92,8 +92,8 @@ public final class PlayerMovementHelper {
     for (int x = minX; x <= maxX; ++x) {
       for (int y = minY; y <= maxY; ++y) {
         for (int z = minZ; z <= maxZ; ++z) {
-          Material material = BlockAccessor.blockAccess(world, x, y, z).getType();
-          if (ClientBlockHelper.isLiquid(material)) {
+          Material material = BukkitBlockAccess.blockAccess(world, x, y, z).getType();
+          if (MaterialLogic.isLiquid(material)) {
             return true;
           }
         }
@@ -112,8 +112,8 @@ public final class PlayerMovementHelper {
     for (int x = minX; x <= maxX; ++x) {
       for (int y = minY; y <= maxY; ++y) {
         for (int z = minZ; z <= maxZ; ++z) {
-          Material material = BlockAccessor.blockAccess(world, x, y, z).getType();
-          if (!ClientBlockHelper.isLiquid(material)) {
+          Material material = BukkitBlockAccess.blockAccess(world, x, y, z).getType();
+          if (!MaterialLogic.isLiquid(material)) {
             return false;
           }
         }
@@ -132,7 +132,7 @@ public final class PlayerMovementHelper {
     for (int x = minX; x < maxX; ++x) {
       for (int y = minY; y < maxY; ++y) {
         for (int z = minZ; z < maxZ; ++z) {
-          if (ClientBlockHelper.isLava(BlockAccessor.blockAccess(world, x, y, z).getType())) {
+          if (MaterialLogic.isLava(BukkitBlockAccess.blockAccess(world, x, y, z).getType())) {
             return true;
           }
         }
@@ -144,7 +144,7 @@ public final class PlayerMovementHelper {
   public static boolean isOnLadder(User user, double positionX, double positionY, double positionZ) {
     Player player = user.player();
     UserMetaClientData clientData = user.meta().clientData();
-    Material type = BlockAccessor.cacheAppliedTypeAccess(
+    Material type = BukkitBlockAccess.cacheAppliedTypeAccess(
       user, player.getWorld(),
       WrappedMathHelper.floor(positionX),
       WrappedMathHelper.floor(positionY),
@@ -163,7 +163,7 @@ public final class PlayerMovementHelper {
     if (data instanceof Openable && (((Openable) data).isOpen())) {
       Directional directional = (Directional) blockState.getData();
       Location downLocation = location.clone().add(0.0, -1.0, 0.0);
-      Block downBlock = BlockAccessor.blockAccess(downLocation);
+      Block downBlock = BukkitBlockAccess.blockAccess(downLocation);
       if (!(downBlock instanceof Directional)) {
         return false;
       }

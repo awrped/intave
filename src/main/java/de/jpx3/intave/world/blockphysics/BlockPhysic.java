@@ -1,4 +1,4 @@
-package de.jpx3.intave.detect.checks.movement.physics.block;
+package de.jpx3.intave.world.blockphysics;
 
 import com.comphenix.protocol.utility.MinecraftVersion;
 import de.jpx3.intave.tools.annotate.Nullable;
@@ -9,7 +9,7 @@ import org.bukkit.util.Vector;
 
 import java.util.List;
 
-public interface CustomBlock {
+public interface BlockPhysic {
   void setup(MinecraftVersion serverVersion);
 
   @Nullable

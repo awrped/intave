@@ -1,10 +1,10 @@
 package de.jpx3.intave.detect.checks.movement.physics;
 
-import de.jpx3.intave.tools.client.ClientBlockHelper;
+import de.jpx3.intave.tools.client.MaterialLogic;
 import de.jpx3.intave.tools.wrapper.*;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserMetaMovementData;
-import de.jpx3.intave.world.BlockAccessor;
+import de.jpx3.intave.world.blockaccess.BukkitBlockAccess;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -25,9 +25,9 @@ public final class LegacyWaterPhysics {
     for (int x = minX; x < maxX; ++x) {
       for (int y = minY; y < maxY; ++y) {
         for (int z = minZ; z < maxZ; ++z) {
-          Material type = BlockAccessor.cacheAppliedTypeAccess(user, world, x, y, z);
-          if (ClientBlockHelper.isWater(type)) {
-            int level = BlockAccessor.cacheAppliedDataAccess(user, world, x, y, z);
+          Material type = BukkitBlockAccess.cacheAppliedTypeAccess(user, world, x, y, z);
+          if (MaterialLogic.isWater(type)) {
+            int level = BukkitBlockAccess.cacheAppliedDataAccess(user, world, x, y, z);
             double d0 = (float) (y + 1) - resolveLiquidHeightPercentage(level);
             if ((double) maxY >= d0) {
               inWater = true;
@@ -93,19 +93,19 @@ public final class LegacyWaterPhysics {
 
   private static int resolveLevel(User user, WrappedBlockPosition pos) {
     World world = user.player().getWorld();
-    Material clientSideBlock = BlockAccessor.cacheAppliedTypeAccess(user, world, pos.xCoord, pos.yCoord, pos.zCoord);
-    return ClientBlockHelper.isWater(clientSideBlock) ? BlockAccessor.cacheAppliedDataAccess(user, world, pos.xCoord, pos.yCoord, pos.zCoord) : -1;
+    Material clientSideBlock = BukkitBlockAccess.cacheAppliedTypeAccess(user, world, pos.xCoord, pos.yCoord, pos.zCoord);
+    return MaterialLogic.isWater(clientSideBlock) ? BukkitBlockAccess.cacheAppliedDataAccess(user, world, pos.xCoord, pos.yCoord, pos.zCoord) : -1;
   }
 
   private static boolean blocksMovement(User user, WrappedBlockPosition position) {
-    Material type = BlockAccessor.cacheAppliedTypeAccess(user, user.player().getWorld(), position.xCoord, position.yCoord, position.zCoord);//blockAt(world, position).getType();
-    return ClientBlockHelper.blocksMovement(type);
+    Material type = BukkitBlockAccess.cacheAppliedTypeAccess(user, user.player().getWorld(), position.xCoord, position.yCoord, position.zCoord);//blockAt(world, position).getType();
+    return MaterialLogic.blocksMovement(type);
   }
 
   private static boolean isBlockSolid(User user, WrappedBlockPosition pos, WrappedEnumDirection side) {
     World world = user.player().getWorld();
-    Material type = BlockAccessor.cacheAppliedTypeAccess(user, world, pos.xCoord, pos.yCoord, pos.zCoord);
-    return !ClientBlockHelper.isLiquid(type) && (side == WrappedEnumDirection.UP || (type != Material.ICE && ClientBlockHelper.blockSolid(type)));
+    Material type = BukkitBlockAccess.cacheAppliedTypeAccess(user, world, pos.xCoord, pos.yCoord, pos.zCoord);
+    return !MaterialLogic.isLiquid(type) && (side == WrappedEnumDirection.UP || (type != Material.ICE && MaterialLogic.blockSolid(type)));
   }
 
   public static float resolveLiquidHeightPercentage(int level) {

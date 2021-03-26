@@ -22,10 +22,11 @@ import de.jpx3.intave.tools.sync.Synchronizer;
 import de.jpx3.intave.tools.wrapper.WrappedEnumDirection;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserRepository;
-import de.jpx3.intave.world.BlockAccessor;
-import de.jpx3.intave.world.block.BlockDataAccess;
+import de.jpx3.intave.world.blockaccess.BlockDataAccess;
+import de.jpx3.intave.world.blockaccess.BukkitBlockAccess;
 import de.jpx3.intave.world.collision.BoundingBoxAccess;
 import de.jpx3.intave.world.collision.Collision;
+import de.jpx3.intave.world.permission.WorldPermission;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -88,7 +89,7 @@ public final class BlockActionDispatcher implements EventProcessor {
 
 
     // context resolve
-    Block clickedBlock = BlockAccessor.blockAccess(blockAgainstLocation);
+    Block clickedBlock = BukkitBlockAccess.blockAccess(blockAgainstLocation);
     Material clickedType = clickedBlock.getType();
     boolean targetBlockClickable = BlockDataAccess.isClickable(clickedType);
     Location defaultPlacementLocation = blockAgainstLocation.clone().add(WrappedEnumDirection.getFront(enumDirection).getDirectionVec().convertToBukkitVec());
@@ -124,9 +125,7 @@ public final class BlockActionDispatcher implements EventProcessor {
         return;
       }
 
-      boolean access = plugin.interactionPermissionService()
-        .blockPlacePermissionCheck()
-        .hasPermission(
+      boolean access = WorldPermission.blockPlacePermission(
           player,
           world,
           hand == null || hand == EnumWrappers.Hand.MAIN_HAND,
@@ -229,12 +228,10 @@ public final class BlockActionDispatcher implements EventProcessor {
     World world = player.getWorld();
     Location blockBreakLocation = blockPosition.toLocation(world);
 
-    boolean access = plugin.interactionPermissionService()
-      .blockBreakPermissionCheck()
-      .hasPermission(
-        player,
-        BlockAccessor.blockAccess(blockBreakLocation)
-      );
+    boolean access = WorldPermission.blockBreakPermission(
+      player,
+      BukkitBlockAccess.blockAccess(blockBreakLocation)
+    );
 
     if (user.boundingBoxAccess().currentlyInOverride(blockPosition.getX(), blockPosition.getY(), blockPosition.getZ())) {
       if (IntaveControl.DEBUG_BLOCK_CACHING) {
@@ -393,7 +390,7 @@ public final class BlockActionDispatcher implements EventProcessor {
 
   private void refreshBlock(Player player, Location location) {
     PacketContainer packet = ProtocolLibrary.getProtocolManager().createPacket(PacketType.Play.Server.BLOCK_CHANGE);
-    Block block = BlockAccessor.blockAccess(location);
+    Block block = BukkitBlockAccess.blockAccess(location);
     WrappedBlockData blockData = WrappedBlockData.createData(block.getType(), block.getData());
     BlockPosition position = new BlockPosition(location.getBlockX(), location.getBlockY(), location.getBlockZ());
     packet.getBlockData().write(0, blockData);

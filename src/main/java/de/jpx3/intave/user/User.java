@@ -10,6 +10,8 @@ import de.jpx3.intave.reflect.ReflectiveHandleAccess;
 import de.jpx3.intave.tools.AccessHelper;
 import de.jpx3.intave.tools.placeholder.PlayerContext;
 import de.jpx3.intave.tools.sync.Synchronizer;
+import de.jpx3.intave.world.collider.Collider;
+import de.jpx3.intave.world.collider.processor.ComplexColliderProcessor;
 import de.jpx3.intave.world.collision.BoundingBoxAccess;
 import org.bukkit.entity.Player;
 
@@ -27,6 +29,7 @@ public final class User {
   private final UserMeta userMeta;
   private final PermissionCache permissionCache;
   private final BoundingBoxAccess boundingBoxAccess;
+  private final ComplexColliderProcessor colliderProcessor;
   private final boolean hasPlayer;
   private final List<UserMessageChannel> receivingUserChannels = new ArrayList<>();
   private final Map<UserMessageChannel, UserMessageChannelPlayerConstraint> receiveWhitelist = Maps.newEnumMap(UserMessageChannel.class);
@@ -46,6 +49,7 @@ public final class User {
     this.userMeta = new UserMeta(player, this);
     this.permissionCache = new PermissionCache();
     this.boundingBoxAccess = new BoundingBoxAccess(hasOnlinePlayer() ? player() : null);
+    this.colliderProcessor = Collider.suitableComplexColliderProcessorFor(this);
     if(hasPlayer) {
       Synchronizer.synchronize(this::setDefaultMessagingChannel);
     }
@@ -134,6 +138,10 @@ public final class User {
 
   public BoundingBoxAccess boundingBoxAccess() {
     return boundingBoxAccess;
+  }
+
+  public ComplexColliderProcessor colliderProcessor() {
+    return colliderProcessor;
   }
 
   public TrustFactor trustFactor() {

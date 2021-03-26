@@ -1,4 +1,4 @@
-package de.jpx3.intave.world;
+package de.jpx3.intave.world.blockaccess;
 
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.event.bukkit.BukkitEventSubscriber;
@@ -18,7 +18,7 @@ import java.util.Map;
 import java.util.WeakHashMap;
 
 @Relocate
-public final class BlockAccessor implements BukkitEventSubscriber {
+public final class BukkitBlockAccess implements BukkitEventSubscriber {
   private static final Map<World, Block> invalidRequestBlockMap = new WeakHashMap<>();
 
   @BukkitEventSubscription
@@ -30,7 +30,7 @@ public final class BlockAccessor implements BukkitEventSubscriber {
 
   public static void setup() {
     Bukkit.getWorlds().forEach(world -> invalidRequestBlockMap.put(world, world.getBlockAt(0, -1, 0)));
-    IntavePlugin.singletonInstance().eventLinker().registerEventsIn(new BlockAccessor());
+    IntavePlugin.singletonInstance().eventLinker().registerEventsIn(new BukkitBlockAccess());
   }
 
   public static Block blockAccess(Location location) {

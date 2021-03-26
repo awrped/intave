@@ -22,8 +22,8 @@ import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserCustomCheckMeta;
 import de.jpx3.intave.user.UserMetaClientData;
 import de.jpx3.intave.user.UserMetaMovementData;
-import de.jpx3.intave.world.BlockAccessor;
-import de.jpx3.intave.world.block.BlockDataAccess;
+import de.jpx3.intave.world.blockaccess.BlockDataAccess;
+import de.jpx3.intave.world.blockaccess.BukkitBlockAccess;
 import de.jpx3.intave.world.raytrace.Raytracer;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -81,7 +81,7 @@ public class AirClickLimitHeuristic extends IntaveMetaCheckPart<Heuristics, AirC
 
     if(blockPosition != null) {
       if (blockPlaceDirection != 255) {
-        Material clickedType = BlockAccessor.blockAccess(blockPosition.toLocation(player.getWorld())).getType();
+        Material clickedType = BukkitBlockAccess.blockAccess(blockPosition.toLocation(player.getWorld())).getType();
         boolean clickable = BlockDataAccess.isClickable(clickedType);
 
         if(clickable) {

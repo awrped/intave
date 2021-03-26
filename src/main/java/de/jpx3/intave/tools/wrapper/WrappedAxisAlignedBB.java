@@ -179,13 +179,11 @@ public class WrappedAxisAlignedBB {
     if (other.maxX > this.minX && other.minX < this.maxX && other.maxY > this.minY && other.minY < this.maxY) {
       if (offsetZ > 0.0D && other.maxZ <= this.minZ) {
         double d1 = this.minZ - other.maxZ;
-
         if (d1 < offsetZ) {
           offsetZ = d1;
         }
       } else if (offsetZ < 0.0D && other.minZ >= this.maxZ) {
         double d0 = this.maxZ - other.minZ;
-
         if (d0 > offsetZ) {
           offsetZ = d0;
         }

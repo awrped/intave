@@ -2,10 +2,7 @@ package de.jpx3.intave.detect.checks.movement.physics.simulators;
 
 import de.jpx3.intave.detect.checks.movement.physics.LegacyWaterPhysics;
 import de.jpx3.intave.detect.checks.movement.physics.ProcessorMotionContext;
-import de.jpx3.intave.detect.checks.movement.physics.collider.Collider;
-import de.jpx3.intave.detect.checks.movement.physics.collider.result.ComplexColliderSimulationResult;
-import de.jpx3.intave.detect.checks.movement.physics.collider.result.QuickColliderSimulationResult;
-import de.jpx3.intave.tools.client.ClientBlockHelper;
+import de.jpx3.intave.tools.client.MaterialLogic;
 import de.jpx3.intave.tools.client.PlayerEffectHelper;
 import de.jpx3.intave.tools.client.PlayerMovementHelper;
 import de.jpx3.intave.tools.client.PlayerMovementPoseHelper;
@@ -16,7 +13,11 @@ import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserMetaClientData;
 import de.jpx3.intave.user.UserMetaMovementData;
 import de.jpx3.intave.user.UserMetaViolationLevelData;
-import de.jpx3.intave.world.BlockAccessor;
+import de.jpx3.intave.world.blockaccess.BukkitBlockAccess;
+import de.jpx3.intave.world.blockphysics.BlockPhysics;
+import de.jpx3.intave.world.collider.Collider;
+import de.jpx3.intave.world.collider.result.ComplexColliderSimulationResult;
+import de.jpx3.intave.world.collider.result.QuickColliderSimulationResult;
 import de.jpx3.intave.world.waterflow.Waterflow;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -66,18 +67,18 @@ public class DefaultPoseSimulator extends PoseSimulator {
       boolean allowJumpInWater = false;
      if (clientData.waterUpdate()) {
        // Geht nicht anders
-       Material material = BlockAccessor.cacheAppliedTypeAccess(
+       Material material = BukkitBlockAccess.cacheAppliedTypeAccess(
          user, user.player().getWorld(),
          movementData.lastPositionX, movementData.lastPositionY, movementData.lastPositionZ
        );
-       int blockData = BlockAccessor.cacheAppliedDataAccess(
+       int blockData = BukkitBlockAccess.cacheAppliedDataAccess(
          user, user.player().getWorld(),
          movementData.lastPositionX, movementData.lastPositionY, movementData.lastPositionZ
        );
        float heightPercentage = LegacyWaterPhysics.resolveLiquidHeightPercentage(blockData);
        if (movementData.onGround) {
          heightPercentage += movementData.positionY % 1;
-         allowJumpInWater = !ClientBlockHelper.isWater(material) || heightPercentage > 0.5;
+         allowJumpInWater = !MaterialLogic.isWater(material) || heightPercentage > 0.5;
        }
      }
       if (inWater && !allowJumpInWater) {
@@ -96,7 +97,7 @@ public class DefaultPoseSimulator extends PoseSimulator {
     if (waterUpdate && swimming) {
       double d3 = movementData.lookVector.getY();
       double d4 = d3 < -0.2D ? 0.085D : 0.06D;
-      boolean fluidStateEmpty = Waterflow.engine().fluidStateEmpty(user, positionX, positionY + 1.0 - 0.1, positionZ);
+      boolean fluidStateEmpty = Waterflow.fluidStateEmpty(user, positionX, positionY + 1.0 - 0.1, positionZ);
       if (d3 <= 0.0D || jumped || !fluidStateEmpty) {
         context.motionY += (d3 - context.motionY) * d4;
       }
@@ -399,20 +400,20 @@ public class DefaultPoseSimulator extends PoseSimulator {
     int blockCollisionPosX = WrappedMathHelper.floor(positionX);
     int blockCollisionPosY = WrappedMathHelper.floor(positionY - 0.2f);
     int blockCollisionPosZ = WrappedMathHelper.floor(positionZ);
-    Material block = BlockAccessor.cacheAppliedTypeAccess(user, world, blockCollisionPosX, blockCollisionPosY, blockCollisionPosZ);
+    Material block = BukkitBlockAccess.cacheAppliedTypeAccess(user, world, blockCollisionPosX, blockCollisionPosY, blockCollisionPosZ);
 
     if (block == Material.AIR) {
-      Material blockBelow = BlockAccessor.cacheAppliedTypeAccess(user, world, blockCollisionPosX, blockCollisionPosY, blockCollisionPosZ);
+      Material blockBelow = BukkitBlockAccess.cacheAppliedTypeAccess(user, world, blockCollisionPosX, blockCollisionPosY, blockCollisionPosZ);
       if (blockBelow.name().contains("FENCE") || blockBelow.name().contains("WALL")) {
         block = blockBelow;
       }
     }
 
-    customBlocks().fallenUpon(user, block);
+    BlockPhysics.fallenUpon(user, block);
 
     // onLanded
     if (movementData.collidedVertically) {
-      Vector collisionVector = customBlocks().blockLanded(
+      Vector collisionVector = BlockPhysics.blockLanded(
         user, block,
         context.motionX, movementData.physicsMotionY, context.motionZ
       );
@@ -427,7 +428,7 @@ public class DefaultPoseSimulator extends PoseSimulator {
 
     // EntityCollidedWithBlock
     if (movementData.onGround && !movementData.sneaking) {
-      Vector collisionVector = customBlocks().entityCollision(
+      Vector collisionVector = BlockPhysics.entityCollision(
         user, block,
         context.motionX, context.motionY, context.motionZ
       );
@@ -451,8 +452,8 @@ public class DefaultPoseSimulator extends PoseSimulator {
       for (int y = blockPositionStartY; y <= blockPositionEndY; y++) {
         for (int z = blockPositionStartZ; z <= blockPositionEndZ; z++) {
           Location location = new Location(world, x, y, z);
-          Material material = BlockAccessor.cacheAppliedTypeAccess(user, world, x, y, z);
-          Vector collisionVector = customBlocks().entityCollision(
+          Material material = BukkitBlockAccess.cacheAppliedTypeAccess(user, world, x, y, z);
+          Vector collisionVector = BlockPhysics.entityCollision(
             user, material,
             location,
             blockCollisionFrom,
@@ -470,9 +471,9 @@ public class DefaultPoseSimulator extends PoseSimulator {
     if (clientData.protocolVersion() >= PROTOCOL_VERSION_VILLAGE_UPDATE) {
       int soulSandModifier = PlayerEnchantmentHelper.resolveSoulSpeedModifier(player);
       if (soulSandModifier == 0) {
-        Block blockAccess = BlockAccessor.blockAccess(world, positionX, positionY - 0.5000001, positionZ);
+        Block blockAccess = BukkitBlockAccess.blockAccess(world, positionX, positionY - 0.5000001, positionZ);
         Material material = blockAccess.getType();
-        Vector speedFactor = customBlocks().speedFactor(user, material, context.motionX, context.motionY, context.motionZ);
+        Vector speedFactor = BlockPhysics.speedFactor(user, material, context.motionX, context.motionY, context.motionZ);
         if (speedFactor != null) {
           context.motionX = speedFactor.getX();
           context.motionY = speedFactor.getY();

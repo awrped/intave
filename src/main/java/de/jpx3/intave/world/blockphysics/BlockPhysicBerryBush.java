@@ -1,4 +1,4 @@
-package de.jpx3.intave.detect.checks.movement.physics.block;
+package de.jpx3.intave.world.blockphysics;
 
 import com.comphenix.protocol.utility.MinecraftVersion;
 import de.jpx3.intave.user.User;
@@ -9,7 +9,7 @@ import org.bukkit.util.Vector;
 import java.util.Collections;
 import java.util.List;
 
-final class CustomBlockBerryBush implements CustomBlock {
+final class BlockPhysicBerryBush implements BlockPhysic {
   private List<Material> material;
   private boolean supported;
 

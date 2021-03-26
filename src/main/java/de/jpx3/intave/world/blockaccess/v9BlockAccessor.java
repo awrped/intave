@@ -1,17 +1,17 @@
-package de.jpx3.intave.world.block;
+package de.jpx3.intave.world.blockaccess;
 
 import com.comphenix.protocol.wrappers.BlockPosition;
 import de.jpx3.intave.patchy.annotate.PatchyAutoTranslation;
-import net.minecraft.server.v1_8_R3.Chunk;
-import net.minecraft.server.v1_8_R3.WorldServer;
+import net.minecraft.server.v1_9_R2.Chunk;
+import net.minecraft.server.v1_9_R2.WorldServer;
 import org.bukkit.World;
-import org.bukkit.craftbukkit.v1_8_R3.CraftWorld;
-import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
+import org.bukkit.craftbukkit.v1_9_R2.CraftWorld;
+import org.bukkit.craftbukkit.v1_9_R2.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 @PatchyAutoTranslation
-public final class v8BlockAccessor implements BlockAccessor {
+public final class v9BlockAccessor implements BlockAccessor {
   @Override
   @PatchyAutoTranslation
   public float blockDamage(Player player, ItemStack itemInHand, BlockPosition blockPosition) {
@@ -20,8 +20,8 @@ public final class v8BlockAccessor implements BlockAccessor {
     if(chunk == null) {
       return 0.0f;
     }
-    net.minecraft.server.v1_8_R3.BlockPosition blockposition = new net.minecraft.server.v1_8_R3.BlockPosition(blockPosition.getX(), blockPosition.getY(), blockPosition.getZ());
-    return chunk.getBlockData(blockposition).getBlock().getDamage(((CraftPlayer) player).getHandle(), worldServer, blockposition);
+    net.minecraft.server.v1_9_R2.BlockPosition blockposition = new net.minecraft.server.v1_9_R2.BlockPosition(blockPosition.getX(), blockPosition.getY(), blockPosition.getZ());
+    return chunk.getBlockData(blockposition).getBlock().getDamage(chunk.getBlockData(blockposition), ((CraftPlayer) player).getHandle(), worldServer, blockposition);
   }
 
   @Override
@@ -32,7 +32,7 @@ public final class v8BlockAccessor implements BlockAccessor {
     if(chunk == null) {
       return false;
     }
-    net.minecraft.server.v1_8_R3.BlockPosition blockposition = new net.minecraft.server.v1_8_R3.BlockPosition(blockPosition.getX(), blockPosition.getY(), blockPosition.getZ());
+    net.minecraft.server.v1_9_R2.BlockPosition blockposition = new net.minecraft.server.v1_9_R2.BlockPosition(blockPosition.getX(), blockPosition.getY(), blockPosition.getZ());
     return chunk.getBlockData(blockposition).getBlock().a(worldServer, blockposition);
   }
 }
