@@ -1,4 +1,4 @@
-package de.jpx3.intave.detect.checks.movement.physics.collider.result;
+package de.jpx3.intave.world.collider.result;
 
 public class QuickColliderSimulationResult {
   private final double motionX, motionY, motionZ;

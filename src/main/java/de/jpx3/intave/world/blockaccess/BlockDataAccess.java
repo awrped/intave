@@ -1,4 +1,4 @@
-package de.jpx3.intave.world.block;
+package de.jpx3.intave.world.blockaccess;
 
 import com.comphenix.protocol.utility.MinecraftVersion;
 import com.comphenix.protocol.wrappers.BlockPosition;
@@ -24,10 +24,10 @@ public final class BlockDataAccess {
   private final static List<Material> clickableMaterials = new ArrayList<>();
 
   public static void setup() {
-    String resolverName = "de.jpx3.intave.world.block.v8BlockAccessor";
+    String resolverName = "de.jpx3.intave.world.blockaccess.v8BlockAccessor";
 
     if (MinecraftVersion.COMBAT_UPDATE.atOrAbove()) {
-      resolverName = "de.jpx3.intave.world.block.v9BlockAccessor";
+      resolverName = "de.jpx3.intave.world.blockaccess.v9BlockAccessor";
     }
 
     ClassLoader classLoader = IntavePlugin.class.getClassLoader();

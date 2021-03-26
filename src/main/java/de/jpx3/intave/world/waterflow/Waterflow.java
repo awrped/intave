@@ -3,6 +3,8 @@ package de.jpx3.intave.world.waterflow;
 import com.comphenix.protocol.utility.MinecraftVersion;
 import de.jpx3.intave.access.IntaveInternalException;
 import de.jpx3.intave.adapter.ProtocolLibAdapter;
+import de.jpx3.intave.tools.wrapper.WrappedAxisAlignedBB;
+import de.jpx3.intave.user.User;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -43,7 +45,15 @@ public final class Waterflow {
     availableEngines = Collections.emptyList();
   }
 
-  public static AbstractWaterflow engine() {
-    return engine;
+  public static boolean areEyesInFluid(User user, double positionX, double positionY, double positionZ) {
+    return engine.areEyesInFluid(user, positionX, positionY, positionZ);
+  }
+
+  public static boolean handleFluidAcceleration(User user, WrappedAxisAlignedBB boundingBox) {
+    return engine.handleFluidAcceleration(user, boundingBox);
+  }
+
+  public static boolean fluidStateEmpty(User user, double x, double y, double z) {
+    return engine.fluidStateEmpty(user, x, y, z);
   }
 }

@@ -11,7 +11,6 @@ import de.jpx3.intave.connect.proxy.ProxyMessenger;
 import de.jpx3.intave.connect.shadow.LabymodShadowIntegration;
 import de.jpx3.intave.connect.sibyl.SibylIntegrationService;
 import de.jpx3.intave.detect.CheckService;
-import de.jpx3.intave.detect.checks.movement.physics.collider.Collider;
 import de.jpx3.intave.event.EventService;
 import de.jpx3.intave.event.bukkit.BukkitEventLinker;
 import de.jpx3.intave.event.packet.PacketSubscriptionLinker;
@@ -37,11 +36,13 @@ import de.jpx3.intave.trustfactor.TrustFactorService;
 import de.jpx3.intave.update.VersionInformation;
 import de.jpx3.intave.update.VersionList;
 import de.jpx3.intave.user.UserRepository;
-import de.jpx3.intave.world.BlockAccessor;
-import de.jpx3.intave.world.block.BlockDataAccess;
+import de.jpx3.intave.world.blockaccess.BlockDataAccess;
+import de.jpx3.intave.world.blockaccess.BukkitBlockAccess;
+import de.jpx3.intave.world.blockphysics.BlockPhysics;
+import de.jpx3.intave.world.collider.Collider;
 import de.jpx3.intave.world.collision.BoundingBoxAccess;
 import de.jpx3.intave.world.collision.patches.BoundingBoxPatcher;
-import de.jpx3.intave.world.permission.InteractionPermissionService;
+import de.jpx3.intave.world.permission.WorldPermission;
 import de.jpx3.intave.world.raytrace.Raytracer;
 import de.jpx3.intave.world.waterflow.Waterflow;
 import org.bukkit.ChatColor;
@@ -84,7 +85,7 @@ public final class IntavePlugin extends JavaPlugin {
   private ViolationService violationService;
   private CheckService checkService;
   private Filterer filterer;
-  private InteractionPermissionService interactionPermissionService;
+  private WorldPermission worldPermission;
   private TrustFactorService trustFactorService;
   private VersionList versionList;
   private LabymodShadowIntegration shadowIntegration;
@@ -154,10 +155,12 @@ public final class IntavePlugin extends JavaPlugin {
       Raytracer.setup();
       Collider.setup();
       Waterflow.setup();
-      BlockAccessor.setup();
+      BukkitBlockAccess.setup();
       BlockDataAccess.setup();
       ViaVersionAdapter.setup();
       BoundingBoxAccess.setup();
+      WorldPermission.setup(this);
+      BlockPhysics.setup();
       InventoryUseItemHelper.setup();
       BoundingBoxPatcher.setup();
 
@@ -414,7 +417,6 @@ public final class IntavePlugin extends JavaPlugin {
       accessService.setup();
 
       customEventService = new CustomEventService(this);
-      interactionPermissionService = new InteractionPermissionService(this);
       checkService = new CheckService(this);
       violationService = new ViolationService(this);
       eventService = new EventService(this);
@@ -550,8 +552,8 @@ public final class IntavePlugin extends JavaPlugin {
     return this.violationService;
   }
 
-  public InteractionPermissionService interactionPermissionService() {
-    return interactionPermissionService;
+  public WorldPermission interactionPermissionService() {
+    return worldPermission;
   }
 
   public SibylIntegrationService sibylIntegrationService() {

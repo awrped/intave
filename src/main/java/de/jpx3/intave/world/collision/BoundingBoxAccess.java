@@ -5,7 +5,7 @@ import de.jpx3.intave.access.IntaveInternalException;
 import de.jpx3.intave.adapter.ProtocolLibAdapter;
 import de.jpx3.intave.patchy.PatchyLoadingInjector;
 import de.jpx3.intave.tools.wrapper.WrappedAxisAlignedBB;
-import de.jpx3.intave.world.BlockAccessor;
+import de.jpx3.intave.world.blockaccess.BukkitBlockAccess;
 import de.jpx3.intave.world.collision.patches.BoundingBoxPatcher;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
@@ -24,7 +24,6 @@ import static de.jpx3.intave.IntaveControl.DISABLE_BLOCK_CACHING_ENTIRELY;
 
 public final class BoundingBoxAccess {
   private final static CacheEntry EMPTY_CACHE_ENTRY = new CacheEntry(Collections.emptyList(), Material.AIR, 0);
-
   private static BoundingBoxResolver globalBoundingBoxResolver;
 
   public static void setup() {
@@ -94,7 +93,7 @@ public final class BoundingBoxAccess {
     if (cacheEntry == null) {
       List<WrappedAxisAlignedBB> boundingBoxes;
       World world = chunk.getWorld();
-      Block block = BlockAccessor.blockAccess(world, posX, posY, posZ);
+      Block block = BukkitBlockAccess.blockAccess(world, posX, posY, posZ);
       Material type = block.getType();
       if(type == Material.AIR) {
         cacheEntry = EMPTY_CACHE_ENTRY;
@@ -142,7 +141,7 @@ public final class BoundingBoxAccess {
     if (cacheEntry == null) {
       List<WrappedAxisAlignedBB> boundingBoxes;
       World world = chunk.getWorld();
-      Block block = BlockAccessor.blockAccess(world, posX, posY, posZ);
+      Block block = BukkitBlockAccess.blockAccess(world, posX, posY, posZ);
       Material type = block.getType();
       if(type == Material.AIR) {
         cacheEntry = EMPTY_CACHE_ENTRY;
@@ -181,7 +180,7 @@ public final class BoundingBoxAccess {
     if (cacheEntry == null) {
       List<WrappedAxisAlignedBB> boundingBoxes;
       World world = chunk.getWorld();
-      Block block = BlockAccessor.blockAccess(world, posX, posY, posZ);
+      Block block = BukkitBlockAccess.blockAccess(world, posX, posY, posZ);
       Material type = block.getType();
       if(type == Material.AIR) {
         cacheEntry = EMPTY_CACHE_ENTRY;
@@ -229,7 +228,7 @@ public final class BoundingBoxAccess {
     if (cacheEntry == null) {
       List<WrappedAxisAlignedBB> boundingBoxes;
       World world = chunk.getWorld();
-      Block block = BlockAccessor.blockAccess(world, posX, posY, posZ);
+      Block block = BukkitBlockAccess.blockAccess(world, posX, posY, posZ);
       Material type = block.getType();
       if(type == Material.AIR) {
         cacheEntry = EMPTY_CACHE_ENTRY;

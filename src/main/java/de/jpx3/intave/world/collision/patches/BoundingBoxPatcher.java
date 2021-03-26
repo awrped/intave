@@ -45,8 +45,7 @@ public final class BoundingBoxPatcher {
     for (int i = 0; i < boundingBoxes.size(); i++) {
       WrappedAxisAlignedBB boundingBox = boundingBoxes.get(i);
       if(boundingBox.isOriginBox()) {
-        WrappedAxisAlignedBB transposedBox = boundingBox.offset(posX, posY, posZ);
-        boundingBoxes.set(i, transposedBox);
+        boundingBoxes.set(i, boundingBox.offset(posX, posY, posZ));
       }
     }
     return boundingBoxes;

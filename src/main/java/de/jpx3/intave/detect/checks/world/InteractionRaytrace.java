@@ -24,8 +24,8 @@ import de.jpx3.intave.tools.wrapper.WrappedEnumDirection;
 import de.jpx3.intave.tools.wrapper.WrappedMovingObjectPosition;
 import de.jpx3.intave.tools.wrapper.WrappedVector;
 import de.jpx3.intave.user.*;
-import de.jpx3.intave.world.BlockAccessor;
-import de.jpx3.intave.world.block.BlockDataAccess;
+import de.jpx3.intave.world.blockaccess.BlockDataAccess;
+import de.jpx3.intave.world.blockaccess.BukkitBlockAccess;
 import de.jpx3.intave.world.collision.BoundingBoxAccess;
 import de.jpx3.intave.world.collision.Collision;
 import de.jpx3.intave.world.raytrace.Raytracer;
@@ -101,7 +101,7 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
     playerLocation.setYaw(movementData.rotationYaw);
     playerLocation.setPitch(movementData.rotationPitch);
 
-    Material clickedType = BlockAccessor.blockAccess(blockPosition.toLocation(player.getWorld())).getType();
+    Material clickedType = BukkitBlockAccess.blockAccess(blockPosition.toLocation(player.getWorld())).getType();
     boolean clickable = BlockDataAccess.isClickable(clickedType);
     Material itemTypeInHand = user.meta().inventoryData().heldItemType();
     boolean isPlacement = itemTypeInHand != Material.AIR && itemTypeInHand.isBlock() && !clickable;
@@ -373,8 +373,8 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
     UserMetaMovementData movementData = user.meta().movementData();
     InteractionType type = interaction.type();
 
-    Block targetLocationBlock = BlockAccessor.blockAccess(targetLocation);
-    Block raycastLocationBlock = BlockAccessor.blockAccess(raycastLocation);
+    Block targetLocationBlock = BukkitBlockAccess.blockAccess(targetLocation);
+    Block raycastLocationBlock = BukkitBlockAccess.blockAccess(raycastLocation);
     if (targetLocationBlock.getType() == Material.AIR || raycastLocationBlock.getType() == Material.AIR) {
       return true;
     }
@@ -450,7 +450,7 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
 
   private void refreshBlock(Player player, Location location) {
     PacketContainer packet = ProtocolLibrary.getProtocolManager().createPacket(PacketType.Play.Server.BLOCK_CHANGE);
-    Block block = BlockAccessor.blockAccess(location);
+    Block block = BukkitBlockAccess.blockAccess(location);
     WrappedBlockData blockData = WrappedBlockData.createData(block.getType(), block.getData());
     BlockPosition position = new BlockPosition(location.getBlockX(), location.getBlockY(), location.getBlockZ());
     packet.getBlockData().write(0, blockData);

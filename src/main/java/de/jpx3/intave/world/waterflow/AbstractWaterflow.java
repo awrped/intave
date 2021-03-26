@@ -1,21 +1,22 @@
 package de.jpx3.intave.world.waterflow;
 
 import com.comphenix.protocol.utility.MinecraftVersion;
-import de.jpx3.intave.tools.client.ClientBlockHelper;
+import de.jpx3.intave.tools.client.MaterialLogic;
 import de.jpx3.intave.tools.wrapper.WrappedAxisAlignedBB;
 import de.jpx3.intave.tools.wrapper.WrappedMathHelper;
 import de.jpx3.intave.tools.wrapper.WrappedVector;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserMetaMovementData;
-import de.jpx3.intave.world.BlockAccessor;
+import de.jpx3.intave.world.blockaccess.BukkitBlockAccess;
 import org.bukkit.Material;
 import org.bukkit.World;
 
 public abstract class AbstractWaterflow {
-  public void setup() throws Exception {}
-  public abstract boolean fluidStateEmpty(User user, double x, double y, double z);
+  protected void setup() throws Exception {}
 
-  public boolean handleFluidAcceleration(User user, WrappedAxisAlignedBB boundingBox) {
+  protected abstract boolean fluidStateEmpty(User user, double x, double y, double z);
+
+  protected boolean handleFluidAcceleration(User user, WrappedAxisAlignedBB boundingBox) {
     World world = user.player().getWorld();
     UserMetaMovementData movementData = user.meta().movementData();
     Object serverWorld = movementData.nmsWorld();
@@ -36,7 +37,7 @@ public abstract class AbstractWaterflow {
         for (int z = minZ; z < maxZ; ++z) {
           Object blockPosition = blockPositionOf(x, y, z);
           Object fluidState = fluidState(user, blockPosition);
-          Material blockClientSide = BlockAccessor.cacheAppliedTypeAccess(user, world, x, y, z);
+          Material blockClientSide = BukkitBlockAccess.cacheAppliedTypeAccess(user, world, x, y, z);
           if (fluidTaggedWithWater(fluidState)) {
             float fluidHeight = fluidHeight(fluidState);
             double d1 = (float) y + fluidHeight;
@@ -50,7 +51,7 @@ public abstract class AbstractWaterflow {
               waterFlowTotal = waterFlowTotal.add(flowVector);
               ++countedWaterCollisions;
             }
-          } else if (ClientBlockHelper.isWater(blockClientSide)) {
+          } else if (MaterialLogic.isWater(blockClientSide)) {
             inWater = true;
           }
         }
@@ -87,10 +88,10 @@ public abstract class AbstractWaterflow {
 //      && blockPlayerViewPositionY < blockY + fluidHeight(fluidState) + 0.11111111F
       ;
   }
-  public abstract boolean fluidTaggedWithWater(Object fluidState);
-  public abstract Object blockPositionOf(int x, int y, int z);
-  public abstract Object fluidState(User user, Object blockPosition);
-  public abstract float fluidHeight(Object fluidState);
-  public abstract WrappedVector resolveFlowVector(Object fluidState, Object world, Object blockPosition);
-  public abstract boolean appliesToAtLeast(MinecraftVersion currentVersion);
+  protected abstract boolean fluidTaggedWithWater(Object fluidState);
+  protected abstract Object blockPositionOf(int x, int y, int z);
+  protected abstract Object fluidState(User user, Object blockPosition);
+  protected abstract float fluidHeight(Object fluidState);
+  protected abstract WrappedVector resolveFlowVector(Object fluidState, Object world, Object blockPosition);
+  protected abstract boolean appliesToAtLeast(MinecraftVersion currentVersion);
 }

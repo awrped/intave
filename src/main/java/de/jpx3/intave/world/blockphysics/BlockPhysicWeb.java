@@ -1,10 +1,10 @@
-package de.jpx3.intave.detect.checks.movement.physics.block;
+package de.jpx3.intave.world.blockphysics;
 
 import com.comphenix.protocol.utility.MinecraftVersion;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserMetaClientData;
 import de.jpx3.intave.user.UserMetaMovementData;
-import de.jpx3.intave.world.block.BlockTypeAccess;
+import de.jpx3.intave.world.blockaccess.BlockTypeAccess;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.util.Vector;
@@ -14,7 +14,7 @@ import java.util.List;
 
 import static de.jpx3.intave.user.UserMetaClientData.PROTOCOL_VERSION_BEE_UPDATE;
 
-final class CustomBlockWeb implements CustomBlock {
+final class BlockPhysicWeb implements BlockPhysic {
   private List<Material> material;
 
   @Override

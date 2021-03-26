@@ -1,12 +1,12 @@
 package de.jpx3.intave.world.collision;
 
 import de.jpx3.intave.tools.annotate.Relocate;
-import de.jpx3.intave.tools.client.ClientBlockHelper;
+import de.jpx3.intave.tools.client.MaterialLogic;
 import de.jpx3.intave.tools.wrapper.WrappedAxisAlignedBB;
 import de.jpx3.intave.tools.wrapper.WrappedMathHelper;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserRepository;
-import de.jpx3.intave.world.BlockAccessor;
+import de.jpx3.intave.world.blockaccess.BukkitBlockAccess;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
@@ -113,9 +113,9 @@ public final class Collision {
     for (int x = minX; x <= maxX; x++) {
       for (int y = minY; y <= maxY; y++) {
         for (int z = minZ; z <= maxZ; z++) {
-          Block block = BlockAccessor.blockAccess(world, x, y, z);
+          Block block = BukkitBlockAccess.blockAccess(world, x, y, z);
           Material type = block.getType();
-          if (!ClientBlockHelper.isLiquid(type) && block.getType() != Material.AIR) {
+          if (!MaterialLogic.isLiquid(type) && block.getType() != Material.AIR) {
             return true;
           }
         }
@@ -138,7 +138,7 @@ public final class Collision {
     for (int x = minX; x <= maxX; x++) {
       for (int y = minY; y <= maxY; y++) {
         for (int z = minZ; z <= maxZ; z++) {
-          Block block = BlockAccessor.blockAccess(world, x, y, z);
+          Block block = BukkitBlockAccess.blockAccess(world, x, y, z);
           if (block.getType() == blockType) {
             return true;
           }

@@ -1,4 +1,4 @@
-package de.jpx3.intave.world.block;
+package de.jpx3.intave.world.blockaccess;
 
 import com.comphenix.protocol.wrappers.BlockPosition;
 import org.bukkit.World;

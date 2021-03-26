@@ -1,9 +1,9 @@
 package de.jpx3.intave.tools.client;
 
-import de.jpx3.intave.world.block.BlockTypeAccess;
+import de.jpx3.intave.world.blockaccess.BlockTypeAccess;
 import org.bukkit.Material;
 
-public final class ClientBlockHelper {
+public final class MaterialLogic {
   public static boolean blocksMovement(Material material) {
     // Liquids don't block movement
     if (isLiquid(material)) {

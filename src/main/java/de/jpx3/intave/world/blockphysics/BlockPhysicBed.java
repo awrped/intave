@@ -1,4 +1,4 @@
-package de.jpx3.intave.detect.checks.movement.physics.block;
+package de.jpx3.intave.world.blockphysics;
 
 import com.comphenix.protocol.utility.MinecraftVersion;
 import de.jpx3.intave.adapter.ProtocolLibAdapter;
@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 
 import static de.jpx3.intave.user.UserMetaClientData.PROTOCOL_VERSION_COLOR_UPDATE;
 
-final class CustomBlockBed implements CustomBlock {
+final class BlockPhysicBed implements BlockPhysic {
   private List<Material> materials;
 
   @Override

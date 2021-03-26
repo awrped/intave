@@ -10,10 +10,6 @@ import de.jpx3.intave.detect.checks.movement.physics.LegacyWaterPhysics;
 import de.jpx3.intave.detect.checks.movement.physics.Pose;
 import de.jpx3.intave.detect.checks.movement.physics.ProcessorMotionContext;
 import de.jpx3.intave.detect.checks.movement.physics.SimulationProcessor;
-import de.jpx3.intave.detect.checks.movement.physics.block.CustomBlocks;
-import de.jpx3.intave.detect.checks.movement.physics.collider.Collider;
-import de.jpx3.intave.detect.checks.movement.physics.collider.result.ComplexColliderSimulationResult;
-import de.jpx3.intave.detect.checks.movement.physics.collider.result.QuickColliderSimulationResult;
 import de.jpx3.intave.detect.checks.movement.physics.simulators.PoseSimulator;
 import de.jpx3.intave.diagnostics.timings.Timings;
 import de.jpx3.intave.reflect.ReflectiveAccess;
@@ -25,9 +21,11 @@ import de.jpx3.intave.tools.sync.Synchronizer;
 import de.jpx3.intave.tools.wrapper.WrappedAxisAlignedBB;
 import de.jpx3.intave.tools.wrapper.WrappedMathHelper;
 import de.jpx3.intave.user.*;
-import de.jpx3.intave.world.BlockAccessor;
+import de.jpx3.intave.world.blockaccess.BukkitBlockAccess;
+import de.jpx3.intave.world.collider.Collider;
+import de.jpx3.intave.world.collider.result.ComplexColliderSimulationResult;
+import de.jpx3.intave.world.collider.result.QuickColliderSimulationResult;
 import de.jpx3.intave.world.collision.Collision;
-import de.jpx3.intave.world.waterflow.AbstractWaterflow;
 import de.jpx3.intave.world.waterflow.Waterflow;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
@@ -54,16 +52,12 @@ public final class Physics extends IntaveCheck {
   private MethodHandle fallDamageInvokeMethod;
 
   private final SimulationProcessor simulationService;
-  private final AbstractWaterflow waterflow;
-  private final CustomBlocks customBlocks;
 
   public Physics(IntavePlugin plugin) {
     super("Physics", "physics");
     this.plugin = plugin;
     this.decrementer = new CheckViolationLevelDecrementer(this, VL_DECREMENT_PER_VALID_MOVE * 20);
     this.simulationService = new SimulationProcessor();
-    this.customBlocks = new CustomBlocks();
-    this.waterflow = Waterflow.engine();
     searchFallDamageApplier();
     linkCheckToPoseSimulators();
   }
@@ -202,7 +196,7 @@ public final class Physics extends IntaveCheck {
 
   private void updateEyesInWater(User user) {
     UserMetaMovementData movementData = user.meta().movementData();
-    movementData.eyesInWater = waterflow.areEyesInFluid(user, movementData.positionX, movementData.positionY, movementData.positionZ);
+    movementData.eyesInWater = Waterflow.areEyesInFluid(user, movementData.positionX, movementData.positionY, movementData.positionZ);
   }
 
   private void updateInWater(User user) {
@@ -210,7 +204,7 @@ public final class Physics extends IntaveCheck {
     UserMetaClientData clientData = meta.clientData();
     UserMetaMovementData movementData = meta.movementData();
     if (clientData.protocolVersion() >= PROTOCOL_VERSION_AQUATIC_UPDATE) {
-      movementData.inWater = waterflow.handleFluidAcceleration(user, movementData.boundingBox());
+      movementData.inWater = Waterflow.handleFluidAcceleration(user, movementData.boundingBox());
     } else {
       WrappedAxisAlignedBB entityBoundingBox = movementData.boundingBox();
       WrappedAxisAlignedBB checkableBoundingBox = entityBoundingBox
@@ -322,7 +316,7 @@ public final class Physics extends IntaveCheck {
         double blockPositionX = (boundingBox.minX + boundingBox.maxX) / 2.0;
         double blockPositionY = (boundingBox.minY + boundingBox.maxY) / 2.0;
         double blockPositionZ = (boundingBox.minZ + boundingBox.maxZ) / 2.0;
-        Block block = BlockAccessor.blockAccess(player.getWorld(), blockPositionX, blockPositionY, blockPositionZ);
+        Block block = BukkitBlockAccess.blockAccess(player.getWorld(), blockPositionX, blockPositionY, blockPositionZ);
         boolean currentlyInOverride = user.boundingBoxAccess().currentlyInOverride(WrappedMathHelper.floor(blockPositionX), WrappedMathHelper.floor(blockPositionY), WrappedMathHelper.floor(blockPositionZ));
 
         String message = "moved into " + (currentlyInOverride ? "<emulated>" : shortenTypeName(block.getType())) + " block";
@@ -359,7 +353,7 @@ public final class Physics extends IntaveCheck {
           double blockPositionX = (boundingBox.minX + boundingBox.maxX) / 2.0;
           double blockPositionY = (boundingBox.minY + boundingBox.maxY) / 2.0;
           double blockPositionZ = (boundingBox.minZ + boundingBox.maxZ) / 2.0;
-          Block block = BlockAccessor.blockAccess(player.getWorld(), blockPositionX, blockPositionY, blockPositionZ);
+          Block block = BukkitBlockAccess.blockAccess(player.getWorld(), blockPositionX, blockPositionY, blockPositionZ);
 
           String message = "moved into " + shortenTypeName(block.getType()) + " block whilst moving in another block";
           boolean multipleBoxes = intersectionBoundingBoxesCurrent.size() > 1;
@@ -730,9 +724,4 @@ public final class Physics extends IntaveCheck {
       movementData.physicsMotionZ = 0.0;
     }
   }
-
-  public CustomBlocks blockCollisionRepository() {
-    return customBlocks;
-  }
-
 }

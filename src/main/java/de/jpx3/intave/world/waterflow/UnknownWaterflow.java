@@ -2,14 +2,14 @@ package de.jpx3.intave.world.waterflow;
 
 import com.comphenix.protocol.utility.MinecraftVersion;
 import de.jpx3.intave.detect.checks.movement.physics.LegacyWaterPhysics;
-import de.jpx3.intave.tools.client.ClientBlockHelper;
+import de.jpx3.intave.tools.client.MaterialLogic;
 import de.jpx3.intave.tools.wrapper.WrappedAxisAlignedBB;
 import de.jpx3.intave.tools.wrapper.WrappedBlockPosition;
 import de.jpx3.intave.tools.wrapper.WrappedMathHelper;
 import de.jpx3.intave.tools.wrapper.WrappedVector;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserMetaMovementData;
-import de.jpx3.intave.world.BlockAccessor;
+import de.jpx3.intave.world.blockaccess.BukkitBlockAccess;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
@@ -19,8 +19,8 @@ final class UnknownWaterflow extends AbstractWaterflow {
   @Override
   public boolean fluidStateEmpty(User user, double x, double y, double z) {
     World world = user.player().getWorld();
-    Block block = BlockAccessor.blockAccess(world, WrappedMathHelper.floor(x), WrappedMathHelper.floor(y), WrappedMathHelper.floor(z));
-    return !ClientBlockHelper.isLiquid(block.getType());
+    Block block = BukkitBlockAccess.blockAccess(world, WrappedMathHelper.floor(x), WrappedMathHelper.floor(y), WrappedMathHelper.floor(z));
+    return !MaterialLogic.isLiquid(block.getType());
   }
 
   @Override
@@ -45,10 +45,10 @@ final class UnknownWaterflow extends AbstractWaterflow {
     for (int x = minX; x < maxX; ++x) {
       for (int y = minY; y < maxY; ++y) {
         for (int z = minZ; z < maxZ; ++z) {
-          Block block = BlockAccessor.blockAccess(world, x, y, z);
-          Material clientSideBlock = BlockAccessor.cacheAppliedTypeAccess(user, world, x, y, z);
-          boolean waterServerSide = ClientBlockHelper.isWater(block.getType());
-          boolean waterClientSide = ClientBlockHelper.isWater(clientSideBlock);
+          Block block = BukkitBlockAccess.blockAccess(world, x, y, z);
+          Material clientSideBlock = BukkitBlockAccess.cacheAppliedTypeAccess(user, world, x, y, z);
+          boolean waterServerSide = MaterialLogic.isWater(block.getType());
+          boolean waterClientSide = MaterialLogic.isWater(clientSideBlock);
           if (waterServerSide) {
             double height = 1 - LegacyWaterPhysics.resolveLiquidHeightPercentage(block.getData());
             double d1 = (float) y + height;
@@ -94,8 +94,8 @@ final class UnknownWaterflow extends AbstractWaterflow {
     double posYEye = positionY + eyeHeight;
     double d0 = posYEye - (double) 0.11111111F;
     WrappedVector vector3d = new WrappedVector(positionX, d0, positionZ);
-    Block block = BlockAccessor.blockAccess(world, vector3d.xCoord, vector3d.yCoord, vector3d.zCoord);
-    if (ClientBlockHelper.isWater(block.getType())) {
+    Block block = BukkitBlockAccess.blockAccess(world, vector3d.xCoord, vector3d.yCoord, vector3d.zCoord);
+    if (MaterialLogic.isWater(block.getType())) {
       double d1 = vector3d.yCoord + 1 - LegacyWaterPhysics.resolveLiquidHeightPercentage(block.getData());
       return d1 > d0;
     }

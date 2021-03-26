@@ -1,4 +1,4 @@
-package de.jpx3.intave.detect.checks.movement.physics.block;
+package de.jpx3.intave.world.blockphysics;
 
 import com.comphenix.protocol.utility.MinecraftVersion;
 import de.jpx3.intave.user.User;
@@ -12,7 +12,7 @@ import java.util.List;
 
 import static de.jpx3.intave.user.UserMetaClientData.PROTOCOL_VERSION_BEE_UPDATE;
 
-final class CustomBlockSoulSand implements CustomBlock {
+final class BlockPhysicSoulSand implements BlockPhysic {
   private List<Material> material;
 
   @Override

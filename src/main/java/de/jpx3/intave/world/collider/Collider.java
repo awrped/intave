@@ -1,14 +1,14 @@
-package de.jpx3.intave.detect.checks.movement.physics.collider;
+package de.jpx3.intave.world.collider;
 
 import de.jpx3.intave.detect.checks.movement.physics.ProcessorMotionContext;
-import de.jpx3.intave.detect.checks.movement.physics.collider.processor.ComplexColliderProcessor;
-import de.jpx3.intave.detect.checks.movement.physics.collider.processor.LegacyComplexColliderProcessor;
-import de.jpx3.intave.detect.checks.movement.physics.collider.processor.NewComplexColliderProcessor;
-import de.jpx3.intave.detect.checks.movement.physics.collider.result.ComplexColliderSimulationResult;
-import de.jpx3.intave.detect.checks.movement.physics.collider.result.QuickColliderSimulationResult;
 import de.jpx3.intave.tools.wrapper.WrappedAxisAlignedBB;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserMetaClientData;
+import de.jpx3.intave.world.collider.processor.ComplexColliderProcessor;
+import de.jpx3.intave.world.collider.processor.LegacyComplexColliderProcessor;
+import de.jpx3.intave.world.collider.processor.NewComplexColliderProcessor;
+import de.jpx3.intave.world.collider.result.ComplexColliderSimulationResult;
+import de.jpx3.intave.world.collider.result.QuickColliderSimulationResult;
 import de.jpx3.intave.world.collision.Collision;
 import org.bukkit.entity.Player;
 
@@ -26,14 +26,16 @@ public final class Collider {
     newCollisionResolver = new NewComplexColliderProcessor();
   }
 
+  public static ComplexColliderProcessor suitableComplexColliderProcessorFor(User user) {
+    UserMetaClientData clientData = user.meta().clientData();
+    return clientData.applyNewEntityCollisions() ? newCollisionResolver : legacyCollisionResolver;
+  }
+
   public static ComplexColliderSimulationResult simulateComplexCollision(
     User user, ProcessorMotionContext context, boolean inWeb,
     double positionX, double positionY, double positionZ
   ) {
-    UserMetaClientData clientData = user.meta().clientData();
-    return clientData.applyNewEntityCollisions()
-      ? newCollisionResolver.simulateCollision(user, context, inWeb, positionX, positionY, positionZ)
-      : legacyCollisionResolver.simulateCollision(user, context, inWeb, positionX, positionY, positionZ);
+    return user.colliderProcessor().simulateCollision(user, context, inWeb, positionX, positionY, positionZ);
   }
 
   public static QuickColliderSimulationResult simulateQuickCollision(

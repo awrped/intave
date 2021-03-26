@@ -15,7 +15,7 @@ import de.jpx3.intave.event.service.ViolationService;
 import de.jpx3.intave.reflect.ReflectiveEntityAccess;
 import de.jpx3.intave.tools.AccessHelper;
 import de.jpx3.intave.user.*;
-import de.jpx3.intave.world.block.BlockDataAccess;
+import de.jpx3.intave.world.blockaccess.BlockDataAccess;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 

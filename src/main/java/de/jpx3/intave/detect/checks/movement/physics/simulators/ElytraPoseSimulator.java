@@ -1,11 +1,11 @@
 package de.jpx3.intave.detect.checks.movement.physics.simulators;
 
 import de.jpx3.intave.detect.checks.movement.physics.ProcessorMotionContext;
-import de.jpx3.intave.detect.checks.movement.physics.collider.Collider;
-import de.jpx3.intave.detect.checks.movement.physics.collider.result.ComplexColliderSimulationResult;
 import de.jpx3.intave.tools.wrapper.WrappedMathHelper;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserMetaMovementData;
+import de.jpx3.intave.world.collider.Collider;
+import de.jpx3.intave.world.collider.result.ComplexColliderSimulationResult;
 import org.bukkit.util.Vector;
 
 public final class ElytraPoseSimulator extends DefaultPoseSimulator {
