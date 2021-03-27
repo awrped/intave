@@ -10,6 +10,7 @@ import de.jpx3.intave.world.collider.processor.NewComplexColliderProcessor;
 import de.jpx3.intave.world.collider.result.ComplexColliderSimulationResult;
 import de.jpx3.intave.world.collider.result.QuickColliderSimulationResult;
 import de.jpx3.intave.world.collision.Collision;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 
 import java.util.List;
@@ -39,6 +40,19 @@ public final class Collider {
   }
 
   public static QuickColliderSimulationResult simulateQuickCollision(
+    World world,
+    double positionX, double positionY, double positionZ,
+    double motionX, double motionY, double motionZ
+  ) {
+    WrappedAxisAlignedBB boundingBox = WrappedAxisAlignedBB.createFromPosition(positionX, positionY, positionZ);
+    List<WrappedAxisAlignedBB> collisionBoxes = Collision.resolve(
+      world,
+      boundingBox.addCoord(motionX, motionY, motionZ)
+    );
+    return resolveCollisionOf(boundingBox, collisionBoxes, motionX, motionY, motionZ);
+  }
+
+  public static QuickColliderSimulationResult simulateQuickCollision(
     Player player,
     double positionX, double positionY, double positionZ,
     double motionX, double motionY, double motionZ
@@ -48,6 +62,14 @@ public final class Collider {
       player,
       boundingBox.addCoord(motionX, motionY, motionZ)
     );
+    return resolveCollisionOf(boundingBox, collisionBoxes, motionX, motionY, motionZ);
+  }
+
+  private static QuickColliderSimulationResult resolveCollisionOf(
+    WrappedAxisAlignedBB boundingBox,
+    List<WrappedAxisAlignedBB> collisionBoxes,
+    double motionX, double motionY, double motionZ
+  ) {
     double startMotionY = motionY;
     for (WrappedAxisAlignedBB collisionBox : collisionBoxes) {
       motionY = collisionBox.calculateYOffset(boundingBox, motionY);

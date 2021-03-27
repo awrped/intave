@@ -3,12 +3,12 @@ package de.jpx3.intave.user;
 import com.google.common.collect.Maps;
 import de.jpx3.intave.access.IntaveInternalException;
 import de.jpx3.intave.access.player.trust.TrustFactor;
+import de.jpx3.intave.fakeplayer.FakePlayer;
 import de.jpx3.intave.connect.shadow.ShadowPacketDataLink;
 import de.jpx3.intave.permission.PermissionCache;
 import de.jpx3.intave.permission.PermissionCheck;
 import de.jpx3.intave.reflect.ReflectiveHandleAccess;
 import de.jpx3.intave.tools.AccessHelper;
-import de.jpx3.intave.tools.annotate.Relocate;
 import de.jpx3.intave.tools.placeholder.PlayerContext;
 import de.jpx3.intave.tools.sync.Synchronizer;
 import de.jpx3.intave.world.collider.Collider;
@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Relocate
 public final class User {
   private final Map<Class<? extends UserCustomCheckMeta>, UserCustomCheckMeta> customMetaPool = new ConcurrentHashMap<>();
 
@@ -215,7 +214,13 @@ public final class User {
     return new User(player);
   }
 
-  @Relocate
+  public void unregister() {
+    FakePlayer fakePlayer = meta().attackData.fakePlayer();
+    if (fakePlayer != null) {
+      fakePlayer.despawn();
+    }
+  }
+
   public static final class UserMeta {
     private final UserMetaViolationLevelData violationLevelData;
     private final UserMetaMovementData movementData;

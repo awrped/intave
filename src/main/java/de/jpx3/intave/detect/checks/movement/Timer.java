@@ -4,6 +4,7 @@ import com.comphenix.protocol.events.PacketEvent;
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.detect.CheckViolationLevelDecrementer;
 import de.jpx3.intave.detect.IntaveMetaCheck;
+import de.jpx3.intave.event.bukkit.BukkitEventSubscription;
 import de.jpx3.intave.event.packet.PacketDescriptor;
 import de.jpx3.intave.event.packet.PacketSubscription;
 import de.jpx3.intave.event.packet.Sender;
@@ -11,12 +12,17 @@ import de.jpx3.intave.logging.IntaveLogger;
 import de.jpx3.intave.tools.AccessHelper;
 import de.jpx3.intave.tools.MathHelper;
 import de.jpx3.intave.tools.sync.Synchronizer;
-import de.jpx3.intave.user.User;
-import de.jpx3.intave.user.UserCustomCheckMeta;
-import de.jpx3.intave.user.UserMetaMovementData;
-import de.jpx3.intave.user.UserRepository;
+import de.jpx3.intave.user.*;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Cancellable;
+import org.bukkit.event.entity.EntityShootBowEvent;
+import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.util.Vector;
+
+import java.util.Locale;
+import java.util.Map;
 
 public final class Timer extends IntaveMetaCheck<Timer.TimerData> {
   private final IntavePlugin plugin;
@@ -140,6 +146,40 @@ public final class Timer extends IntaveMetaCheck<Timer.TimerData> {
       }
     }
   }
+
+  @BukkitEventSubscription
+  public void consumeItem(PlayerItemConsumeEvent event) {
+    Player player = event.getPlayer();
+    cancelOnPacketOverflow(player, event);
+  }
+
+  @BukkitEventSubscription
+  public void shootBow(EntityShootBowEvent event) {
+    Entity entity = event.getEntity();
+    if(entity instanceof Player) {
+      Player player = (Player) entity;
+      cancelOnPacketOverflow(player, event);
+    }
+  }
+
+  private void cancelOnPacketOverflow(Player player, Cancellable cancellable) {
+    User user = UserRepository.userOf(player);
+    Timer.TimerData timerData = metaOf(user);
+    long lastTimerFlag = timerData.lastTimerFlag;
+    long msSinceFlag = AccessHelper.now() - lastTimerFlag;
+    UserMetaViolationLevelData violationLevelData = user.meta().violationLevelData();
+    Map<String, Map<String, Double>> violationLevel = violationLevelData.violationLevel;
+    String name = name().toLowerCase();
+    if(!violationLevel.containsKey(name)) {
+      return;
+    }
+    Map<String, Double> stringDoubleMap = violationLevel.get(name);
+    if(stringDoubleMap.get("thresholds") > 5 && msSinceFlag < 2000) {
+      cancellable.setCancelled(true);
+      player.updateInventory();
+    }
+  }
+
 
   public void checkSetback(PacketEvent event) {
     Player player = event.getPlayer();

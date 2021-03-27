@@ -1,9 +1,12 @@
 package de.jpx3.intave.detect.checks.world.breakspeedlimiter;
 
+import com.comphenix.protocol.PacketType;
+import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.wrappers.BlockPosition;
 import com.comphenix.protocol.wrappers.EnumWrappers;
+import com.comphenix.protocol.wrappers.WrappedBlockData;
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.detect.IntaveMetaCheckPart;
 import de.jpx3.intave.detect.checks.world.BreakSpeedLimiter;
@@ -14,10 +17,17 @@ import de.jpx3.intave.event.packet.Sender;
 import de.jpx3.intave.event.service.ViolationService;
 import de.jpx3.intave.reflect.ReflectiveEntityAccess;
 import de.jpx3.intave.tools.AccessHelper;
+import de.jpx3.intave.tools.sync.Synchronizer;
+import de.jpx3.intave.tools.wrapper.WrappedEnumDirection;
 import de.jpx3.intave.user.*;
 import de.jpx3.intave.world.blockaccess.BlockDataAccess;
+import de.jpx3.intave.world.blockaccess.BukkitBlockAccess;
+import org.bukkit.Location;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+
+import java.lang.reflect.InvocationTargetException;
 
 public final class BreakSpeedFinishCheck extends IntaveMetaCheckPart<BreakSpeedLimiter, BreakSpeedFinishCheck.BreakSpeedFinishMeta> {
   public BreakSpeedFinishCheck(BreakSpeedLimiter parentCheck) {
@@ -91,7 +101,10 @@ public final class BreakSpeedFinishCheck extends IntaveMetaCheckPart<BreakSpeedL
             String details = "at " + percentage;
 
             ViolationService violationService = IntavePlugin.singletonInstance().violationProcessor();
-            violationService.processViolation(player, 10, "BreakSpeedLimiter", message, details);
+            if (violationService.processViolation(player, 10, "BreakSpeedLimiter", message, details)) {
+              event.setCancelled(true);
+              refreshBlocksAround(player, blockPosition.toLocation(player.getWorld()));
+            }
           }
         } else {
           long milliseconds = resolveMillisecondsOf(meta.maximumBlockDamage);
@@ -102,7 +115,10 @@ public final class BreakSpeedFinishCheck extends IntaveMetaCheckPart<BreakSpeedL
             String message = "finished breaking-process too quickly";
             String details = exceeded + "ms faster than expected";
             ViolationService violationService = IntavePlugin.singletonInstance().violationProcessor();
-            violationService.processViolation(player, 1, "BreakSpeedLimiter", message, details);
+            if (violationService.processViolation(player, 1, "BreakSpeedLimiter", message, details)) {
+              event.setCancelled(true);
+              refreshBlocksAround(player, blockPosition.toLocation(player.getWorld()));
+            }
           }
         }
 
@@ -112,6 +128,31 @@ public final class BreakSpeedFinishCheck extends IntaveMetaCheckPart<BreakSpeedL
         meta.maximumBlockDamage = Float.MIN_VALUE;
         break;
       }
+    }
+  }
+
+  private void refreshBlocksAround(Player player, Location targetLocation) {
+    Synchronizer.synchronize(() -> {
+      player.updateInventory();
+      refreshBlock(player, targetLocation);
+      for (WrappedEnumDirection direction : WrappedEnumDirection.values()) {
+        Location placedBlock = targetLocation.clone().add(direction.getDirectionVec().convertToBukkitVec());
+        refreshBlock(player, placedBlock);
+      }
+    });
+  }
+
+  private void refreshBlock(Player player, Location location) {
+    PacketContainer packet = ProtocolLibrary.getProtocolManager().createPacket(PacketType.Play.Server.BLOCK_CHANGE);
+    Block block = BukkitBlockAccess.blockAccess(location);
+    WrappedBlockData blockData = WrappedBlockData.createData(block.getType(), block.getData());
+    BlockPosition position = new BlockPosition(location.getBlockX(), location.getBlockY(), location.getBlockZ());
+    packet.getBlockData().write(0, blockData);
+    packet.getBlockPositionModifier().write(0, position);
+    try {
+      ProtocolLibrary.getProtocolManager().sendServerPacket(player, packet);
+    } catch (InvocationTargetException exception) {
+      exception.printStackTrace();
     }
   }
 

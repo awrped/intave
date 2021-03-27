@@ -340,6 +340,10 @@ public final class BoundingBoxAccess {
     globalReplacements.remove(new Location(world, posX, posY, posZ));
   }
 
+  public static BoundingBoxResolver globalBoundingBoxResolver() {
+    return globalBoundingBoxResolver;
+  }
+
   public static class CacheEntry {
     private final List<WrappedAxisAlignedBB> boundingBoxes;
     private final Material type;

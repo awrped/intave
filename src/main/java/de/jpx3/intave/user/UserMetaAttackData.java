@@ -1,6 +1,7 @@
 package de.jpx3.intave.user;
 
 import com.google.common.collect.Maps;
+import de.jpx3.intave.fakeplayer.FakePlayer;
 import de.jpx3.intave.detect.checks.combat.heuristics.MiningStrategy;
 import de.jpx3.intave.detect.checks.combat.heuristics.mining.MiningStrategyExecutor;
 import de.jpx3.intave.event.service.entity.ClientSideEntityService;
@@ -27,6 +28,12 @@ public final class UserMetaAttackData {
 
   public final Map<MiningStrategy, MiningStrategyExecutor> activeMiningStrategies = Maps.newHashMap();
 
+  @Nullable
+  private FakePlayer fakePlayer;
+  public double fakePlayerLastReportedX;
+  public double fakePlayerLastReportedY;
+  public double fakePlayerLastReportedZ;
+
   public UserMetaAttackData(Player player) {
     this.player = player;
   }
@@ -44,6 +51,10 @@ public final class UserMetaAttackData {
       perfectYaw = RotationHelper.resolveYawRotation(positions, positionX, positionZ);
       perfectPitch = RotationHelper.resolvePitchRotation(positions, positionX, positionY, positionZ);
     }
+  }
+
+  public FakePlayer fakePlayer() {
+    return fakePlayer;
   }
 
   public boolean recentlyAttacked(long time) {
@@ -90,5 +101,9 @@ public final class UserMetaAttackData {
 
     this.lastAttackedEntity = attackedEntity;
     this.lastAttack = AccessHelper.now();
+  }
+
+  public void setFakePlayer(FakePlayer fakePlayer) {
+    this.fakePlayer = fakePlayer;
   }
 }

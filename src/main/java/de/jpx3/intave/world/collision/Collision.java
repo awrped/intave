@@ -17,6 +17,8 @@ import java.util.List;
 
 @Relocate
 public final class Collision {
+  private final static BoundingBoxResolver boundingBoxResolver = BoundingBoxAccess.globalBoundingBoxResolver();
+
   public static List<WrappedAxisAlignedBB> resolve(Player player, WrappedAxisAlignedBB playerBoundingBox) {
     int minX = WrappedMathHelper.floor(playerBoundingBox.minX);
     int maxX = WrappedMathHelper.floor(playerBoundingBox.maxX + 1.0D);
@@ -72,6 +74,65 @@ public final class Collision {
       resolvedBoundingBoxes = Collections.emptyList();
     } else {
       resolvedBoundingBoxes.removeIf(wrappedAxisAlignedBB -> !wrappedAxisAlignedBB.intersectsWith(playerBoundingBox));
+    }
+    return resolvedBoundingBoxes;
+  }
+
+  public static List<WrappedAxisAlignedBB> resolve(
+    World world,
+    WrappedAxisAlignedBB boundingBox
+  ) {
+    int minX = WrappedMathHelper.floor(boundingBox.minX);
+    int maxX = WrappedMathHelper.floor(boundingBox.maxX + 1.0D);
+    int minY = WrappedMathHelper.floor(boundingBox.minY);
+    int maxY = WrappedMathHelper.floor(boundingBox.maxY + 1.0D);
+    int minZ = WrappedMathHelper.floor(boundingBox.minZ);
+    int maxZ = WrappedMathHelper.floor(boundingBox.maxZ + 1.0D);
+
+    int ystart = Math.max(minY - 1, 0);
+
+    List<WrappedAxisAlignedBB> resolvedBoundingBoxes = null;
+
+    // this looks 1000x slower than it actually is
+    for (int chunkx = minX >> 4; chunkx <= maxX - 1 >> 4; ++chunkx) {
+      int chunkXPos = chunkx << 4;
+      for (int chunkz = minZ >> 4; chunkz <= maxZ - 1 >> 4; ++chunkz) {
+        if (world.isChunkLoaded(chunkx, chunkz)) {
+          int chunkZPos = chunkz << 4;
+          int xstart = Math.max(minX, chunkXPos);
+          int zstart = Math.max(minZ, chunkZPos);
+          int xend = Math.min(maxX, chunkXPos + 16);
+          int zend = Math.min(maxZ, chunkZPos + 16);
+          for (int x = xstart; x < xend; ++x) {
+            for (int z = zstart; z < zend; ++z) {
+              for (int y = ystart; y < maxY; ++y) {
+                List<WrappedAxisAlignedBB> resolve = boundingBoxResolver.resolve(world, x, y, z);
+
+                boolean insideBorder = !isInsideBorder(world, x, z);
+                if (insideBorder) {
+                  if (resolvedBoundingBoxes == null) {
+                    resolvedBoundingBoxes = new ArrayList<>();
+                  }
+                  resolvedBoundingBoxes.add(new WrappedAxisAlignedBB(x, y, z, x + 1, y, z + 1));
+                }
+
+                if ((resolve != null && !resolve.isEmpty())) {
+                  if (resolvedBoundingBoxes == null) {
+                    resolvedBoundingBoxes = new ArrayList<>(resolve);
+                  } else {
+                    resolvedBoundingBoxes.addAll(resolve);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    if (resolvedBoundingBoxes == null) {
+      resolvedBoundingBoxes = Collections.emptyList();
+    } else {
+      resolvedBoundingBoxes.removeIf(wrappedAxisAlignedBB -> !wrappedAxisAlignedBB.intersectsWith(boundingBox));
     }
     return resolvedBoundingBoxes;
   }
