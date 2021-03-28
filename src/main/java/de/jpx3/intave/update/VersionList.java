@@ -10,11 +10,10 @@ import de.jpx3.intave.tools.CachedResource;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 public final class VersionList {
-  private final List<VersionInformation> content = new ArrayList<>();
+  private final List<Version> content = new ArrayList<>();
 
   public VersionList() {
   }
@@ -35,16 +34,16 @@ public final class VersionList {
       String release = jsonObject.get("release").getAsString();
       String status = jsonObject.get("status").getAsString();
       content.add(
-        new VersionInformation(
+        new Version(
           name, Long.parseLong(release),
-          VersionInformation.VersionTypeClassifier.valueOf(status.toUpperCase(Locale.ROOT))
+          Version.Status.fromName(status)
         )
       );
     }
   }
 
-  public VersionInformation versionInformation(String version) {
-    for (VersionInformation versionInformation : content) {
+  public Version versionInformation(String version) {
+    for (Version versionInformation : content) {
       if(versionInformation.version().equalsIgnoreCase(version)) {
         return versionInformation;
       }
@@ -52,7 +51,7 @@ public final class VersionList {
     return null;
   }
 
-  public List<VersionInformation> content() {
+  public List<Version> content() {
     return content;
   }
 }

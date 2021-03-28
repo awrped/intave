@@ -209,7 +209,7 @@ public final class UserMetaMovementData {
   }
 
   public void applyGroundInformationToPacket(PacketContainer packet) {
-    packet.getBooleans().write(0, onGround);
+    packet.getBooleans().write(0, true);
   }
 
   private void updateMovementMetaData() {

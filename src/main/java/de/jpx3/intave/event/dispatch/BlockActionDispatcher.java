@@ -12,8 +12,6 @@ import com.comphenix.protocol.wrappers.WrappedBlockData;
 import de.jpx3.intave.IntaveControl;
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.detect.EventProcessor;
-import de.jpx3.intave.event.bukkit.BukkitEventSubscription;
-import de.jpx3.intave.event.packet.ListenerPriority;
 import de.jpx3.intave.event.packet.PacketDescriptor;
 import de.jpx3.intave.event.packet.PacketSubscription;
 import de.jpx3.intave.event.packet.Sender;
@@ -32,8 +30,6 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
-import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.util.NumberConversions;
 
 import java.lang.reflect.InvocationTargetException;
@@ -56,13 +52,13 @@ public final class BlockActionDispatcher implements EventProcessor {
     this.plugin.eventLinker().registerEventsIn(this);
   }
 
-  @PacketSubscription(
-    priority = ListenerPriority.LOW,
-    packets = {
-      @PacketDescriptor(sender = Sender.CLIENT, packetName = "BLOCK_PLACE"),
-      @PacketDescriptor(sender = Sender.CLIENT, packetName = "USE_ITEM")
-    }
-  )
+//  @PacketSubscription(
+//    priority = ListenerPriority.LOW,
+//    packets = {
+//      @PacketDescriptor(sender = Sender.CLIENT, packetName = "BLOCK_PLACE"),
+//      @PacketDescriptor(sender = Sender.CLIENT, packetName = "USE_ITEM")
+//    }
+//  )
   public void receiveInteraction(PacketEvent event) {
     Player player = event.getPlayer();
     if (player.isDead()) {
@@ -102,7 +98,6 @@ public final class BlockActionDispatcher implements EventProcessor {
     EnumWrappers.Hand hand = packet.getHands().readSafely(0);
     int replacementId = itemTypeInHand.getId();
     byte shape = 0;
-
 
     boolean isPlacement = placeableBlockInHand && !targetBlockClickable;
 
@@ -178,25 +173,25 @@ public final class BlockActionDispatcher implements EventProcessor {
     }
   }
 
-  @BukkitEventSubscription(ignoreCancelled = true)
-  public void onPre(BlockPlaceEvent place) {
-    if(/*place.isCancelled() && */place.getClass().equals(BlockPlaceEvent.class)) {
-      Block block = place.getBlock();
-      if(IntaveControl.DEBUG_BLOCK_CACHING) {
-        place.getPlayer().sendMessage("PlaceEvent " + place.getBlock());
-      }
-      BoundingBoxAccess boundingBoxAccess = UserRepository.userOf(place.getPlayer()).boundingBoxAccess();
-      boundingBoxAccess.invalidate(block.getX(), block.getY(), block.getZ());
-      boundingBoxAccess.invalidateOverride(block.getWorld(), block.getX(), block.getY(), block.getZ());
-    }
-  }
+//  @BukkitEventSubscription(ignoreCancelled = true)
+//  public void onPre(BlockPlaceEvent place) {
+//    if(/*place.isCancelled() && */place.getClass().equals(BlockPlaceEvent.class)) {
+//      Block block = place.getBlock();
+//      if(IntaveControl.DEBUG_BLOCK_CACHING) {
+//        place.getPlayer().sendMessage("PlaceEvent " + place.getBlock());
+//      }
+//      BoundingBoxAccess boundingBoxAccess = UserRepository.userOf(place.getPlayer()).boundingBoxAccess();
+//      boundingBoxAccess.invalidate(block.getX(), block.getY(), block.getZ());
+//      boundingBoxAccess.invalidateOverride(block.getWorld(), block.getX(), block.getY(), block.getZ());
+//    }
+//  }
 
-  @PacketSubscription(
-    priority = ListenerPriority.LOWEST,
-    packets = {
-      @PacketDescriptor(sender = Sender.CLIENT, packetName = "BLOCK_DIG")
-    }
-  )
+//  @PacketSubscription(
+//    priority = ListenerPriority.LOWEST,
+//    packets = {
+//      @PacketDescriptor(sender = Sender.CLIENT, packetName = "BLOCK_DIG")
+//    }
+//  )
   public void receiveBreak(PacketEvent event) {
     Player player = event.getPlayer();
     if (player.isDead()) {
@@ -258,20 +253,20 @@ public final class BlockActionDispatcher implements EventProcessor {
     }
   }
 
-  @BukkitEventSubscription(ignoreCancelled = true)
-  public void onPre(BlockBreakEvent breeak) {
-    if(/*breeak.isCancelled() && */breeak.getClass().equals(BlockBreakEvent.class)) {
-      Block block = breeak.getBlock();
-      BoundingBoxAccess boundingBoxAccess = UserRepository.userOf(breeak.getPlayer()).boundingBoxAccess();
-      boundingBoxAccess.invalidate(block.getX(), block.getY(), block.getZ());
-      boundingBoxAccess.invalidateOverride(block.getWorld(), block.getX(), block.getY(), block.getZ());
-//      Synchronizer.synchronizeDelayed(() -> {
-//        if (IntaveControl.DEBUG_BLOCK_CACHING) {
-//          breeak.getPlayer().sendMessage("Reset break");
-//        }
-//      }, 2);
-    }
-  }
+//  @BukkitEventSubscription(ignoreCancelled = true)
+//  public void onPre(BlockBreakEvent breeak) {
+//    if(/*breeak.isCancelled() && */breeak.getClass().equals(BlockBreakEvent.class)) {
+//      Block block = breeak.getBlock();
+//      BoundingBoxAccess boundingBoxAccess = UserRepository.userOf(breeak.getPlayer()).boundingBoxAccess();
+//      boundingBoxAccess.invalidate(block.getX(), block.getY(), block.getZ());
+//      boundingBoxAccess.invalidateOverride(block.getWorld(), block.getX(), block.getY(), block.getZ());
+////      Synchronizer.synchronizeDelayed(() -> {
+////        if (IntaveControl.DEBUG_BLOCK_CACHING) {
+////          breeak.getPlayer().sendMessage("Reset break");
+////        }
+////      }, 2);
+//    }
+//  }
 
   @PacketSubscription(
     packets = {
@@ -313,7 +308,6 @@ public final class BlockActionDispatcher implements EventProcessor {
   @PacketSubscription(
     packets = {
       @PacketDescriptor(sender = Sender.SERVER, packetName = "BLOCK_BREAK"),
-//      @PacketDescriptor(sender = Sender.SERVER, packetName = "BLOCK_ACTION"),
       @PacketDescriptor(sender = Sender.SERVER, packetName = "BLOCK_CHANGE"),
       @PacketDescriptor(sender = Sender.SERVER, packetName = "MULTI_BLOCK_CHANGE")
     }
@@ -353,6 +347,7 @@ public final class BlockActionDispatcher implements EventProcessor {
 
     World world = player.getWorld();
     if(transactionSynchronize) {
+//      player.sendMessage("Updated " + blockDataList.size() + " blocks: " + blockDataList);
       plugin.eventService().transactionFeedbackService().requestPong(player, null, (player1, target) -> {
         for (int i = 0; i < blockPositions.size(); i++) {
           BlockPosition blockPosition = blockPositions.get(i);

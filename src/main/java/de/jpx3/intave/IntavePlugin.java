@@ -33,7 +33,7 @@ import de.jpx3.intave.tools.items.InventoryUseItemHelper;
 import de.jpx3.intave.tools.sync.Synchronizer;
 import de.jpx3.intave.tools.wrapper.link.WrapperLinkage;
 import de.jpx3.intave.trustfactor.TrustFactorService;
-import de.jpx3.intave.update.VersionInformation;
+import de.jpx3.intave.update.Version;
 import de.jpx3.intave.update.VersionList;
 import de.jpx3.intave.user.UserRepository;
 import de.jpx3.intave.warning.ClientWarningService;
@@ -377,16 +377,16 @@ public final class IntavePlugin extends JavaPlugin {
       versionList = new VersionList();
       versionList.setup();
 
-      VersionInformation versionInformation = versionList.versionInformation(version());
+      Version version = versionList.versionInformation(version());
 
-      if (versionInformation == null) {
+      if (version == null) {
         logger().info("This version of Intave is not listed in the official version index");
       } else {
-        long duration = AccessHelper.now() - versionInformation.release();
+        long duration = AccessHelper.now() - version.release();
         String durationAsString = DurationTranslator.translateDuration(duration);
 
         String infoMessage = "";
-        switch (versionInformation.typeClassifier()) {
+        switch (version.typeClassifier()) {
           case LATEST:
             infoMessage = "Using the latest version of Intave (" + durationAsString + " old)";
             break;

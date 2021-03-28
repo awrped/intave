@@ -266,7 +266,7 @@ public final class MovementDispatcher implements EventProcessor {
 
       if (!vehicleMove) {
         movementData.applyGroundInformationToPacket(packet);
-        ReflectiveEntityAccess.setOnGround(player, movementData.onGround);
+        ReflectiveEntityAccess.setOnGround(player, /*movementData.onGround*/true);
       }
 
       if (movementData.onGround && !clientOnGround && movementData.step) {

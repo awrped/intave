@@ -18,7 +18,7 @@ import de.jpx3.intave.tools.AccessHelper;
 import de.jpx3.intave.tools.DurationTranslator;
 import de.jpx3.intave.tools.GarbageCollector;
 import de.jpx3.intave.tools.sync.Synchronizer;
-import de.jpx3.intave.update.VersionInformation;
+import de.jpx3.intave.update.Version;
 import de.jpx3.intave.user.UserRepositoryEventListener;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
@@ -66,15 +66,15 @@ public final class EventService implements BukkitEventSubscriber {
     }
 
     String currentVersion = IntavePlugin.version();
-    VersionInformation versionInformation = plugin.versionList().versionInformation(currentVersion);
+    Version version = plugin.versionList().versionInformation(currentVersion);
 
     Synchronizer.synchronize(() -> {
-      if(versionInformation == null) {
+      if(version == null) {
         sendPrefixedMessage(ChatColor.YELLOW + "This server is running an experimental version of Intave (" + currentVersion + ")", player);
         sendPrefixedMessage(ChatColor.YELLOW + "It is possible that bugs occur", player);
       } else {
-        if(versionInformation.typeClassifier() == VersionInformation.VersionTypeClassifier.OUTDATED) {
-          long duration = AccessHelper.now() - versionInformation.release();
+        if(version.typeClassifier() == Version.Status.OUTDATED) {
+          long duration = AccessHelper.now() - version.release();
           String durationAsString = DurationTranslator.translateDuration(duration);
 
           sendPrefixedMessage(ChatColor.RED + "This server is running an outdated version of Intave ("+durationAsString+" old)", player);

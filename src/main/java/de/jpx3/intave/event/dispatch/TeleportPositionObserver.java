@@ -33,6 +33,8 @@ public final class TeleportPositionObserver implements PacketEventSubscriber {
     Player player = event.getPlayer();
     PacketContainer packet = event.getPacket();
 
+//    Thread.dumpStack();
+
     if (NEW_TELEPORTATION) {
       dispatchTeleportation(player, packet);
     } else {

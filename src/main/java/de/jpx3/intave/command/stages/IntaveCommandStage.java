@@ -10,7 +10,7 @@ import de.jpx3.intave.security.LicenseVerification;
 import de.jpx3.intave.tools.AccessHelper;
 import de.jpx3.intave.tools.DurationTranslator;
 import de.jpx3.intave.tools.annotate.Native;
-import de.jpx3.intave.update.VersionInformation;
+import de.jpx3.intave.update.Version;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserMessageChannel;
 import org.bukkit.ChatColor;
@@ -166,13 +166,13 @@ public final class IntaveCommandStage extends CommandStage {
     boolean hasVersionViewPermission = PermissionCheck.permissionCheck(player, "intave.command");
     boolean versionViewAllowed = false;
 
-    VersionInformation versionInformation = IntavePlugin.singletonInstance().versionList().versionInformation(IntavePlugin.version());
+    Version versionInformation = IntavePlugin.singletonInstance().versionList().versionInformation(IntavePlugin.version());
 
     String version;
 
     if(versionInformation != null) {
       version = IntavePlugin.version() + " (" + DurationTranslator.translateDuration(AccessHelper.now() - versionInformation.release()) + " old";
-      if(versionInformation.typeClassifier() == VersionInformation.VersionTypeClassifier.OUTDATED) {
+      if(versionInformation.typeClassifier() == Version.Status.OUTDATED) {
         version += " and outdated";
       }
       version += ")";

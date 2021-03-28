@@ -5,6 +5,7 @@ import com.comphenix.protocol.events.ListenerPriority;
 import com.comphenix.protocol.events.PacketEvent;
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.tools.annotate.Relocate;
+import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserRepository;
 
 import java.util.Arrays;
@@ -39,8 +40,12 @@ public final class ForwardingPacketAdapter extends IntavePacketAdapter {
       }
     }
 
-    if(UserRepository.userOf(event.getPlayer()).shouldIgnoreNextOutboundPacket()) {
-      UserRepository.userOf(event.getPlayer()).receiveNextOutboundPacket();
+    User user = UserRepository.userOf(event.getPlayer());
+    if(user == null) {
+      return;
+    }
+    if(user.shouldIgnoreNextOutboundPacket()) {
+      user.receiveNextOutboundPacket();
 //      Bukkit.broadcastMessage(Bukkit.isPrimaryThread() + " " + event.getPacketType());
       return;
     }
@@ -60,9 +65,12 @@ public final class ForwardingPacketAdapter extends IntavePacketAdapter {
       }
     }
 
-    if(UserRepository.userOf(event.getPlayer()).shouldIgnoreNextPacket()) {
-      UserRepository.userOf(event.getPlayer()).receiveNextPacket();
-//      Bukkit.broadcastMessage(Bukkit.isPrimaryThread() + " " + event.getPacketType());
+    User user = UserRepository.userOf(event.getPlayer());
+    if(user == null) {
+      return;
+    }
+    if(user.shouldIgnoreNextPacket()) {
+      user.receiveNextPacket();
       return;
     }
 
