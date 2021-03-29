@@ -1,6 +1,7 @@
 package de.jpx3.intave.tools.wrapper;
 
 import de.jpx3.intave.reflect.ReflectiveAccess;
+import de.jpx3.intave.tools.annotate.KeepEnumInternalNames;
 import de.jpx3.intave.tools.wrapper.link.WrapperLinkage;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
@@ -105,6 +106,7 @@ public class WrappedMovingObjectPosition {
     return null;
   }
 
+  @KeepEnumInternalNames
   public enum MovingObjectType {
     MISS,
     BLOCK,

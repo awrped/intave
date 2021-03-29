@@ -4,11 +4,13 @@ import com.comphenix.protocol.wrappers.EnumWrappers;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
+import de.jpx3.intave.tools.annotate.KeepEnumInternalNames;
 
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
 
+@KeepEnumInternalNames
 public enum WrappedEnumDirection {
   DOWN(0, 1, -1, "down", WrappedEnumDirection.AxisDirection.NEGATIVE, WrappedEnumDirection.Axis.Y, new WrappedVector(0, -1, 0)),
   UP(1, 0, -1, "up", WrappedEnumDirection.AxisDirection.POSITIVE, WrappedEnumDirection.Axis.Y, new WrappedVector(0, 1, 0)),
