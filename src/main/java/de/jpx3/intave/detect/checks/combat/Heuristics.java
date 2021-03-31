@@ -67,6 +67,7 @@ public final class Heuristics extends IntaveMetaCheck<Heuristics.HeuristicMeta> 
     appendCheckPart(new AttackReduceIgnoreHeuristic(this));
     appendCheckPart(new PacketInventoryHeuristic(this));
     appendCheckPart(new BlockingHeuristic(this));
+//    appendCheckPart(new VentolotlHeuristic(this));
 //    appendCheckPart(new LinearRegressionHeuristic(this));
   }
 
@@ -107,6 +108,7 @@ public final class Heuristics extends IntaveMetaCheck<Heuristics.HeuristicMeta> 
     }
   }
 
+  @Native
   public void evaluate(Player player, boolean enforceDecision) {
     Collection<? extends Player> onlinePlayers = Bukkit.getOnlinePlayers();
     if (!IntaveControl.DISABLE_LICENSE_CHECK && onlinePlayers.size() <= 6) {
