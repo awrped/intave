@@ -76,6 +76,7 @@ public final class BreakSpeedFinishCheck extends IntaveMetaCheckPart<BreakSpeedL
     BreakSpeedFinishMeta meta = metaOf(user);
     UserMetaClientData clientData = user.meta().clientData();
     UserMetaInventoryData inventoryData = user.meta().inventoryData();
+    UserMetaMovementData movementData = user.meta().movementData();
 
     ItemStack heldItem = inventoryData.heldItem();
     PacketContainer packet = event.getPacket();

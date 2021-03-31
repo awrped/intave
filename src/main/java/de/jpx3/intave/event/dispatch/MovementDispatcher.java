@@ -11,7 +11,6 @@ import de.jpx3.intave.detect.checks.movement.Timer;
 import de.jpx3.intave.detect.checks.world.InteractionRaytrace;
 import de.jpx3.intave.event.bukkit.BukkitEventSubscription;
 import de.jpx3.intave.event.packet.*;
-import de.jpx3.intave.reflect.ReflectiveEntityAccess;
 import de.jpx3.intave.tools.MathHelper;
 import de.jpx3.intave.tools.annotate.Relocate;
 import de.jpx3.intave.tools.client.PoseHelper;
@@ -261,12 +260,18 @@ public final class MovementDispatcher implements EventProcessor {
 
       if (hasMovement) {
         physicsCheck.receiveMovement(user);
+      } else {
+        physicsCheck.updateOnGroundIfFlying(user);
       }
       Boolean clientOnGround = packet.getBooleans().read(0);
 
       if (!vehicleMove) {
         movementData.applyGroundInformationToPacket(packet);
-        ReflectiveEntityAccess.setOnGround(player, /*movementData.onGround*/true);
+//        if (clientOnGround != movementData.onGround) {
+//          player.sendMessage(ChatColor.DARK_RED.toString() + clientOnGround + " " + movementData.onGround);
+//        } else {
+//          player.sendMessage(clientOnGround + " " + movementData.onGround + " " + hasMovement);
+//        }
       }
 
       if (movementData.onGround && !clientOnGround && movementData.step) {

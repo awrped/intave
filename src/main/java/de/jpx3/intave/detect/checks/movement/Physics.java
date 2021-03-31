@@ -169,6 +169,31 @@ public final class Physics extends IntaveCheck {
     }
   }
 
+  public void updateOnGroundIfFlying(User user) {
+    UserMetaMovementData movementData = user.meta().movementData();
+    double physicsMotionX = movementData.physicsMotionX;
+    double physicsMotionY = movementData.physicsMotionY;
+    double physicsMotionZ = movementData.physicsMotionZ;
+    if (Math.abs(physicsMotionX) < movementData.resetMotion()) {
+      physicsMotionX = 0;
+    }
+    if (Math.abs(physicsMotionY) < movementData.resetMotion()) {
+      physicsMotionY = 0;
+    }
+    if (Math.abs(physicsMotionZ) < movementData.resetMotion()) {
+      physicsMotionZ = 0;
+    }
+    double motionX = physicsMotionX * 0.91f;
+    double motionY = (physicsMotionY - 0.08) * 0.98f;
+    double motionZ = physicsMotionZ * 0.91f;
+    QuickColliderSimulationResult colliderResult = Collider.simulateQuickCollision(
+      user.player(),
+      movementData.verifiedPositionX, movementData.verifiedPositionY, movementData.verifiedPositionZ,
+      motionX, motionY, motionZ
+    );
+    movementData.onGround = colliderResult.onGround();
+  }
+
   private void predictFlyingPacketBeforeVelocity(User user) {
     UserMetaMovementData movementData = user.meta().movementData();
     if (movementData.pastVelocity != 0) {
