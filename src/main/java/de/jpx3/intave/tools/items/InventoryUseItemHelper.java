@@ -11,6 +11,7 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
 
 import java.util.List;
 
@@ -82,6 +83,12 @@ public final class InventoryUseItemHelper {
       User user = UserRepository.userOf(player);
       return tridentUsable(user, itemStack);
     }
+
+    // Bow check
+    if (type == Material.BOW && !containsItemInInventory(player, Material.ARROW)) {
+      return false;
+    }
+
     boolean useItem = materialUseItemList.contains(type);
     boolean potion = materialPotionList.contains(type);
     return useItem || potion || foodItemRegistry.foodConsumable(player, type);
@@ -101,6 +108,16 @@ public final class InventoryUseItemHelper {
       return movementData.inWater || (world.isThundering() || world.hasStorm());
     }
     return true;
+  }
+
+  private static boolean containsItemInInventory(Player player, Material item) {
+    PlayerInventory inventory = player.getInventory();
+    for (ItemStack content : inventory.getContents()) {
+      if (content != null && content.getType() == item) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public static FoodItemsRegistry foodItemRegistry() {

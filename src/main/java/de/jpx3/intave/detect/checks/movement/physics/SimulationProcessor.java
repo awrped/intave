@@ -12,6 +12,7 @@ import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserMetaInventoryData;
 import de.jpx3.intave.user.UserMetaMovementData;
 import de.jpx3.intave.world.collider.result.ComplexColliderSimulationResult;
+import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
 import static de.jpx3.intave.reflect.ReflectiveDataWatcherAccess.DATA_WATCHER_BLOCKING_ID;
@@ -51,7 +52,8 @@ public final class SimulationProcessor {
           // Release the player's hand on the client and serverside
           ItemStack itemStack = inventoryData.heldItem();
           if (itemStack != null && !InventoryUseItemHelper.isSwordItem(user.player(), itemStack)) {
-            if (movementData.physicsEatingSlotSwitchVL++ > 1) {
+            int threshold = itemStack.getType() == Material.BOW ? 5 : 1;
+            if (movementData.physicsEatingSlotSwitchVL++ > threshold) {
               inventoryData.applySlotSwitch();
             } else {
               inventoryData.setHandActive(true);
