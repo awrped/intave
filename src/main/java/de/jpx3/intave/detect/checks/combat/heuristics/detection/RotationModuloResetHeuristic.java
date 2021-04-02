@@ -55,7 +55,7 @@ public final class RotationModuloResetHeuristic extends IntaveMetaCheckPart<Heur
           int options = Anomaly.AnomalyOption.LIMIT_4 | Anomaly.AnomalyOption.DELAY_128s;
           Anomaly anomaly = Anomaly.anomalyOf("100", Confidence.PROBABLE, Anomaly.Type.KILLAURA, description, options);
           parentCheck().saveAnomaly(player, anomaly);
-          plugin.eventService().attackCancelService().requestDamageCancel(user, AttackCancelType.DCRM);
+          plugin.eventService().attackCancelService().requestDamageCancel(user, AttackCancelType.MEDIUM);
         }
       }
       heuristicMeta.roundedRotationLooking = false;

@@ -30,8 +30,8 @@ public final class UserMetaPunishmentData {
 
   public UserMetaPunishmentData(Player player) {
     this.damageCancels = Lists.newArrayList(
-      new DamageCancel(AttackCancelType.DCRH, DAMAGE_CANCEL_HEAVY_DURATION, (event) -> event.setCancelled(true)),
-      new DamageCancel(AttackCancelType.DCRM, DAMAGE_CANCEL_MEDIUM_DURATION, (event) -> {
+      new DamageCancel(AttackCancelType.HEAVY, DAMAGE_CANCEL_HEAVY_DURATION, (event) -> event.setCancelled(true)),
+      new DamageCancel(AttackCancelType.MEDIUM, DAMAGE_CANCEL_MEDIUM_DURATION, (event) -> {
         attackCount++;
         if (attackCount % 10 == 0 || attackCount % ThreadLocalRandom.current().nextInt(1, 5) == 0) {
           event.setDamage(0);
@@ -39,11 +39,11 @@ public final class UserMetaPunishmentData {
         // Perform hurt-time change
         EntityNoDamageTickChanger.applyHurtTimeChangeTo(player, (int) (DAMAGE_CANCEL_MEDIUM_DURATION / 50));
       }),
-      new DamageCancel(AttackCancelType.DCRL, DAMAGE_CANCEL_LIGHT_DURATION, (event) -> {
+      new DamageCancel(AttackCancelType.LIGHT, DAMAGE_CANCEL_LIGHT_DURATION, (event) -> {
         // Perform hurt-time change
         EntityNoDamageTickChanger.applyHurtTimeChangeTo(player, (int) (DAMAGE_CANCEL_LIGHT_DURATION / 50));
       }),
-      new DamageCancel(AttackCancelType.DCRB, BLOCKING_DAMAGE_CANCEL_DURATION, (event) -> {
+      new DamageCancel(AttackCancelType.BLOCKING, BLOCKING_DAMAGE_CANCEL_DURATION, (event) -> {
         double blockingDamageAbsorption = event.getDamage(EntityDamageEvent.DamageModifier.BLOCKING);
         if (blockingDamageAbsorption != 0) {
           event.setDamage(EntityDamageEvent.DamageModifier.BLOCKING, 0);

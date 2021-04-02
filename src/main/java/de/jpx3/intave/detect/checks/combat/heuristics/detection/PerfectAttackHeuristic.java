@@ -105,7 +105,7 @@ public final class PerfectAttackHeuristic extends IntaveMetaCheckPart<Heuristics
         int options = Anomaly.AnomalyOption.LIMIT_4 | Anomaly.AnomalyOption.SUGGEST_MINING | Anomaly.AnomalyOption.DELAY_16s;
         Anomaly anomaly = Anomaly.anomalyOf("51", Confidence.PROBABLE, Anomaly.Type.KILLAURA, description, options);
         parentCheck().saveAnomaly(player, anomaly);
-        plugin.eventService().attackCancelService().requestDamageCancel(user, AttackCancelType.DCRM);
+        plugin.eventService().attackCancelService().requestDamageCancel(user, AttackCancelType.MEDIUM);
 //      } else {
 //        player.sendMessage("failRate:" + MathHelper.formatDouble(failRate, 2) + ", " + descriptor);
       }

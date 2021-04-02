@@ -78,7 +78,7 @@ public final class PacketSprintToggleHeuristic extends IntaveMetaCheckPart<Heuri
         int options = Anomaly.AnomalyOption.DELAY_128s | Anomaly.AnomalyOption.REQUIRES_HEAVY_COMBAT;
         Anomaly anomaly = Anomaly.anomalyOf("41", confidence, Anomaly.Type.KILLAURA, description, options);
         parentCheck().saveAnomaly(player, anomaly);
-        plugin.eventService().attackCancelService().requestDamageCancel(user, AttackCancelType.DCRH);
+        plugin.eventService().attackCancelService().requestDamageCancel(user, AttackCancelType.HEAVY);
       }
     }
   }

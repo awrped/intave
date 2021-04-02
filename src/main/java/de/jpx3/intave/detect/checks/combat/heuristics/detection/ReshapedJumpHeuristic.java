@@ -67,7 +67,7 @@ public final class ReshapedJumpHeuristic extends IntaveMetaCheckPart<Heuristics,
           int options = Anomaly.AnomalyOption.LIMIT_2 | Anomaly.AnomalyOption.DELAY_128s | Anomaly.AnomalyOption.SUGGEST_MINING;
           Anomaly anomaly = Anomaly.anomalyOf("61", Confidence.LIKELY, Anomaly.Type.KILLAURA, description, options);
           parentCheck().saveAnomaly(player, anomaly);
-          plugin.eventService().attackCancelService().requestDamageCancel(user, AttackCancelType.DCRM);
+          plugin.eventService().attackCancelService().requestDamageCancel(user, AttackCancelType.MEDIUM);
         }
       } else {
         heuristicMeta.balance -= heuristicMeta.balance > 0 ? 0.2 : 0;

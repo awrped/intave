@@ -62,7 +62,7 @@ public final class RotationAccuracyYawHeuristic extends IntaveMetaCheckPart<Heur
         int options = Anomaly.AnomalyOption.LIMIT_4 | Anomaly.AnomalyOption.SUGGEST_MINING;
         Anomaly anomaly = Anomaly.anomalyOf("86", Confidence.PROBABLE, Anomaly.Type.KILLAURA, description, options);
         parentCheck().saveAnomaly(player, anomaly);
-        plugin.eventService().attackCancelService().requestDamageCancel(user, AttackCancelType.DCRM);
+        plugin.eventService().attackCancelService().requestDamageCancel(user, AttackCancelType.MEDIUM);
       }
     } else if (heuristicMeta.snapVL > 0) {
       heuristicMeta.snapVL -= 0.1;
@@ -87,7 +87,7 @@ public final class RotationAccuracyYawHeuristic extends IntaveMetaCheckPart<Heur
             Anomaly anomaly = Anomaly.anomalyOf("81", Confidence.PROBABLE, Anomaly.Type.KILLAURA, description, options);
             parentCheck().saveAnomaly(player, anomaly);
             heuristicMeta.followBalance -= 20;
-            plugin.eventService().attackCancelService().requestDamageCancel(user, AttackCancelType.DCRL);
+            plugin.eventService().attackCancelService().requestDamageCancel(user, AttackCancelType.LIGHT);
           }
 
         }
@@ -98,7 +98,7 @@ public final class RotationAccuracyYawHeuristic extends IntaveMetaCheckPart<Heur
           int options = Anomaly.AnomalyOption.LIMIT_2 | Anomaly.AnomalyOption.DELAY_128s | Anomaly.AnomalyOption.SUGGEST_MINING;
           Anomaly anomaly = Anomaly.anomalyOf("82", Confidence.LIKELY, Anomaly.Type.KILLAURA, description, options);
           parentCheck().saveAnomaly(player, anomaly);
-          plugin.eventService().attackCancelService().requestDamageCancel(user, AttackCancelType.DCRM);
+          plugin.eventService().attackCancelService().requestDamageCancel(user, AttackCancelType.MEDIUM);
         }
 
         // Check yaw accuracy
@@ -113,7 +113,7 @@ public final class RotationAccuracyYawHeuristic extends IntaveMetaCheckPart<Heur
               int options = Anomaly.AnomalyOption.LIMIT_2 | Anomaly.AnomalyOption.DELAY_32s | Anomaly.AnomalyOption.SUGGEST_MINING;
               Anomaly anomaly = Anomaly.anomalyOf("83", Confidence.PROBABLE, Anomaly.Type.KILLAURA, description, options);
               parentCheck().saveAnomaly(player, anomaly);
-              plugin.eventService().attackCancelService().requestDamageCancel(user, AttackCancelType.DCRM);
+              plugin.eventService().attackCancelService().requestDamageCancel(user, AttackCancelType.MEDIUM);
             }
           } else if (heuristicMeta.rotationAccuracyVL > 0) {
             heuristicMeta.rotationAccuracyVL -= 0.005;
@@ -129,7 +129,7 @@ public final class RotationAccuracyYawHeuristic extends IntaveMetaCheckPart<Heur
           Anomaly anomaly = Anomaly.anomalyOf("84", Confidence.MAYBE, Anomaly.Type.KILLAURA, description, options);
           parentCheck().saveAnomaly(player, anomaly);
           heuristicMeta.balanceYawAccuracyOther = 0;
-          plugin.eventService().attackCancelService().requestDamageCancel(user, AttackCancelType.DCRL);
+          plugin.eventService().attackCancelService().requestDamageCancel(user, AttackCancelType.LIGHT);
         }
       }
     }

@@ -83,7 +83,7 @@ public final class BlockingHeuristic extends IntaveMetaCheckPart<Heuristics, Blo
           int options = Anomaly.AnomalyOption.DELAY_128s | Anomaly.AnomalyOption.LIMIT_2;
           Anomaly anomaly = Anomaly.anomalyOf("143", Confidence.MAYBE, Anomaly.Type.KILLAURA, description, options);
           parentCheck().saveAnomaly(player, anomaly);
-          plugin.eventService().attackCancelService().requestDamageCancel(user, AttackCancelType.DCRB);
+          plugin.eventService().attackCancelService().requestDamageCancel(user, AttackCancelType.BLOCKING);
           punishmentData.timeLastBlockCancel = AccessHelper.now();
           Synchronizer.synchronize(() -> ReflectiveDataWatcherAccess.setDataWatcherFlag(player, ReflectiveDataWatcherAccess.DATA_WATCHER_BLOCKING_ID, false));
         }
@@ -98,7 +98,7 @@ public final class BlockingHeuristic extends IntaveMetaCheckPart<Heuristics, Blo
         int options = Anomaly.AnomalyOption.DELAY_128s;
         Anomaly anomaly = Anomaly.anomalyOf("141", Confidence.CERTAIN, Anomaly.Type.KILLAURA, description, options);
         parentCheck().saveAnomaly(player, anomaly);
-        plugin.eventService().attackCancelService().requestDamageCancel(user, AttackCancelType.DCRB);
+        plugin.eventService().attackCancelService().requestDamageCancel(user, AttackCancelType.BLOCKING);
       }
 
       int clientTicksBetweenBlockingToggle = meta.clientTicksBetweenBlockingToggle;
@@ -117,7 +117,7 @@ public final class BlockingHeuristic extends IntaveMetaCheckPart<Heuristics, Blo
             int options = Anomaly.AnomalyOption.DELAY_128s;
             Anomaly anomaly = Anomaly.anomalyOf("142", Confidence.CERTAIN, Anomaly.Type.KILLAURA, description, options);
             parentCheck().saveAnomaly(player, anomaly);
-            plugin.eventService().attackCancelService().requestDamageCancel(user, AttackCancelType.DCRB);
+            plugin.eventService().attackCancelService().requestDamageCancel(user, AttackCancelType.BLOCKING);
           }
         } else if (meta.acaBlockingVL > 1) {
           meta.acaBlockingVL -= 2;
