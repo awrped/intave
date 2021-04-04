@@ -29,7 +29,7 @@ public final class EntityVelocityCache implements PacketEventSubscriber {
       @PacketDescriptor(sender = Sender.SERVER, packetName = "ENTITY_VELOCITY")
     }
   )
-  public void onPacketSending(PacketEvent event) {
+  public void receiveEntityVelocity(PacketEvent event) {
     Player player = event.getPlayer();
     User user = UserRepository.userOf(player);
     FakePlayer fakePlayer = user.meta().attackData().fakePlayer();

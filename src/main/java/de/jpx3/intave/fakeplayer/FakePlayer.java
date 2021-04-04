@@ -16,12 +16,15 @@ import de.jpx3.intave.fakeplayer.randomaction.actions.EquipmentArmorAction;
 import de.jpx3.intave.fakeplayer.randomaction.actions.EquipmentHeldItemAction;
 import de.jpx3.intave.fakeplayer.randomaction.actions.HurtAnimationAction;
 import de.jpx3.intave.fakeplayer.randomaction.actions.SwingAnimationAction;
+import de.jpx3.intave.tools.AccessHelper;
 import de.jpx3.intave.tools.wrapper.WrappedMathHelper;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserMetaAttackData;
 import de.jpx3.intave.user.UserRepository;
+import de.jpx3.intave.world.blockaccess.BukkitBlockAccess;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 
 import java.lang.reflect.InvocationTargetException;
@@ -51,6 +54,7 @@ public final class FakePlayer implements TickTaskScheduler {
   private final boolean equipArmor;
   private final boolean equipHeldItem;
   private final FakePlayerAttackSubscriber attackSubscriber;
+  private long lastHurtAction;
   public long lastPingPacketSent;
 
   FakePlayer(
@@ -255,30 +259,43 @@ public final class FakePlayer implements TickTaskScheduler {
       setSneaking(false);
     }
     setSneaking(false);
-    if (this.ticks % 10 == 0 && this.movement.onGround) {
+    if (this.ticks % 5 == 0 && this.movement.onGround) {
       sendWalkingSoundEffect(this.movement.location);
     }
   }
 
   private final static int SOUND_CONVERT_FACTOR = 8;
-  private final static String SOUND_NAME = "step.stone";
 
   private void sendWalkingSoundEffect(Location location) {
     PacketContainer packet = protocolManager.createPacket(PacketType.Play.Server.NAMED_SOUND_EFFECT);
-    packet.getStrings().writeSafely(0, SOUND_NAME);
-    packet.getSoundCategories().writeSafely(0, null);
-    int effectPosX = (int) (location.getX() * SOUND_CONVERT_FACTOR);
-    int effectPosY = (int) (location.getY() * SOUND_CONVERT_FACTOR);
-    int effectPosZ = (int) (location.getZ() * SOUND_CONVERT_FACTOR);
-    packet.getIntegers().writeSafely(0, effectPosX);
-    packet.getIntegers().writeSafely(1, effectPosY);
-    packet.getIntegers().writeSafely(2, effectPosZ);
-    float volume = (System.currentTimeMillis() % 5 == 0L ? 1.0f : 0.15f);
-    packet.getFloat().writeSafely(0, volume);
+    packet.getStrings().write(0, resolveSoundName());
+    packet.getIntegers().write(0, (int) (location.getX() * SOUND_CONVERT_FACTOR));
+    packet.getIntegers().write(1, (int) (location.getY() * SOUND_CONVERT_FACTOR));
+    packet.getIntegers().write(2, (int) (location.getZ() * SOUND_CONVERT_FACTOR));
+    packet.getFloat().write(0, 0.15f);
+    packet.getIntegers().write(3, 63);
     try {
       protocolManager.sendServerPacket(parentPlayer, packet);
     } catch (InvocationTargetException e) {
       e.printStackTrace();
+    }
+  }
+
+  private String resolveSoundName() {
+    Location location = movement.location;
+    Block block = BukkitBlockAccess.blockAccess(location.clone().add(0.0, -1.0, 0.0));
+    switch (block.getType()) {
+      case GRASS: {
+        return "step.grass";
+      }
+      case GRAVEL: {
+        return "step.gravel";
+      }
+      case WOOD: {
+        return "step.wood";
+      }
+      default:
+        return "step.stone";
     }
   }
 
@@ -426,6 +443,10 @@ public final class FakePlayer implements TickTaskScheduler {
 
   public void onAttack() {
     this.movement.combatEvent();
+    if (AccessHelper.now() - this.lastHurtAction > 500) {
+      RandomAction.findAndProcessAction(actions, ActionType.HURT_ANIMATION);
+      this.lastHurtAction = AccessHelper.now();
+    }
   }
 
   public int fakePlayerEntityId() {

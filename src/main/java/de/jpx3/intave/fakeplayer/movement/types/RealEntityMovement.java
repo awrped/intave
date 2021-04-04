@@ -49,7 +49,7 @@ public final class RealEntityMovement extends Movement {
       this.motionZ *= 0.6;
     }
     boolean movedEnoughForJump = Math.hypot(startMotionX - motionX, startMotionZ - motionZ) > 0.1;
-    if (this.onGround && movedEnoughForJump && ((++this.lastJump > 2 && distance > 1.0) || collidedHorizontally)) {
+    if (this.onGround && ((movedEnoughForJump && ++this.lastJump > 2 && distance > 1.0) || collidedHorizontally)) {
       this.lastJump = 0;
       jump();
     } else if (!this.onGround) {
