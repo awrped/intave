@@ -4,7 +4,6 @@ import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.access.IntaveInternalException;
 import de.jpx3.intave.adapter.ProtocolLibAdapter;
 import de.jpx3.intave.patchy.PatchyLoadingInjector;
-import de.jpx3.intave.reflect.ReflectiveMaterialAccess;
 import de.jpx3.intave.tools.AccessHelper;
 import de.jpx3.intave.tools.wrapper.WrappedAxisAlignedBB;
 import de.jpx3.intave.world.blockaccess.BukkitBlockAccess;
@@ -219,6 +218,8 @@ public final class BoundingBoxAccess {
   }
 
   public void invalidate(int posX, int posY, int posZ) {
+//    PluginInvocation pluginInvocation = CallerResolver.callerPluginInfo();
+//    player.sendMessage(ChatColor.DARK_GRAY + "Invalidated " + posX + " " + posY + " " + posZ + " (now type " + BukkitBlockAccess.blockAccess(player.getWorld(), posX, posY,  posZ).getType() + ") (" + pluginInvocation.baseClassName() + "." + pluginInvocation.methodName() + ")");
     invalidate0(posX + 1, posY, posZ);
     invalidate0(posX - 1, posY, posZ);
     invalidate0(posX, posY, posZ + 1);
@@ -250,6 +251,8 @@ public final class BoundingBoxAccess {
         type, blockState
       );
     }
+//    PluginInvocation pluginInvocation = CallerResolver.callerPluginInfo();
+//    player.sendMessage(ChatColor.GRAY + "Override " + posX + " " + posY + " " + posZ + " -> " + type + " (" + pluginInvocation.baseClassName() + "." + pluginInvocation.methodName() + ")");
     long key = bigKey(posX, posY, posZ);
     indexedReplacements.put(key, cacheEntry);
     locatedReplacements.put(new Location(world, posX, posY, posZ), cacheEntry);
@@ -286,6 +289,8 @@ public final class BoundingBoxAccess {
   }
 
   public void invalidateOverride(int posX, int posY, int posZ) {
+//    PluginInvocation pluginInvocation = CallerResolver.callerPluginInfo();
+//    player.sendMessage(ChatColor.BLACK + "Invalidated override " + posX + " " + posY + " " + posZ  + " (" + pluginInvocation.baseClassName() + "." + pluginInvocation.methodName() + ")");
     long key = bigKey(posX, posY, posZ);
     indexedReplacements.remove(key);
   }

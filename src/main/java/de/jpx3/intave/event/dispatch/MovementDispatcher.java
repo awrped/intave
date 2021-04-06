@@ -135,8 +135,6 @@ public final class MovementDispatcher implements EventProcessor {
   public void sentRespawn(PacketEvent event) {
     Player player = event.getPlayer();
     synchronizeRespawn(player);
-//    Synchronizer.synchronizeDelayed(() -> {
-//    }, 1);
   }
 
   private void synchronizeRespawn(Player player) {

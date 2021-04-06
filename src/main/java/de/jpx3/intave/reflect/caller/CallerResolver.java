@@ -13,12 +13,16 @@ public final class CallerResolver {
 
   public static PluginInvocation callerPluginInfo() {
     StackTraceElement[] stacktrace = Thread.currentThread().getStackTrace();
+
+    int i = 0;
+
     for (StackTraceElement element : stacktrace) {
       String callerClassName = element.getClassName();
       String callerMethodName = element.getMethodName();
       String pluginName = pluginFromClass(callerClassName);
-      if(!pluginName.equalsIgnoreCase(NO_PLUGIN_FOUND) &&
-        !pluginName.equalsIgnoreCase("Intave")
+      if(!pluginName.equalsIgnoreCase(NO_PLUGIN_FOUND)
+//        && !pluginName.equalsIgnoreCase("Intave")
+        && i++ > 1
       ) {
         return new PluginInvocation(
           pluginName,

@@ -19,6 +19,10 @@ public final class PluginInvocation {
     return className;
   }
 
+  public String baseClassName() {
+    return className.substring(className.lastIndexOf(".") + 1);
+  }
+
   public String methodName() {
     return methodName;
   }

@@ -96,7 +96,7 @@ public final class BreakSpeedFinishCheck extends IntaveMetaCheckPart<BreakSpeedL
       case STOP_DESTROY_BLOCK: {
         if (clientData.flyingPacketStream()) {
           float blockDamageDealt = meta.curBlockDamageMP;
-          if (blockDamageDealt < 1) {
+          if (blockDamageDealt < 0.9) { // ~90%
             String message = "finished breaking-process too quickly";
             String percentage = (int)(blockDamageDealt * 100d) + "%";
             String details = "at " + percentage;
