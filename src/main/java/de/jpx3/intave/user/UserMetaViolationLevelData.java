@@ -9,6 +9,7 @@ import java.util.Map;
 @Relocate
 public final class UserMetaViolationLevelData {
   public double physicsVL;
+  public double physicsVelocityVL;
   public double physicsInvalidMovementsInRow;
   public volatile boolean isInActiveTeleportBundle;
 
