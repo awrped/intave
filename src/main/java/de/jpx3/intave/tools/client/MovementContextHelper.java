@@ -161,15 +161,19 @@ public final class MovementContextHelper {
   private static boolean canGoThroughTrapDoorOnLadder(Block block) {
     Location location = block.getLocation();
     BlockState blockState = block.getState();
-    MaterialData data = blockState.getData();
-    if (data instanceof Openable && (((Openable) data).isOpen())) {
+    MaterialData trapDoorData = blockState.getData();
+    if (trapDoorData instanceof Openable && (((Openable) trapDoorData).isOpen())) {
       Attachable directional = (Attachable) blockState.getData();
-      Location downLocation = location.clone().add(0.0, -1, 0.0);
-      Block downBlock = BukkitBlockAccess.blockAccess(downLocation);
-      if (!(data instanceof Directional)) {
+      Location downLocation = location.clone().add(0, -1, 0);
+      if (!(trapDoorData instanceof Directional)) {
         return false;
       }
-      Directional downBlockDirectional = (Directional) downBlock.getState().getData();
+      Block downBlock = BukkitBlockAccess.blockAccess(downLocation);
+      MaterialData downBlockData = downBlock.getState().getData();
+      if (!(downBlockData instanceof Directional)) {
+        return false;
+      }
+      Directional downBlockDirectional = (Directional) downBlockData;
       return downBlock.getType() == Material.LADDER && directional.getFacing() == downBlockDirectional.getFacing();
     }
     return false;
