@@ -252,13 +252,18 @@ public final class MovementDispatcher implements EventProcessor {
         physicsCheck.updateOnGroundIfFlying(user);
       }
       Boolean clientOnGround = packet.getBooleans().read(0);
+      boolean collidedWithBoat = movementData.collidedWithBoat();
 
-      if (!vehicleMove) {
+      if (!vehicleMove && !collidedWithBoat) {
         movementData.applyGroundInformationToPacket(packet);
       }
 
       if (movementData.onGround && !clientOnGround && movementData.step) {
         movementData.onGround = false;
+      }
+
+      if (collidedWithBoat) {
+        movementData.onGround = clientOnGround;
       }
 
       timerCheck.checkSetback(event);

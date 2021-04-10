@@ -214,6 +214,17 @@ public final class UserMetaMovementData {
     }
   }
 
+  public boolean collidedWithBoat() {
+    return nearestBoatLocation != null && distanceToVerifiedLocation(nearestBoatLocation) < 2;
+  }
+
+  public double distanceToVerifiedLocation(Location location) {
+    double xDiff = Math.abs(verifiedPositionX - location.getX());
+    double yDiff = Math.abs(verifiedPositionY - location.getY());
+    double zDiff = Math.abs(verifiedPositionZ - location.getZ());
+    return Math.sqrt(xDiff * xDiff + yDiff * yDiff + zDiff * zDiff);
+  }
+
   public float eyeHeight() {
     if (player.isSleeping()) {
       return 0.2f;

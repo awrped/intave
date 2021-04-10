@@ -295,15 +295,7 @@ public final class Physics extends IntaveCheck {
     movementData.onLadderLast = onLadderCurrent;
 
     // Entity collision check
-    Location nearestBoatLocation = movementData.nearestBoatLocation;
-    boolean collidedWithBoat = false;
-    if (nearestBoatLocation != null) {
-      double distanceToBoat = LazyEntityCollisionService.distanceTo(movementData, nearestBoatLocation);
-      if (distanceToBoat < 2) {
-        collidedWithBoat = true;
-      }
-    }
-
+    boolean collidedWithBoat = movementData.collidedWithBoat();
     boolean skipVLCalculation = distance <= 1e-5;
     double verticalViolationIncrease = skipVLCalculation ? 0 : calculateVerticalViolationLevelIncrease(user, predictedY, onLadder, collidedWithBoat);
     double horizontalViolationIncrease = skipVLCalculation ? 0 : calculateHorizontalViolationIncrease(user, predictedX, predictedZ, onLadder, collidedWithBoat);

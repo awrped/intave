@@ -42,7 +42,7 @@ public final class LazyEntityCollisionService {
     for (Entity entity : entities) {
       if (entity.getType() == EntityType.BOAT) {
         Location entityLocation = entity.getLocation();
-        double distance = distanceTo(movementData, entityLocation);
+        double distance = movementData.distanceToVerifiedLocation(entityLocation);
         if (distance < DISTANCE_TO_BOAT) {
           movementData.nearestBoatLocation = entityLocation;
           successful = true;
@@ -52,13 +52,5 @@ public final class LazyEntityCollisionService {
     if (!successful) {
       movementData.nearestBoatLocation = null;
     }
-  }
-
-
-  public static double distanceTo(UserMetaMovementData movementData, Location location) {
-    double xDiff = Math.abs(movementData.verifiedPositionX - location.getX());
-    double yDiff = Math.abs(movementData.verifiedPositionY - location.getY());
-    double zDiff = Math.abs(movementData.verifiedPositionZ - location.getZ());
-    return Math.sqrt(xDiff * xDiff + yDiff * yDiff + zDiff * zDiff);
   }
 }
