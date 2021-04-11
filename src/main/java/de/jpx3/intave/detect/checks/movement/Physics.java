@@ -49,7 +49,7 @@ import static de.jpx3.intave.user.UserMetaClientData.PROTOCOL_VERSION_AQUATIC_UP
 @Relocate
 public final class Physics extends IntaveCheck {
   private final static double VL_DECREMENT_PER_VALID_MOVE = 0.05;
-  private final static double VELOCITY_VL_THRESHOLD = 3;
+  private final static double VELOCITY_VL_THRESHOLD = 6;
 
   private final IntavePlugin plugin;
   private final CheckViolationLevelDecrementer decrementer;
@@ -127,6 +127,7 @@ public final class Physics extends IntaveCheck {
     predictFlyingPacketBeforeVelocity(user);
 
     ComplexColliderSimulationResult predictedMovement = simulationService.simulate(user, movementData.movementPoseType());
+//    movementData.entityMotionVector = predictedMovement.entityContext();
     movementData.onGround = predictedMovement.onGround();
     movementData.collidedHorizontally = predictedMovement.collidedHorizontally();
     movementData.collidedVertically = predictedMovement.collidedVertically();
