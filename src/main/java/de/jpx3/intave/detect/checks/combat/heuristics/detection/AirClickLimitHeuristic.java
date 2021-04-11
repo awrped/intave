@@ -16,6 +16,7 @@ import de.jpx3.intave.event.packet.ListenerPriority;
 import de.jpx3.intave.event.packet.PacketDescriptor;
 import de.jpx3.intave.event.packet.PacketSubscription;
 import de.jpx3.intave.event.packet.Sender;
+import de.jpx3.intave.tools.AccessHelper;
 import de.jpx3.intave.tools.sync.Synchronizer;
 import de.jpx3.intave.tools.wrapper.WrappedMovingObjectPosition;
 import de.jpx3.intave.tools.wrapper.WrappedVector;
@@ -185,14 +186,25 @@ public class AirClickLimitHeuristic extends IntaveMetaCheckPart<Heuristics, AirC
     }
 
     if (sum > 13 && user.meta().clientData().protocolVersion() <= UserMetaClientData.PROTOCOL_VERSION_BOUNTIFUL_UPDATE) {
-      if (!IntaveControl.DISABLE_AUTOCLICKER_CHECK) {
+      meta.flaggCounter++;
+      double timeDiffrenceInSeconds = (System.currentTimeMillis() - meta.lastFlagTimeStamp) / 1000d;
+
+      if(sum > meta.maxCPS) {
+        meta.maxCPS = sum;
+      }
+
+      if(timeDiffrenceInSeconds > 15) {
         Anomaly anomaly = Anomaly.anomalyOf(
           "11",
-          sum > 14 ? Confidence.VERY_LIKELY : Confidence.PROBABLE,
+          IntaveControl.DISABLE_AUTOCLICKER_CHECK ? Confidence.NONE : (sum > 14 ? Confidence.VERY_LIKELY : Confidence.PROBABLE),
           Anomaly.Type.AUTOCLICKER,
-          "too many swing packets in air " + sum, Anomaly.AnomalyOption.DELAY_128s
+          "swings in air (cps " + meta.maxCPS + ") (sum " + meta.flaggCounter + ")", Anomaly.AnomalyOption.DELAY_128s
         );
         parentCheck().saveAnomaly(player, anomaly);
+
+        meta.lastFlagTimeStamp = System.currentTimeMillis();
+        meta.maxCPS = 0;
+        meta.flaggCounter = 0;
       }
     }
 
@@ -241,6 +253,10 @@ public class AirClickLimitHeuristic extends IntaveMetaCheckPart<Heuristics, AirC
   }
 
   public static class AirClickLimitHeuristicMeta extends UserCustomCheckMeta {
+    private int maxCPS;
+    private long lastFlagTimeStamp;
+    private int flaggCounter;
+
     BlockPosition currentDiggedBlock;
     private int tickIndex;
     private int[] tickArray = new int[20];

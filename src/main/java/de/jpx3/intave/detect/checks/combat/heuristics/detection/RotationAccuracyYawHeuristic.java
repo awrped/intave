@@ -89,7 +89,7 @@ public final class RotationAccuracyYawHeuristic extends IntaveMetaCheckPart<Heur
             Anomaly anomaly = Anomaly.anomalyOf("81", Confidence.NONE, Anomaly.Type.KILLAURA, description, options);
             parentCheck().saveAnomaly(player, anomaly);
             heuristicMeta.followBalance -= 7;
-            plugin.eventService().attackCancelService().requestDamageCancel(user, AttackCancelType.LIGHT);
+//            plugin.eventService().attackCancelService().requestDamageCancel(user, AttackCancelType.LIGHT);
           }
 
         }

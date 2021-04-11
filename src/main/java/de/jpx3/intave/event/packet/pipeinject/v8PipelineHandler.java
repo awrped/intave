@@ -36,12 +36,14 @@ public final class v8PipelineHandler extends ChannelDuplexHandler {
       cancelled = packetEvent.isCancelled();
     }
     if(!cancelled) {
-      super.channelRead(context, packet);
+      context.fireChannelRead(packet);
+    } else {
+      context.fireChannelReadComplete();
     }
   }
 
   @Override
-  public void write(ChannelHandlerContext channelHandlerContext, Object packet, ChannelPromise channelPromise) throws Exception {
+  public void write(ChannelHandlerContext context, Object packet, ChannelPromise channelPromise) throws Exception {
     PacketType packetType = PacketType.fromClass(packet.getClass());
     Collection<LocalPacketAdapter> adapters = injectionService.subscriptionsOf(packetType);
     boolean cancelled = false;
@@ -54,7 +56,7 @@ public final class v8PipelineHandler extends ChannelDuplexHandler {
       cancelled = packetEvent.isCancelled();
     }
     if(!cancelled) {
-      super.write(channelHandlerContext, packet, channelPromise);
+      context.write(packet, channelPromise);
     }
   }
 

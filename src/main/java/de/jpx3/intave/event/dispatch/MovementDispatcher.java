@@ -151,6 +151,7 @@ public final class MovementDispatcher implements EventProcessor {
         movementData.physicsMotionX = 0;
         movementData.physicsMotionY = 0;
         movementData.physicsMotionZ = 0;
+        user.boundingBoxAccess().identityInvalidate();
       });
   }
 
