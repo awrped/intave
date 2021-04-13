@@ -193,7 +193,7 @@ public class AirClickLimitHeuristic extends IntaveMetaCheckPart<Heuristics, AirC
         meta.maxCPS = sum;
       }
 
-      if(timeDiffrenceInSeconds > 15) {
+      if(timeDiffrenceInSeconds > 30) {
         Anomaly anomaly = Anomaly.anomalyOf(
           "11",
           IntaveControl.DISABLE_AUTOCLICKER_CHECK ? Confidence.NONE : (sum > 14 ? Confidence.VERY_LIKELY : Confidence.PROBABLE),
@@ -206,6 +206,8 @@ public class AirClickLimitHeuristic extends IntaveMetaCheckPart<Heuristics, AirC
         meta.maxCPS = 0;
         meta.flaggCounter = 0;
       }
+    } else {
+      meta.lastFlagTimeStamp = System.currentTimeMillis();
     }
 
     prepareNextTick(meta);
