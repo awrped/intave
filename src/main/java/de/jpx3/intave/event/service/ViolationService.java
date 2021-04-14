@@ -32,14 +32,14 @@ public final class ViolationService {
 
   @Deprecated
   public boolean processViolation(Player detectedPlayer, double vl, String checkName, String message) {
-    return processViolation(detectedPlayer, vl, checkName, message, "", "thresholds");
+    return processViolation(detectedPlayer, vl, checkName, message, "", "thresholds", true);
   }
 
   public boolean processViolation(Player detectedPlayer, double vl, String checkName, String message, String details) {
-    return processViolation(detectedPlayer, vl, checkName, message, details, "thresholds");
+    return processViolation(detectedPlayer, vl, checkName, message, details, "thresholds", true);
   }
 
-  public synchronized boolean processViolation(Player detectedPlayer, double vl, String checkName, String message, String details, String thresholdsKey) {
+  public synchronized boolean processViolation(Player detectedPlayer, double vl, String checkName, String message, String details, String thresholdsKey, boolean increaseViolationDebug) {
     checkName = checkName.toLowerCase(Locale.ROOT);
 
     User detectedUser = UserRepository.userOf(detectedPlayer);
@@ -72,7 +72,9 @@ public final class ViolationService {
       return response == IntaveViolationEvent.Reaction.INTERRUPT && preventionActivation <= newVl;
     }
 
-    check.statistics().increaseViolations();
+    if(increaseViolationDebug) {
+      check.statistics().increaseViolations();
+    }
     performVerbose(detectedUser, checkName, oldVl, newVl, message, details);
     violationMapOf(detectedPlayer).get(checkName).put(thresholdsKey, newVl);
 

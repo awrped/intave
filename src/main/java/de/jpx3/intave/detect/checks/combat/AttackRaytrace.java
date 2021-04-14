@@ -233,7 +233,7 @@ public class AttackRaytrace extends IntaveMetaCheck<AttackRaytrace.AttackRaytrac
     if (movementData.inVehicle()) {
       message += " (vehicle)";
     }
-    plugin.violationProcessor().processViolation(player, vl, "AttackRaytrace", message, details, thresholdKey);
+    plugin.violationProcessor().processViolation(player, vl, "AttackRaytrace", message, details, thresholdKey, true);
     return true;
   }
 
@@ -341,7 +341,7 @@ public class AttackRaytrace extends IntaveMetaCheck<AttackRaytrace.AttackRaytrac
       if (movementData.inVehicle()) {
         message += " (vehicle)";
       }
-      plugin.violationProcessor().processViolation(player, 0, "AttackRaytrace", message, details, thresholdKey);
+      plugin.violationProcessor().processViolation(player, 0, "AttackRaytrace", message, details, thresholdKey, false);
       return true;
     }
     hitboxDecrementer.decrement(user, VL_DECREMENT_PER_ATTACK);
