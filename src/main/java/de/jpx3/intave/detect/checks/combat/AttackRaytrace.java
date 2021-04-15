@@ -324,7 +324,7 @@ public class AttackRaytrace extends IntaveMetaCheck<AttackRaytrace.AttackRaytrac
           );
         }
         minReachInItr = Math.min(minReachInItr, result.reach);
-        clonedEntity.onLivingUpdate();
+        clonedEntity.onUpdate();
       }
       minReach = Math.min(minReach, minReachInItr);
     }

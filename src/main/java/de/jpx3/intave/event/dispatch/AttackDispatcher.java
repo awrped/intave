@@ -50,7 +50,7 @@ public final class AttackDispatcher implements EventProcessor {
   }
 
   @PacketSubscription(
-    priority = ListenerPriority.HIGH,
+    priority = ListenerPriority.LOW,
     packets = {
       @PacketDescriptor(sender = Sender.CLIENT, packetName = "USE_ENTITY")
     }

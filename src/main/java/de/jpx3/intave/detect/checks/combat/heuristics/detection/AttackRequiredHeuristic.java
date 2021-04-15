@@ -77,6 +77,11 @@ public final class AttackRequiredHeuristic extends IntaveMetaCheckPart<Heuristic
       return;
     }
 
+    boolean dead = entity.fakeDead || entity.dead;
+    if (dead) {
+      return;
+    }
+
     VentolotlMeta meta = metaOf(player);
     if (meta.didSwing && !meta.didAttack) {
       // Raytrace if cursor is upon entity

@@ -159,6 +159,35 @@ public final class ClientSideEntityService implements PacketEventSubscriber {
     processPacketSpawnMob(user, event.getPacketType(), entityName, packet, livingEntity, hitBoxBoundaries);
   }
 
+  private String entityNameOf(Object entity) {
+    String entityName = entity.getClass().getSimpleName();
+    if (entityName.startsWith("Entity")) {
+      entityName = entityName.substring("Entity".length());
+    }
+    return entityName;
+  }
+
+  private Object entityOfDataWatcher(WrappedDataWatcher dataWatcher) {
+    Object handle = dataWatcher.getHandle();
+    Class<?> handleClass = handle.getClass();
+    try {
+      return entityByHandle(handle, handleClass.getDeclaredField(dataWatcherEntityFieldName));
+    } catch (NoSuchFieldException e) {
+      throw new IntaveInternalException(e);
+    }
+  }
+
+  private Object entityByHandle(Object handle, Field entityField) {
+    try {
+      if (!entityField.isAccessible()) {
+        entityField.setAccessible(true);
+      }
+      return entityField.get(handle);
+    } catch (Exception e) {
+      throw new IntaveInternalException(e);
+    }
+  }
+
   @PacketSubscription(
     priority = ListenerPriority.HIGH,
     packets = {
@@ -205,7 +234,7 @@ public final class ClientSideEntityService implements PacketEventSubscriber {
     }
     for (Map.Entry<Integer, WrappedEntity> entry : synchronizeData.synchronizedEntityMap().entrySet()) {
       WrappedEntity entity = entry.getValue();
-      entity.onLivingUpdate();
+      entity.onUpdate();
     }
   }
 
@@ -285,6 +314,10 @@ public final class ClientSideEntityService implements PacketEventSubscriber {
       serverPosX, serverPosY, serverPosZ,
       boundaries
     );
+  }
+
+  private String entityNameByBukkitEntity(Entity entity) {
+    return entityNameOf(ReflectiveHandleAccess.handleOf(entity));
   }
 
   private void processPacketSpawnMob(
@@ -373,8 +406,68 @@ public final class ClientSideEntityService implements PacketEventSubscriber {
     synchronizedEntityMap.put(entityId, entity);
   }
 
+  @PacketSubscription(
+    priority = ListenerPriority.HIGH,
+    packets = {
+      @PacketDescriptor(sender = Sender.SERVER, packetName = "ENTITY_STATUS")
+    }
+  )
+  public void receiveEntityStatus(PacketEvent event) {
+    Player player = event.getPlayer();
+    User user = UserRepository.userOf(player);
+    PacketContainer packet = event.getPacket();
+    Integer entityID = packet.getIntegers().read(0);
+    Byte type = packet.getBytes().read(0);
+    WrappedEntity entity = entityByIdentifier(user, entityID);
+    if (entity == null || type != 3) {
+      return;
+    }
+    boolean synchronize = entity.clientSynchronized && entity.tracingEnabled();
+    if (synchronize) {
+      plugin.eventService().transactionFeedbackService().requestPong(player, entity, (p, e) -> updateDeadState(e));
+    } else {
+      updateDeadState(entity);
+    }
+  }
+
+  private void updateDeadState(WrappedEntity entity) {
+    entity.fakeDead = true;
+    entity.health = 0f;
+  }
+
+  @PacketSubscription(
+    priority = ListenerPriority.HIGH,
+    packets = {
+      @PacketDescriptor(sender = Sender.SERVER, packetName = "ENTITY_METADATA")
+    }
+  )
+  public void receiveEntityMetaData(PacketEvent event) {
+    Player player = event.getPlayer();
+    User user = UserRepository.userOf(player);
+    PacketContainer packet = event.getPacket();
+    Integer entityID = packet.getIntegers().read(0);
+    WrappedEntity entity = entityByIdentifier(user, entityID);
+    if (entity == null) {
+      return;
+    }
+    WrappedDataWatcher dataWatcher = new WrappedDataWatcher(packet.getWatchableCollectionModifier().read(0));
+    if (dataWatcher.getObject(6) != null) {
+      float health = dataWatcher.getFloat(6);
+      boolean synchronize = entity.clientSynchronized && entity.tracingEnabled();
+      if (synchronize) {
+        plugin.eventService().transactionFeedbackService().requestPong(player, entity, (p, e) -> updateHealthState(e, health));
+      } else {
+        updateHealthState(entity, health);
+      }
+    }
+  }
+
+  private void updateHealthState(WrappedEntity entity, float health) {
+    entity.health = health;
+  }
+
   @Nullable
-  private Entity serverEntityByIdentifier(Player player, int entityID) {
+  public static Entity serverEntityByIdentifier(Player player, int entityID) {
     for (Entity entity : player.getWorld().getEntities()) {
       if (entity.getEntityId() == entityID) {
         return entity;
@@ -387,38 +480,5 @@ public final class ClientSideEntityService implements PacketEventSubscriber {
   public static WrappedEntity entityByIdentifier(User user, int entityID) {
     UserMetaSynchronizeData synchronizeData = user.meta().synchronizeData();
     return synchronizeData.synchronizedEntityMap().getOrDefault(entityID, null);
-  }
-
-  private String entityNameOf(Object entity) {
-    String entityName = entity.getClass().getSimpleName();
-    if (entityName.startsWith("Entity")) {
-      entityName = entityName.substring("Entity".length());
-    }
-    return entityName;
-  }
-
-  private String entityNameByBukkitEntity(Entity entity) {
-    return entityNameOf(ReflectiveHandleAccess.handleOf(entity));
-  }
-
-  private Object entityOfDataWatcher(WrappedDataWatcher dataWatcher) {
-    Object handle = dataWatcher.getHandle();
-    Class<?> handleClass = handle.getClass();
-    try {
-      return entityByHandle(handle, handleClass.getDeclaredField(dataWatcherEntityFieldName));
-    } catch (NoSuchFieldException e) {
-      throw new IntaveInternalException(e);
-    }
-  }
-
-  private Object entityByHandle(Object handle, Field entityField) {
-    try {
-      if (!entityField.isAccessible()) {
-        entityField.setAccessible(true);
-      }
-      return entityField.get(handle);
-    } catch (Exception e) {
-      throw new IntaveInternalException(e);
-    }
   }
 }

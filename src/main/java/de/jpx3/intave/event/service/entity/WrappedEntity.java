@@ -31,6 +31,9 @@ public class WrappedEntity implements Cloneable {
   public EntityPositionContext position;
   public EntityPositionContext alternativePosition;
   public List<EntityPositionContext> positionHistory = new CopyOnWriteArrayList<>();
+  public boolean dead, fakeDead;
+  public float health;
+  private int deathTime;
 
   private WrappedAxisAlignedBB boundingBox;
   private boolean enabledResponseTracing;
@@ -71,12 +74,17 @@ public class WrappedEntity implements Cloneable {
     }
   }
 
+  public void onUpdate() {
+    this.onEntityUpdate();
+    this.onLivingUpdate();
+  }
+
   /**
    * Interpolates the position of the entity between the position and the new position to make the entity move smoothly.
    * This method applies if the given entity has an instance of LivingEntity. Packets: (All types of movement packets)
    * FLYING, LOOK, POSITION, POSITION_LOOK
    */
-  public void onLivingUpdate() {
+  private void onLivingUpdate() {
     if (isEntityLiving) {
       if (this.newPosRotationIncrements > 0) {
         double newPosX = position.posX + (position.newPosX - position.posX) / (double) this.newPosRotationIncrements;
@@ -88,6 +96,19 @@ public class WrappedEntity implements Cloneable {
         setPosition(newPosX, newPosY, newPosZ);
         setPosition(alternativeNewPosY);
       }
+    }
+  }
+
+  private void onEntityUpdate() {
+    if (this.health <= 0.0) {
+      onDeathUpdate();
+    }
+  }
+
+  private void onDeathUpdate() {
+    ++this.deathTime;
+    if (this.deathTime == 20) {
+      this.dead = true;
     }
   }
 
