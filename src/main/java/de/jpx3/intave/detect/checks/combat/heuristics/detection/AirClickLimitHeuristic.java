@@ -207,7 +207,9 @@ public class AirClickLimitHeuristic extends IntaveMetaCheckPart<Heuristics, AirC
         meta.flaggCounter = 0;
       }
     } else {
-      meta.lastFlagTimeStamp = System.currentTimeMillis();
+      if(meta.flaggCounter == 0) {
+        meta.lastFlagTimeStamp = System.currentTimeMillis();
+      }
     }
 
     prepareNextTick(meta);
