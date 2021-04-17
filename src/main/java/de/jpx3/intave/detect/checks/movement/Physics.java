@@ -377,7 +377,7 @@ public final class Physics extends IntaveCheck {
 
         Violation violation = Violation.fromType(Physics.class)
           .withPlayer(player).withMessage(message).withDetails(details)
-          .withDefaultThreshold().withVL(0)
+          .withVL(0)
           .build();
         plugin.violationProcessor().processViolation(violation);
 
@@ -415,7 +415,7 @@ public final class Physics extends IntaveCheck {
           String details = (multipleBoxes ? intersectionBoundingBoxesCurrent.size() : "one") + " box" + (multipleBoxes ? "es" : "");
           Violation violation = Violation.fromType(Physics.class)
             .withPlayer(player).withMessage(message).withDetails(details)
-            .withDefaultThreshold().withVL(0)
+            .withVL(0)
             .build();
           plugin.violationProcessor().processViolation(violation);
           WrappedAxisAlignedBB startPhaseBoundingBox = WrappedAxisAlignedBB.createFromPosition(user, movementData.verifiedLocation());
@@ -462,7 +462,7 @@ public final class Physics extends IntaveCheck {
 
       Violation violation = Violation.fromType(Physics.class)
         .withPlayer(player).withMessage(message).withDetails(details)
-        .withDefaultThreshold().withVL(violationLevelIncrease / 10d)
+        .withVL(violationLevelIncrease / 10d)
         .build();
       ViolationContext violationContext = plugin.violationProcessor().processViolation(violation);
 
@@ -472,11 +472,9 @@ public final class Physics extends IntaveCheck {
         if (movementData.pastExternalVelocity <= 8) {
           setbackTicks = 8;
         } else {
-          setbackTicks = violationLevelData.physicsVL > 50 ? 3 : 1;
+          setbackTicks = violationLevelData.physicsVL > 50 ? 3 : 2;
         }
         plugin.eventService().emulationEngine().emulationSetBack(player, emulationMotion, setbackTicks);
-      }
-      if (setback) {
         movementData.invalidMovement = true;
       }
     }
@@ -843,6 +841,10 @@ public final class Physics extends IntaveCheck {
     if (Math.abs(movementData.physicsMotionZ) < resetMotion) {
       movementData.physicsMotionZ = 0.0;
     }
+  }
+
+  public SimulationProcessor simulationService() {
+    return simulationService;
   }
 
   @Override

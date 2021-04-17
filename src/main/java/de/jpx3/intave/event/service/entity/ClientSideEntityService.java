@@ -207,10 +207,14 @@ public final class ClientSideEntityService implements PacketEventSubscriber {
 
   private void processEntityDestroy(Player player, int[] entityIDs) {
     User user = UserRepository.userOf(player);
+    UserMetaAttackData attackData = user.meta().attackData();
     UserMetaSynchronizeData synchronizeData = user.meta().synchronizeData();
     Map<Integer, WrappedEntity> synchronizedEntityMap = synchronizeData.synchronizedEntityMap();
     for (int entityID : entityIDs) {
       synchronizedEntityMap.remove(entityID);
+      if (attackData.lastAttackedEntity() != null && attackData.lastAttackedEntityID() == entityID) {
+        attackData.nullifyLastAttackedEntity();
+      }
     }
   }
 

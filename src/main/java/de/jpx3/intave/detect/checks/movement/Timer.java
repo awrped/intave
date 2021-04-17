@@ -4,6 +4,7 @@ import com.comphenix.protocol.events.PacketEvent;
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.detect.CheckViolationLevelDecrementer;
 import de.jpx3.intave.detect.IntaveMetaCheck;
+import de.jpx3.intave.detect.checks.movement.physics.SimulationProcessor;
 import de.jpx3.intave.event.bukkit.BukkitEventSubscription;
 import de.jpx3.intave.event.packet.PacketDescriptor;
 import de.jpx3.intave.event.packet.PacketSubscription;
@@ -15,6 +16,7 @@ import de.jpx3.intave.tools.AccessHelper;
 import de.jpx3.intave.tools.MathHelper;
 import de.jpx3.intave.tools.sync.Synchronizer;
 import de.jpx3.intave.user.*;
+import de.jpx3.intave.world.collider.result.ComplexColliderSimulationResult;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
@@ -28,6 +30,7 @@ import java.util.Map;
 public final class Timer extends IntaveMetaCheck<Timer.TimerData> {
   private final IntavePlugin plugin;
   private final CheckViolationLevelDecrementer decrementer;
+  private final SimulationProcessor simulationProcessor;
 
   private final boolean highToleranceMode;
 
@@ -35,6 +38,7 @@ public final class Timer extends IntaveMetaCheck<Timer.TimerData> {
     super("Timer", "timer", TimerData.class);
     this.plugin = plugin;
     this.decrementer = new CheckViolationLevelDecrementer(this, 0.2);
+    this.simulationProcessor = plugin.checkService().searchCheck(Physics.class).simulationService();
     highToleranceMode = configuration().settings().boolBy("high-tolerance", false);
     if (highToleranceMode) {
       IntaveLogger.logger().info("Enabled high ping tolerance");
@@ -62,7 +66,8 @@ public final class Timer extends IntaveMetaCheck<Timer.TimerData> {
     User user = userOf(event.getPlayer());
 //    if(user.meta().clientData().flyingPacketStream()) {
 //    }
-    metaOf(user).timerBalance -= 12.5;
+    double leniency = user.meta().violationLevelData().isInActiveTeleportBundle ? 2 : 12.5;
+    metaOf(user).timerBalance -= leniency;
   }
 
   public void receiveMovement(PacketEvent event, boolean teleportConf) {
@@ -131,20 +136,14 @@ public final class Timer extends IntaveMetaCheck<Timer.TimerData> {
       String balanceAsString = MathHelper.formatDouble(timerData.timerBalance / 10, 2);
       statistics().increaseFails();
 
-      Violation violation = Violation.fromType(Timer.class)
-        .withPlayer(player).withMessage("moved too frequently").withDetails(balanceAsString + " ticks ahead")
-        .withDefaultThreshold().withVL(0.5)
+      Violation violation = Violation.fromType(Timer.class).withPlayer(player)
+        .withMessage("moved too frequently").withDetails(balanceAsString + " ticks ahead").withVL(0.5)
         .build();
       ViolationContext violationContext = plugin.violationProcessor().processViolation(violation);
 
       if (violationContext.shouldCounterThreat()) {
         UserMetaMovementData movementData = user.meta().movementData();
         plugin.eventService().emulationEngine().emulationSetBack(player, new Vector(movementData.physicsMotionX, movementData.physicsMotionY, movementData.physicsMotionZ), 12);
-        if (timerData.timerBalance > 50) {
-          event.setCancelled(true);
-        }
-        // packet removed
-//        timerData.timerBalance -= 5.0;
       }
       timerData.lastTimerFlag = AccessHelper.now();
       // leniency
@@ -203,12 +202,13 @@ public final class Timer extends IntaveMetaCheck<Timer.TimerData> {
   public void checkSetback(PacketEvent event) {
     Player player = event.getPlayer();
     User user = UserRepository.userOf(player);
+    UserMetaMovementData movementData = user.meta().movementData();
     TimerData timerData = metaOf(user);
-
     if (timerData.flagTick) {
-      UserMetaMovementData movementData = user.meta().movementData();
-      plugin.eventService().emulationEngine().emulationSetBack(player, new Vector(movementData.physicsMotionX, movementData.physicsMotionY, movementData.physicsMotionZ), 6);
-      event.setCancelled(true);
+      ComplexColliderSimulationResult result = this.simulationProcessor.simulateMovementWithoutKeyPress(user);
+      Vector bukkitVector = result.context().toBukkitVector();
+      plugin.eventService().emulationEngine().emulationSetBack(player, bukkitVector, 6);
+      movementData.invalidMovement = true;
     }
   }
 

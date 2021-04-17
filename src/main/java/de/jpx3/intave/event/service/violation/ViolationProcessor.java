@@ -19,6 +19,8 @@ import org.bukkit.entity.Player;
 
 import java.util.*;
 
+import static de.jpx3.intave.event.service.violation.Violation.ViolationFlags;
+
 public final class ViolationProcessor {
   private final IntavePlugin plugin;
 
@@ -35,8 +37,8 @@ public final class ViolationProcessor {
     }
     Player player = optionalPlayer.get();
 
-    User detectedUser = UserRepository.userOf(player);
-    if(detectedUser.justJoined() || !detectedUser.hasOnlinePlayer()) {
+    User user = UserRepository.userOf(player);
+    if(user.justJoined() || !user.hasOnlinePlayer()) {
       return violationContext.counterThreatBecause("Player is not reachable").complete();
     }
 
@@ -47,20 +49,17 @@ public final class ViolationProcessor {
 
     fillInVLContext(violationContext);
 
-    processExternalViolationEvent(violationContext);
+    processViolationEvent(violationContext);
     processViolationStatistics(violationContext);
-    processVerbose(violationContext);
-    processVLIncrease(violationContext);
+    processViolationVerbose(violationContext);
+    processViolationLevelIncrease(violationContext);
 
     lookupThresholdCommands(violationContext);
-    processThresholdCommandEvents(violationContext);
+    processThresholdsEvents(violationContext);
     executeCommands(violationContext);
 
-    if(!violationContext.completed()) {
-      boolean activation = violationContext.violationLevelPassedPreventionActivation();
-      if(activation) {
-        violationContext.counterThreatBecause("Activation prevention reached");
-      }
+    if (!violationContext.completed() && violationContext.violationLevelPassedPreventionActivation()) {
+      violationContext.counterThreatBecause("Activation prevention reached");
     }
 
     return violationContext.complete();
@@ -86,7 +85,7 @@ public final class ViolationProcessor {
     violationContext.setPreventionActivation(preventionActivation);
   }
 
-  private void processExternalViolationEvent(
+  private void processViolationEvent(
     ViolationContext violationContext
   ) {
     if(violationContext.completed()) {
@@ -125,7 +124,7 @@ public final class ViolationProcessor {
     if(violationContext.completed()) {
       return;
     }
-    boolean ignoreVioStat = violationContext.violation().flagSet(Violation.ViolationFlags.DONT_PROCESS_VIOSTAT);
+    boolean ignoreVioStat = violationContext.violation().flagSet(ViolationFlags.DONT_PROCESS_VIOSTAT);
     if(ignoreVioStat) {
       return;
     }
@@ -134,7 +133,7 @@ public final class ViolationProcessor {
 
   private final static String LOGGER_MESSAGE_LAYOUT = "%s/%s %s %s(+%s -> %s on %s)";
 
-  private void processVerbose(ViolationContext violationContext) {
+  private void processViolationVerbose(ViolationContext violationContext) {
     if(violationContext.completed()) {
       return;
     }
@@ -159,7 +158,7 @@ public final class ViolationProcessor {
     plugin.logger().violation(consoleMessage);
   }
 
-  private void processVLIncrease(ViolationContext violationContext) {
+  private void processViolationLevelIncrease(ViolationContext violationContext) {
     if(violationContext.completed()) {
       return;
     }
@@ -192,7 +191,7 @@ public final class ViolationProcessor {
     }
   }
 
-  private void processThresholdCommandEvents(
+  private void processThresholdsEvents(
     ViolationContext violationContext
   ) {
     if (violationContext.completed() || violationContext.commands().isEmpty()) {

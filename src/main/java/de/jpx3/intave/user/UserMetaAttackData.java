@@ -103,6 +103,11 @@ public final class UserMetaAttackData {
     this.lastAttack = AccessHelper.now();
   }
 
+  public void nullifyLastAttackedEntity() {
+    this.lastAttackedEntityID = 0;
+    this.lastAttackedEntity = null;
+  }
+
   public void setFakePlayer(FakePlayer fakePlayer) {
     this.fakePlayer = fakePlayer;
   }

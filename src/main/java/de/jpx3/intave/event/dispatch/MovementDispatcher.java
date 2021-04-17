@@ -211,8 +211,6 @@ public final class MovementDispatcher implements EventProcessor {
     movementData.updateMovement(packet, hasMovement, hasRotation);
     teleportPositionObserver.receiveMovement(event);
 
-    timerCheck.receiveMovement(event, movementData.isTeleportConfirmationPacket);
-
     if (movementData.awaitTeleport) {
       event.setCancelled(true);
       return;
@@ -230,7 +228,7 @@ public final class MovementDispatcher implements EventProcessor {
       String details = "moved " + MathHelper.formatDouble(distance, 2) + " blocks";
       Violation violation = Violation.fromType(Physics.class)
         .withPlayer(player).withMessage(message).withDetails(details)
-        .withDefaultThreshold().withVL(25)
+        .withVL(25)
         .build();
       plugin.violationProcessor().processViolation(violation);
       return;
@@ -263,6 +261,9 @@ public final class MovementDispatcher implements EventProcessor {
       } else {
         physicsCheck.updateOnGroundIfFlying(user);
       }
+
+      timerCheck.receiveMovement(event, movementData.isTeleportConfirmationPacket);
+
       Boolean clientOnGround = packet.getBooleans().read(0);
       boolean collidedWithBoat = movementData.collidedWithBoat();
 
@@ -278,7 +279,6 @@ public final class MovementDispatcher implements EventProcessor {
         movementData.onGround = clientOnGround;
       }
 
-      timerCheck.checkSetback(event);
       attackData.updatePerfectRotation();
 
       if (inventoryData.awaitingSlotSet != -1) {
