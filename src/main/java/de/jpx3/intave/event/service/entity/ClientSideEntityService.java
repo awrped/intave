@@ -380,9 +380,9 @@ public final class ClientSideEntityService implements PacketEventSubscriber {
     UserMetaSynchronizeData synchronizeData = user.meta().synchronizeData();
     Map<Integer, WrappedEntity> synchronizedEntityMap = synchronizeData.synchronizedEntityMap();
     WrappedEntity entity = new WrappedEntity(entityName, entityId, isEntityLiving, boundaries);
-    entity.serverPosX = WrappedEntity.getPositionLong(posX);
-    entity.serverPosY = WrappedEntity.getPositionLong(posY);
-    entity.serverPosZ = WrappedEntity.getPositionLong(posZ);
+    entity.serverPosX = WrappedMathHelper.getPositionLong(posX);
+    entity.serverPosY = WrappedMathHelper.getPositionLong(posY);
+    entity.serverPosZ = WrappedMathHelper.getPositionLong(posZ);
     entity.setPositionAndRotationSpawnMob(posX, posY, posZ, posY);
     synchronizedEntityMap.put(entityId, entity);
   }

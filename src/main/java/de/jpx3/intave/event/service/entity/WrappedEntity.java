@@ -6,6 +6,7 @@ import de.jpx3.intave.adapter.ProtocolLibAdapter;
 import de.jpx3.intave.reflect.hitbox.HitBoxBoundaries;
 import de.jpx3.intave.tools.MathHelper;
 import de.jpx3.intave.tools.wrapper.WrappedAxisAlignedBB;
+import de.jpx3.intave.tools.wrapper.WrappedMathHelper;
 import org.bukkit.Bukkit;
 
 import java.util.List;
@@ -127,9 +128,9 @@ public class WrappedEntity implements Cloneable {
       newPosX = packet.getDoubles().read(0);
       newPosY = packet.getDoubles().read(1);
       newPosZ = packet.getDoubles().read(2);
-      serverPosX = getPositionLong(newPosX);
-      serverPosY = getPositionLong(newPosY);
-      serverPosZ = getPositionLong(newPosZ);
+      serverPosX = WrappedMathHelper.getPositionLong(newPosX);
+      serverPosY = WrappedMathHelper.getPositionLong(newPosY);
+      serverPosZ = WrappedMathHelper.getPositionLong(newPosZ);
     } else {
       serverPosX = packet.getIntegers().read(1);
       serverPosY = packet.getIntegers().read(2);
@@ -159,9 +160,7 @@ public class WrappedEntity implements Cloneable {
       setPositionAndRotationEntityLiving(alternativeNewPosY);
     }
   }
-  public static long getPositionLong(double value) {
-    return MathHelper.floor_double_long(value * 4096.0D);
-  }
+
 
   /**
    * Handles relative movement. Packets: REL_ENTITY_MOVE, REL_ENTITY_MOVE_LOOK or ENTITY_LOOK

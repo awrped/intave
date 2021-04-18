@@ -81,14 +81,6 @@ public final class WrappedMathHelper {
     return value < (double) i ? i - 1 : i;
   }
 
-  /**
-   * Long version of floor_double
-   */
-  public static long floor_double_long(double value) {
-    long i = (long) value;
-    return value < (double) i ? i - 1L : i;
-  }
-
   public static int func_154353_e(double value) {
     return (int) (value >= 0.0D ? value : -value + 1.0D);
   }
@@ -422,6 +414,19 @@ public final class WrappedMathHelper {
     int k = clamp_int((int) (f5 * 255.0F), 0, 255);
     int l = clamp_int((int) (f6 * 255.0F), 0, 255);
     return j << 16 | k << 8 | l;
+  }
+
+  public static long getPositionLong(double value) {
+    return WrappedMathHelper.floor_double_long(value * 4096.0D);
+  }
+
+  /**
+   * Long version of floor_double
+   */
+  public static long floor_double_long(double value)
+  {
+    long i = (long)value;
+    return value < (double)i ? i - 1L : i;
   }
 
   public static float toRadians(float value) {
