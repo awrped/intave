@@ -310,7 +310,7 @@ public final class Physics extends IntaveCheck {
 
     boolean velocityDetected = false;
     if (!skipVLCalculation && movementData.pastExternalVelocity < 10 && !movementData.recentlyEncounteredFlyingPacket(2)) {
-      if (distance > 0.0005) {
+      if (distance > 0.0005 && !onLadder) {
         boolean aggressive = violationLevelData.physicsVelocityVL++ >= VELOCITY_VL_THRESHOLD;
         if (aggressive || distance > 0.01) {
           if (aggressive) {
