@@ -458,7 +458,7 @@ public final class ClientSideEntityService implements PacketEventSubscriber {
     PacketContainer packet = event.getPacket();
     Integer entityID = packet.getIntegers().read(0);
     if (player.getEntityId() == entityID) {
-      synchronizePlayerHealth(user, packet);
+      synchronizePlayerHealth(player, packet);
       return;
     }
     WrappedEntity entity = entityByIdentifier(user, entityID);
@@ -476,12 +476,14 @@ public final class ClientSideEntityService implements PacketEventSubscriber {
     }
   }
 
-  private void synchronizePlayerHealth(User user, PacketContainer packet) {
+  private void synchronizePlayerHealth(Player player, PacketContainer packet) {
     Float health = readHealthOf(packet.getWatchableCollectionModifier().read(0));
     if (health != null) {
-      UserMetaAbilityData abilityData = user.meta().abilityData();
-      abilityData.health = health;
-      abilityData.ticksToLastHealthUpdate = 0;
+      plugin.eventService().transactionFeedbackService().requestPong(player, health, (p, retrievedHealth) -> {
+        UserMetaAbilityData abilityData = UserRepository.userOf(p).meta().abilityData();
+        abilityData.health = retrievedHealth;
+        abilityData.ticksToLastHealthUpdate = 0;
+      });
     }
   }
 
