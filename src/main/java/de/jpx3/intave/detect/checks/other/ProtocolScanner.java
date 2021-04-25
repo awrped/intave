@@ -2,7 +2,9 @@ package de.jpx3.intave.detect.checks.other;
 
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
+import com.comphenix.protocol.wrappers.EnumWrappers;
 import de.jpx3.intave.IntavePlugin;
+import de.jpx3.intave.adapter.ProtocolLibAdapter;
 import de.jpx3.intave.detect.IntaveMetaCheck;
 import de.jpx3.intave.event.packet.PacketDescriptor;
 import de.jpx3.intave.event.packet.PacketSubscription;
@@ -11,7 +13,10 @@ import de.jpx3.intave.event.service.violation.Violation;
 import de.jpx3.intave.tools.MathHelper;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserCustomCheckMeta;
+import de.jpx3.intave.user.UserMetaClientData;
+import de.jpx3.intave.user.UserMetaMovementData;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.MainHand;
 
 public final class ProtocolScanner extends IntaveMetaCheck<ProtocolScanner.ProtocolScannerMeta> {
   private final IntavePlugin plugin;
@@ -27,7 +32,7 @@ public final class ProtocolScanner extends IntaveMetaCheck<ProtocolScanner.Proto
       @PacketDescriptor(sender = Sender.CLIENT, packetName = "LOOK")
     }
   )
-  public void on(PacketEvent event) {
+  public void receiveRotation(PacketEvent event) {
     Player player = event.getPlayer();
     float rotationPitch = event.getPacket().getFloat().read(1);
     if (Math.abs(rotationPitch) > 90.05f) {
@@ -62,6 +67,44 @@ public final class ProtocolScanner extends IntaveMetaCheck<ProtocolScanner.Proto
     }
     meta.lastSlot = slot;
     meta.slotPacketsSent++;
+  }
+
+  private final static boolean HAS_OFF_HAND = ProtocolLibAdapter.COMBAT_UPDATE.atOrAbove();
+
+  @PacketSubscription(
+    packets = {
+      @PacketDescriptor(sender = Sender.CLIENT, packetName = "SETTINGS")
+    }
+  )
+  public void receiveClientOptions(PacketEvent event) {
+    Player player = event.getPlayer();
+    User user = userOf(player);
+    PacketContainer packet = event.getPacket();
+    UserMetaClientData clientData = user.meta().clientData();
+    if (HAS_OFF_HAND && clientData.combatUpdate()) {
+      EnumWrappers.Hand sentHand = packet.getHands().read(0);
+      if (!equalHand(player.getMainHand(), sentHand)) {
+        return;
+      }
+    }
+    UserMetaMovementData movementData = user.meta().movementData();
+    int keyForward = movementData.keyForward;
+    int keyStrafe = movementData.keyStrafe;
+    if (keyForward != 0 || keyStrafe != 0) {
+      Violation violation = Violation.fromType(ProtocolScanner.class)
+        .withPlayer(player)
+        .withMessage("updated client settings whilst walking")
+        .withDetails("version " + clientData.versionString())
+        .withVL(0)
+        .build();
+      plugin.violationProcessor().processViolation(violation);
+      event.setCancelled(true);
+    }
+  }
+
+  private boolean equalHand(Object bukkitHand, EnumWrappers.Hand hand) {
+    return bukkitHand == MainHand.LEFT && hand == EnumWrappers.Hand.MAIN_HAND
+      || bukkitHand == MainHand.RIGHT && hand == EnumWrappers.Hand.OFF_HAND;
   }
 
   public static class ProtocolScannerMeta extends UserCustomCheckMeta {

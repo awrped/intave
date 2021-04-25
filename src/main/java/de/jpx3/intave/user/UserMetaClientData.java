@@ -17,9 +17,70 @@ public final class UserMetaClientData {
   public static int VERSION_DETAILS = 97; // secret integer for security - DO NOT MODIFY
   public static int PROTOCOL_VERSION_BOUNTIFUL_UPDATE = 47; // 1.8
   private final int protocolVersion;
+  private final String versionString;
 
   public UserMetaClientData(Player player) {
     this.protocolVersion = player == null ? -1 : ViaVersionAdapter.protocolVersionOf(player);
+    this.versionString = versionAsString();
+  }
+
+  private String versionAsString() {
+    if (protocolVersion <= 47)
+      return "1.8.x";
+    if (protocolVersion <= 107)
+      return "1.9.0";
+    if (protocolVersion <= 108)
+      return "1.9.1";
+    if (protocolVersion <= 109)
+      return "1.9.2";
+    if (protocolVersion <= 110)
+      return "1.9.3";
+    if (protocolVersion <= 210)
+      return "1.10.x";
+    if (protocolVersion <= 315)
+      return "1.11.0";
+    if (protocolVersion <= 316)
+      return "1.11.1/2";
+    if (protocolVersion <= 335)
+      return "1.12.0";
+    if (protocolVersion <= 338)
+      return "1.12.1";
+    if (protocolVersion <= 340)
+      return "1.12.2";
+    if (protocolVersion <= 393)
+      return "1.13.0";
+    if (protocolVersion <= 401)
+      return "1.13.1";
+    if (protocolVersion <= 404)
+      return "1.13.2";
+    if (protocolVersion <= 477)
+      return "1.14.0";
+    if (protocolVersion <= 480)
+      return "1.14.1";
+    if (protocolVersion <= 485)
+      return "1.14.2";
+    if (protocolVersion <= 490)
+      return "1.14.3";
+    if (protocolVersion <= 498)
+      return "1.14.4";
+    if (protocolVersion <= 573)
+      return "1.15.0";
+    if (protocolVersion <= 575)
+      return "1.15.1";
+    if (protocolVersion <= 578)
+      return "1.15.2";
+    if (protocolVersion <= 735)
+      return "1.16.0";
+    if (protocolVersion <= 736)
+      return "1.16.1";
+    if (protocolVersion <= 751)
+      return "1.16.2";
+    if (protocolVersion <= 753)
+      return "1.16.3";
+    if (protocolVersion <= 754)
+      return "1.16.4/5";
+
+    return "NA";
   }
 
   public int protocolVersion() {
@@ -91,62 +152,7 @@ public final class UserMetaClientData {
     return protocolVersion >= PROTOCOL_VERSION_COMBAT_UPDATE;
   }
 
-  public String versionAsString() {
-    if (protocolVersion <= 47)
-      return "1.8.x";
-    if (protocolVersion <= 107)
-      return "1.9.0";
-    if (protocolVersion <= 108)
-      return "1.9.1";
-    if (protocolVersion <= 109)
-      return "1.9.2";
-    if (protocolVersion <= 110)
-      return "1.9.3";
-    if (protocolVersion <= 210)
-      return "1.10.x";
-    if (protocolVersion <= 315)
-      return "1.11.0";
-    if (protocolVersion <= 316)
-      return "1.11.1/2";
-    if (protocolVersion <= 335)
-      return "1.12.0";
-    if (protocolVersion <= 338)
-      return "1.12.1";
-    if (protocolVersion <= 340)
-      return "1.12.2";
-    if (protocolVersion <= 393)
-      return "1.13.0";
-    if (protocolVersion <= 401)
-      return "1.13.1";
-    if (protocolVersion <= 404)
-      return "1.13.2";
-    if (protocolVersion <= 477)
-      return "1.14.0";
-    if (protocolVersion <= 480)
-      return "1.14.1";
-    if (protocolVersion <= 485)
-      return "1.14.2";
-    if (protocolVersion <= 490)
-      return "1.14.3";
-    if (protocolVersion <= 498)
-      return "1.14.4";
-    if (protocolVersion <= 573)
-      return "1.15.0";
-    if (protocolVersion <= 575)
-      return "1.15.1";
-    if (protocolVersion <= 578)
-      return "1.15.2";
-    if (protocolVersion <= 735)
-      return "1.16.0";
-    if (protocolVersion <= 736)
-      return "1.16.1";
-    if (protocolVersion <= 751)
-      return "1.16.2";
-    if (protocolVersion <= 753)
-      return "1.16.3";
-    if (protocolVersion <= 754)
-      return "1.16.4/5";
-
-    return "NA";
+  public String versionString() {
+    return versionString;
   }
 }
