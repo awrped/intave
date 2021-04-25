@@ -74,7 +74,7 @@ public final class Heuristics extends IntaveMetaCheck<Heuristics.HeuristicMeta> 
     appendCheckPart(new RotationSensitivityHeuristic(this));
     appendCheckPart(new RotationModuloResetHeuristic(this));
     appendCheckPart(new PacketOrderSwingHeuristic(this));
-    appendCheckPart(new PacketSprintToggleHeuristic(this));
+    appendCheckPart(new PacketPlayerActionToggleHeuristic(this));
     appendCheckPart(new RotationLHeuristics(this));
     appendCheckPart(new PacketInventoryHeuristic(this));
     appendCheckPart(new BlockingHeuristic(this));

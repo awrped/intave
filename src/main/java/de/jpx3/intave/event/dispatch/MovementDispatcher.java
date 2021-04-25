@@ -12,6 +12,7 @@ import de.jpx3.intave.detect.checks.world.InteractionRaytrace;
 import de.jpx3.intave.event.bukkit.BukkitEventSubscription;
 import de.jpx3.intave.event.packet.*;
 import de.jpx3.intave.event.service.violation.Violation;
+import de.jpx3.intave.tools.AccessHelper;
 import de.jpx3.intave.tools.MathHelper;
 import de.jpx3.intave.tools.annotate.Relocate;
 import de.jpx3.intave.tools.client.PoseHelper;
@@ -530,7 +531,9 @@ public final class MovementDispatcher implements EventProcessor {
   public void receiveEntityActionPacket(PacketEvent event) {
     Player player = event.getPlayer();
     User user = UserRepository.userOf(player);
-    UserMetaMovementData movementData = user.meta().movementData();
+    User.UserMeta meta = user.meta();
+    UserMetaMovementData movementData = meta.movementData();
+    UserMetaPunishmentData punishmentData = meta.punishmentData();
     PacketContainer packet = event.getPacket();
     PlayerAction playerAction = PlayerActionResolver.resolveActionFromPacket(packet);
     switch (playerAction) {
@@ -543,6 +546,9 @@ public final class MovementDispatcher implements EventProcessor {
         movementData.sprinting = false;
         break;
       case START_SNEAKING:
+        if (AccessHelper.now() - punishmentData.timeLastSneakToggleCancel < 1000) {
+          event.setCancelled(true);
+        }
         movementData.sneaking = true;
         break;
       case STOP_SNEAKING:

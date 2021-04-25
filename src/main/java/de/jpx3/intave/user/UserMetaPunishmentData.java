@@ -24,6 +24,7 @@ public final class UserMetaPunishmentData {
   public int damageTicksBefore = -1;
   public int appliedDamageTicks = -1;
   public long timeLastBlockCancel;
+  public long timeLastSneakToggleCancel;
 
   public UserMetaPunishmentData(Player player) {
     this.damageCancels = Lists.newArrayList(

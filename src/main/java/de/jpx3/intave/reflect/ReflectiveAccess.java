@@ -21,7 +21,6 @@ public final class ReflectiveAccess {
   public static void setup() {
     ReflectiveBlockAccess.setup();
     ReflectiveEntityHitBoxAccess.setup();
-    ReflectiveEntityHitBoxAccess.setup();
     PatchyLoadingInjector.loadUnloadedClassPatched(IntavePlugin.class.getClassLoader(), "de.jpx3.intave.reflect.ReflectiveDataWatcherAccess");
     PatchyLoadingInjector.loadUnloadedClassPatched(IntavePlugin.class.getClassLoader(), "de.jpx3.intave.reflect.ReflectiveHandleAccess");
     PatchyLoadingInjector.loadUnloadedClassPatched(IntavePlugin.class.getClassLoader(), "de.jpx3.intave.reflect.ReflectiveEntityAccess");

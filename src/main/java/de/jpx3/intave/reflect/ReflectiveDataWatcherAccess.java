@@ -9,6 +9,7 @@ import org.bukkit.entity.Player;
 @PatchyAutoTranslation
 public final class ReflectiveDataWatcherAccess {
   public static final int DATA_WATCHER_BLOCKING_ID = 4;
+  public static final int DATA_WATCHER_SNEAK_ID = 1;
 
   @PatchyAutoTranslation
   public static void setDataWatcherFlag(Player player, int i, boolean flag) {
