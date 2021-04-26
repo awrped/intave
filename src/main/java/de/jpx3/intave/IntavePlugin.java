@@ -24,10 +24,7 @@ import de.jpx3.intave.lib.asm.Frame;
 import de.jpx3.intave.logging.IntaveLogger;
 import de.jpx3.intave.metrics.Metrics;
 import de.jpx3.intave.reflect.ReflectiveAccess;
-import de.jpx3.intave.security.ContextSecrets;
-import de.jpx3.intave.security.HWIDVerification;
-import de.jpx3.intave.security.HashAccess;
-import de.jpx3.intave.security.LicenseVerification;
+import de.jpx3.intave.security.*;
 import de.jpx3.intave.tools.*;
 import de.jpx3.intave.tools.annotate.Native;
 import de.jpx3.intave.tools.client.SinusCache;
@@ -199,8 +196,8 @@ public final class IntavePlugin extends JavaPlugin {
           bytes[7 - i] = value;
         }
 
-        long longOne = ThreadLocalRandom.current().nextLong(0, Long.MAX_VALUE);
-        long longTwo = ThreadLocalRandom.current().nextLong(0, Long.MAX_VALUE);
+        long longOne = ThreadLocalRandom.current().nextLong(0x4000000000000000L, Long.MAX_VALUE);
+        long longTwo = ThreadLocalRandom.current().nextLong(0x4000000000000000L, Long.MAX_VALUE);
         String requestedId = String.valueOf(new UUID(longOne, longTwo));
 
         String idKey = identificationKey > 0 ? new String(bytes) : "aaaaaaaa", response = "";
@@ -355,10 +352,10 @@ public final class IntavePlugin extends JavaPlugin {
       boolean partner = (UserMetaClientData.VERSION_DETAILS & 0x100) != 0;
       boolean enterprise = (UserMetaClientData.VERSION_DETAILS & 0x200) != 0;
 
-      if (partner) {
-        logger.info("Running Intave in partner mode");
-      } else if (enterprise) {
-        logger.info("Running Intave in enterprise mode");
+      if (partner || enterprise) {
+        logger.info("Identify confirmed, special features enabled");
+      } else {
+        logger.info("Identity verification missing");
       }
 
       if (offlineMode) {
@@ -427,6 +424,8 @@ public final class IntavePlugin extends JavaPlugin {
       } else {
         contextStatusResource.write(new ByteArrayInputStream(("success/" + AccessHelper.now()).getBytes(StandardCharsets.UTF_8)));
       }
+
+      SSLConnectionVerifier.setup();
 
       ReflectiveAccess.setup();
       WrapperLinkage.setup();
@@ -650,7 +649,7 @@ public final class IntavePlugin extends JavaPlugin {
       // mark caches as deletable
       Class<?> relocator = Class.forName("de.jpx3.relocator.Relocator");
       relocator.getMethod("i").invoke(null);
-    } catch (Exception exception) {}
+    } catch (Exception ignored) {}
     logger().info("Intave offline");
     logger.shutdown();
   }

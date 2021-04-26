@@ -24,9 +24,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.util.*;
 
@@ -122,7 +120,7 @@ public final class ConfigurationLoader {
     YamlConfiguration configuration = tryDownloadConfiguration();
     if(configuration == null) {
       try {
-        configuration = readConfiguration();
+        configuration = (YamlConfiguration) readConfiguration();
       } catch (IllegalStateException exception) {
         throw new IllegalStateException("Unable to prepare configuration");
       }
@@ -139,7 +137,7 @@ public final class ConfigurationLoader {
       configuration = tryDownloadConfiguration();
       if(configuration == null) {
         try {
-          configuration = readConfiguration();
+          configuration = (YamlConfiguration) readConfiguration();
         } catch (IllegalStateException exception) {
           throw new IllegalStateException("Unable to prepare configuration");
         }
@@ -148,7 +146,7 @@ public final class ConfigurationLoader {
       }
     } else {
       try {
-        configuration = readConfiguration();
+        configuration = (YamlConfiguration) readConfiguration();
       } catch (IllegalStateException exception) {
         configuration = tryDownloadConfiguration();
         if(configuration == null) {
@@ -204,7 +202,7 @@ public final class ConfigurationLoader {
   }
 
   @Native
-  private YamlConfiguration readConfiguration() {
+  private Object readConfiguration() {
     try {
       File configurationCache = configurationCache();
       if(!configurationCache.exists()) {
@@ -223,7 +221,10 @@ public final class ConfigurationLoader {
       ByteBuffer byteBuffer = ByteBuffer.wrap(byteArrayOutputStream.toByteArray());
       byte[] iv = new byte[byteBuffer.getInt()];
       byteBuffer.get(iv);
-      SecretKey secretKey = generateSecretKey(iv);
+      KeySpec spec = new PBEKeySpec(ConfigurationLoader.SECRET_KEY.toCharArray(), iv, 65536, 128); // AES-128
+      SecretKeyFactory secretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
+      byte[] key = secretKeyFactory.generateSecret(spec).getEncoded();
+      SecretKey secretKey = new SecretKeySpec(key, "AES");
       byte[] cipherBytes = new byte[byteBuffer.remaining()];
       byteBuffer.get(cipherBytes);
       Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
@@ -237,8 +238,9 @@ public final class ConfigurationLoader {
   }
 
   @Native
-  private void saveConfiguration(YamlConfiguration configuration) {
+  private void saveConfiguration(Object configurationObj) {
     try {
+      YamlConfiguration configuration = (YamlConfiguration) configurationObj;
       int state = configuration.getInt("state");
       saveState(state);
       File configurationCache = configurationCache();
@@ -250,7 +252,10 @@ public final class ConfigurationLoader {
       SecureRandom secureRandom = new SecureRandom();
       byte[] iv = new byte[12];
       secureRandom.nextBytes(iv);
-      SecretKey secretKey = generateSecretKey(iv);
+      KeySpec spec = new PBEKeySpec(ConfigurationLoader.SECRET_KEY.toCharArray(), iv, 65536, 128); // AES-128
+      SecretKeyFactory secretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
+      byte[] key = secretKeyFactory.generateSecret(spec).getEncoded();
+      SecretKey secretKey = new SecretKeySpec(key, "AES");
       Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
       GCMParameterSpec parameterSpec = new GCMParameterSpec(128, iv);
       cipher.init(Cipher.ENCRYPT_MODE, secretKey, parameterSpec);
@@ -262,17 +267,9 @@ public final class ConfigurationLoader {
       FileOutputStream fileOutputStream = new FileOutputStream(configurationCache);
       fileOutputStream.write(byteBuffer.array());
       fileOutputStream.close();
-    } catch (Exception  exception) {
+    } catch (Exception exception) {
       throw new IllegalStateException(exception);
     }
-  }
-
-  @Native
-  private SecretKey generateSecretKey(byte[] iv) throws NoSuchAlgorithmException, InvalidKeySpecException {
-    KeySpec spec = new PBEKeySpec(ConfigurationLoader.SECRET_KEY.toCharArray(), iv, 65536, 128); // AES-128
-    SecretKeyFactory secretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
-    byte[] key = secretKeyFactory.generateSecret(spec).getEncoded();
-    return new SecretKeySpec(key, "AES");
   }
 
   public void deleteCaches() {

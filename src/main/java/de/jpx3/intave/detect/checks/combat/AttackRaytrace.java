@@ -191,7 +191,7 @@ public class AttackRaytrace extends IntaveMetaCheck<AttackRaytrace.AttackRaytrac
     }
 
     attackData.setLastReach(distanceOfResult.reach);
-    String message, details, thresholdKey, sibylMessage;
+    String message, details, thresholdKey, special;
     AttackRaytraceResult attackRaytraceResult = AttackRaytrace.AttackRaytraceResult.of(distanceOfResult.reach, blockReachDistance);
     final int vl = applicableViolationPoints(attackRaytraceResult, distanceOfResult, user, expandHitbox);
     String entityName = entity.entityName();
@@ -201,7 +201,7 @@ public class AttackRaytrace extends IntaveMetaCheck<AttackRaytrace.AttackRaytrac
         message = "attacked " + resolveIndefArticle(entityName) + " " + entityName.toLowerCase() + " out of sight";
         details = "";
         thresholdKey = "applicable-thresholds.hitbox";
-        sibylMessage = ChatColor.RED + "[R] " + player.getName() + " missed hit on " + entityName.toLowerCase();
+        special = ChatColor.RED + "[R] " + player.getName() + " missed hit on " + entityName.toLowerCase();
         break;
       }
       case REACH: {
@@ -209,7 +209,7 @@ public class AttackRaytrace extends IntaveMetaCheck<AttackRaytrace.AttackRaytrac
         message = "attacked " + resolveIndefArticle(entityName) + " " + entityName.toLowerCase() + " from too far away";
         details = displayReach + " blocks";
         thresholdKey = "applicable-thresholds.reach";
-        sibylMessage = ChatColor.RED + "[R] " + player.getName() + " attacked " + entityName.toLowerCase() + " from " + displayReach;
+        special = ChatColor.RED + "[R] " + player.getName() + " attacked " + entityName.toLowerCase() + " from " + displayReach;
         break;
       }
       default: {
@@ -225,7 +225,7 @@ public class AttackRaytrace extends IntaveMetaCheck<AttackRaytrace.AttackRaytrac
       public void run() {
         for (Player authenticatedPlayer : Bukkit.getOnlinePlayers()) {
           if (plugin.sibylIntegrationService().isAuthenticated(authenticatedPlayer)) {
-            authenticatedPlayer.sendMessage(sibylMessage);
+            authenticatedPlayer.sendMessage(special);
           }
         }
       }

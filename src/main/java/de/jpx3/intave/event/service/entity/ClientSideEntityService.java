@@ -147,15 +147,15 @@ public final class ClientSideEntityService implements PacketEventSubscriber {
       livingEntity = false;
     } else {
       // player
-      hitBoxBoundaries = HitBoxBoundaries.of(0.6f, 1.8f);
       Integer entityID = packet.getIntegers().read(0);
-      Object entity = entityOfDataWatcher(packet.getDataWatcherModifier().read(0));
       FakePlayer fakePlayer = attackData.fakePlayer();
-      String entityNameOfDataWatcher = entityNameOf(entity);
       if (fakePlayer != null && fakePlayer.fakePlayerEntityId() == entityID) {
         entityName = "Intave-Bot";
+        hitBoxBoundaries = HitBoxBoundaries.of(0.6f, 1.8f);
       } else {
-        entityName = entityNameOfDataWatcher;
+        Object entity = entityOfDataWatcher(packet.getDataWatcherModifier().read(0));
+        hitBoxBoundaries = ReflectiveEntityHitBoxAccess.boundariesOf(entity);
+        entityName = entityNameOf(entity);
       }
       livingEntity = true;
     }

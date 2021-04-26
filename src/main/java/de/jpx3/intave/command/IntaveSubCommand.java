@@ -153,10 +153,6 @@ public final class IntaveSubCommand {
       }
       Class<?> expectedType = allTypes[i];
       Object output = TypeTranslators.tryTranslate(sender, expectedType, arg, executedCommand);
-      if(output instanceof String) {
-        sender.sendMessage(prefix + ChatColor.RED + "Invalid parameter \"" + arg + "\": " + output);
-        return null;
-      }
       if(output == null) {
         return null;
       }

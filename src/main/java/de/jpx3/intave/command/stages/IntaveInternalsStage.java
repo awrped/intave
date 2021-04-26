@@ -106,7 +106,8 @@ public final class IntaveInternalsStage extends CommandStage {
     permission = "intave.command.internals.collectivekick",
     description = "Kicks all players with the same ip as the target player"
   )
-  public void collectiveKick(CommandSender commandSender, Player target, String message) {
+  public void collectiveKick(CommandSender commandSender, Player target, String[] messageParts) {
+    String message = Arrays.stream(messageParts).map(s -> s + " ").collect(Collectors.joining()).trim();
     for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
       if(!onlinePlayer.equals(target) && onlinePlayer.getAddress().equals(target.getAddress())) {
         String parsedMessage = ChatColor.translateAlternateColorCodes('&', message);

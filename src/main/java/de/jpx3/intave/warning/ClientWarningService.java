@@ -74,10 +74,10 @@ public final class ClientWarningService implements PacketEventSubscriber {
 
   @Native
   private void warn(Player player, ClientData clientData) {
-    String sibylMessage = ChatColor.RED + "[CW] " + player.getName() + " joined with " + clientData.name();
+    String message = ChatColor.RED + "[CW] " + player.getName() + " joined with " + clientData.name();
     for (Player authenticatedPlayer : Bukkit.getOnlinePlayers()) {
       if (plugin.sibylIntegrationService().isAuthenticated(authenticatedPlayer)) {
-        authenticatedPlayer.sendMessage(sibylMessage);
+        authenticatedPlayer.sendMessage(message);
       }
     }
     switch (clientData.action()) {

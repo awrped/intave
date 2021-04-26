@@ -176,10 +176,8 @@ public final class IntaveCommandStage extends CommandStage {
   @Native
   private void sendVersionMessage(CommandSender player) {
     boolean hasVersionViewPermission = BukkitPermissionCheck.permissionCheck(player, "intave.command");
-    boolean versionViewAllowed = false;
 
     Version versionInformation = IntavePlugin.singletonInstance().versionList().versionInformation(IntavePlugin.version());
-
     String version;
 
     if(!hasVersionViewPermission) {
@@ -209,7 +207,7 @@ public final class IntaveCommandStage extends CommandStage {
     } else if(LicenseVerification.network().equals("~bypass")){
       player.sendMessage(prefix + "This self-issued version does not require certification");
     } else {
-      player.sendMessage(prefix + "Certified for " + LicenseVerification.network() + (enterprise || partner ? " (verified)" : "")  +" / " + LicenseVerification.licenseKey());
+      player.sendMessage(prefix + "Certified for " + LicenseVerification.network() + (enterprise || partner ? " (verified)" : " (not verified)"));
     }
   }
 

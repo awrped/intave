@@ -7,6 +7,10 @@ import java.io.IOException;
 
 public final class SSLConnectionVerifier {
 
+  public static void setup() {
+
+  }
+
   @Native
   public static void verifyURLConnection(HttpsURLConnection connection) throws IOException {
 //    Certificate serverCertificate = connection.getServerCertificates()[0];
