@@ -4,9 +4,9 @@ import java.util.Arrays;
 
 public enum Confidence {
   VERMEINTLICH("XD", Integer.MAX_VALUE),
-  CERTAIN("!!", 10000),
-  VERY_LIKELY("!", 80),
-  LIKELY("?!", 40),
+  CERTAIN("!!!!", 10000),
+  VERY_LIKELY("!!!", 80),
+  LIKELY("!!", 40),
   LESS_LIKELY("?!", 30),
   PROBABLE("?", 20),
   MAYBE("??", 10),
