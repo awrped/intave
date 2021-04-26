@@ -80,14 +80,20 @@ public final class PlacementAnalysis extends IntaveMetaCheck<PlacementAnalysis.P
         double average = RotationMathHelper.averageOf(meta.permutePlacementDifferences);
 
         if (average < 20) {
-          if (meta.permutePacketOrderBalance++ >= 2) {
-            Violation violation = Violation.fromType(PlacementAnalysis.class)
-              .withPlayer(player)
-              .withMessage("permute packet-order")
-              .withVL(2)
-              .build();
-            plugin.violationProcessor().processViolation(violation);
+          long permutePacketIncrementDiff = now - meta.permutePacketLastIncrement;
+
+          if (permutePacketIncrementDiff > 20) {
+            if (meta.permutePacketOrderBalance++ >= 2) {
+              Violation violation = Violation.fromType(PlacementAnalysis.class)
+                .withPlayer(player)
+                .withMessage("permute packet-order")
+                .withVL(2)
+                .build();
+              plugin.violationProcessor().processViolation(violation);
+            }
+            meta.permutePacketLastIncrement = now;
           }
+
         } else if (meta.permutePacketOrderBalance >= 0) {
           meta.permutePacketOrderBalance--;
         }
@@ -107,6 +113,7 @@ public final class PlacementAnalysis extends IntaveMetaCheck<PlacementAnalysis.P
   public static final class PlacementAnalysisMeta extends UserCustomCheckMeta {
     // Permute Placement Order
     public double permutePacketOrderBalance;
+    public long permutePacketLastIncrement;
     public List<Long> permutePlacementDifferences = new ArrayList<>();
 
     public long lastMovePacket;
