@@ -241,6 +241,9 @@ public final class RotationModuloResetHeuristic extends IntaveMetaCheckPart<Heur
 
       if(confidence.level() != 0) {
         int options = Anomaly.AnomalyOption.DELAY_128s;
+        if(confidence.level() >= Confidence.LIKELY.level()) {
+          plugin.eventService().attackCancelService().requestDamageCancel(user, AttackCancelType.MEDIUM);
+        }
         Anomaly anomaly = Anomaly.anomalyOf("102", confidence, Anomaly.Type.KILLAURA, description, options);
         parentCheck().saveAnomaly(player, anomaly);
       }
