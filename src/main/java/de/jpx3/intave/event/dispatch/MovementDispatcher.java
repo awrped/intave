@@ -359,6 +359,11 @@ public final class MovementDispatcher implements EventProcessor {
     } else {
       movementData.pastInWeb++;
     }
+    if (inventoryData.inventoryOpen()) {
+      movementData.pastInventoryOpen = 0;
+    } else {
+      movementData.pastInventoryOpen++;
+    }
     inventoryData.pastHotBarSlotChange++;
     inventoryData.pastItemUsageTransition++;
     movementData.pastWaterMovement++;

@@ -48,16 +48,16 @@ public final class PlacementPacketOrderAnalyzer extends IntaveMetaCheckPart<Plac
       }
 
       long timeDiff = now - meta.lastMovePacket;
-      meta.permutePlacementDifferences.add(timeDiff);
+      meta.placementDifferences.add(timeDiff);
 
-      if (meta.permutePlacementDifferences.size() == 4) {
-        double average = RotationMathHelper.averageOf(meta.permutePlacementDifferences);
+      if (meta.placementDifferences.size() == 4) {
+        double average = RotationMathHelper.averageOf(meta.placementDifferences);
 
         if (average < 20) {
-          long permutePacketIncrementDiff = now - meta.permutePacketLastIncrement;
+          long permutePacketIncrementDiff = now - meta.lastIncrement;
 
           if (permutePacketIncrementDiff > 20) {
-            if (meta.permutePacketOrderBalance++ >= 2) {
+            if (meta.packetOrderBalance++ >= 2) {
               Violation violation = Violation.fromType(PlacementAnalysis.class)
                 .withPlayer(player)
                 .withMessage("permute packet-order")
@@ -65,14 +65,14 @@ public final class PlacementPacketOrderAnalyzer extends IntaveMetaCheckPart<Plac
                 .build();
               plugin.violationProcessor().processViolation(violation);
             }
-            meta.permutePacketLastIncrement = now;
+            meta.lastIncrement = now;
           }
 
-        } else if (meta.permutePacketOrderBalance >= 0) {
-          meta.permutePacketOrderBalance--;
+        } else if (meta.packetOrderBalance >= 0) {
+          meta.packetOrderBalance--;
         }
 
-        meta.permutePlacementDifferences.clear();
+        meta.placementDifferences.clear();
       }
     } else {
       meta.lastMovePacket = now;
@@ -85,9 +85,9 @@ public final class PlacementPacketOrderAnalyzer extends IntaveMetaCheckPart<Plac
   }
 
   public static class PlacementOrderMeta extends UserCustomCheckMeta {
-    public double permutePacketOrderBalance;
-    public long permutePacketLastIncrement;
-    public List<Long> permutePlacementDifferences = new ArrayList<>();
+    public double packetOrderBalance;
+    public long lastIncrement;
+    public List<Long> placementDifferences = new ArrayList<>();
 
     public long lastMovePacket;
   }
