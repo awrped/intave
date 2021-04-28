@@ -30,7 +30,10 @@ import de.jpx3.intave.world.collider.result.ComplexColliderSimulationResult;
 import de.jpx3.intave.world.collider.result.QuickColliderSimulationResult;
 import de.jpx3.intave.world.collision.Collision;
 import de.jpx3.intave.world.waterflow.Waterflow;
-import org.bukkit.*;
+import org.bukkit.ChatColor;
+import org.bukkit.GameMode;
+import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
@@ -165,7 +168,7 @@ public final class Physics extends IntaveCheck {
       Pose movementPoseType = movementData.movementPoseType();
       PoseSimulator calculationPart = movementPoseType.simulator();
       if (movementData.pastVelocity == 0) {
-        if (movementData.physicsJumped) {
+        if (movementData.physicsJumped && movementData.lastVelocityApplicableForJumpDenial()) {
           movementData.physicsJumpedOverrideVL++;
         } else if (movementData.physicsJumpedOverrideVL > 0) {
           movementData.physicsJumpedOverrideVL--;
@@ -173,6 +176,10 @@ public final class Physics extends IntaveCheck {
       }
       calculationPart.prepareNextTick(user, movementData.positionX, movementData.positionY, movementData.positionZ, motionX, motionY, motionZ);
     }
+  }
+
+  private boolean applicableForJumpDenial(Vector velocity) {
+    return velocity.clone().setY(0).length() > 0.2;
   }
 
   public void updateOnGroundIfFlying(User user) {

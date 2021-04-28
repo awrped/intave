@@ -56,7 +56,7 @@ public final class PacketOrderSwingHeuristic extends IntaveMetaCheckPart<Heurist
       return;
     }
     if (clientData.flyingPacketStream() && action == EnumWrappers.EntityUseAction.ATTACK && !heuristicMeta.swingTick) {
-      String description = "swing not correlated with attack";
+      String description = "swing not correlated with attack ("+user.meta().clientData().versionString()+")";
       Anomaly anomaly = Anomaly.anomalyOf("31", Confidence.CERTAIN, Anomaly.Type.KILLAURA, description, Anomaly.AnomalyOption.DELAY_128s);
       parentCheck().saveAnomaly(player, anomaly);
       plugin.eventService().combatMitigator().mitigate(user, AttackNerfStrategy.HT_LIGHT);

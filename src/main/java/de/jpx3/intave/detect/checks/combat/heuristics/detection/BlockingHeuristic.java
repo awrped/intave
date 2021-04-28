@@ -87,6 +87,7 @@ public final class BlockingHeuristic extends IntaveMetaCheckPart<Heuristics, Blo
           Anomaly anomaly = Anomaly.anomalyOf("143", Confidence.MAYBE, Anomaly.Type.KILLAURA, description, options);
           parentCheck().saveAnomaly(player, anomaly);
           plugin.eventService().combatMitigator().mitigate(user, AttackNerfStrategy.BLOCKING);
+          plugin.eventService().combatMitigator().mitigate(user, AttackNerfStrategy.DMG_MEDIUM);
           punishmentData.timeLastBlockCancel = AccessHelper.now();
           Synchronizer.synchronize(() -> ReflectiveDataWatcherAccess.setDataWatcherFlag(player, ReflectiveDataWatcherAccess.DATA_WATCHER_BLOCKING_ID, false));
         }
