@@ -99,16 +99,18 @@ public class RotationSnapHeuristic extends IntaveMetaCheckPart<Heuristics, Rotat
     double diffPerfectYaw = Math.abs(WrappedMathHelper.wrapAngleTo180_double(attackData.perfectYaw() - movementData.rotationYaw));
 
     if(yawMotion > 40 && meta.yawMotions[1] < 9) {
-      double directionLast = movementData.rotationYaw + keysToRotation(meta.lastKeyStrafe, meta.lastKeyForward);
-      double direction = movementData.lastRotationYaw + keysToRotation(movementData.keyStrafe, movementData.keyForward);
+      if(meta.lastKeyStrafe != movementData.keyStrafe || meta.lastKeyForward != movementData.keyForward) {
+        double directionLast = movementData.rotationYaw + keysToRotation(meta.lastKeyStrafe, meta.lastKeyForward);
+        double direction = movementData.lastRotationYaw + keysToRotation(movementData.keyStrafe, movementData.keyForward);
 
-      direction = Math.floorMod((int) direction, 360);
-      directionLast = Math.floorMod((int) directionLast, 360);
+        direction = Math.floorMod((int) direction, 360);
+        directionLast = Math.floorMod((int) directionLast, 360);
 
 //      String key = resolveKeysFromInput(movementData.keyForward, movementData.keyStrafe);
 //      String lastKey = resolveKeysFromInput(meta.lastKeyForward, meta.lastKeyStrafe);
-      boolean silentMovement = (int) (WrappedMathHelper.wrapAngleTo180_double(directionLast - direction) / 45d) == 0;
-      meta.silentMovements[0] = silentMovement;
+        boolean silentMovement = (int) (WrappedMathHelper.wrapAngleTo180_double(directionLast - direction) / 45d) == 0;
+        meta.silentMovements[0] = silentMovement;
+      }
 
       if(attackData.lastAttackedEntity() != null) {
         WrappedEntity wrappedEntity = attackData.lastAttackedEntity();
@@ -143,7 +145,7 @@ public class RotationSnapHeuristic extends IntaveMetaCheckPart<Heuristics, Rotat
         if(valueOfSnap > 90) {
           addVL = 40;
         } else {
-          addVL = 15;
+          addVL = 20;
         }
       }
 
