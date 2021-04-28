@@ -65,13 +65,13 @@ public final class BoundingBoxPatcher {
   }
 
   public static List<WrappedAxisAlignedBB> forceRepose(List<WrappedAxisAlignedBB> boundingBoxes, int posX, int posY, int posZ) {
-    if(boundingBoxes.isEmpty()) {
-      return boundingBoxes;
-    }
-    for (int i = 0; i < boundingBoxes.size(); i++) {
-      WrappedAxisAlignedBB boundingBox = boundingBoxes.get(i);
-      boundingBoxes.set(i, boundingBox.offset(-posX, -posY, -posZ));
-    }
+//    if(boundingBoxes.isEmpty()) {
+//      return boundingBoxes;
+//    }
+//    for (int i = 0; i < boundingBoxes.size(); i++) {
+//      WrappedAxisAlignedBB boundingBox = boundingBoxes.get(i);
+//      boundingBoxes.set(i, boundingBox.offset(-posX, -posY, -posZ));
+//    }
     return boundingBoxes;
   }
 }

@@ -2,7 +2,7 @@
 
 physics:
 
-  joap-limit: [100, 100, 8, 2, 1, 1]
+  joap-limit: [100, 100, 8, 2, 1, 0]
 
   prevention-activation: [100, 20, 10, 5, 5, 5]
 

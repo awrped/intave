@@ -120,7 +120,11 @@ public final class Heuristics extends IntaveMetaCheck<Heuristics.HeuristicMeta> 
   @Native
   public void evaluate(Player player, boolean enforceDecision) {
     Collection<? extends Player> onlinePlayers = Bukkit.getOnlinePlayers();
-    if (!IntaveControl.DISABLE_LICENSE_CHECK && onlinePlayers.size() <= 5) {
+
+    boolean isPartner = (UserMetaClientData.VERSION_DETAILS & 0x100) != 0;
+    boolean isEnterprise = (UserMetaClientData.VERSION_DETAILS & 0x200) != 0;
+
+    if (!IntaveControl.DISABLE_LICENSE_CHECK && !isPartner && !isEnterprise && onlinePlayers.size() <= 5) {
       return;
     }
 
@@ -136,9 +140,6 @@ public final class Heuristics extends IntaveMetaCheck<Heuristics.HeuristicMeta> 
     List<Anomaly> anomaliesWithoutDelay = catchAnomaliesOf(user, false);
     List<Confidence> allConfidencesWithoutDelay = resolveConfidencesOf(anomaliesWithoutDelay);
     Confidence overallConfidenceWithoutDelay = computeOverallConfidence(allConfidencesWithoutDelay);
-
-    boolean isPartner = (UserMetaClientData.VERSION_DETAILS & 0x100) != 0;
-    boolean isEnterprise = (UserMetaClientData.VERSION_DETAILS & 0x200) != 0;
 
     if (attackData.activeMiningStrategy != null) {
       this.tryRemoveMiningStrategy(attackData.activeMiningStrategy);

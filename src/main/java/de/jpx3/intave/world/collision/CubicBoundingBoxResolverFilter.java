@@ -28,10 +28,9 @@ public final class CubicBoundingBoxResolverFilter implements BoundingBoxResolver
       return forward.resolve(world, advanceType, posX, posY, posZ);
     }
     List<WrappedAxisAlignedBB> resolve = forward.resolve(world, advanceType, posX, posY, posZ);
-    if (!isInLoadedChunk(world, posX, posZ)) {
-      return resolve;
+    if (isInLoadedChunk(world, posX, posZ)) {
+      (isSolid(resolve, posX, posY, posZ) ? solidMaterials : otherMaterials).add(advanceType);
     }
-    (isSolid(resolve, posX, posY, posZ) ? solidMaterials : otherMaterials).add(advanceType);
     return resolve;
   }
 

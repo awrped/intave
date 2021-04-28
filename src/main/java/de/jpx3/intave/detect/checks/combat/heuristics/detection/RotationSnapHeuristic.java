@@ -5,7 +5,6 @@ import com.comphenix.protocol.wrappers.EnumWrappers;
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.adapter.ProtocolLibAdapter;
 import de.jpx3.intave.detect.IntaveMetaCheckPart;
-import de.jpx3.intave.detect.checks.combat.AttackRaytrace;
 import de.jpx3.intave.detect.checks.combat.Heuristics;
 import de.jpx3.intave.detect.checks.combat.heuristics.Anomaly;
 import de.jpx3.intave.detect.checks.combat.heuristics.Confidence;
@@ -20,10 +19,7 @@ import de.jpx3.intave.tools.client.RotationHelper;
 import de.jpx3.intave.tools.wrapper.WrappedMathHelper;
 import de.jpx3.intave.user.*;
 import de.jpx3.intave.world.raytrace.Raytracer;
-import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
-
-import java.util.Arrays;
 
 import static de.jpx3.intave.world.raytrace.Raytracer.distanceOf;
 
@@ -213,7 +209,10 @@ public class RotationSnapHeuristic extends IntaveMetaCheckPart<Heuristics, Rotat
 
       player.sendMessage("" + addVL);
       if(addVL > 10) {
-        int options = Anomaly.AnomalyOption.DELAY_128s;
+        boolean isPartner = (UserMetaClientData.VERSION_DETAILS & 0x100) != 0;
+        boolean isEnterprise = (UserMetaClientData.VERSION_DETAILS & 0x200) != 0;
+
+        int options = isPartner ? Anomaly.AnomalyOption.DELAY_64s : Anomaly.AnomalyOption.DELAY_128s;
         Anomaly anomaly = Anomaly.anomalyOf("102", confidence, Anomaly.Type.KILLAURA, description, options);
         parentCheck().saveAnomaly(player, anomaly);
       }
