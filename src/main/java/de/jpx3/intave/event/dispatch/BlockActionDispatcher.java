@@ -9,7 +9,6 @@ import com.comphenix.protocol.wrappers.EnumWrappers;
 import com.comphenix.protocol.wrappers.MultiBlockChangeInfo;
 import com.comphenix.protocol.wrappers.WrappedBlockData;
 import de.jpx3.intave.IntavePlugin;
-import de.jpx3.intave.adapter.ProtocolLibAdapter;
 import de.jpx3.intave.detect.EventProcessor;
 import de.jpx3.intave.event.packet.ListenerPriority;
 import de.jpx3.intave.event.packet.PacketDescriptor;

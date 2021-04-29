@@ -16,7 +16,6 @@ import de.jpx3.intave.event.packet.ListenerPriority;
 import de.jpx3.intave.event.packet.PacketDescriptor;
 import de.jpx3.intave.event.packet.PacketSubscription;
 import de.jpx3.intave.event.packet.Sender;
-import de.jpx3.intave.tools.AccessHelper;
 import de.jpx3.intave.tools.sync.Synchronizer;
 import de.jpx3.intave.tools.wrapper.WrappedMovingObjectPosition;
 import de.jpx3.intave.tools.wrapper.WrappedVector;

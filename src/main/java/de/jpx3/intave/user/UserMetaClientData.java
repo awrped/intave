@@ -25,6 +25,8 @@ public final class UserMetaClientData {
   }
 
   private String versionAsString() {
+    if(protocolVersion < 0)
+      return "0.0.0";
     if (protocolVersion <= 47)
       return "1.8.x";
     if (protocolVersion <= 107)

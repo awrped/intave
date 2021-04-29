@@ -4,7 +4,9 @@ import com.comphenix.protocol.ProtocolLibrary;
 import com.google.common.collect.Lists;
 import de.jpx3.intave.adapter.viaversion.ViaVersion2Access;
 import de.jpx3.intave.adapter.viaversion.ViaVersion3Access;
+import de.jpx3.intave.adapter.viaversion.ViaVersion4Access;
 import de.jpx3.intave.adapter.viaversion.ViaVersionAccess;
+import de.jpx3.intave.logging.IntaveLogger;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -20,19 +22,22 @@ public class ViaVersionAdapter {
   static {
     available.add(new ViaVersion2Access());
     available.add(new ViaVersion3Access());
+    available.add(new ViaVersion4Access());
   }
 
   private static ViaVersionAccess access;
 
   public static void setup() {
-    for (ViaVersionAccess viaVersionAccess : available) {
-      if (viaVersionAccess.available()) {
-        access = viaVersionAccess;
-        access.setup();
-        break;
-      }
+    if (Bukkit.getServer().getPluginManager().getPlugin("ViaVersion") == null) {
+      return;
     }
+    access = available.stream().filter(ViaVersionAccess::available).findFirst().orElse(null);
     available.clear();
+    if(access != null) {
+      access.setup();
+    } else {
+      IntaveLogger.logger().error("Failed to link ViaVersion: Unable to find accessor");
+    }
   }
 
   public static boolean ignoreBlocking(Player player) {
@@ -40,10 +45,10 @@ public class ViaVersionAdapter {
   }
 
   public static int protocolVersionOf(Player player) {
-    return hasViaVersion() ? access.protocolVersionOf(player) : ProtocolLibrary.getProtocolManager().getProtocolVersion(player);
+    return foundLinkage() ? access.protocolVersionOf(player) : ProtocolLibrary.getProtocolManager().getProtocolVersion(player);
   }
 
-  public static boolean hasViaVersion() {
-    return !(access == null || !Bukkit.getServer().getPluginManager().isPluginEnabled("ViaVersion"));
+  public static boolean foundLinkage() {
+    return access != null;
   }
 }
