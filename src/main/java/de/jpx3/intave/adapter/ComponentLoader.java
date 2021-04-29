@@ -26,7 +26,7 @@ public final class ComponentLoader {
   }
 
   public boolean loadComponents() {
-    essentialComponents.put("ProtocolLib", "https://intave.de/cnd/global/ProtocolLib-4-5-1.jar");
+    essentialComponents.put("ProtocolLib", "https://intave.de/cnd/global/ProtocolLib-4-6-0.jar");
     return essentialComponents.keySet().stream().allMatch(this::loadComponent);
   }
 

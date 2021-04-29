@@ -38,6 +38,7 @@ public final class ClientSideEntityService implements PacketEventSubscriber {
 
   private final static boolean NEW_POSITION_PROCESSING = ProtocolLibAdapter.serverVersion().isAtLeast(ProtocolLibAdapter.COMBAT_UPDATE);
   private final static boolean HEALTH_PROCESSING_1_10 = ProtocolLibAdapter.serverVersion().isAtLeast(ProtocolLibAdapter.FROSTBURN_UPDATE);
+  private final static boolean HEALTH_PROCESSING_1_14 = ProtocolLibAdapter.serverVersion().isAtLeast(ProtocolLibAdapter.VILLAGE_UPDATE);
 
   public ClientSideEntityService(IntavePlugin plugin) {
     this.plugin = plugin;
@@ -73,7 +74,7 @@ public final class ClientSideEntityService implements PacketEventSubscriber {
       if (declaredField.getType() == entityClass) {
         String fieldName = declaredField.getName();
         if (!dataWatcherEntityFieldName.equals(fieldName)) {
-          IntaveLogger.logger().globalPrintLn("[Intave] Conflicting field name internal for entity-from-datawatcher access: Internals suggest " + dataWatcherEntityFieldName + " but found " + fieldName);
+          IntaveLogger.logger().globalPrintLn("[Intave] Conflicting in access pool: \"" + dataWatcherEntityFieldName + "\" expected but found \"" + fieldName + "\"");
         }
         dataWatcherEntityFieldName = fieldName;
         break;
@@ -495,15 +496,10 @@ public final class ClientSideEntityService implements PacketEventSubscriber {
     for (WrappedWatchableObject watchableObject : watchableObjects) {
       int index = watchableObject.getIndex();
 
-      if (HEALTH_PROCESSING_1_10) {
-        if (index == 7) {
-          Object rawValue = watchableObject.getRawValue();
-          return ((Number) rawValue).floatValue();
-        }
-      } else {
-        if (index == 6) {
-          return (Float) watchableObject.getRawValue();
-        }
+      int requiredIndex = HEALTH_PROCESSING_1_14 ? 8 : (HEALTH_PROCESSING_1_10 ? 7 : 6);
+      if (index == requiredIndex) {
+        Object rawValue = watchableObject.getRawValue();
+        return ((Number) rawValue).floatValue();
       }
     }
     return null;

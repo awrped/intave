@@ -33,7 +33,23 @@ public final class ProtocolLibAdapter {
     boolean specifiedEnumModifier = Arrays.stream(EnumWrappers.class.getMethods()).anyMatch(method -> method.getName().equalsIgnoreCase("getGenericConverter") && method.getParameterCount() == 2);
 
     if(!specifiedEnumModifier) {
-      throw new InvalidDependencyException("Your version of ProtocolLib is outdated");
+      throw new InvalidDependencyException("Your version of ProtocolLib is outdated (missing generic enum conversion)");
+    }
+
+    if(VILLAGE_UPDATE.atOrAbove()) {
+      if(!methodExists("com.comphenix.protocol.events.PacketContainer", "getMovingBlockPositions")) {
+        throw new InvalidDependencyException("Your version of ProtocolLib is outdated (missing MOP packet access)");
+      }
+    }
+
+  }
+
+  private static boolean methodExists(String className, String methodName) {
+    try {
+      Class.forName(className).getDeclaredMethod(methodName);
+      return true;
+    } catch (Exception exception) {
+      return false;
     }
   }
 }

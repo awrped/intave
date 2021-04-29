@@ -1,9 +1,9 @@
 package de.jpx3.intave.world.blockaccess;
 
-import com.comphenix.protocol.utility.MinecraftVersion;
 import com.comphenix.protocol.wrappers.BlockPosition;
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.access.IntaveInternalException;
+import de.jpx3.intave.adapter.ProtocolLibAdapter;
 import de.jpx3.intave.logging.IntaveLogger;
 import de.jpx3.intave.patchy.PatchyLoadingInjector;
 import de.jpx3.intave.reflect.ReflectiveAccess;
@@ -27,11 +27,14 @@ public final class BlockDataAccess {
 
   public static void setup() {
     String resolverName = "de.jpx3.intave.world.blockaccess.v8BlockAccessor";
-    if (MinecraftVersion.COMBAT_UPDATE.atOrAbove()) {
+    if (ProtocolLibAdapter.COMBAT_UPDATE.atOrAbove()) {
       resolverName = "de.jpx3.intave.world.blockaccess.v9BlockAccessor";
     }
-    if(MinecraftVersion.AQUATIC_UPDATE.atOrAbove()) {
+    if(ProtocolLibAdapter.AQUATIC_UPDATE.atOrAbove()) {
       resolverName = "de.jpx3.intave.world.blockaccess.v13BlockAccessor";
+    }
+    if(ProtocolLibAdapter.VILLAGE_UPDATE.atOrAbove()) {
+      resolverName = "de.jpx3.intave.world.blockaccess.v14BlockAccessor";
     }
     ClassLoader classLoader = IntavePlugin.class.getClassLoader();
     PatchyLoadingInjector.loadUnloadedClassPatched(classLoader, resolverName);
@@ -68,7 +71,7 @@ public final class BlockDataAccess {
 
      */
 
-    if(MinecraftVersion.VILLAGE_UPDATE.atOrAbove()) {
+    if(ProtocolLibAdapter.VILLAGE_UPDATE.atOrAbove()) {
       newClickableLoad();
     } else {
       legacyClickableLoad();

@@ -1,5 +1,6 @@
 package de.jpx3.intave.tools.wrapper;
 
+import de.jpx3.intave.adapter.ProtocolLibAdapter;
 import de.jpx3.intave.reflect.ReflectiveAccess;
 import de.jpx3.intave.tools.annotate.KeepEnumInternalNames;
 import de.jpx3.intave.tools.wrapper.link.WrapperLinkage;
@@ -8,9 +9,10 @@ import org.bukkit.World;
 import org.bukkit.entity.Entity;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 
 public class WrappedMovingObjectPosition {
+  private final static boolean NEW_RESOLVER = ProtocolLibAdapter.VILLAGE_UPDATE.atOrAbove();
+
   private WrappedBlockPosition blockPos;
 
   /** What type of ray trace hit was this? 0 = block, 1 = entity */
@@ -69,6 +71,58 @@ public class WrappedMovingObjectPosition {
       //return new WrappedMovingObjectPosition(new WrappedVector(0,0,0), WrappedEnumDirection.UP, new WrappedBlockPosition(0,0,0));
       return null;
     }
+
+    if(NEW_RESOLVER) {
+      return newResolve(movingObjectPosition);
+    } else {
+      return legacyResolve(movingObjectPosition);
+    }
+  }
+
+  private static WrappedMovingObjectPosition newResolve(Object movingObjectPosition) {
+    try {
+      Class<?> movingObjectPositionBase = ReflectiveAccess.lookupServerClass("MovingObjectPosition");
+      Class<?> movingObjectPositionEntity = ReflectiveAccess.lookupServerClass("MovingObjectPositionEntity");
+      Class<?> movingObjectPositionBlock = ReflectiveAccess.lookupServerClass("MovingObjectPositionBlock");
+
+      String typeName = (String) Enum.class.getMethod("name").invoke(movingObjectPositionBase.getMethod("getType").invoke(movingObjectPosition));
+      MovingObjectType movingObjectType = MovingObjectType.valueOf(typeName);
+
+      if(movingObjectType == MovingObjectType.ENTITY) {
+        Field field = movingObjectPositionEntity.getDeclaredField("entity");
+        if(!field.isAccessible()) {
+          field.setAccessible(true);
+        }
+        Object entity = field.get(movingObjectPosition);
+        return new WrappedMovingObjectPosition(serverEntityByIdentifier((int) entity.getClass().getMethod("getId").invoke(entity)));
+      } else {
+        Field movingObjectPositionBaseField = movingObjectPositionBase.getDeclaredField("pos");
+        if(!movingObjectPositionBaseField.isAccessible())
+          movingObjectPositionBaseField.setAccessible(true);
+        Object pos = movingObjectPositionBaseField.get(movingObjectPosition);
+        WrappedVector wrappedPos = WrapperLinkage.vectorOf(pos);
+
+        Field bField = movingObjectPositionBlock.getDeclaredField("b");
+        if(!bField.isAccessible())
+          bField.setAccessible(true);
+        Object direction = bField.get(movingObjectPosition);
+        String directionName = (String) Enum.class.getMethod("name").invoke(direction);
+        WrappedEnumDirection wrappedEnumDirection = WrappedEnumDirection.valueOf(directionName);
+
+        Field cField = movingObjectPositionBlock.getDeclaredField("c");
+        if(!cField.isAccessible())
+          cField.setAccessible(true);
+        Object blockPosition = cField.get(movingObjectPosition);
+        WrappedBlockPosition wrappedBlockPosition = WrapperLinkage.blockPositionOf(blockPosition);
+
+        return new WrappedMovingObjectPosition(movingObjectType, wrappedPos, wrappedEnumDirection, wrappedBlockPosition);
+      }
+    } catch (Exception exception) {
+      throw new IllegalStateException(exception);
+    }
+  }
+
+  private static WrappedMovingObjectPosition legacyResolve(Object movingObjectPosition) {
     try {
       Class<?> movingObjectPositionClass = ReflectiveAccess.lookupServerClass("MovingObjectPosition");
       Field eField = movingObjectPositionClass.getDeclaredField("e");
@@ -90,8 +144,8 @@ public class WrappedMovingObjectPosition {
         Entity bukkitEntity = serverEntityByIdentifier((int) entity.getClass().getMethod("getId").invoke(entity));
         return new WrappedMovingObjectPosition(bukkitEntity, wrappedPos);
       }
-    } catch (NoSuchFieldException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
-      throw new IllegalStateException(e);
+    } catch (Exception exception) {
+      throw new IllegalStateException(exception);
     }
   }
 

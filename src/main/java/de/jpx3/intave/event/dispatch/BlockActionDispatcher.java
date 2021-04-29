@@ -4,11 +4,9 @@ import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.reflect.StructureModifier;
-import com.comphenix.protocol.wrappers.BlockPosition;
-import com.comphenix.protocol.wrappers.EnumWrappers;
-import com.comphenix.protocol.wrappers.MultiBlockChangeInfo;
-import com.comphenix.protocol.wrappers.WrappedBlockData;
+import com.comphenix.protocol.wrappers.*;
 import de.jpx3.intave.IntavePlugin;
+import de.jpx3.intave.adapter.ProtocolLibAdapter;
 import de.jpx3.intave.detect.EventProcessor;
 import de.jpx3.intave.event.packet.ListenerPriority;
 import de.jpx3.intave.event.packet.PacketDescriptor;
@@ -99,10 +97,12 @@ public final class BlockActionDispatcher implements EventProcessor {
       check = playerDigType == START_DESTROY_BLOCK || playerDigType == STOP_DESTROY_BLOCK || playerDigType == ABORT_DESTROY_BLOCK;
     } else if (packetType == PacketType.Play.Client.BLOCK_PLACE) {
       Integer enumDirection = packet.getIntegers().readSafely(0);
-      BlockPosition blockPosition = packet.getBlockPositionModifier().readSafely(0);
+      
+      BlockPosition blockPosition = readBlockPositionFrom(packet);
       if (blockPosition == null) {
         return;
       }
+      
       if (enumDirection == null) {
         enumDirection = packet.getDirections().readSafely(0).ordinal();
       }
@@ -112,9 +112,7 @@ public final class BlockActionDispatcher implements EventProcessor {
     }
 
     if (check) {
-      BlockPosition blockPosition = packet.getBlockPositionModifier().read(0);
-      // distance check
-
+      BlockPosition blockPosition = readBlockPositionFrom(packet);
       if (blockPosition == null) {
         return;
       }
@@ -131,6 +129,17 @@ public final class BlockActionDispatcher implements EventProcessor {
     }
   }
 
+  private final static boolean USE_MBP_FOR_BC = ProtocolLibAdapter.AQUATIC_UPDATE.atOrAbove();
+
+  private BlockPosition readBlockPositionFrom(PacketContainer container) {
+    if(USE_MBP_FOR_BC) {
+      MovingObjectPositionBlock movingObjectPositionBlock = container.getMovingBlockPositions().readSafely(0);
+      return movingObjectPositionBlock == null ? null : movingObjectPositionBlock.getBlockPosition();
+    } else {
+      return container.getBlockPositionModifier().readSafely(0);
+    }
+  }
+  
   @PacketSubscription(
     packets = {
       @PacketDescriptor(sender = Sender.SERVER, packetName = "BLOCK_BREAK"),
