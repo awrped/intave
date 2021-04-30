@@ -169,15 +169,10 @@ public class RotationSnapHeuristic extends IntaveMetaCheckPart<Heuristics, Rotat
         }
       }
 
-      switch (meta.silentMovements[1]) {
-        case CHANGED:
-          description += " changed";
-          break;
-        case SILENTMOVE:
-          description += " silent";
-          break;
-        default:
-          break;
+      if(meta.silentMovements[1] == KeyStates.SILENTMOVE) {
+        description += " silent";
+      } else if(meta.silentMovements[1] == KeyStates.CHANGED) {
+        description += " changed";
       }
 
       double vl = calculateViolation(valueOfSnap, lookedAt, meta);
