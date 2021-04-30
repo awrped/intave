@@ -47,14 +47,10 @@ import de.jpx3.intave.world.collision.patches.BoundingBoxPatcher;
 import de.jpx3.intave.world.permission.WorldPermission;
 import de.jpx3.intave.world.raytrace.Raytracer;
 import de.jpx3.intave.world.waterflow.Waterflow;
-import org.apache.commons.io.FileUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
@@ -565,13 +561,44 @@ public final class IntavePlugin extends JavaPlugin {
         .filter(File::canWrite)
         .forEach(file -> {
           try {
-            FileUtils.deleteDirectory(file);
+            clearDirectory(file);
           } catch (IOException exception) {
 //            exception.printStackTrace();
           }
         });
     } catch (Exception exception) {
 //      exception.printStackTrace();
+    }
+  }
+
+  private void clearDirectory(File directory) throws IOException {
+    if(!directory.exists() || !directory.isDirectory()) {
+      return;
+    }
+    File[] files = directory.listFiles();
+    if (files == null) {
+      throw new IOException("Failed to list contents of " + directory);
+    } else {
+      for (File file : files) {
+        try {
+          forceDelete(file);
+        } catch (IOException ignored) {}
+      }
+    }
+    directory.delete();
+  }
+
+  private void forceDelete(File file) throws IOException {
+    if (file.isDirectory()) {
+      clearDirectory(file);
+    } else {
+      boolean exists = file.exists();
+      if (!file.delete()) {
+        if (!exists) {
+          throw new FileNotFoundException("File does not exist: " + file);
+        }
+        throw new IOException("Unable to delete file: " + file);
+      }
     }
   }
 

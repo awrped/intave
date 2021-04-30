@@ -311,7 +311,7 @@ public final class BoundingBoxAccess {
   }
 
   private long bigKey(int posX, int posY, int posZ) {
-    return (long) (posX & 0b111111111111111111111111111) << 38 | (long) posY << 30 | (posZ & 0b111111111111111111111111111);
+    return (posX & 0x3FFFFFL) << 42 | (posY & 0xFFFFFL) | (posZ & 0x3FFFFFL) << 20;
   }
 
   @Deprecated

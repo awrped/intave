@@ -3,6 +3,7 @@ package de.jpx3.intave.adapter;
 import com.comphenix.protocol.utility.MinecraftVersion;
 
 public final class MinecraftVersions {
+  public static final MinecraftVersion VER1_16_2 = new MinecraftVersion("1.16.2");
   public static final MinecraftVersion VER1_16_0 = new MinecraftVersion("1.16");
   public static final MinecraftVersion VER1_15_0 = new MinecraftVersion("1.15");
   public static final MinecraftVersion VER1_14_0 = new MinecraftVersion("1.14");

@@ -87,10 +87,7 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
     if (blockPosition == null || movementData.inVehicle()) {
       return;
     }
-    Integer enumDirection = packet.getIntegers().readSafely(0);
-    if (enumDirection == null) {
-      enumDirection = packet.getDirections().readSafely(0).ordinal();
-    }
+    int enumDirection = readEnumDirectionFrom(packet);
     if (enumDirection == 255 || event.isCancelled()) {
       return;
     }
@@ -155,8 +152,7 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
     float blockDamage = BlockDataAccess.blockDamage(player, user.meta().inventoryData().heldItem(), blockPosition);
     boolean instantBreak = blockDamage == Float.POSITIVE_INFINITY || blockDamage >= 1.0f || user.meta().abilityData().inGameMode(PlayerAbilityEvaluator.GameMode.CREATIVE);
     boolean breakBlock = instantBreak || playerDigType == STOP_DESTROY_BLOCK;
-    EnumWrappers.Direction direction = packet.getDirections().readSafely(0);
-    int enumDirection = direction == null ? 255 : direction.ordinal();
+    int enumDirection = readEnumDirectionFrom(packet);
     boolean blocking = blockPosition.getX() == 0 && blockPosition.getY() == 0 &&  blockPosition.getZ() == 0 && enumDirection == 0;
     if (enumDirection == 255 || blocking) {
       return;
@@ -574,11 +570,7 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
               return;
             }
           }
-          if (packet.getDirections().size() > 0) {
-            packet.getDirections().write(0, raycastResult.sideHit.toDirection());
-          } else {
-            packet.getIntegers().write(0, raycastResult.sideHit.getIndex());
-          }
+          writeEnumDirection(packet, raycastResult.sideHit);
           packet.getBlockPositionModifier().write(
             0,
             new BlockPosition(raycastLocation.getBlockX(), raycastLocation.getBlockY(), raycastLocation.getBlockZ())
@@ -731,14 +723,37 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
 //    return resolvePositionMotion(user, result.context());
 //  }
 
-  private final static boolean USE_MBP_FOR_BC = MinecraftVersions.VER1_13_0.atOrAbove();
+  private final static boolean BLOCK_DATA_WRAPPED_IN_MOVING_OBJECT_POSITION = MinecraftVersions.VER1_13_0.atOrAbove();
 
-  private BlockPosition readBlockPositionFrom(PacketContainer container) {
-    if(USE_MBP_FOR_BC) {
-      MovingObjectPositionBlock movingObjectPositionBlock = container.getMovingBlockPositions().readSafely(0);
+  private BlockPosition readBlockPositionFrom(PacketContainer packet) {
+    if(BLOCK_DATA_WRAPPED_IN_MOVING_OBJECT_POSITION) {
+      MovingObjectPositionBlock movingObjectPositionBlock = packet.getMovingBlockPositions().readSafely(0);
       return movingObjectPositionBlock == null ? null : movingObjectPositionBlock.getBlockPosition();
     } else {
-      return container.getBlockPositionModifier().readSafely(0);
+      return packet.getBlockPositionModifier().readSafely(0);
+    }
+  }
+
+  private int readEnumDirectionFrom(PacketContainer packet) {
+    if(BLOCK_DATA_WRAPPED_IN_MOVING_OBJECT_POSITION) {
+      MovingObjectPositionBlock movingObjectPositionBlock = packet.getMovingBlockPositions().readSafely(0);
+      return movingObjectPositionBlock == null ? 255 : movingObjectPositionBlock.getDirection().ordinal();
+    } else {
+      Integer enumDirection = packet.getIntegers().readSafely(0);
+      return enumDirection == null ? packet.getDirections().readSafely(0).ordinal() : enumDirection;
+    }
+  }
+
+  private void writeEnumDirection(PacketContainer packet, WrappedEnumDirection enumDirection) {
+    if(BLOCK_DATA_WRAPPED_IN_MOVING_OBJECT_POSITION) {
+      MovingObjectPositionBlock movingObjectPositionBlock = packet.getMovingBlockPositions().readSafely(0);
+      movingObjectPositionBlock.setDirection(enumDirection.toDirection());
+    } else {
+      if (packet.getDirections().size() > 0) {
+        packet.getDirections().write(0, enumDirection.toDirection());
+      } else {
+        packet.getIntegers().write(0, enumDirection.getIndex());
+      }
     }
   }
 

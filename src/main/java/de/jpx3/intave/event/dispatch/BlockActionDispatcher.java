@@ -139,7 +139,9 @@ public final class BlockActionDispatcher implements EventProcessor {
       return container.getBlockPositionModifier().readSafely(0);
     }
   }
-  
+
+  private final static boolean USE_SELECTION_POSITION_TO_READ_MBC_PACKET = MinecraftVersions.VER1_16_2.atOrAbove();
+
   @PacketSubscription(
     packets = {
       @PacketDescriptor(sender = Sender.SERVER, packetName = "BLOCK_BREAK"),
@@ -158,12 +160,35 @@ public final class BlockActionDispatcher implements EventProcessor {
     List<WrappedBlockData> blockDataList;
 
     if (packetType == PacketType.Play.Server.MULTI_BLOCK_CHANGE) {
-      MultiBlockChangeInfo[] multiBlockChangeInfos = packet.getMultiBlockChangeInfoArrays().readSafely(0);
-      blockPositions = new ArrayList<>();
-      blockDataList = new ArrayList<>();
-      for (MultiBlockChangeInfo multiBlockChangeInfo : multiBlockChangeInfos) {
-        blockPositions.add(new BlockPosition(multiBlockChangeInfo.getAbsoluteX(), multiBlockChangeInfo.getY(), multiBlockChangeInfo.getAbsoluteZ()));
-        blockDataList.add(multiBlockChangeInfo.getData());
+      if(USE_SELECTION_POSITION_TO_READ_MBC_PACKET) {
+        BlockPosition blockPosition = packet.getSectionPositions().readSafely(0);
+
+        int chunkXBase = blockPosition.getX() << 4;
+        int chunkYBase = blockPosition.getY() << 4;
+        int chunkZBase = blockPosition.getZ() << 4;
+
+        short[] relativePositions = packet.getShortArrays().read(0);
+        WrappedBlockData[] blockInfos = packet.getBlockDataArrays().read(0);
+        blockPositions = new ArrayList<>();
+        blockDataList = new ArrayList<>();
+
+        int index = 0;
+        for (short relativePosition : relativePositions) {
+          int posX = chunkXBase + (relativePosition >>> 8 & 0xF);
+          int posY = chunkYBase + (relativePosition       & 0xF);
+          int posZ = chunkZBase + (relativePosition >>> 4 & 0xF);
+          blockPositions.add(new BlockPosition(posX, posY, posZ));
+          blockDataList.add(blockInfos[index]);
+          index++;
+        }
+      } else {
+        MultiBlockChangeInfo[] multiBlockChangeInfos = packet.getMultiBlockChangeInfoArrays().readSafely(0);
+        blockPositions = new ArrayList<>();
+        blockDataList = new ArrayList<>();
+        for (MultiBlockChangeInfo multiBlockChangeInfo : multiBlockChangeInfos) {
+          blockPositions.add(new BlockPosition(multiBlockChangeInfo.getAbsoluteX(), multiBlockChangeInfo.getY(), multiBlockChangeInfo.getAbsoluteZ()));
+          blockDataList.add(multiBlockChangeInfo.getData());
+        }
       }
     } else {
       BlockPosition position = packet.getBlockPositionModifier().readSafely(0);
