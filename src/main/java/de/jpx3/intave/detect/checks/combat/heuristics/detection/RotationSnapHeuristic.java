@@ -2,6 +2,7 @@ package de.jpx3.intave.detect.checks.combat.heuristics.detection;
 
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.wrappers.EnumWrappers;
+import de.jpx3.intave.IntaveControl;
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.adapter.MinecraftVersions;
 import de.jpx3.intave.adapter.ProtocolLibraryAdapter;
@@ -116,7 +117,9 @@ public class RotationSnapHeuristic extends IntaveMetaCheckPart<Heuristics, Rotat
 //      String key = resolveKeysFromInput(movementData.keyForward, movementData.keyStrafe);
 //      String lastKey = resolveKeysFromInput(meta.lastKeyForward, meta.lastKeyStrafe);
         boolean silentMovement = (int) (WrappedMathHelper.wrapAngleTo180_double(directionLast - direction) / 45d) == 0;
-        if(silentMovement && (movementData.keyForward != 0 || movementData.keyStrafe != 0) && (meta.lastKeyForward != 0 || meta.lastKeyStrafe != 0)) {
+        if(silentMovement && (movementData.keyForward != 0 || movementData.keyStrafe != 0) && (meta.lastKeyForward != 0 || meta.lastKeyStrafe != 0)
+          && (movementData.keyForward != meta.lastKeyForward || movementData.keyStrafe != meta.lastKeyStrafe)
+        ) {
           meta.silentMovements[0] = KeyStates.SILENTMOVE;
         } else {
           meta.silentMovements[0] = KeyStates.CHANGED;
@@ -145,15 +148,7 @@ public class RotationSnapHeuristic extends IntaveMetaCheckPart<Heuristics, Rotat
         + " s:" + Math.min(meta.lastSwing, 9)
         + "/" + Math.min(meta.lastAttack, 9);
 
-      double addVL;
-      if(valueOfSnap > 90 && meta.lastAttack <= 3) {
-        addVL = 20;
-      } else  if(valueOfSnap > 55) {
-        addVL = 15;
-      } else {
-        addVL = 10;
-      }
-
+      boolean lookedAt = false;
       if(attackData.lastAttackedEntity() != null) {
         double minValue = Math.min(meta.perfectRotations[0], meta.perfectRotations[1]);
         double maxValue = Math.max(meta.perfectRotations[0], meta.perfectRotations[1]);
@@ -165,13 +160,8 @@ public class RotationSnapHeuristic extends IntaveMetaCheckPart<Heuristics, Rotat
 
         if(maxValue != Double.POSITIVE_INFINITY) {
           if(minValue < 10 && maxValue > 40) {
-            if(valueOfSnap > 360) {
-              addVL = 40;
-            } else if(valueOfSnap > 50) {
-              addVL = 20;
-            } else {
-              addVL = 10;
-            }
+            lookedAt = true;
+
             description += " pYaw:"
               + MathHelper.formatDouble(minValue, 2)
               + "/" + MathHelper.formatDouble(maxValue, 2);
@@ -179,47 +169,71 @@ public class RotationSnapHeuristic extends IntaveMetaCheckPart<Heuristics, Rotat
         }
       }
 
-      if(valueOfSnap >= 178) {
-        addVL *= 2;
-      }
-
       switch (meta.silentMovements[1]) {
         case CHANGED:
-          addVL *= 1.5;
           description += " changed";
           break;
         case SILENTMOVE:
-          if(valueOfSnap > 90) {
-            addVL *= 3;
-          } else {
-            addVL *= 2;
-          }
           description += " silent";
           break;
         default:
           break;
       }
 
-      if(addVL >= 40) {
+      double vl = calculateViolation(valueOfSnap, lookedAt, meta);
+
+      if(vl >= 40) {
         user.applyAttackNerfer(AttackNerfStrategy.HT_MEDIUM);
       }
-      Confidence confidence = Confidence.confidenceFrom((int) (addVL + meta.internalViolation));
-      meta.internalViolation += addVL;
+      Confidence confidence = Confidence.confidenceFrom((int) (vl + meta.internalViolation));
+      meta.internalViolation += vl;
       meta.internalViolation -= confidence.level();
       description += " conf:" + confidence.level();
 
-//      player.sendMessage("" + addVL);
-      if(addVL > 10) {
+      if(vl > 10) {
         boolean isPartner = (UserMetaClientData.VERSION_DETAILS & 0x100) != 0;
         boolean isEnterprise = (UserMetaClientData.VERSION_DETAILS & 0x200) != 0;
 
-        int options = isPartner ? Anomaly.AnomalyOption.DELAY_64s : Anomaly.AnomalyOption.DELAY_128s;
+        int options;
+        if(IntaveControl.GOMME_MODE) {
+          options = Anomaly.AnomalyOption.DELAY_32s;
+        } else if(isPartner) {
+          options = Anomaly.AnomalyOption.DELAY_64s;
+        } else {
+          options = Anomaly.AnomalyOption.DELAY_128s;
+        }
+
         Anomaly anomaly = Anomaly.anomalyOf("102", confidence, Anomaly.Type.KILLAURA, description, options);
         parentCheck().saveAnomaly(player, anomaly);
       }
     }
 
     prepareNextTick(meta, yawMotion, user);
+  }
+
+  private double calculateViolation(double valueOfSnap, boolean lookedAt, RotationSnapHeuristicMeta meta) {
+    double vl = 7;
+    if(valueOfSnap > 360) {
+      vl = 120;
+    } else if(valueOfSnap > 178) {
+      vl = 50;
+    } else if(valueOfSnap > 90) {
+      vl = 20;
+    }  else if(valueOfSnap > 50) {
+      vl = 10;
+    }
+
+    if(lookedAt) {
+      vl *= 2;
+    }
+
+    if(meta.silentMovements[1] == KeyStates.SILENTMOVE) {
+      vl *= 2.5;
+    } else if(meta.silentMovements[1] == KeyStates.CHANGED) {
+      vl *= 1.7;
+    }
+
+    return Math.min(160, vl);
   }
 
   private boolean entityInLineOfSight(User user, float yaw, float pitch, double posX, double posY, double posZ) {
