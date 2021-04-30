@@ -449,10 +449,10 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
     }
   }
 
-  private void emulatePhysicalInteract(Player player, Block clickedBlock) {
+  private void emulatePhysicalInteract(Player player, Block block) {
     World world = player.getWorld();
     BoundingBoxAccess boundingBoxAccess = userOf(player).boundingBoxAccess();
-    Material clickedType = clickedBlock.getType();
+    Material clickedType = block.getType();
     switch (clickedType) {
       case WOODEN_DOOR: {
         //TODO
@@ -468,13 +468,13 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
         break;
       }
       case TRAP_DOOR: {
-        int data = clickedBlock.getData();
+        int data = BlockDataAccess.dataIndexOf(block);//BlockDataAccess.dataIndexOf(block);
         boolean newOpen = (data & 4) != 0;
         int bitMask = 4;
         byte newData = (byte) (!newOpen ? (data | bitMask) : (data & ~bitMask));
-        Material material = clickedBlock.getType();
-        boundingBoxAccess.override(world, clickedBlock.getX(), clickedBlock.getY(), clickedBlock.getZ(), material, newData);
-        Synchronizer.packetSynchronize(() -> boundingBoxAccess.invalidateOverride(clickedBlock.getX(), clickedBlock.getY(), clickedBlock.getZ()));
+        Material material = block.getType();
+        boundingBoxAccess.override(world, block.getX(), block.getY(), block.getZ(), material, newData);
+        Synchronizer.packetSynchronize(() -> boundingBoxAccess.invalidateOverride(block.getX(), block.getY(), block.getZ()));
         break;
       }
     }
@@ -687,7 +687,7 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
   private void refreshBlock(Player player, Location location) {
     PacketContainer packet = ProtocolLibrary.getProtocolManager().createPacket(PacketType.Play.Server.BLOCK_CHANGE);
     Block block = BukkitBlockAccess.blockAccess(location);
-    WrappedBlockData blockData = WrappedBlockData.createData(block.getType(), block.getData());
+    WrappedBlockData blockData = WrappedBlockData.createData(block.getType(), BlockDataAccess.dataIndexOf(block));
     BlockPosition position = new BlockPosition(location.getBlockX(), location.getBlockY(), location.getBlockZ());
     packet.getBlockData().write(0, blockData);
     packet.getBlockPositionModifier().write(0, position);

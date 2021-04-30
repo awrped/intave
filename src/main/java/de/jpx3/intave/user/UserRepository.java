@@ -18,6 +18,12 @@ public final class UserRepository {
   private final static Lock lock = new ReentrantLock();
   private static boolean closed;
 
+
+  // used to load the class on startup
+  public static void setup() {
+
+  }
+
   public static void registerUser(Player player) {
     userRepository.put(player.getUniqueId(), User.userFor(player));
     if (IntaveControl.RESET_HURT_TIME_ON_JOIN) {

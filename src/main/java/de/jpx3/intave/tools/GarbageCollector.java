@@ -12,6 +12,11 @@ public final class GarbageCollector {
     throw new UnsupportedOperationException();
   }
 
+  // class loading
+  public static void setup() {
+
+  }
+
   public static <K, V> Map<K, V> watch(Map<K, V> initialMap) {
     boundMaps.add(initialMap);
     return initialMap;

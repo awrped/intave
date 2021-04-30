@@ -8,22 +8,29 @@ import de.jpx3.intave.logging.IntaveLogger;
 import de.jpx3.intave.patchy.PatchyLoadingInjector;
 import de.jpx3.intave.reflect.ReflectiveAccess;
 import de.jpx3.intave.reflect.ReflectiveBlockAccess;
-import de.jpx3.intave.reflect.ReflectiveMaterialAccess;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
 public final class BlockDataAccess {
   private static BlockAccessor blockAccessor;
+  private static MethodHandle nativeBlockDataAccess;
 
-  private final static List<Material> clickableMaterials = new ArrayList<>();
+  private final static boolean ALL_BLOCKS_LEGACY = !MinecraftVersions.VER1_14_0.atOrAbove();
+
+  private final static HashSet<Material> clickableMaterials = new HashSet<>();
+  private final static HashSet<Material> legacyMaterials = new HashSet<>();
 
   public static void setup() {
     String resolverName = "de.jpx3.intave.world.blockaccess.v8BlockAccessor";
@@ -40,7 +47,17 @@ public final class BlockDataAccess {
     PatchyLoadingInjector.loadUnloadedClassPatched(classLoader, resolverName);
     blockAccessor = instanceOf(resolverName);
 
-    loadClickableMaterials();
+    if(MinecraftVersions.VER1_14_0.atOrAbove()) {
+      try {
+        Class<?> blockDataClass = ReflectiveAccess.lookupServerClass("IBlockData");
+        Class<?> craftBukkitClass = ReflectiveAccess.lookupCraftBukkitClass("block.CraftBlock");
+        nativeBlockDataAccess = MethodHandles.lookup().findVirtual(craftBukkitClass, "getNMS", MethodType.methodType(blockDataClass));
+      } catch (NoSuchMethodException | IllegalAccessException exception) {
+        throw new IntaveInternalException("Failed to load data access method", exception);
+      }
+    }
+
+    loadMaterials();
   }
 
   private static <T> T instanceOf(String className) {
@@ -52,78 +69,79 @@ public final class BlockDataAccess {
     }
   }
 
-  private static void loadClickableMaterials() {
-    /*
-    class Block
-
-    1.8   public boolean interact(World world, BlockPosition blockposition, IBlockData iblockdata, EntityHuman entityhuman,                                                   EnumDirection enumdirection, float f, float f1, float f2)
-    1.9   public boolean interact(World world, BlockPosition blockposition, IBlockData iblockdata, EntityHuman entityhuman, EnumHand enumhand, @Nullable ItemStack itemstack, EnumDirection enumdirection, float f, float f1, float f2)
-    1.10  public boolean interact(World world, BlockPosition blockposition, IBlockData iblockdata, EntityHuman entityhuman, EnumHand enumhand, @Nullable ItemStack itemstack, EnumDirection enumdirection, float f, float f1, float f2)
-    1.11  public boolean interact(World world, BlockPosition blockposition, IBlockData iblockdata, EntityHuman entityhuman, EnumHand enumhand,                                EnumDirection enumdirection, float f, float f1, float f2)
-    1.12  public boolean interact(World world, BlockPosition blockposition, IBlockData iblockdata, EntityHuman entityhuman, EnumHand enumhand,                                EnumDirection enumdirection, float f, float f1, float f2)
-    1.13  public boolean interact(IBlockData iblockdata, World world, BlockPosition blockposition, EntityHuman entityhuman, EnumHand enumhand, EnumDirection enumdirection, float f, float f1, float f2) @D
-    1.14  public boolean interact(IBlockData iblockdata, World world, BlockPosition blockposition, EntityHuman entityhuman, EnumHand enumhand, MovingObjectPositionBlock movingobjectpositionblock) @D
-    1.15  public EnumInteractionResult interact(IBlockData iblockdata, World world, BlockPosition blockposition, EntityHuman entityhuman, EnumHand enumhand, MovingObjectPositionBlock movingobjectpositionblock) @D
-
-    class BlockBase
-
-    1.16  public EnumInteractionResult interact(IBlockData iblockdata, World world, BlockPosition blockposition, EntityHuman entityhuman, EnumHand enumhand, MovingObjectPositionBlock movingobjectpositionblock) @D
-
-     */
-
-    if(MinecraftVersions.VER1_14_0.atOrAbove()) {
-      newClickableLoad();
+  public static int dataIndexOf(Block block) {
+    Material type = block.getType();
+    if(isLegacy(type)) {
+      return block.getData();
     } else {
-      legacyClickableLoad();
+      try {
+        return RuntimeBlockDataIndexer.indexOfModernState(type, nativeBlockDataAccess.invoke());
+      } catch (Throwable throwable) {
+        throw new IntaveInternalException("Failed to access data of " + block, throwable);
+      }
     }
   }
 
-  private static void newClickableLoad() {
-    Method getState, createBlockData, getBlock;
+  public static boolean isLegacy(Material type) {
+    return ALL_BLOCKS_LEGACY || legacyMaterials.contains(type);
+  }
+
+  public static boolean isClickable(Material type) {
+    return clickableMaterials.contains(type);
+  }
+
+  public static float blockDamage(Player player, ItemStack itemInHand, BlockPosition blockPosition) {
+    return blockAccessor.blockDamage(player, itemInHand, blockPosition);
+  }
+
+  public static boolean replacementPlace(World world, Player player, BlockPosition blockPosition) {
+    return blockAccessor.replacementPlace(world, player, blockPosition);
+  }
+
+  private static void loadMaterials() {
+    if(MinecraftVersions.VER1_14_0.atOrAbove()) {
+      modernLoad();
+    } else {
+      legacyLoad();
+    }
+  }
+
+  private static void modernLoad() {
+    Method isInteractable, isLegacy;
     try {
-      createBlockData = Bukkit.class.getMethod("createBlockData", Material.class);
-      getState = ReflectiveAccess.lookupCraftBukkitClass("block.data.CraftBlockData").getMethod("getState");
-      getBlock = ReflectiveAccess.lookupServerClass("IBlockData").getMethod("getBlock");
+      isInteractable = Material.class.getMethod("isInteractable");
+      isLegacy = Material.class.getMethod("isLegacy");
     } catch (NoSuchMethodException exception) {
       throw new IntaveInternalException(exception);
     }
 
     for (Material material : Material.values()) {
-      if(!material.isBlock()) {
-        continue;
-      }
-      Object block = null;
       try {
-        block = getBlock.invoke(getState.invoke(createBlockData.invoke(null, material)));
+        if((boolean) isLegacy.invoke(material)) {
+          legacyMaterials.add(material);
+        }
       } catch (Exception exception) {
         exception.printStackTrace();
       }
-      if (block == null) {
-        IntaveLogger.logger().globalPrintLn("No block found for material " + material);
-        continue;
-      }
-      List<Method> methods = allMethodsIn(block.getClass());
-      for (Method method : methods) {
-        String methodName = method.getName();
-        if (methodName.equalsIgnoreCase("interact")) {
-          String declaringClassName = method.getDeclaringClass().getSimpleName();
-          if (!declaringClassName.equals("Block") && !declaringClassName.equals("BlockBase")) {
-            clickableMaterials.add(material);
-          }
+
+      try {
+        if(material.isBlock() && (boolean) isInteractable.invoke(material)) {
+          clickableMaterials.add(material);
         }
+      } catch (Exception exception) {
+        exception.printStackTrace();
       }
     }
   }
 
-  private static void legacyClickableLoad() {
-    for (int i = 0; i < 1000; i++) {
-      Material material = ReflectiveMaterialAccess.materialById(i);
-      if (material == null) {
+  private static void legacyLoad() {
+    for (Material material : Material.values()) {
+      if(!material.isBlock()) {
         continue;
       }
-      Object block = ReflectiveBlockAccess.blockById(i);
+      Object block = ReflectiveBlockAccess.blockById(material.getId());
       if (block == null) {
-        IntaveLogger.logger().globalPrintLn("No block found for id " + i);
+        IntaveLogger.logger().globalPrintLn("No block found for id " + material.getId());
         continue;
       }
       List<Method> methods = allMethodsIn(block.getClass());
@@ -149,17 +167,5 @@ public final class BlockDataAccess {
       clazz = clazz.getSuperclass();
     } while (clazz != Object.class);
     return methods;
-  }
-
-  public static boolean isClickable(Material type) {
-    return clickableMaterials.contains(type);
-  }
-
-  public static float blockDamage(Player player, ItemStack itemInHand, BlockPosition blockPosition) {
-    return blockAccessor.blockDamage(player, itemInHand, blockPosition);
-  }
-
-  public static boolean replacementPlace(World world, Player player, BlockPosition blockPosition) {
-    return blockAccessor.replacementPlace(world, player, blockPosition);
   }
 }

@@ -5,6 +5,7 @@ import de.jpx3.intave.adapter.MinecraftVersions;
 import de.jpx3.intave.tools.wrapper.WrappedAxisAlignedBB;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserRepository;
+import de.jpx3.intave.world.blockaccess.BlockDataAccess;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
@@ -46,7 +47,7 @@ public final class BlockThinPatch extends BoundingBoxPatch {
 
   @Override
   protected List<WrappedAxisAlignedBB> patch(World world, Player player, Block block, List<WrappedAxisAlignedBB> bbs) {
-    return patch(world, player, block.getType(), block.getData(), bbs);
+    return patch(world, player, block.getType(), BlockDataAccess.dataIndexOf(block), bbs);
   }
 
   @Override

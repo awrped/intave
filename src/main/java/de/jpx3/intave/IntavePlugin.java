@@ -40,6 +40,7 @@ import de.jpx3.intave.user.UserRepository;
 import de.jpx3.intave.warning.ClientWarningService;
 import de.jpx3.intave.world.blockaccess.BlockDataAccess;
 import de.jpx3.intave.world.blockaccess.BukkitBlockAccess;
+import de.jpx3.intave.world.blockaccess.RuntimeBlockDataIndexer;
 import de.jpx3.intave.world.blockphysics.BlockPhysics;
 import de.jpx3.intave.world.collider.Collider;
 import de.jpx3.intave.world.collision.BoundingBoxAccess;
@@ -436,7 +437,10 @@ public final class IntavePlugin extends JavaPlugin {
 
       SSLConnectionVerifier.setup();
 
+      RuntimeBlockDataIndexer.prepareIndex();
+
       ReflectiveAccess.setup();
+      UserRepository.setup();
       WrapperLinkage.setup();
       Raytracer.setup();
       Collider.setup();
@@ -452,7 +456,6 @@ public final class IntavePlugin extends JavaPlugin {
 
       versionList = new VersionList();
       versionList.setup();
-      displayVersionInformation();
 
       IntavePlugin.offlineMode = offlineMode;
 
@@ -507,9 +510,12 @@ public final class IntavePlugin extends JavaPlugin {
       return;
     }
 
+    GarbageCollector.setup();
+
     BackgroundExecutor.execute(this::clearIntegrityGarbage);
     BackgroundExecutor.execute(this::clearSaveFolderGarbage);
     packetSubscriptionLinker.refreshLinkages();
+    displayVersionInformation();
     logger.info("Intave booted successfully");
   }
 

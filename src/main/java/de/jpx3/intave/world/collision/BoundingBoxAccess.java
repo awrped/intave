@@ -6,6 +6,7 @@ import de.jpx3.intave.adapter.MinecraftVersions;
 import de.jpx3.intave.patchy.PatchyLoadingInjector;
 import de.jpx3.intave.tools.AccessHelper;
 import de.jpx3.intave.tools.wrapper.WrappedAxisAlignedBB;
+import de.jpx3.intave.world.blockaccess.BlockDataAccess;
 import de.jpx3.intave.world.blockaccess.BukkitBlockAccess;
 import de.jpx3.intave.world.collision.patches.BoundingBoxPatcher;
 import org.bukkit.Location;
@@ -111,7 +112,7 @@ public final class BoundingBoxAccess {
       } else {
         List<WrappedAxisAlignedBB> boundingBoxes = globalBoundingBoxResolver.resolve(world, type, posX, posY, posZ);
         boundingBoxes = BoundingBoxPatcher.patch(world, player, block, boundingBoxes);
-        cacheEntry = new CacheEntry(boundingBoxes, type, block.getData());
+        cacheEntry = new CacheEntry(boundingBoxes, type, BlockDataAccess.dataIndexOf(block));
       }
       boolean cacheType = block.getY() >= 0;
       if (!DISABLE_BLOCK_CACHING_ENTIRELY && cacheType) {
@@ -156,7 +157,7 @@ public final class BoundingBoxAccess {
       } else {
         List<WrappedAxisAlignedBB> boundingBoxes = globalBoundingBoxResolver.resolve(world, type, posX, posY, posZ);
         boundingBoxes = BoundingBoxPatcher.patch(world, player, block, boundingBoxes);
-        cacheEntry = new CacheEntry(boundingBoxes, type, block.getData());
+        cacheEntry = new CacheEntry(boundingBoxes, type, BlockDataAccess.dataIndexOf(block));
       }
       boolean cacheType = block.getY() >= 0;
       if (!DISABLE_BLOCK_CACHING_ENTIRELY && cacheType) {
@@ -202,7 +203,7 @@ public final class BoundingBoxAccess {
         List<WrappedAxisAlignedBB> boundingBoxes;
         boundingBoxes = globalBoundingBoxResolver.resolve(world, type, posX, posY, posZ);
         boundingBoxes = BoundingBoxPatcher.patch(world, player, block, boundingBoxes);
-        cacheEntry = new CacheEntry(boundingBoxes, type, block.getData());
+        cacheEntry = new CacheEntry(boundingBoxes, type, BlockDataAccess.dataIndexOf(block));
       }
       boolean cacheType = block.getY() >= 0;
       if (!DISABLE_BLOCK_CACHING_ENTIRELY && cacheType) {

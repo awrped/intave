@@ -9,6 +9,7 @@ import de.jpx3.intave.tools.wrapper.WrappedMathHelper;
 import de.jpx3.intave.tools.wrapper.WrappedVector;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserMetaMovementData;
+import de.jpx3.intave.world.blockaccess.BlockDataAccess;
 import de.jpx3.intave.world.blockaccess.BukkitBlockAccess;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -50,7 +51,7 @@ final class UnknownWaterflowEngine extends AbstractWaterflowEngine {
           boolean waterServerSide = MaterialLogic.isWater(block.getType());
           boolean waterClientSide = MaterialLogic.isWater(clientSideBlock);
           if (waterServerSide) {
-            double height = 1 - LegacyWaterPhysics.resolveLiquidHeightPercentage(block.getData());
+            double height = 1 - LegacyWaterPhysics.resolveLiquidHeightPercentage(BlockDataAccess.dataIndexOf(block));
             double d1 = (float) y + height;
             if (d1 >= entityBoundingBox.minY) {
               inWater = true;
@@ -96,7 +97,7 @@ final class UnknownWaterflowEngine extends AbstractWaterflowEngine {
     WrappedVector vector3d = new WrappedVector(positionX, d0, positionZ);
     Block block = BukkitBlockAccess.blockAccess(world, vector3d.xCoord, vector3d.yCoord, vector3d.zCoord);
     if (MaterialLogic.isWater(block.getType())) {
-      double d1 = vector3d.yCoord + 1 - LegacyWaterPhysics.resolveLiquidHeightPercentage(block.getData());
+      double d1 = vector3d.yCoord + 1 - LegacyWaterPhysics.resolveLiquidHeightPercentage(BlockDataAccess.dataIndexOf(block));
       return d1 > d0;
     }
     return false;

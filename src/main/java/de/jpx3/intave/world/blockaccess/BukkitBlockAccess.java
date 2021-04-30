@@ -65,7 +65,7 @@ public final class BukkitBlockAccess implements BukkitEventSubscriber {
     if (isInLoadedChunk(blockAccess, blockX, blockZ) || Bukkit.isPrimaryThread()) {
       return user.boundingBoxAccess().resolveData(blockX >> 4, blockZ >> 4, blockX, blockY, blockZ);
     }
-    return invalidRequestBlockMap.get(blockAccess).getData();
+    return BlockDataAccess.dataIndexOf(invalidRequestBlockMap.get(blockAccess));
   }
 
   public static int cacheAppliedDataAccess(User user, World blockAccess, double x, double y, double z) {
@@ -75,7 +75,7 @@ public final class BukkitBlockAccess implements BukkitEventSubscriber {
     if (isInLoadedChunk(blockAccess, blockX, blockZ) || Bukkit.isPrimaryThread()) {
       return user.boundingBoxAccess().resolveData(blockX >> 4, blockZ >> 4, blockX, blockY, blockZ);
     }
-    return invalidRequestBlockMap.get(blockAccess).getData();
+    return BlockDataAccess.dataIndexOf(invalidRequestBlockMap.get(blockAccess));
   }
 
   public static Material cacheAppliedTypeAccess(User user, Location location) {
