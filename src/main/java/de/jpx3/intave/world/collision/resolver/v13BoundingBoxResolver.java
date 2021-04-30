@@ -2,6 +2,7 @@ package de.jpx3.intave.world.collision.resolver;
 
 import de.jpx3.intave.patchy.annotate.PatchyAutoTranslation;
 import de.jpx3.intave.tools.wrapper.WrappedAxisAlignedBB;
+import de.jpx3.intave.world.blockaccess.BlockDataAccess;
 import de.jpx3.intave.world.blockaccess.BukkitBlockAccess;
 import de.jpx3.intave.world.collision.BoundingBoxResolver;
 import net.minecraft.server.v1_13_R2.*;
@@ -22,7 +23,7 @@ public final class v13BoundingBoxResolver implements BoundingBoxResolver {
   public List<WrappedAxisAlignedBB> resolve(World world, Material advanceType, int posX, int posY, int posZ) {
     Location location = new Location(world, posX, posY, posZ);
     org.bukkit.block.Block block = BukkitBlockAccess.blockAccess(location);
-    return resolve(world, posX, posY, posZ, advanceType, block.getData());
+    return resolve(world, posX, posY, posZ, advanceType, BlockDataAccess.dataIndexOf(block));
   }
 
   @Override

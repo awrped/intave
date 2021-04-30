@@ -3,6 +3,7 @@ package de.jpx3.intave.world.collision.patches;
 import de.jpx3.intave.tools.wrapper.WrappedAxisAlignedBB;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserRepository;
+import de.jpx3.intave.world.blockaccess.BlockDataAccess;
 import de.jpx3.intave.world.collision.BoundingBoxBuilder;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -16,7 +17,7 @@ import static de.jpx3.intave.user.UserMetaClientData.PROTOCOL_VERSION_COMBAT_UPD
 public final class BlockLilyPadPatch extends BoundingBoxPatch {
   @Override
   public List<WrappedAxisAlignedBB> patch(World world, Player player, Block block, List<WrappedAxisAlignedBB> bbs) {
-    return patch(world, player, block.getType(), block.getData(), bbs);
+    return patch(world, player, block.getType(), BlockDataAccess.dataIndexOf(block), bbs);
   }
 
   @Override

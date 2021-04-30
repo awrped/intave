@@ -162,16 +162,14 @@ public final class BlockActionDispatcher implements EventProcessor {
     if (packetType == PacketType.Play.Server.MULTI_BLOCK_CHANGE) {
       if(USE_SELECTION_POSITION_TO_READ_MBC_PACKET) {
         BlockPosition blockPosition = packet.getSectionPositions().readSafely(0);
-
         int chunkXBase = blockPosition.getX() << 4;
         int chunkYBase = blockPosition.getY() << 4;
         int chunkZBase = blockPosition.getZ() << 4;
-
         short[] relativePositions = packet.getShortArrays().read(0);
         WrappedBlockData[] blockInfos = packet.getBlockDataArrays().read(0);
-        blockPositions = new ArrayList<>();
-        blockDataList = new ArrayList<>();
-
+        int expectedOutputLength = blockInfos.length;
+        blockPositions = new ArrayList<>(expectedOutputLength);
+        blockDataList = new ArrayList<>(expectedOutputLength);
         int index = 0;
         for (short relativePosition : relativePositions) {
           int posX = chunkXBase + (relativePosition >>> 8 & 0xF);
@@ -183,8 +181,9 @@ public final class BlockActionDispatcher implements EventProcessor {
         }
       } else {
         MultiBlockChangeInfo[] multiBlockChangeInfos = packet.getMultiBlockChangeInfoArrays().readSafely(0);
-        blockPositions = new ArrayList<>();
-        blockDataList = new ArrayList<>();
+        int expectedOutputLength = multiBlockChangeInfos.length;
+        blockPositions = new ArrayList<>(expectedOutputLength);
+        blockDataList = new ArrayList<>(expectedOutputLength);
         for (MultiBlockChangeInfo multiBlockChangeInfo : multiBlockChangeInfos) {
           blockPositions.add(new BlockPosition(multiBlockChangeInfo.getAbsoluteX(), multiBlockChangeInfo.getY(), multiBlockChangeInfo.getAbsoluteZ()));
           blockDataList.add(multiBlockChangeInfo.getData());
