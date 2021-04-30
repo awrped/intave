@@ -201,6 +201,9 @@ public final class User {
   }
 
   public void applyAttackNerfer(AttackNerfStrategy strategy) {
+    if(trustFactor().atLeast(TrustFactor.BYPASS)) {
+      return;
+    }
     //noinspection deprecation
     plugin().eventService().combatMitigator().mitigate(this, strategy);
   }

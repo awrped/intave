@@ -89,7 +89,6 @@ public final class IntavePlugin extends JavaPlugin {
   private ViolationProcessor violationProcessor;
   private CheckService checkService;
   private Filters filters;
-  private WorldPermission worldPermission;
   private TrustFactorService trustFactorService;
   private VersionList versionList;
   private LabymodShadowIntegration shadowIntegration;
@@ -754,10 +753,6 @@ public final class IntavePlugin extends JavaPlugin {
 
   public ViolationProcessor violationProcessor() {
     return this.violationProcessor;
-  }
-
-  public WorldPermission interactionPermissionService() {
-    return worldPermission;
   }
 
   public SibylIntegrationService sibylIntegrationService() {

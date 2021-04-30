@@ -27,7 +27,7 @@ import static de.jpx3.intave.IntaveControl.DISABLE_BLOCK_CACHING_ENTIRELY;
 
 public final class BoundingBoxAccess {
   private final static int FREQUENCY_OVERFLOW = 2;
-  private static BoundingBoxResolver globalBoundingBoxResolver;
+  private static BoundingBoxResolver resolver;
 
   public static void setup() {
     // ugly, the way ZKM likes it
@@ -37,9 +37,11 @@ public final class BoundingBoxAccess {
 
     if(MinecraftVersions.VER1_14_0.atOrAbove()) {
       className = "de.jpx3.intave.world.collision.resolver.v14BoundingBoxResolver";
+      acClass = "";
     } else if(MinecraftVersions.VER1_13_0.atOrAbove()) {
       className = "de.jpx3.intave.world.collision.resolver.v13BoundingBoxResolver";
 //      acClass = "de.jpx3.intave.world.collision.resolver.ac.v13AlwaysCollidingBoundingBox";
+      acClass = "";
     } else if(MinecraftVersions.VER1_12_0.atOrAbove()) {
       className = "de.jpx3.intave.world.collision.resolver.v12BoundingBoxResolver";
       acClass = "de.jpx3.intave.world.collision.resolver.ac.v12AlwaysCollidingBoundingBox";
@@ -53,9 +55,9 @@ public final class BoundingBoxAccess {
 
     PatchyLoadingInjector.loadUnloadedClassPatched(IntavePlugin.class.getClassLoader(), acClass);
     PatchyLoadingInjector.loadUnloadedClassPatched(IntavePlugin.class.getClassLoader(), className);
-    globalBoundingBoxResolver = instanceOf(className);
-    globalBoundingBoxResolver = new LiquidDynamicResolver(globalBoundingBoxResolver);
-    globalBoundingBoxResolver = new CubeDynamicResolver(globalBoundingBoxResolver);
+    resolver = instanceOf(className);
+    resolver = new LiquidDynamicResolver(resolver);
+    resolver = new CubeDynamicResolver(resolver);
   }
 
   private static <T> T instanceOf(String className) {
@@ -287,7 +289,7 @@ public final class BoundingBoxAccess {
     } else {
       BoundingBoxAccessFlowStudy.increaseLookups();
       List<WrappedAxisAlignedBB> boundingBoxes;
-      boundingBoxes = globalBoundingBoxResolver.resolve(world, type, posX, posY, posZ);
+      boundingBoxes = resolver.resolve(world, type, posX, posY, posZ);
       boundingBoxes = BoundingBoxPatcher.patch(world, player, block, boundingBoxes);
       return new CacheEntry(boundingBoxes, type, BlockDataAccess.dataIndexOf(block));
     }
@@ -367,7 +369,7 @@ public final class BoundingBoxAccess {
 
   public List<WrappedAxisAlignedBB> constructBlock(World world, int posX, int posY, int posZ, Material type, int blockState) {
     List<WrappedAxisAlignedBB> resolve;
-    resolve = globalBoundingBoxResolver.resolve(world, posX, posY, posZ, type, blockState);
+    resolve = resolver.resolve(world, posX, posY, posZ, type, blockState);
     resolve = BoundingBoxPatcher.patch(world, player, posX, posY, posZ, type, blockState, resolve);
     return resolve;
   }
@@ -394,13 +396,13 @@ public final class BoundingBoxAccess {
   }
 
   private long bigKey(int posX, int posY, int posZ) {
-    return (posX & 0x3FFFFFL) << 42 | (posY & 0xFFFFFL) | (posZ & 0x3FFFFFL) << 20;
+    return (posX & 4194303L) << 42 | (posY & 0xFFFFFL) | (posZ & 0x3FFFFFL) << 20;
   }
 
   @Deprecated
   // the global bb resolver should not be available to external classes, please remove this method ~richy
   public static BoundingBoxResolver globalBoundingBoxResolver() {
-    return globalBoundingBoxResolver;
+    return resolver;
   }
 
   public static class CacheEntry {

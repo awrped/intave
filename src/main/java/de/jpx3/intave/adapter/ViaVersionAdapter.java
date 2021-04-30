@@ -29,6 +29,7 @@ public class ViaVersionAdapter {
 
   public static void setup() {
     if (Bukkit.getServer().getPluginManager().getPlugin("ViaVersion") == null) {
+      System.out.println("[Intave] Couldn't find ViaVersion");
       return;
     }
     access = available.stream().filter(ViaVersionAccess::available).findFirst().orElse(null);
@@ -45,7 +46,13 @@ public class ViaVersionAdapter {
   }
 
   public static int protocolVersionOf(Player player) {
-    return foundLinkage() ? access.protocolVersionOf(player) : ProtocolLibrary.getProtocolManager().getProtocolVersion(player);
+    if (foundLinkage()) {
+      System.out.println("[Intave] Linkage found, requesting version");
+      return access.protocolVersionOf(player);
+    } else {
+      System.out.println("[Intave] No linkage found, performing protolib request");
+      return ProtocolLibrary.getProtocolManager().getProtocolVersion(player);
+    }
   }
 
   public static boolean foundLinkage() {

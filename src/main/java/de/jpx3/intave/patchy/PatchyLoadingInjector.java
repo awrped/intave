@@ -11,9 +11,11 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public final class PatchyLoadingInjector {
-
   @Native
   public static <T> Class<T> loadUnloadedClassPatched(ClassLoader classLoader, String className) {
+    if(className.isEmpty()) {
+      return null;
+    }
     className = className.replace("/", ".");
     byte[] classBytes;
     try {
