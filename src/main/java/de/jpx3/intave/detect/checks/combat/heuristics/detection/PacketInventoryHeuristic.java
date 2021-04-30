@@ -54,6 +54,11 @@ public final class PacketInventoryHeuristic extends IntaveMetaCheckPart<Heuristi
     User user = UserRepository.userOf(player);
     PacketInventoryMeta meta = metaOf(user);
     UserMetaClientData clientData = user.meta().clientData();
+    UserMetaAbilityData abilityData = user.meta().abilityData();
+
+    if (abilityData.ignoringMovementPackets()) {
+      return;
+    }
 
     if (clientData.flyingPacketStream() && meta.inventoryTicks <= 1 && meta.performedInventoryOpenOperation) {
       int options = SUGGEST_MINING | DELAY_128s | SUGGEST_MINING;
@@ -61,6 +66,7 @@ public final class PacketInventoryHeuristic extends IntaveMetaCheckPart<Heuristi
       Anomaly anomaly = Anomaly.anomalyOf("131", Confidence.PROBABLE, Anomaly.Type.KILLAURA, details, options);
       parentCheck().saveAnomaly(player, anomaly);
       user.applyAttackNerfer(AttackNerfStrategy.HT_MEDIUM);
+      user.applyAttackNerfer(AttackNerfStrategy.CANCEL_FIRST_HIT);
     }
   }
 
