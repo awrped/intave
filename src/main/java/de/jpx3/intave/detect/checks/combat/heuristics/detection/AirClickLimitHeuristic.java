@@ -262,18 +262,18 @@ public class AirClickLimitHeuristic extends IntaveMetaCheckPart<Heuristics, AirC
     //        }
     //    });
     //TODO: das BLOCK_DIG verhindert nicht komplett das der block abgebaut wird (das abbauen wird manchmal vom server verhindert wenn der spieler den block zu schnell abgebaut hat)
-    try {
-      PacketContainer packet = ProtocolLibrary.getProtocolManager().createPacket(PacketType.Play.Client.BLOCK_DIG);
-
-      packet.getBlockPositionModifier().write(0, meta.currentDiggedBlock);
-      packet.getDirections().write(0, EnumWrappers.Direction.DOWN);
-      packet.getPlayerDigTypes().write(0, EnumWrappers.PlayerDigType.ABORT_DESTROY_BLOCK);
-
-      userOf(player).ignoreNextPacket();
-      ProtocolLibrary.getProtocolManager().recieveClientPacket(player, packet);
-    } catch (InvocationTargetException | IllegalAccessException exception) {
-      exception.printStackTrace();
-    }
+//    try {
+//      PacketContainer packet = ProtocolLibrary.getProtocolManager().createPacket(PacketType.Play.Client.BLOCK_DIG);
+//
+//      packet.getBlockPositionModifier().write(0, meta.currentDiggedBlock);
+//      packet.getDirections().write(0, EnumWrappers.Direction.DOWN);
+//      packet.getPlayerDigTypes().write(0, EnumWrappers.PlayerDigType.ABORT_DESTROY_BLOCK);
+//
+//      userOf(player).ignoreNextPacket();
+//      ProtocolLibrary.getProtocolManager().recieveClientPacket(player, packet);
+//    } catch (InvocationTargetException | IllegalAccessException exception) {
+//      exception.printStackTrace();
+//    }
   }
 
   public static class AirClickLimitHeuristicMeta extends UserCustomCheckMeta {
