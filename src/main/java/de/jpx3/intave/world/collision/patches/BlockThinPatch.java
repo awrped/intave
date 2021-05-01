@@ -34,7 +34,6 @@ public final class BlockThinPatch extends BoundingBoxPatch {
   };
 
   public BlockThinPatch() {
-    super(Material.THIN_GLASS, Material.STAINED_GLASS_PANE, Material.IRON_FENCE);
     Arrays.stream(STATES_8).forEach(WrappedAxisAlignedBB::setOriginBox);
     Arrays.stream(STATES_9).forEach(WrappedAxisAlignedBB::setOriginBox);
   }
@@ -154,5 +153,11 @@ public final class BlockThinPatch extends BoundingBoxPatch {
   @Override
   protected boolean requireRepose() {
     return true;
+  }
+
+  @Override
+  public boolean appliesTo(Material material) {
+    String name = material.name();
+    return name.contains("GLASS_PANE") || name.contains("THIN_GLASS") || name.contains("IRON_BAR");
   }
 }

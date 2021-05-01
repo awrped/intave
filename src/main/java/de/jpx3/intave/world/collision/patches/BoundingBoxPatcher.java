@@ -72,7 +72,9 @@ public final class BoundingBoxPatcher {
     List<WrappedAxisAlignedBB> reposedList = new ArrayList<>(boundingBoxes);
     for (int i = 0; i < reposedList.size(); i++) {
       WrappedAxisAlignedBB boundingBox = reposedList.get(i);
-      reposedList.set(i, boundingBox.offset(-posX, -posY, -posZ));
+      WrappedAxisAlignedBB newBox = boundingBox.offset(-posX, -posY, -posZ);
+      newBox.setOriginBox();
+      reposedList.set(i, newBox);
     }
     return reposedList;
   }

@@ -145,6 +145,11 @@ public final class UserMetaClientData {
     return protocolVersion < PROTOCOL_VERSION_VILLAGE_UPDATE;
   }
 
+  public boolean beeUpdate() {
+    // 1.15
+    return protocolVersion >= PROTOCOL_VERSION_BEE_UPDATE;
+  }
+
   public boolean waterUpdate() {
     // >= 1.13
     return protocolVersion >= PROTOCOL_VERSION_AQUATIC_UPDATE;
