@@ -11,6 +11,7 @@ import de.jpx3.intave.event.packet.PacketDescriptor;
 import de.jpx3.intave.event.packet.PacketSubscription;
 import de.jpx3.intave.event.packet.Sender;
 import de.jpx3.intave.event.service.violation.Violation;
+import de.jpx3.intave.event.service.violation.ViolationContext;
 import de.jpx3.intave.tools.AccessHelper;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserCustomCheckMeta;
@@ -101,7 +102,10 @@ public final class PlacementSpeedAnalyzer extends IntaveMetaCheckPart<PlacementA
             .withDetails(((int) average) + "ms/block, limit at " + ((int) minAverage) + "ms/block")
             .withDefaultThreshold().withVL(5).build();
 
-          plugin.violationProcessor().processViolation(violation);
+          ViolationContext violationContext = plugin.violationProcessor().processViolation(violation);
+          if (violationContext.violationLevelAfter() > 20) {
+            parentCheck().applyPlacementAnalysisDamageCancel(user);
+          }
         }
       }
     }

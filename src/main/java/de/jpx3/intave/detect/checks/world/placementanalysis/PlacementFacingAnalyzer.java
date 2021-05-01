@@ -9,7 +9,9 @@ import de.jpx3.intave.detect.checks.world.PlacementAnalysis;
 import de.jpx3.intave.event.packet.PacketDescriptor;
 import de.jpx3.intave.event.packet.PacketSubscription;
 import de.jpx3.intave.event.packet.Sender;
+import de.jpx3.intave.event.punishment.AttackNerfStrategy;
 import de.jpx3.intave.event.service.violation.Violation;
+import de.jpx3.intave.user.User;
 import org.bukkit.entity.Player;
 
 import static de.jpx3.intave.detect.checks.world.PlacementAnalysis.COMMON_FLAG_MESSAGE;
@@ -29,6 +31,7 @@ public final class PlacementFacingAnalyzer extends IntaveCheckPart<PlacementAnal
   )
   public void checkPlacementVector(PacketEvent event) {
     Player player = event.getPlayer();
+    User user = userOf(player);
     PacketContainer packet = event.getPacket();
     if (blockingPlacementPacket(packet)) {
       return;
@@ -47,6 +50,8 @@ public final class PlacementFacingAnalyzer extends IntaveCheckPart<PlacementAnal
         .withVL(5)
         .build();
       plugin.violationProcessor().processViolation(violation);
+      user.applyAttackNerfer(AttackNerfStrategy.CANCEL_FIRST_HIT);
+      user.applyAttackNerfer(AttackNerfStrategy.HT_MEDIUM);
     }
   }
 

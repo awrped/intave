@@ -4,6 +4,8 @@ import de.jpx3.intave.tools.wrapper.WrappedAxisAlignedBB;
 import de.jpx3.intave.tools.wrapper.WrappedMathHelper;
 import de.jpx3.intave.user.*;
 import de.jpx3.intave.world.blockaccess.BukkitBlockAccess;
+import de.jpx3.intave.world.blockphysics.BlockClimableRepository;
+import de.jpx3.intave.world.blockphysics.BlockSlipperinessRepository;
 import de.jpx3.intave.world.collision.Collision;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -19,35 +21,19 @@ import org.bukkit.material.Openable;
 import java.util.List;
 
 public final class MovementContextHelper {
-  public static double jumpMotionFor(Player player) {
+  public static double jumpMotionFor(Player player, float jumpUpwardsMotion) {
     User user = UserRepository.userOf(player);
     UserMetaPotionData potionData = user.meta().potionData();
-    double motionY = 0.42f;
     if (potionData.potionEffectJumpDuration > 0) {
       int jumpAmplifier = potionData.potionEffectJumpAmplifier();
-      motionY += (float) ((jumpAmplifier + 1) * 0.1);
+      jumpUpwardsMotion += (float) ((jumpAmplifier + 1) * 0.1);
     }
-    return motionY;
+    return jumpUpwardsMotion;
   }
 
   public static float resolveSlipperiness(User user, Location location) {
     Material type = BukkitBlockAccess.cacheAppliedTypeAccess(user, location);
-    float blockSlipperiness;
-    switch (type) {
-      case PACKED_ICE:
-      case ICE: {
-        blockSlipperiness = 0.98f;
-        break;
-      }
-      case SLIME_BLOCK: {
-        blockSlipperiness = 0.8f;
-        break;
-      }
-      default: {
-        blockSlipperiness = 0.6f;
-      }
-    }
-    return blockSlipperiness * 0.91f;
+    return BlockSlipperinessRepository.resolveSlipperinessOf(type) * 0.91f;
   }
 
   public static float resolveFriction(User user, double positionX, double positionY, double positionZ) {
@@ -155,7 +141,7 @@ public final class MovementContextHelper {
     if (clientData.combatUpdate() && type.name().contains("TRAP_DOOR") && canGoThroughTrapDoorOnLadder(block)) {
       return true;
     }
-    return type == Material.LADDER || type == Material.VINE;
+    return BlockClimableRepository.isClimable(type);
   }
 
   private static boolean canGoThroughTrapDoorOnLadder(Block block) {

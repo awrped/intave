@@ -18,12 +18,12 @@ import java.util.function.Consumer;
 
 @Relocate
 public final class UserMetaPunishmentData {
-  public final static long DAMAGE_CANCEL_LIGHT_DURATION = 20_000;
-  private final static long DAMAGE_CANCEL_MEDIUM_DURATION = 20_000;
+  public final static long DAMAGE_CANCEL_LIGHT_DURATION = 40_000;
+  private final static long DAMAGE_CANCEL_MEDIUM_DURATION = 40_000;
   private final static long DAMAGE_CANCEL_HEAVY_DURATION = 5_000;
   private final static long BLOCKING_DAMAGE_CANCEL_DURATION = 5_000;
 
-  private final static long DAMAGE_CANCEL_FIRST_HIT_DURATION = 20_000;
+  private final static long DAMAGE_CANCEL_FIRST_HIT_DURATION = 60_000;
   private final static long ENTITY_HURT_TIME_CHANGE_DURATION = 5_000;
 
   private final Map<AttackNerfStrategy, AttackNerfer> attackNerfersMap = new HashMap<>();

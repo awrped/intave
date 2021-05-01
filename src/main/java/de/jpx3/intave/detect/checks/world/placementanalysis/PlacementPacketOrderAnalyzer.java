@@ -10,8 +10,10 @@ import de.jpx3.intave.event.packet.PacketDescriptor;
 import de.jpx3.intave.event.packet.PacketSubscription;
 import de.jpx3.intave.event.packet.Sender;
 import de.jpx3.intave.event.service.violation.Violation;
+import de.jpx3.intave.event.service.violation.ViolationContext;
 import de.jpx3.intave.tools.AccessHelper;
 import de.jpx3.intave.tools.RotationMathHelper;
+import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserCustomCheckMeta;
 import org.bukkit.entity.Player;
 
@@ -39,6 +41,7 @@ public final class PlacementPacketOrderAnalyzer extends IntaveMetaCheckPart<Plac
   )
   public void checkPlacementPacketOrder(PacketEvent event) {
     Player player = event.getPlayer();
+    User user = userOf(player);
     PacketContainer packet = event.getPacket();
     PlacementOrderMeta meta = metaOf(player);
 
@@ -65,7 +68,10 @@ public final class PlacementPacketOrderAnalyzer extends IntaveMetaCheckPart<Plac
                 .withMessage(COMMON_FLAG_MESSAGE)
                 .withVL(2)
                 .build();
-              plugin.violationProcessor().processViolation(violation);
+              ViolationContext violationContext = plugin.violationProcessor().processViolation(violation);
+              if (violationContext.violationLevelAfter() > 5) {
+                parentCheck().applyPlacementAnalysisDamageCancel(user);
+              }
             }
             meta.lastIncrement = now;
           }

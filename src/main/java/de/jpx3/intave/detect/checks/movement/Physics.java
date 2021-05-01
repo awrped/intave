@@ -158,7 +158,7 @@ public final class Physics extends IntaveCheck {
   private Pose poseOf(User user) {
     Player player = user.player();
     if (player.getVehicle() != null) {
-      return Pose.VEHICLE;
+      return Pose.HORSE;
     } else {
       UserMetaMovementData movementData = user.meta().movementData();
       boolean inLava = movementData.inLava();
@@ -672,7 +672,7 @@ public final class Physics extends IntaveCheck {
         movementData.enforceBoatStep = false;
       } else if (movementData.physicsMotionY < 0) {
         legitimateDeviation = Math.max(legitimateDeviation, 10);
-        if (movementData.motionY() > movementData.jumpUpwardsMotion()) {
+        if (movementData.motionY() > movementData.jumpMotion()) {
           movementData.enforceBoatStep = true;
         }
       }
@@ -750,6 +750,7 @@ public final class Physics extends IntaveCheck {
     boolean onLadder,
     boolean collidedWithBoat
   ) {
+    Player player = user.player();
     User.UserMeta meta = user.meta();
     UserMetaViolationLevelData violationLevelData = meta.violationLevelData();
     UserMetaMovementData movementData = meta.movementData();
@@ -763,7 +764,7 @@ public final class Physics extends IntaveCheck {
     );
     double predictedDistanceMoved = Math.hypot(predictedX, predictedZ);
 
-    if (movementPoseType == Pose.VEHICLE) {
+    if (movementPoseType == Pose.HORSE) {
 
 //      user.player().sendMessage(distanceMoved + " " + predictedDistanceMoved);
 
@@ -772,8 +773,20 @@ public final class Physics extends IntaveCheck {
       }
     }
 
+    double distance = MathHelper.resolveHorizontalDistance(predictedX, predictedZ, motionX, motionZ);
     boolean pushedByWaterFlow = movementData.pastPushedByWaterFlow <= 20;
-    double legitimateDeviation = movementData.pastPlayerAttackPhysics <= 1 ? 0.01 : 0.0007;
+    double legitimateDeviation;
+    if (movementData.pastPlayerAttackPhysics <= 1) {
+      legitimateDeviation = 0.01;
+    } else {
+      legitimateDeviation = 0.0007;
+      if (distance > 0.0007) {
+        boolean collides = Collision.nearBySolidBlock(player.getWorld(), movementData.boundingBox().growHorizontally(0.001));
+        if (collides) {
+          legitimateDeviation = distanceMoved < 0.04 ? 0.04 : 0.001;
+        }
+      }
+    }
 
     if (movementData.collidedHorizontally && movementData.pastVelocity < 20) {
       legitimateDeviation = 0.027;
@@ -823,7 +836,6 @@ public final class Physics extends IntaveCheck {
       legitimateDeviation = Math.max(legitimateDeviation, 0.4);
     }
 
-    double distance = MathHelper.resolveHorizontalDistance(predictedX, predictedZ, motionX, motionZ);
     if (movementData.physicsUnpredictableVelocityExpected) {
       Vector lastVelocity = movementData.lastVelocity;
       double velocityDistance = Math.hypot(lastVelocity.getX(), lastVelocity.getZ());

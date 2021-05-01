@@ -64,6 +64,10 @@ public final class BreakSpeedFinishCheck extends IntaveMetaCheckPart<BreakSpeedL
       meta.curBlockDamageMP += blockDamage;
       meta.maximumBlockDamage = Math.max(meta.maximumBlockDamage, blockDamage);
     }
+
+    if (meta.balance > 0 && !event.isCancelled()) {
+      meta.balance -= 0.005;
+    }
   }
 
   @PacketSubscription(
@@ -98,7 +102,7 @@ public final class BreakSpeedFinishCheck extends IntaveMetaCheckPart<BreakSpeedL
       case STOP_DESTROY_BLOCK: {
         if (clientData.flyingPacketStream()) {
           float blockDamageDealt = meta.curBlockDamageMP;
-          if (blockDamageDealt < 0.79) { // ~79%
+          if (blockDamageDealt < 0.79 && meta.balance++ >= 2) { // ~79%
             String message = "finished breaking-process too quickly";
             String percentage = (int)(blockDamageDealt * 100d) + "%";
             String details = "at " + percentage;
@@ -119,7 +123,7 @@ public final class BreakSpeedFinishCheck extends IntaveMetaCheckPart<BreakSpeedL
           long receivedMilliseconds = AccessHelper.now() - meta.breakProcessStartTime;
           long exceeded = milliseconds - receivedMilliseconds;
 
-          if (exceeded > 100) {
+          if (exceeded > 100 && meta.balance++ >= 2) {
             String message = "finished breaking-process too quickly";
             String details = exceeded + "ms faster than expected";
             ViolationProcessor violationProcessor = IntavePlugin.singletonInstance().violationProcessor();
@@ -199,10 +203,11 @@ public final class BreakSpeedFinishCheck extends IntaveMetaCheckPart<BreakSpeedL
   }
 
   public static final class BreakSpeedFinishMeta extends UserCustomCheckMeta {
-    private BlockPosition targetBlockPosition;
-    private float curBlockDamageMP = 0f;
-    private float maximumBlockDamage;
-    private boolean breakProcess;
-    private long breakProcessStartTime;
+    public BlockPosition targetBlockPosition;
+    public float curBlockDamageMP = 0f;
+    public float maximumBlockDamage;
+    public boolean breakProcess;
+    public long breakProcessStartTime;
+    public double balance;
   }
 }
