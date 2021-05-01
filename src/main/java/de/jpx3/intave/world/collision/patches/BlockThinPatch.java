@@ -14,8 +14,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-// TODO: 04/28/21 DOES NOT YET SUPPORT STRAIGHT PANES WTF PLZ FIX RICHY 
-
 public final class BlockThinPatch extends BoundingBoxPatch {
   protected static final WrappedAxisAlignedBB[] STATES_8 = new WrappedAxisAlignedBB[] {
     new WrappedAxisAlignedBB(0.0F, 0.0F, 0.4375F, 1.0F, 1.0F, 0.5625F), // full ew connection
@@ -115,6 +113,7 @@ public final class BlockThinPatch extends BoundingBoxPatch {
           west  |= index == 5 || index == 0;
         }
 
+        // via version emulates 1.8 behaviour of panes, we can account for it
         if(!(north || east || south || west) && user.meta().clientData().waterUpdate()) {
           north = south = east = west = true;
         }
