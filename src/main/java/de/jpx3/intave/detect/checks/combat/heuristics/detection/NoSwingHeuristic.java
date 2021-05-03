@@ -23,30 +23,6 @@ public final class NoSwingHeuristic extends IntaveMetaCheckPart<Heuristics, NoSw
     super(parentCheck, NoSwingMeta.class);
   }
 
-//  @BukkitEventSubscription(priority = EventPriority.LOWEST)
-//  public void on(PlayerAnimationEvent swing) {
-//    Player player = swing.getPlayer();
-//    metaOf(player).swungHand = true;
-//  }
-
-//  @BukkitEventSubscription(priority = EventPriority.LOWEST)
-//  public void on(EntityDamageByEntityEvent event) {
-//    Entity attacker = event.getDamager();
-//    Entity damaged = event.getEntity();
-//
-//    if (attacker instanceof Player && damaged instanceof LivingEntity &&
-//        event.getCause().equals(EntityDamageEvent.DamageCause.ENTITY_ATTACK)
-//    ) {
-//      Player player = (Player) attacker;
-//      User user = userOf(player);
-//      NoSwingMeta meta = metaOf(user);
-//      if(!meta.swungHand) {
-
-//      }
-//      meta.swungHand = false;
-//    }
-//  }
-
   @PacketSubscription(
     priority = ListenerPriority.NORMAL,
     packets = {

@@ -41,7 +41,13 @@ public final class RuntimeBlockDataIndexer {
   }
 
   public static Object modernStateFromIndex(Material type, int blockState) {
-    return blockDataRegister.get(type).get(blockState);
+    try {
+      return blockDataRegister.get(type).get(blockState);
+    } catch (Exception exception) {
+      System.out.println("[Intave] Failed to correctly emulate data structure of block type " + type + " (requested state " + blockState + ")");
+      exception.printStackTrace();
+      return blockDataRegister.get(type).get(0);
+    }
   }
 
   @PatchyAutoTranslation

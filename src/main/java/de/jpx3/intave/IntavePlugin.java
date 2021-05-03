@@ -148,7 +148,6 @@ public final class IntavePlugin extends JavaPlugin {
       TpsResolver.setup();
       Synchronizer.setup();
       ContextSecrets.setup();
-      BackgroundExecutor.start();
 
       trustFactorService = new TrustFactorService(this);
       // version mambo jumbo
@@ -156,6 +155,9 @@ public final class IntavePlugin extends JavaPlugin {
       // stage 5
       componentLoader = new ComponentLoader(this);
       componentLoader.loadComponents();
+
+      // we need to put this here
+      BackgroundExecutor.start();
 
       packetSubscriptionLinker = new PacketSubscriptionLinker(this);
 
