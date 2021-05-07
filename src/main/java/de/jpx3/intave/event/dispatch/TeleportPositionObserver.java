@@ -201,6 +201,7 @@ public final class TeleportPositionObserver implements PacketEventSubscriber {
     User user = UserRepository.userOf(player);
     UserMetaMovementData movementData = user.meta().movementData();
     movementData.awaitTeleport = true;
+    movementData.awaitOutgoingTeleport = false;
     movementData.teleportResendCountdown = 20;
     movementData.isTeleportConfirmationPacket = false;
   }

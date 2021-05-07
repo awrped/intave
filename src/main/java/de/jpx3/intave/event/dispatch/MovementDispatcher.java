@@ -198,7 +198,7 @@ public final class MovementDispatcher implements EventProcessor {
     movementData.updateMovement(packet, hasMovement, hasRotation);
     teleportPositionObserver.receiveMovement(event);
 
-    if (movementData.awaitTeleport) {
+    if (movementData.awaitTeleport || movementData.awaitOutgoingTeleport) {
       event.setCancelled(true);
       return;
     }
@@ -285,7 +285,7 @@ public final class MovementDispatcher implements EventProcessor {
 
     // flag -> remove packet
     if (movementData.invalidMovement && violationLevelData.isInActiveTeleportBundle) {
-      movementData.awaitTeleport = true; // awaiting next teleport
+      movementData.awaitOutgoingTeleport = true; // awaiting next teleport
       event.setCancelled(true);
     }
   }

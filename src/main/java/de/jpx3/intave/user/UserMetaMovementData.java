@@ -110,7 +110,7 @@ public final class UserMetaMovementData {
   public boolean willReceiveSetbackVelocity;
   public int lastTeleport;
   public int teleportId;
-  public volatile boolean awaitTeleport = false;
+  public volatile boolean awaitTeleport = false, awaitOutgoingTeleport = false;
   public Location teleportLocation = null;
   private volatile Location verifiedLocation;
   public int teleportResendCountdown = 10;
