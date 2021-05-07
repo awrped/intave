@@ -274,7 +274,7 @@ public final class UserMetaMovementData {
     }
     if (swimming || elytraFlying /*|| spinAttack */) {
       return 0.4f;
-    } else if (sneaking) {
+    } else if (lastSneaking) {
       return 1.62f - user.meta().clientData().cameraSneakOffset();
     } else {
       return 1.62f;
