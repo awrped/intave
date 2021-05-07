@@ -18,7 +18,9 @@ import de.jpx3.intave.tools.placeholder.PlayerContext;
 import de.jpx3.intave.tools.sync.Synchronizer;
 import de.jpx3.intave.world.collider.Collider;
 import de.jpx3.intave.world.collider.processor.ComplexColliderProcessor;
-import de.jpx3.intave.world.collision.BoundingBoxAccess;
+import de.jpx3.intave.world.collision.access.FastDoubleIndexOCBlockShapeAccess;
+import de.jpx3.intave.world.collision.access.OCBlockShapeAccess;
+import de.jpx3.intave.world.collision.resolver.BoundingBoxResolverFactory;
 import org.bukkit.entity.Player;
 
 import java.lang.ref.WeakReference;
@@ -35,7 +37,7 @@ public final class User {
   private final WeakReference<Object> nmsEntity;
   private final UserMeta userMeta;
   private final BukkitPermissionCache permissionCache;
-  private final BoundingBoxAccess boundingBoxAccess;
+  private final OCBlockShapeAccess blockShapeAccess;
   private final ComplexColliderProcessor colliderProcessor;
   private final boolean hasPlayer;
   private final List<UserMessageChannel> receivingUserChannels = new ArrayList<>();
@@ -57,7 +59,7 @@ public final class User {
     this.userMeta = new UserMeta(player, this);
     this.userMeta.setup();
     this.permissionCache = new BukkitPermissionCache();
-    this.boundingBoxAccess = new BoundingBoxAccess(hasOnlinePlayer() ? player() : null);
+    this.blockShapeAccess = new FastDoubleIndexOCBlockShapeAccess(player, BoundingBoxResolverFactory.resolver());
     this.colliderProcessor = Collider.suitableComplexColliderProcessorFor(this);
     if(hasPlayer) {
       Synchronizer.synchronize(this::setDefaultMessagingChannel);
@@ -153,8 +155,8 @@ public final class User {
     this.shadowRepo = shadowRepo;
   }
 
-  public BoundingBoxAccess boundingBoxAccess() {
-    return boundingBoxAccess;
+  public OCBlockShapeAccess blockShapeAccess() {
+    return blockShapeAccess;
   }
 
   public ComplexColliderProcessor colliderProcessor() {

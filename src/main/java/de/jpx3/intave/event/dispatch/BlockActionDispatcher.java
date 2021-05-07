@@ -5,6 +5,7 @@ import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.reflect.StructureModifier;
 import com.comphenix.protocol.wrappers.*;
+import com.google.common.collect.Lists;
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.adapter.MinecraftVersions;
 import de.jpx3.intave.detect.EventProcessor;
@@ -15,7 +16,7 @@ import de.jpx3.intave.event.packet.Sender;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserMetaMovementData;
 import de.jpx3.intave.user.UserRepository;
-import de.jpx3.intave.world.collision.BoundingBoxAccess;
+import de.jpx3.intave.world.collision.access.OCBlockShapeAccess;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -73,8 +74,8 @@ public final class BlockActionDispatcher implements EventProcessor {
   private void chunkInvalidate(Player player, int chunkX, int chunkZ) {
     int chunkXMinPos = chunkX << 4, chunkXMaxPos = chunkXMinPos + 16;
     int chunkZMinPos = chunkZ << 4, chunkZMaxPos = chunkZMinPos + 16;
-    BoundingBoxAccess boundingBoxAccess = UserRepository.userOf(player).boundingBoxAccess();
-    boundingBoxAccess.invalidateOverridesInBounds(chunkXMinPos, chunkXMaxPos, chunkZMinPos, chunkZMaxPos);
+    OCBlockShapeAccess blockShapeAccess = UserRepository.userOf(player).blockShapeAccess();
+    blockShapeAccess.invalidateOverridesInBounds(chunkXMinPos, chunkXMaxPos, chunkZMinPos, chunkZMaxPos);
   }
 
   @PacketSubscription(
@@ -154,7 +155,7 @@ public final class BlockActionDispatcher implements EventProcessor {
     PacketContainer packet = event.getPacket();
     PacketType packetType = event.getPacketType();
 
-    BoundingBoxAccess boundingBoxAccess = UserRepository.userOf(player).boundingBoxAccess();
+    OCBlockShapeAccess blockShapeAccess = UserRepository.userOf(player).blockShapeAccess();
 
     List<BlockPosition> blockPositions;
     List<WrappedBlockData> blockDataList;
@@ -191,7 +192,7 @@ public final class BlockActionDispatcher implements EventProcessor {
       }
     } else {
       BlockPosition position = packet.getBlockPositionModifier().readSafely(0);
-      blockPositions = Collections.singletonList(position);
+      blockPositions = Lists.newArrayList(position);
       blockDataList = Collections.singletonList(packet.getBlockData().read(0));
     }
 
@@ -204,6 +205,16 @@ public final class BlockActionDispatcher implements EventProcessor {
       }
     }
 
+
+//    for (Iterator<BlockPosition> iterator = blockPositions.iterator(); iterator.hasNext(); ) {
+//      BlockPosition blockPosition = iterator.next();
+//
+//      if()
+//
+//      iterator.remove();
+//
+//    }
+
     World world = player.getWorld();
     if (transactionSynchronize) {
       plugin.eventService().transactionFeedbackService().requestPong(player, null, (player1, target) -> {
@@ -211,16 +222,16 @@ public final class BlockActionDispatcher implements EventProcessor {
           BlockPosition blockPosition = blockPositions.get(i);
           WrappedBlockData blockData = blockDataList.get(i);
           Material material = blockData.getType();
-          boundingBoxAccess.override(world, blockPosition.getX(), blockPosition.getY(), blockPosition.getZ(), material, blockData.getData());
-          boundingBoxAccess.invalidate(blockPosition.getX(), blockPosition.getY(), blockPosition.getZ());
+          blockShapeAccess.override(world, blockPosition.getX(), blockPosition.getY(), blockPosition.getZ(), material, blockData.getData());
+          blockShapeAccess.invalidate(blockPosition.getX(), blockPosition.getY(), blockPosition.getZ());
         }
       });
     } else {
       for (int i = 0; i < blockPositions.size(); i++) {
         BlockPosition blockPosition = blockPositions.get(i);
         WrappedBlockData blockData = blockDataList.get(i);
-        boundingBoxAccess.override(world, blockPosition.getX(), blockPosition.getY(), blockPosition.getZ(), blockData.getType(), blockData.getData());
-        boundingBoxAccess.invalidate(blockPosition.getX(), blockPosition.getY(), blockPosition.getZ());
+        blockShapeAccess.override(world, blockPosition.getX(), blockPosition.getY(), blockPosition.getZ(), blockData.getType(), blockData.getData());
+        blockShapeAccess.invalidate(blockPosition.getX(), blockPosition.getY(), blockPosition.getZ());
       }
     }
   }

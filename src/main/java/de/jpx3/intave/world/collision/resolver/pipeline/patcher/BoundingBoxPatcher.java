@@ -1,4 +1,4 @@
-package de.jpx3.intave.world.collision.patches;
+package de.jpx3.intave.world.collision.resolver.pipeline.patcher;
 
 import de.jpx3.intave.logging.IntaveLogger;
 import de.jpx3.intave.tools.wrapper.WrappedAxisAlignedBB;
@@ -7,10 +7,7 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public final class BoundingBoxPatcher {
   private final static Map<Material, BoundingBoxPatch> patches = new HashMap<>();
@@ -34,25 +31,21 @@ public final class BoundingBoxPatcher {
     }
   }
 
-  private static void add(BoundingBoxPatch boundingBoxPatch) {
-    for (Material type : Material.values()) {
-      if(boundingBoxPatch.appliesTo(type)) {
-        patches.put(type, boundingBoxPatch);
-      }
-    }
+  private static void add(BoundingBoxPatch patch) {
+    Arrays.stream(Material.values()).filter(patch::appliesTo).forEach(type -> patches.put(type, patch));
   }
 
   public static List<WrappedAxisAlignedBB> patch(World world, Player player, Block block, List<WrappedAxisAlignedBB> bbs) {
-    BoundingBoxPatch boundingBoxPatch = patches.get(block.getType());
-    return boundingBoxPatch == null ? bbs : transpose(boundingBoxPatch.patch(world, player, block, reposeIfRequired(boundingBoxPatch, bbs, block.getX(), block.getY(), block.getZ())), block.getX(), block.getY(), block.getZ());
+    BoundingBoxPatch patch = patches.get(block.getType());
+    return patch == null ? bbs : transpose(patch.patch(world, player, block, reposeIfRequired(patch, bbs, block.getX(), block.getY(), block.getZ())), block.getX(), block.getY(), block.getZ());
   }
 
   public static List<WrappedAxisAlignedBB> patch(World world, Player player, int blockX, int blockY, int blockZ, Material type, int blockState, List<WrappedAxisAlignedBB> boxes) {
-    BoundingBoxPatch boundingBoxPatch = patches.get(type);
-    return boundingBoxPatch == null ? boxes : transpose(boundingBoxPatch.patch(world, player, type, blockState, reposeIfRequired(boundingBoxPatch, boxes, blockX, blockY, blockZ)), blockX, blockY, blockZ);
+    BoundingBoxPatch patch = patches.get(type);
+    return patch == null ? boxes : transpose(patch.patch(world, player, type, blockState, reposeIfRequired(patch, boxes, blockX, blockY, blockZ)), blockX, blockY, blockZ);
   }
 
-  public static List<WrappedAxisAlignedBB> transpose(List<WrappedAxisAlignedBB> boundingBoxes, int posX, int posY, int posZ) {
+  private static List<WrappedAxisAlignedBB> transpose(List<WrappedAxisAlignedBB> boundingBoxes, int posX, int posY, int posZ) {
     if(boundingBoxes.isEmpty()) {
       return boundingBoxes;
     }
@@ -65,7 +58,7 @@ public final class BoundingBoxPatcher {
     return boundingBoxes;
   }
 
-  public static List<WrappedAxisAlignedBB> reposeIfRequired(BoundingBoxPatch patch, List<WrappedAxisAlignedBB> boundingBoxes, int posX, int posY, int posZ) {
+  private static List<WrappedAxisAlignedBB> reposeIfRequired(BoundingBoxPatch patch, List<WrappedAxisAlignedBB> boundingBoxes, int posX, int posY, int posZ) {
     if(!patch.requireRepose() || boundingBoxes.isEmpty()) {
       return boundingBoxes;
     }

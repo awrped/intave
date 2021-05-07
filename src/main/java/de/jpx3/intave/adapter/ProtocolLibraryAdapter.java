@@ -21,9 +21,13 @@ public final class ProtocolLibraryAdapter {
       throw new InvalidDependencyException("Your version of ProtocolLib is outdated (missing generic enum conversion)");
     }
 
+    if(!methodExists(MinecraftVersion.class.getName(), "atOrAbove")) {
+      throw new InvalidDependencyException("Your version of ProtocolLib is outdated (atOrAbove check missing)");
+    }
+
     if(MinecraftVersions.VER1_14_0.atOrAbove()) {
       if(!methodExists("com.comphenix.protocol.events.PacketContainer", "getMovingBlockPositions")) {
-        throw new InvalidDependencyException("Your version of ProtocolLib is outdated (missing MOP packet access)");
+        throw new InvalidDependencyException("Your version of ProtocolLib is outdated (missing moving-object-position packet access)");
       }
     }
   }

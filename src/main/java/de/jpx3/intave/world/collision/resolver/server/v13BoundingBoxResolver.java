@@ -1,44 +1,38 @@
-package de.jpx3.intave.world.collision.resolver;
+package de.jpx3.intave.world.collision.resolver.server;
 
 import de.jpx3.intave.patchy.annotate.PatchyAutoTranslation;
 import de.jpx3.intave.tools.wrapper.WrappedAxisAlignedBB;
 import de.jpx3.intave.world.blockaccess.BlockDataAccess;
 import de.jpx3.intave.world.blockaccess.BukkitBlockAccess;
-import de.jpx3.intave.world.blockaccess.RuntimeBlockDataIndexer;
-import de.jpx3.intave.world.collision.BoundingBoxResolver;
-import net.minecraft.server.v1_14_R1.*;
+import de.jpx3.intave.world.collision.resolver.BoundingBoxResolvePipelineElement;
+import net.minecraft.server.v1_13_R2.*;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
-import org.bukkit.craftbukkit.v1_14_R1.CraftWorld;
-import org.bukkit.craftbukkit.v1_14_R1.util.CraftMagicNumbers;
+import org.bukkit.craftbukkit.v1_13_R2.CraftWorld;
+import org.bukkit.craftbukkit.v1_13_R2.util.CraftMagicNumbers;
+import org.bukkit.entity.Player;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @PatchyAutoTranslation
-public final class v14BoundingBoxResolver implements BoundingBoxResolver {
+public final class v13BoundingBoxResolver implements BoundingBoxResolvePipelineElement {
   @Override
   @PatchyAutoTranslation
-  public List<WrappedAxisAlignedBB> resolve(World world, Material advanceType, int posX, int posY, int posZ) {
+  public List<WrappedAxisAlignedBB> nativeResolve(World world, Player player, Material type, int blockState, int posX, int posY, int posZ) {
     Location location = new Location(world, posX, posY, posZ);
     org.bukkit.block.Block block = BukkitBlockAccess.blockAccess(location);
-
-    return resolve(world, posX, posY, posZ, advanceType, BlockDataAccess.dataIndexOf(block));
+    return customResolve(world, player, type, BlockDataAccess.dataIndexOf(block), posX, posY, posZ);
   }
 
   @Override
   @PatchyAutoTranslation
-  public List<WrappedAxisAlignedBB> resolve(World world, int posX, int posY, int posZ, Material type, int blockState) {
+  public List<WrappedAxisAlignedBB> customResolve(World world, Player player, Material type, int blockState, int posX, int posY, int posZ) {
     WorldServer handle = ((CraftWorld) world).getHandle();
     BlockPosition blockPosition = new BlockPosition(posX, posY, posZ);
-    IBlockData blockData;
-    if(BlockDataAccess.isLegacy(type)) {
-      blockData = CraftMagicNumbers.getBlock(type, (byte) blockState);
-    } else {
-      blockData = (IBlockData) RuntimeBlockDataIndexer.modernStateFromIndex(type, blockState);
-    }
+    IBlockData blockData = CraftMagicNumbers.getBlock(type, (byte) blockState);
     if(blockData == null) {
       return Collections.emptyList();
     }

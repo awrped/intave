@@ -351,10 +351,10 @@ public final class Physics extends IntaveCheck {
     if (distance > 1e-3) {
       movementData.suspiciousMovement = true;
       ComplexColliderSimulationResult entityCollisionResult = simulationService.simulateMovementWithoutKeyPress(user);
-      MotionVector setbackContext = entityCollisionResult.context();
-      predictedX = setbackContext.motionX;
-      predictedY = setbackContext.motionY;
-      predictedZ = setbackContext.motionZ;
+      MotionVector setbackMotion = entityCollisionResult.context();
+      predictedX = setbackMotion.motionX;
+      predictedY = setbackMotion.motionY;
+      predictedZ = setbackMotion.motionZ;
     }
 
     if (flying || spectator) {
@@ -385,13 +385,13 @@ public final class Physics extends IntaveCheck {
         double blockPositionY = (boundingBox.minY + boundingBox.maxY) / 2.0;
         double blockPositionZ = (boundingBox.minZ + boundingBox.maxZ) / 2.0;
         Block block = BukkitBlockAccess.blockAccess(player.getWorld(), blockPositionX, blockPositionY, blockPositionZ);
-        boolean currentlyInOverride = user.boundingBoxAccess().currentlyInOverride(WrappedMathHelper.floor(blockPositionX), WrappedMathHelper.floor(blockPositionY), WrappedMathHelper.floor(blockPositionZ));
+        boolean currentlyInOverride = user.blockShapeAccess().currentlyInOverride(WrappedMathHelper.floor(blockPositionX), WrappedMathHelper.floor(blockPositionY), WrappedMathHelper.floor(blockPositionZ));
 
         String message = "moved into " + (currentlyInOverride ? "emulated" : "") + " " + shortenTypeName(block.getType()) + " block";
         boolean multipleBoxes = intersectionBoundingBoxesCurrent.size() > 1;
         String details = (multipleBoxes ? intersectionBoundingBoxesCurrent.size() : "one") + " box" + (multipleBoxes ? "es" : "");
 
-        user.boundingBoxAccess().identityInvalidate();
+        user.blockShapeAccess().identityInvalidate();
 
         Violation violation = Violation.builderFor(Physics.class)
           .withPlayer(player).withMessage(message).withDetails(details)
@@ -420,7 +420,7 @@ public final class Physics extends IntaveCheck {
 
         if (!startBoundingBoxInList) {
           movementData.invalidMovement = true;
-          user.boundingBoxAccess().identityInvalidate();
+          user.blockShapeAccess().identityInvalidate();
 
           WrappedAxisAlignedBB boundingBox = intersectionBoundingBoxesCurrent.get(0);
           double blockPositionX = (boundingBox.minX + boundingBox.maxX) / 2.0;
@@ -457,7 +457,7 @@ public final class Physics extends IntaveCheck {
       violationLevelIncrease = Math.max(1, violationLevelIncrease);
       violationLevelData.physicsVL += violationLevelIncrease;
       violationLevelData.physicsInvalidMovementsInRow++;
-      user.boundingBoxAccess().invalidate();
+      user.blockShapeAccess().invalidate();
       statistics().increaseFails();
     } else {
       violationLevelData.physicsInvalidMovementsInRow = 0;
@@ -476,7 +476,7 @@ public final class Physics extends IntaveCheck {
         details += ", velocity";
       }
 
-      user.boundingBoxAccess().identityInvalidate();
+      user.blockShapeAccess().identityInvalidate();
 
       Violation violation = Violation.builderFor(Physics.class)
         .withPlayer(player).withMessage(message).withDetails(details)

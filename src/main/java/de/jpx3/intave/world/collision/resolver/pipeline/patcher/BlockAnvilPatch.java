@@ -1,4 +1,4 @@
-package de.jpx3.intave.world.collision.patches;
+package de.jpx3.intave.world.collision.resolver.pipeline.patcher;
 
 import de.jpx3.intave.tools.wrapper.WrappedAxisAlignedBB;
 import de.jpx3.intave.world.blockaccess.BlockDataAccess;

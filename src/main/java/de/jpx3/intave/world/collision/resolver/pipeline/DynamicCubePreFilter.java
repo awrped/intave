@@ -1,0 +1,67 @@
+package de.jpx3.intave.world.collision.resolver.pipeline;
+
+import de.jpx3.intave.diagnostics.BoundingBoxAccessFlowStudy;
+import de.jpx3.intave.tools.wrapper.WrappedAxisAlignedBB;
+import de.jpx3.intave.world.collision.resolver.BoundingBoxResolvePipelineElement;
+import org.bukkit.Material;
+import org.bukkit.World;
+import org.bukkit.entity.Player;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+public final class DynamicCubePreFilter implements BoundingBoxResolvePipelineElement {
+  private final BoundingBoxResolvePipelineElement forward;
+  private final Set<Material> solidMaterials = new HashSet<>();
+  private final Set<Material> otherMaterials = new HashSet<>();
+
+  public DynamicCubePreFilter(BoundingBoxResolvePipelineElement forward) {
+    this.forward = forward;
+  }
+
+  @Override
+  @Deprecated
+  public List<WrappedAxisAlignedBB> nativeResolve(World world, Player player, Material type, int blockState, int posX, int posY, int posZ) {
+    if (solidMaterials.contains(type)) {
+      BoundingBoxAccessFlowStudy.increaseDynamic();
+      return Collections.singletonList(new WrappedAxisAlignedBB(posX, posY, posZ, posX + 1, posY + 1, posZ + 1));
+    } else if (otherMaterials.contains(type)) {
+      return forward.nativeResolve(world, player, type, blockState, posX, posY, posZ);
+    }
+    List<WrappedAxisAlignedBB> resolve = forward.nativeResolve(world, player, type, blockState, posX, posY, posZ);
+    if (isInLoadedChunk(world, posX, posZ)) {
+      (isSolid(resolve, posX, posY, posZ) ? solidMaterials : otherMaterials).add(type);
+    }
+    return resolve;
+  }
+
+  @Override
+  public List<WrappedAxisAlignedBB> customResolve(World world, Player player, Material type, int blockState, int posX, int posY, int posZ) {
+    if (solidMaterials.contains(type)) {
+      BoundingBoxAccessFlowStudy.increaseDynamic();
+      return Collections.singletonList(new WrappedAxisAlignedBB(posX, posY, posZ, posX + 1, posY + 1, posZ + 1));
+    } else if (otherMaterials.contains(type)) {
+      return forward.customResolve(world, player, type, blockState, posX, posY, posZ);
+    }
+    List<WrappedAxisAlignedBB> resolve = forward.customResolve(world, player, type, blockState, posX, posY, posZ);
+    if (isInLoadedChunk(world, posX, posZ)) {
+      (isSolid(resolve, posX, posY, posZ) ? solidMaterials : otherMaterials).add(type);
+    }
+    return resolve;
+  }
+
+  public static boolean isInLoadedChunk(World world, int x, int z) {
+    return world.isChunkLoaded(x >> 4, z >> 4);
+  }
+
+  private boolean isSolid(List<WrappedAxisAlignedBB> resolve, int posX, int posY, int posZ) {
+    if (resolve.size() != 1) {
+      return false;
+    }
+    WrappedAxisAlignedBB theBox = resolve.get(0).offset(-posX, -posY, -posZ);
+    return theBox.minX == 0 && theBox.minY == 0 && theBox.minZ == 0 &&
+      theBox.maxX == 1 && theBox.maxY == 1 && theBox.maxZ == 1;
+  }
+}

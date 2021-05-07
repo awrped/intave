@@ -5,7 +5,8 @@ import de.jpx3.intave.patchy.annotate.PatchyTranslateParameters;
 import de.jpx3.intave.tools.wrapper.WrappedMovingObjectPosition;
 import de.jpx3.intave.tools.wrapper.WrappedVector;
 import de.jpx3.intave.user.UserRepository;
-import de.jpx3.intave.world.collision.BoundingBoxAccess;
+import de.jpx3.intave.world.collision.access.BlockShape;
+import de.jpx3.intave.world.collision.access.OCBlockShapeAccess;
 import net.minecraft.server.v1_8_R3.*;
 import org.bukkit.World;
 import org.bukkit.craftbukkit.v1_8_R3.CraftWorld;
@@ -144,10 +145,10 @@ public final class LegacyVersionRaytracer implements VersionRaytracer {
   @PatchyAutoTranslation
   @PatchyTranslateParameters
   private IBlockData typeOf(Player player, WorldServer world, BlockPosition blockPosition) {
-    BoundingBoxAccess boundingBoxAccess = UserRepository.userOf(player).boundingBoxAccess();
-    BoundingBoxAccess.CacheEntry cacheEntry = boundingBoxAccess.overrideOf(blockPosition.getX(), blockPosition.getY(), blockPosition.getZ());
-    if(cacheEntry != null) {
-      return Block.getById(cacheEntry.type().getId()).fromLegacyData(cacheEntry.data());
+    OCBlockShapeAccess blockShapeAccess = UserRepository.userOf(player).blockShapeAccess();
+    BlockShape shape = blockShapeAccess.overrideOf(blockPosition.getX(), blockPosition.getY(), blockPosition.getZ());
+    if(shape != null) {
+      return Block.getById(shape.type().getId()).fromLegacyData(shape.data());
     } else {
       return world.getType(blockPosition);
     }

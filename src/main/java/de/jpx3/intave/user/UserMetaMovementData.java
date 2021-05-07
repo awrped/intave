@@ -162,13 +162,13 @@ public final class UserMetaMovementData {
   }
 
   public void applySizeUpdate() {
-//    if(user.meta().clientData().roundEnvironmentNumbers()) {
-//      widthRounded = Math.round(width * 500d) / 1000d;
-//      heightRounded = Math.round(height * 10000d) / 10000d;
-//    } else {
-    widthRounded = Math.round(width * 500000000000000d) / 1000000000000000d;
-    heightRounded = Math.round(height * 100000000000000d) / 100000000000000d;
-//    }
+    if(user.meta().clientData().roundEnvironmentNumbers()) {
+      widthRounded = Math.round(width * 500d) / 1000d;
+      heightRounded = Math.round(height * 10000d) / 10000d;
+    } else {
+      widthRounded = Math.round(width * 500000000000000d) / 1000000000000000d;
+      heightRounded = Math.round(height * 100000000000000d) / 100000000000000d;
+    }
   }
 
   public void updateWorld() {
@@ -194,9 +194,9 @@ public final class UserMetaMovementData {
 
     if (hasMovement) {
       StructureModifier<Double> modifier = packet.getDoubles();
-      positionX = modifier.read(0);
-      positionY = modifier.read(1);
-      positionZ = modifier.read(2);
+      positionX = round(modifier.read(0));
+      positionY = round(modifier.read(1));
+      positionZ = round(modifier.read(2));
 
       motionX = positionX - verifiedPositionX;
       motionY = positionY - verifiedPositionY;
@@ -226,6 +226,12 @@ public final class UserMetaMovementData {
       yawSine = SinusCache.sin(rotationYaw * (float) Math.PI / 180.0F, false);
       yawCosine = SinusCache.cos(rotationYaw * (float) Math.PI / 180.0F, false);
     }
+  }
+
+  private double round(double input) {
+//    double factor = 100000000000000d;
+//    return Math.round(input * factor) / factor;
+    return input;
   }
 
   private float jumpUpwardsMotion() {

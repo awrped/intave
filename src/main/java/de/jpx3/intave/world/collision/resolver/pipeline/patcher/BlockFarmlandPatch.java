@@ -1,4 +1,4 @@
-package de.jpx3.intave.world.collision.patches;
+package de.jpx3.intave.world.collision.resolver.pipeline.patcher;
 
 import de.jpx3.intave.tools.wrapper.WrappedAxisAlignedBB;
 import de.jpx3.intave.user.User;
@@ -12,22 +12,20 @@ import org.bukkit.entity.Player;
 
 import java.util.List;
 
-public final class BlockLilyPadPatch extends BoundingBoxPatch {
+public final class BlockFarmlandPatch extends BoundingBoxPatch {
   @Override
-  public List<WrappedAxisAlignedBB> patch(World world, Player player, Block block, List<WrappedAxisAlignedBB> bbs) {
+  protected List<WrappedAxisAlignedBB> patch(World world, Player player, Block block, List<WrappedAxisAlignedBB> bbs) {
     return patch(world, player, block.getType(), BlockDataAccess.dataIndexOf(block), bbs);
   }
 
   @Override
-  public List<WrappedAxisAlignedBB> patch(World world, Player player, Material type, int blockState, List<WrappedAxisAlignedBB> bbs) {
+  protected List<WrappedAxisAlignedBB> patch(World world, Player player, Material type, int blockState, List<WrappedAxisAlignedBB> bbs) {
     User user = UserRepository.userOf(player);
     BoundingBoxBuilder builder = BoundingBoxBuilder.create();
-    if (user.meta().clientData().combatUpdate()) {
-      builder.shape(0.0625f, 0.0f, 0.0625f, 0.9375f, 0.09375f, 0.9375f);
+    if(user.meta().clientData().protocolVersion() > 210 /* 1.10.1*/) {
+      builder.shape(0, 0, 0, 1, 0.9375f, 1);
     } else {
-      float radius = 0.5F;
-      float height = 0.015625F;
-      builder.shape(0.5F - radius, 0.0F, 0.5F - radius, 0.5F + radius, height, 0.5F + radius);
+      builder.shape(0,0,0,1,1, 1);
     }
     return builder.applyAndResolve();
   }
@@ -35,6 +33,6 @@ public final class BlockLilyPadPatch extends BoundingBoxPatch {
   @Override
   public boolean appliesTo(Material material) {
     String name = material.name();
-    return name.contains("WATER_LILY");
+    return name.equals("SOIL") || name.equals("FARMLAND");
   }
 }

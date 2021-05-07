@@ -7,7 +7,11 @@ import de.jpx3.intave.tools.wrapper.WrappedMathHelper;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserMetaMovementData;
 import de.jpx3.intave.user.UserRepository;
+import de.jpx3.intave.world.blockaccess.BlockDataAccess;
 import de.jpx3.intave.world.blockaccess.BukkitBlockAccess;
+import de.jpx3.intave.world.collision.access.OCBlockShapeAccess;
+import de.jpx3.intave.world.collision.resolver.BoundingBoxResolvePipelineElement;
+import de.jpx3.intave.world.collision.resolver.BoundingBoxResolverFactory;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -22,7 +26,7 @@ import java.util.function.Function;
 
 @Relocate
 public final class Collision {
-  private final static BoundingBoxResolver boundingBoxResolver = BoundingBoxAccess.globalBoundingBoxResolver();
+  private final static BoundingBoxResolvePipelineElement boundingBoxResolver = BoundingBoxResolverFactory.resolver();
 
   public static List<WrappedAxisAlignedBB> resolve(Player player, WrappedAxisAlignedBB playerBoundingBox) {
     int minX = WrappedMathHelper.floor(playerBoundingBox.minX);
@@ -47,7 +51,7 @@ public final class Collision {
       movementData.outsideBorder = true;
     }
 
-    BoundingBoxAccess boundingBoxAccess = user.boundingBoxAccess();
+    OCBlockShapeAccess blockShapeAccess = user.blockShapeAccess();
     World world = player.getWorld();
 
     // this looks 1000x slower than it actually is
@@ -63,7 +67,7 @@ public final class Collision {
           for (int x = xstart; x < xend; ++x) {
             for (int z = zstart; z < zend; ++z) {
               for (int y = ystart; y < maxY; ++y) {
-                List<WrappedAxisAlignedBB> resolve = boundingBoxAccess.resolveBoxes(chunkx, chunkz, x, y, z);
+                List<WrappedAxisAlignedBB> resolve = blockShapeAccess.resolveBoxes(chunkx, chunkz, x, y, z);
 
                 boolean positionInBorder = !blockOutsideBorder(world, x, z);
                 if (positionInBorder && !movementData.outsideBorder) {
@@ -123,8 +127,10 @@ public final class Collision {
           for (int x = xstart; x < xend; ++x) {
             for (int z = zstart; z < zend; ++z) {
               for (int y = ystart; y < maxY; ++y) {
-                Material type = BukkitBlockAccess.blockAccess(world, x, y, z).getType();
-                List<WrappedAxisAlignedBB> resolve = boundingBoxResolver.resolve(world, type, x, y, z);
+                Block block = BukkitBlockAccess.blockAccess(world, x, y, z);
+                Material type = block.getType();
+                int data = BlockDataAccess.dataIndexOf(block);
+                List<WrappedAxisAlignedBB> resolve = boundingBoxResolver.customResolve(world, null, type, data, x, y, z);
 
                 boolean insideBorder = !blockOutsideBorder(world, x, z);
                 if (insideBorder) {
@@ -193,7 +199,7 @@ public final class Collision {
   }
 
   public static boolean playerInImaginaryBlock(User user, World world, int posX, int posY, int posZ, Material type, int data) {
-    List<WrappedAxisAlignedBB> boundingBoxes = user.boundingBoxAccess().constructBlock(world, posX, posY, posZ, type, data);
+    List<WrappedAxisAlignedBB> boundingBoxes = user.blockShapeAccess().constructBlock(world, posX, posY, posZ, type, data);
     if (boundingBoxes == null || boundingBoxes.isEmpty()) {
       return false;
     }

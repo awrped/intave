@@ -34,8 +34,8 @@ import de.jpx3.intave.user.UserMetaInventoryData;
 import de.jpx3.intave.user.UserMetaMovementData;
 import de.jpx3.intave.world.blockaccess.BlockDataAccess;
 import de.jpx3.intave.world.blockaccess.BukkitBlockAccess;
-import de.jpx3.intave.world.collision.BoundingBoxAccess;
 import de.jpx3.intave.world.collision.Collision;
+import de.jpx3.intave.world.collision.access.OCBlockShapeAccess;
 import de.jpx3.intave.world.permission.WorldPermission;
 import de.jpx3.intave.world.raytrace.Raytracer;
 import org.bukkit.GameMode;
@@ -385,11 +385,11 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
       (byte) 0
     );
     if(access) {
-      BoundingBoxAccess boundingBoxAccess = userOf(player).boundingBoxAccess();
-      boundingBoxAccess.override(world, blockX, blockY, blockZ, replacementType, shape);
+      OCBlockShapeAccess blockShapeAccess = userOf(player).blockShapeAccess();
+      blockShapeAccess.override(world, blockX, blockY, blockZ, replacementType, shape);
       // enforce block reset later
       Synchronizer.packetSynchronize(() -> {
-        Synchronizer.synchronize(() -> boundingBoxAccess.invalidateOverride(blockX, blockY, blockZ));
+        Synchronizer.synchronize(() -> blockShapeAccess.invalidateOverride(blockX, blockY, blockZ));
       });
     } else {
       return false;
@@ -401,9 +401,9 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
   public void onPre(BlockPlaceEvent place) {
     if(place.getClass().equals(BlockPlaceEvent.class)) {
       Block block = place.getBlock();
-      BoundingBoxAccess boundingBoxAccess = userOf(place.getPlayer()).boundingBoxAccess();
-      boundingBoxAccess.invalidate(block.getX(), block.getY(), block.getZ());
-      boundingBoxAccess.invalidateOverride(block.getX(), block.getY(), block.getZ());
+      OCBlockShapeAccess blockShapeAccess = userOf(place.getPlayer()).blockShapeAccess();
+      blockShapeAccess.invalidate(block.getX(), block.getY(), block.getZ());
+      blockShapeAccess.invalidateOverride(block.getX(), block.getY(), block.getZ());
     }
   }
 
@@ -424,7 +424,7 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
     Location placementLocation,
     Material itemTypeInHand
   ) {
-    BoundingBoxAccess boundingBoxAccess = userOf(player).boundingBoxAccess();
+    OCBlockShapeAccess blockShapeAccess = userOf(player).blockShapeAccess();
     World world = player.getWorld();
     Material placementType = placementLocation.getBlock().getType();
     switch (itemTypeInHand) {
@@ -433,7 +433,7 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
         if(MaterialLogic.isLiquid(placementType)) {
           // emulate
           if (WorldPermission.bukkitActionPermission(player, BucketAction.FILL_BUCKET, clickedBlock, BlockFace.SELF, itemTypeInHand, null)) {
-            boundingBoxAccess.override(world, placementLocation.getBlockX(), placementLocation.getBlockY(), placementLocation.getBlockZ(), Material.AIR, 0);
+            blockShapeAccess.override(world, placementLocation.getBlockX(), placementLocation.getBlockY(), placementLocation.getBlockZ(), Material.AIR, 0);
           }
         }
         break;
@@ -442,7 +442,7 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
       case LAVA_BUCKET: {
         // emulate
         if (WorldPermission.bukkitActionPermission(player, BucketAction.EMPTY_BUCKET, clickedBlock, BlockFace.SELF, itemTypeInHand, null)) {
-          boundingBoxAccess.override(world, placementLocation.getBlockX(), placementLocation.getBlockY(), placementLocation.getBlockZ(), itemTypeInHand == Material.WATER_BUCKET ? Material.WATER : Material.LAVA, 15);
+          blockShapeAccess.override(world, placementLocation.getBlockX(), placementLocation.getBlockY(), placementLocation.getBlockZ(), itemTypeInHand == Material.WATER_BUCKET ? Material.WATER : Material.LAVA, 15);
         }
         break;
       }
@@ -451,7 +451,7 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
 
   private void emulatePhysicalInteract(Player player, Block block) {
     World world = player.getWorld();
-    BoundingBoxAccess boundingBoxAccess = userOf(player).boundingBoxAccess();
+    OCBlockShapeAccess blockShapeAccess = userOf(player).blockShapeAccess();
     Material clickedType = block.getType();
     switch (clickedType) {
       case WOODEN_DOOR: {
@@ -473,8 +473,8 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
         int bitMask = 4;
         byte newData = (byte) (!newOpen ? (data | bitMask) : (data & ~bitMask));
         Material material = block.getType();
-        boundingBoxAccess.override(world, block.getX(), block.getY(), block.getZ(), material, newData);
-        Synchronizer.packetSynchronize(() -> boundingBoxAccess.invalidateOverride(block.getX(), block.getY(), block.getZ()));
+        blockShapeAccess.override(world, block.getX(), block.getY(), block.getZ(), material, newData);
+        Synchronizer.packetSynchronize(() -> blockShapeAccess.invalidateOverride(block.getX(), block.getY(), block.getZ()));
         break;
       }
     }
@@ -484,18 +484,18 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
   public void on(PlayerBucketFillEvent fill) {
     Player player = fill.getPlayer();
     Block block = fill.getBlockClicked().getRelative(fill.getBlockFace());
-    BoundingBoxAccess boundingBoxAccess = userOf(player).boundingBoxAccess();
-    boundingBoxAccess.invalidate(block.getX(), block.getY(), block.getZ());
-    boundingBoxAccess.invalidateOverride(block.getX(), block.getY(), block.getZ());
+    OCBlockShapeAccess blockShapeAccess = userOf(player).blockShapeAccess();
+    blockShapeAccess.invalidate(block.getX(), block.getY(), block.getZ());
+    blockShapeAccess.invalidateOverride(block.getX(), block.getY(), block.getZ());
   }
 
   @BukkitEventSubscription
   public void on(PlayerBucketEmptyEvent empty) {
     Player player = empty.getPlayer();
     Block block = empty.getBlockClicked().getRelative(empty.getBlockFace());
-    BoundingBoxAccess boundingBoxAccess = userOf(player).boundingBoxAccess();
-    boundingBoxAccess.invalidate(block.getX(), block.getY(), block.getZ());
-    boundingBoxAccess.invalidateOverride(block.getX(), block.getY(), block.getZ());
+    OCBlockShapeAccess blockShapeAccess = userOf(player).blockShapeAccess();
+    blockShapeAccess.invalidate(block.getX(), block.getY(), block.getZ());
+    blockShapeAccess.invalidateOverride(block.getX(), block.getY(), block.getZ());
   }
 
   private boolean emulateBreak(Player player, Interaction interaction) {
@@ -510,8 +510,8 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
       int blockY = blockBreakLocation.getBlockY();
       int blockZ = blockBreakLocation.getBlockZ();
       // add to future bounding boxes
-      BoundingBoxAccess boundingBoxAccess = userOf(player).boundingBoxAccess();
-      boundingBoxAccess.override(world, blockX, blockY, blockZ, Material.AIR, (byte) 0);
+      OCBlockShapeAccess blockShapeAccess = userOf(player).blockShapeAccess();
+      blockShapeAccess.override(world, blockX, blockY, blockZ, Material.AIR, (byte) 0);
 
 //      player.sendMessage("Cleared " + blockX + " " + blockY + " " + blockZ + " with AIR");
     }
@@ -521,9 +521,9 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
   @BukkitEventSubscription(ignoreCancelled = true)
   public void onPre(BlockBreakEvent breeak) {
     Block block = breeak.getBlock();
-    BoundingBoxAccess boundingBoxAccess = userOf(breeak.getPlayer()).boundingBoxAccess();
-    boundingBoxAccess.invalidate(block.getX(), block.getY(), block.getZ());
-    boundingBoxAccess.invalidateOverride(block.getX(), block.getY(), block.getZ());
+    OCBlockShapeAccess blockShapeAccess = userOf(breeak.getPlayer()).blockShapeAccess();
+    blockShapeAccess.invalidate(block.getX(), block.getY(), block.getZ());
+    blockShapeAccess.invalidateOverride(block.getX(), block.getY(), block.getZ());
   }
 
   private void emulatePacket(
@@ -538,7 +538,7 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
     Player player = interaction.player();
     User user = userOf(player);
     ResponseType response = interaction.type().response();
-    BoundingBoxAccess boundingBoxAccess = user.boundingBoxAccess();
+    OCBlockShapeAccess blockShapeAccess = user.blockShapeAccess();
     if (enforceCancel) {
       response = ResponseType.CANCEL;
     }
@@ -548,7 +548,7 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
       if (hitMiss || raycastResult == null) {
         if (canRefreshBlocks) {
           refreshBlocksAround(player, targetLocation);
-          boundingBoxAccess.invalidateOverride(targetLocation.getBlockX(), targetLocation.getBlockY(), targetLocation.getBlockZ());
+          blockShapeAccess.invalidateOverride(targetLocation.getBlockX(), targetLocation.getBlockY(), targetLocation.getBlockZ());
         }
       } else {
         PacketContainer packet = interaction.thePacket();
@@ -566,7 +566,7 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
             );
             if (raytraceCollidesWithPosition) {
               refreshBlocksAround(player, targetLocation);
-              boundingBoxAccess.invalidateOverride(targetLocation.getBlockX(), targetLocation.getBlockY(), targetLocation.getBlockZ());
+              blockShapeAccess.invalidateOverride(targetLocation.getBlockX(), targetLocation.getBlockY(), targetLocation.getBlockZ());
               return;
             }
           }

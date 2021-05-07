@@ -1,37 +1,38 @@
-package de.jpx3.intave.world.collision.resolver;
+package de.jpx3.intave.world.collision.resolver.server;
 
 import de.jpx3.intave.patchy.annotate.PatchyAutoTranslation;
 import de.jpx3.intave.tools.wrapper.WrappedAxisAlignedBB;
 import de.jpx3.intave.tools.wrapper.link.WrapperLinkage;
-import de.jpx3.intave.world.collision.BoundingBoxResolver;
-import de.jpx3.intave.world.collision.resolver.ac.v9AlwaysCollidingBoundingBox;
-import net.minecraft.server.v1_9_R2.*;
+import de.jpx3.intave.world.collision.resolver.BoundingBoxResolvePipelineElement;
+import de.jpx3.intave.world.collision.resolver.acbbs.v8AlwaysCollidingBoundingBox;
+import net.minecraft.server.v1_8_R3.*;
 import org.bukkit.World;
-import org.bukkit.craftbukkit.v1_9_R2.CraftChunk;
-import org.bukkit.craftbukkit.v1_9_R2.CraftWorld;
+import org.bukkit.craftbukkit.v1_8_R3.CraftChunk;
+import org.bukkit.craftbukkit.v1_8_R3.CraftWorld;
+import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 @PatchyAutoTranslation
-public final class v9BoundingBoxResolver implements BoundingBoxResolver {
-  private final static v9AlwaysCollidingBoundingBox ALWAYS_COLLIDING_BOX = new v9AlwaysCollidingBoundingBox();
+public final class v8BoundingBoxResolver implements BoundingBoxResolvePipelineElement {
+  private final static v8AlwaysCollidingBoundingBox ALWAYS_COLLIDING_BOX = new v8AlwaysCollidingBoundingBox();
 
   @Override
   @PatchyAutoTranslation
-  public List<WrappedAxisAlignedBB> resolve(World world, org.bukkit.Material advanceType, int posX, int posY, int posZ) {
+  public List<WrappedAxisAlignedBB> nativeResolve(World world, Player player, org.bukkit.Material type, int blockState, int posX, int posY, int posZ) {
     Chunk handle = ((CraftChunk) world.getChunkAt(posX >> 4, posZ >> 4)).getHandle();
     BlockPosition blockposition = new BlockPosition(posX, posY, posZ);
     IBlockData blockData = handle.getBlockData(blockposition);
-    if(blockData == null) {
+    if (blockData == null) {
       return Collections.emptyList();
     }
     List<AxisAlignedBB> bbs = new ArrayList<>();
     blockData.getBlock().a(
-      blockData,
       ((CraftWorld) world).getHandle(),
       blockposition,
+      blockData,
       ALWAYS_COLLIDING_BOX,
       bbs,
       null
@@ -41,17 +42,17 @@ public final class v9BoundingBoxResolver implements BoundingBoxResolver {
 
   @Override
   @PatchyAutoTranslation
-  public List<WrappedAxisAlignedBB> resolve(World world, int posX, int posY, int posZ, org.bukkit.Material type, int blockState) {
+  public List<WrappedAxisAlignedBB> customResolve(World world, Player player, org.bukkit.Material type, int blockState, int posX, int posY, int posZ) {
     BlockPosition blockposition = new BlockPosition(posX, posY, posZ);
-    IBlockData blockData = Block.getByCombinedId(type.getId() | ((blockState << 12) & 0xF));
+    IBlockData blockData = Block.d.a((type.getId() << 4) | (blockState & 0xF));
     List<AxisAlignedBB> bbs = new ArrayList<>();
-    if(blockData == null) {
+    if (blockData == null) {
       return Collections.emptyList();
     }
     blockData.getBlock().a(
-      blockData,
       ((CraftWorld) world).getHandle(),
       blockposition,
+      blockData,
       ALWAYS_COLLIDING_BOX,
       bbs,
       null
@@ -60,7 +61,7 @@ public final class v9BoundingBoxResolver implements BoundingBoxResolver {
   }
 
   private List<WrappedAxisAlignedBB> translate(List<?> bbs) {
-    if(bbs.isEmpty()) {
+    if (bbs.isEmpty()) {
       return Collections.emptyList();
     }
     List<WrappedAxisAlignedBB> list = new ArrayList<>();

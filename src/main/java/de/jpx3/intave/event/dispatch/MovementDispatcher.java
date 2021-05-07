@@ -85,7 +85,7 @@ public final class MovementDispatcher implements EventProcessor {
     User user = UserRepository.userOf(player);
     UserMetaMovementData movementData = user.meta().movementData();
     movementData.updateWorld();
-    user.boundingBoxAccess().identityInvalidate();
+    user.blockShapeAccess().identityInvalidate();
   }
 
   @BukkitEventSubscription
@@ -139,7 +139,7 @@ public final class MovementDispatcher implements EventProcessor {
         movementData.physicsMotionX = 0;
         movementData.physicsMotionY = 0;
         movementData.physicsMotionZ = 0;
-        user.boundingBoxAccess().identityInvalidate();
+        user.blockShapeAccess().identityInvalidate();
         user.meta().potionData().clearPotionEffects();
       });
   }

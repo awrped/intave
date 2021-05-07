@@ -18,7 +18,7 @@ import de.jpx3.intave.tools.MathHelper;
 import de.jpx3.intave.tools.annotate.Native;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserRepository;
-import de.jpx3.intave.world.collision.BoundingBoxAccess;
+import de.jpx3.intave.world.collision.access.OCBlockShapeAccess;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
@@ -246,7 +246,7 @@ public final class IntaveRootStage extends CommandStage {
   @Native
   public void outputReplacements(User user) {
     Player player = user.player();
-    BoundingBoxAccess bba = user.boundingBoxAccess();
+    OCBlockShapeAccess bba = user.blockShapeAccess();
     player.sendMessage(ChatColor.RED + "You have " + bba.locatedReplacements().size() + "/" + bba.indexedReplacements().size() + " replacements");
   }
 
