@@ -149,7 +149,7 @@ public class RotationSnapHeuristic extends IntaveMetaCheckPart<Heuristics, Rotat
     double yawMotion = Math.abs(movementData.lastRotationYaw - movementData.rotationYaw);
     UserMetaAttackData attackData = user.meta().attackData();
 
-    if (yawMotion > 40 && meta.yawMotions[1] < 9) {
+    if ((yawMotion > 40 && meta.yawMotions[1] < 9) || (yawMotion > 25 && meta.yawMotions[1] == 0)) {
       if (meta.lastKeyStrafe != movementData.keyStrafe || meta.lastKeyForward != movementData.keyForward) {
         double directionLast = movementData.rotationYaw + keysToRotation(meta.lastKeyStrafe, meta.lastKeyForward);
         double direction = movementData.lastRotationYaw + keysToRotation(movementData.keyStrafe, movementData.keyForward);
@@ -183,9 +183,16 @@ public class RotationSnapHeuristic extends IntaveMetaCheckPart<Heuristics, Rotat
       }
     }
 
-    boolean isLegit = meta.yawMotions[1] > 9 || meta.yawMotions[0] < 40 || yawMotion > 9;
+    boolean isSuspicious = (meta.yawMotions[1] == 0 && meta.yawMotions[0] > 25 && meta.yawMotions[0] > 9);
 
-    if (!isLegit && (meta.lastSwing <= 3 || meta.lastAttack <= 3) && meta.rotationPacketCounter > 10 && movementData.lastTeleport > 7) {
+    boolean liteFlag = false;
+    if(isSuspicious && meta.silentMovements[1] == KeyStates.SILENTMOVE && meta.rotationPacketCounter > 10 && movementData.lastTeleport > 7) {
+      liteFlag = true;
+    }
+
+    isSuspicious = meta.yawMotions[1] < 9 && meta.yawMotions[0] > 40 && yawMotion < 9;
+
+    if (isSuspicious && (meta.lastSwing <= 3 || meta.lastAttack <= 3) && meta.rotationPacketCounter > 10 && movementData.lastTeleport > 7) {
       double valueOfSnap = meta.yawMotions[0];
       String description = "rotation snap ["
         + MathHelper.formatDouble(meta.yawMotions[1], 2)
@@ -237,7 +244,8 @@ public class RotationSnapHeuristic extends IntaveMetaCheckPart<Heuristics, Rotat
         }
       }
 
-      double vl = calculateViolation(valueOfSnap, changedLookToEntity, user);
+      double vl = calculateViolation(valueOfSnap, changedLookToEntity, user, liteFlag);
+      liteFlag = false;
 
       if (vl >= 40) {
         user.applyAttackNerfer(AttackNerfStrategy.HT_MEDIUM);
@@ -253,29 +261,39 @@ public class RotationSnapHeuristic extends IntaveMetaCheckPart<Heuristics, Rotat
           description += " " + user.meta().clientData().protocolVersion();
         }
 
-        boolean isPartner = (UserMetaClientData.VERSION_DETAILS & 0x100) != 0;
-        boolean isEnterprise = (UserMetaClientData.VERSION_DETAILS & 0x200) != 0;
-
-        int options;
-        if (IntaveControl.GOMME_MODE) {
-          options = Anomaly.AnomalyOption.DELAY_32s;
-        } else if (isPartner) {
-          options = Anomaly.AnomalyOption.DELAY_64s;
-        } else {
-          options = Anomaly.AnomalyOption.DELAY_128s;
-        }
-
-        Anomaly anomaly = Anomaly.anomalyOf("102", confidence, Anomaly.Type.KILLAURA, description, options);
+        Anomaly anomaly = Anomaly.anomalyOf("102", confidence, Anomaly.Type.KILLAURA, description, anomalieOptions());
         parentCheck().saveAnomaly(player, anomaly);
       }
 
       meta.entityPositions.clear();
     }
 
+    if(liteFlag) {
+      String description = "rotation snap scaffold [" +  MathHelper.formatDouble(meta.yawMotions[0], 2) + "]";
+
+      Anomaly anomaly = Anomaly.anomalyOf("102", Confidence.MAYBE, Anomaly.Type.KILLAURA, description, anomalieOptions());
+      parentCheck().saveAnomaly(player, anomaly);
+    }
+
     prepareNextTick(meta, yawMotion, user);
   }
 
-  private double calculateViolation(double valueOfSnap, boolean channgedLookToEntity, User user) {
+  private static int anomalieOptions() {
+    boolean isPartner = (UserMetaClientData.VERSION_DETAILS & 0x100) != 0;
+    boolean isEnterprise = (UserMetaClientData.VERSION_DETAILS & 0x200) != 0;
+
+    int options;
+    if (IntaveControl.GOMME_MODE) {
+      options = Anomaly.AnomalyOption.DELAY_32s;
+    } else if (isPartner) {
+      options = Anomaly.AnomalyOption.DELAY_64s;
+    } else {
+      options = Anomaly.AnomalyOption.DELAY_128s;
+    }
+    return options;
+  }
+
+  private double calculateViolation(double valueOfSnap, boolean channgedLookToEntity, User user, boolean liteFlag) {
     RotationSnapHeuristicMeta meta = metaOf(user);
 
     double vl = 7;
@@ -305,6 +323,10 @@ public class RotationSnapHeuristic extends IntaveMetaCheckPart<Heuristics, Rotat
 
     if(user.meta().clientData().protocolVersion() <= UserMetaClientData.PROTOCOL_VERSION_BOUNTIFUL_UPDATE) {
       vl /= 3;
+    }
+
+    if(liteFlag) {
+      vl += 10;
     }
 
     return Math.min(160, vl);
