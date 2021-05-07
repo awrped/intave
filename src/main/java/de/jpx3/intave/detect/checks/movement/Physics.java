@@ -387,7 +387,7 @@ public final class Physics extends IntaveCheck {
         Block block = BukkitBlockAccess.blockAccess(player.getWorld(), blockPositionX, blockPositionY, blockPositionZ);
         boolean currentlyInOverride = user.blockShapeAccess().currentlyInOverride(WrappedMathHelper.floor(blockPositionX), WrappedMathHelper.floor(blockPositionY), WrappedMathHelper.floor(blockPositionZ));
 
-        String message = "moved into " + (currentlyInOverride ? "emulated" : "") + " " + shortenTypeName(block.getType()) + " block";
+        String message = "moved into " + (currentlyInOverride ? "emulated " : "") + shortenTypeName(block.getType()) + " block";
         boolean multipleBoxes = intersectionBoundingBoxesCurrent.size() > 1;
         String details = (multipleBoxes ? intersectionBoundingBoxesCurrent.size() : "one") + " box" + (multipleBoxes ? "es" : "");
 

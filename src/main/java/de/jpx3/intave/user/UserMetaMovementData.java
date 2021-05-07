@@ -166,7 +166,7 @@ public final class UserMetaMovementData {
       widthRounded = Math.round(width * 500d) / 1000d;
       heightRounded = Math.round(height * 10000d) / 10000d;
     } else {
-      widthRounded = Math.round(width * 500000000000000d) / 1000000000000000d;
+      widthRounded = Math.round(width * 50000000000000d) / 100000000000000d;
       heightRounded = Math.round(height * 100000000000000d) / 100000000000000d;
     }
   }

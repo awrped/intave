@@ -21,7 +21,7 @@ import java.util.Map;
 
 public final class ConnectionHealthResolver implements PacketEventSubscriber {
   private final IntavePlugin plugin;
-  private final static long TIMEOUT_DURATION = 1000 * 20;
+  private final static long TIMEOUT_DURATION = 1000 * 30;
 
   public ConnectionHealthResolver(IntavePlugin plugin) {
     this.plugin = plugin;
@@ -33,7 +33,7 @@ public final class ConnectionHealthResolver implements PacketEventSubscriber {
         long dur = AccessHelper.now() - lastKeepAliveResponse(user);
         if(TIMEOUT_DURATION < dur) {
           Synchronizer.synchronize(() -> {
-            System.out.println("[Intave] " + player.getName() + " was not responding to any packets since 20 seconds");
+            System.out.println("[Intave] " + player.getName() + " was not responding to any packets for 30 seconds");
             player.kickPlayer("Timed out");
           });
         }

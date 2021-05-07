@@ -25,7 +25,7 @@ import java.util.Map;
 
 public final class TransactionFeedbackService implements PacketEventSubscriber {
   private final static long TRANSACTION_TIMEOUT = 3000;
-  private final static long TRANSACTION_TIMEOUT_KICK = 8000;
+  private final static long TRANSACTION_TIMEOUT_KICK = 12000;
   public final static short TRANSACTION_MIN_CODE = -32768;
   public final static short TRANSACTION_MAX_CODE = -16370;
   private final static ProtocolManager protocolManager = ProtocolLibrary.getProtocolManager();

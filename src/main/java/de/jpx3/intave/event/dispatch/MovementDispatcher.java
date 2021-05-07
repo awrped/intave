@@ -285,6 +285,7 @@ public final class MovementDispatcher implements EventProcessor {
 
     // flag -> remove packet
     if (movementData.invalidMovement && violationLevelData.isInActiveTeleportBundle) {
+      movementData.awaitTeleport = true; // awaiting next teleport
       event.setCancelled(true);
     }
   }
