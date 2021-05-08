@@ -49,9 +49,9 @@ public final class PlayerInventoryEvaluator implements PacketEventSubscriber, Bu
     Player player = (Player) event.getEntity();
     User user = UserRepository.userOf(player);
     UserMetaInventoryData inventoryData = user.meta().inventoryData();
-    if (inventoryData.pastSlotSwitch < 5) {
-      event.setCancelled(true);
-    }
+//    if (inventoryData.pastSlotSwitch < 5) {
+//      event.setCancelled(true);
+//    }
     if (event.getFoodLevel() >= 20 && inventoryData.foodItem() && inventoryData.handActive()) {
       inventoryData.deactivateHand();
     }

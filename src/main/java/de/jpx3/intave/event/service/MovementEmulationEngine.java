@@ -176,13 +176,13 @@ public final class MovementEmulationEngine {
     futurePosition.setYaw(movementData.rotationYaw);
     futurePosition.setPitch(movementData.rotationPitch);
 
-    if ((Math.abs(motion.getX()) < 0.01 && Math.abs(motion.getZ()) < 0.01 && motion.getY() == 0.0) || ticks <= 0) {
+    if ((Math.abs(motion.getX()) < 0.01 && Math.abs(motion.getZ()) < 0.01 && motion.getY() == 0.0 && ticks <= 3) || ticks <= 0) {
       // velocity
 
       // fixes stuck in block below, please remove and fix me differently
       futurePosition.subtract(0, 0.02, 0);
       boundingBox = WrappedAxisAlignedBB.createFromPosition(user, futurePosition);
-      futurePosition.add(0, Collision.resolve(player, boundingBox).isEmpty() ? 0.03 : 0.02,0);
+      futurePosition.add(0, Collision.resolve(player, boundingBox).isEmpty() ? 0.03 : 0.02, 0);
       boundingBox = WrappedAxisAlignedBB.createFromPosition(user, futurePosition);
 
       teleport(player, futurePosition);
@@ -298,7 +298,7 @@ public final class MovementEmulationEngine {
     movementData.setBoundingBox(entityBoundingBox);
     movementData.setVerifiedLocation(teleportLocation.clone(), "Emulation-Setback");
 //    player.teleport(teleportLocation);
-    if(user.meta().inventoryData().inventoryOpen()) {
+    if (user.meta().inventoryData().inventoryOpen()) {
       player.closeInventory();
     }
     rotationlessTeleport(player, teleportLocation, movementData.rotationYaw, movementData.rotationPitch);
