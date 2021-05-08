@@ -455,7 +455,7 @@ public final class Physics extends IntaveCheck {
     if (violationLevelIncrease > 0) {
       violationLevelIncrease = Math.min(200.0, violationLevelIncrease);
       violationLevelIncrease = Math.max(1, violationLevelIncrease);
-      violationLevelData.physicsVL += violationLevelIncrease;
+      violationLevelData.physicsVL = MathHelper.minmax(0, violationLevelData.physicsVL + violationLevelIncrease, 200);
       violationLevelData.physicsInvalidMovementsInRow++;
       user.blockShapeAccess().identityInvalidate();
       statistics().increaseFails();
@@ -501,7 +501,7 @@ public final class Physics extends IntaveCheck {
       decrementer.decrement(user, VL_DECREMENT_PER_VALID_MOVE);
     }
 
-    violationLevelData.physicsVL = MathHelper.minmax(0, violationLevelData.physicsVL, 100);
+    violationLevelData.physicsVL = MathHelper.minmax(0, violationLevelData.physicsVL, 200);
 
     if (movementData.onLadderLast) {
       movementData.artificialFallDistance = 0;
