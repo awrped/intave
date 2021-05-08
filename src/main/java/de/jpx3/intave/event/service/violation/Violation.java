@@ -149,6 +149,8 @@ public final class Violation {
       if(details == null || details.isEmpty()) {
         details = "";
       }
+      baseMessage = baseMessage.trim();
+      details = details.trim();
       if(addedViolationPoints < 0) {
         throw new IllegalStateException("Can not have negative VL");
       }

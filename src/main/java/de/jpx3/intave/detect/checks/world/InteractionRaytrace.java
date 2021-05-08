@@ -11,6 +11,7 @@ import com.comphenix.protocol.wrappers.MovingObjectPositionBlock;
 import com.comphenix.protocol.wrappers.WrappedBlockData;
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.access.player.event.BucketAction;
+import de.jpx3.intave.access.player.trust.TrustFactor;
 import de.jpx3.intave.adapter.MinecraftVersions;
 import de.jpx3.intave.detect.CheckViolationLevelDecrementer;
 import de.jpx3.intave.detect.IntaveMetaCheck;
@@ -640,8 +641,14 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
         append = "invalid block face";
         vl = longBreakDuration ? 20 : 15;
       }
+      float blockDamage = BlockDataAccess.blockDamage(player, user.meta().inventoryData().heldItem(), interaction.targetBlock);
+      boolean instantBreak = blockDamage == Float.POSITIVE_INFINITY || blockDamage >= 1.0f || user.meta().abilityData().inGameMode(PlayerAbilityEvaluator.GameMode.CREATIVE);
+      if(instantBreak) {
+        vl = 0;
+      }
       message = "performed invalid break";// +" -" + append;
       details = typeName + " block, " + append;
+      mustFlag = true;
     } else if (type == InteractionType.PLACE) {
       String typeAgainstName = shortenTypeName(targetLocationBlock.getType());
       String typeName = shortenTypeName(user.meta().inventoryData().heldItemType());
@@ -672,6 +679,9 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
       details = typeAgainstName + " block";
       mustFlag = true;
       vl = 0;
+    }
+    if(user.trustFactor().atLeast(TrustFactor.BYPASS)) {
+      mustFlag = false;
     }
     Violation violation = Violation.builderFor(InteractionRaytrace.class)
       .withPlayer(player).withMessage(message).withDetails(details).withVL(vl)

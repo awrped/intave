@@ -164,15 +164,6 @@ public final class UserMetaMovementData {
   public void applySizeUpdate() {
     widthRounded = Math.round(width * 50d) / 100d;
     heightRounded = Math.round(height * 100d) / 100d;
-    /*
-    if(user.meta().clientData().roundEnvironmentNumbers()) {
-      widthRounded = Math.round(width * 500d) / 1000d;
-      heightRounded = Math.round(height * 10000d) / 10000d;
-    } else {
-      widthRounded = Math.round(width * 5000000000d) / 10000000000d;
-      heightRounded = Math.round(height * 10000000000d) / 10000000000d;
-    }
-     */
 //    if(user.meta().clientData().roundEnvironmentNumbers()) {
 //      widthRounded = Math.round(width * 500d) / 1000d;
 //      heightRounded = Math.round(height * 10000d) / 10000d;
@@ -180,7 +171,6 @@ public final class UserMetaMovementData {
 //      widthRounded = Math.round(width * 500000000000000d) / 1000000000000000d;
 //      heightRounded = Math.round(height * 100000000000000d) / 100000000000000d;
 //    }
-
   }
 
   public void updateWorld() {

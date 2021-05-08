@@ -133,10 +133,9 @@ public final class LegacyVersionRaytracer implements VersionRaytracer {
       // block1.a refers to getCollisionBoundingBox
       if (block1.a(iblockdata1, false)) {
         MovingObjectPosition movingobjectposition2 = block1.a(world, blockposition, (Vec3D) lookVector.convertToNativeVec3(), (Vec3D) position.convertToNativeVec3());
-        if (movingobjectposition2 == null) {
-          continue;
+        if (movingobjectposition2 != null) {
+          return movingobjectposition2;
         }
-        return movingobjectposition2;
       }
     }
     return null;

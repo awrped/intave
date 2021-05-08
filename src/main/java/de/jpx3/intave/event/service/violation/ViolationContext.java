@@ -35,9 +35,11 @@ public final class ViolationContext {
   }
 
   public ViolationContext counterThreatBecause(String reason) {
-    this.counterThreat();
+    if (processCompleted) {
+      throw new UnsupportedOperationException();
+    }
     this.threatAssessment = reason;
-    return this;
+    return this.counterThreat();
   }
 
   public ViolationContext counterThreat() {
@@ -49,9 +51,11 @@ public final class ViolationContext {
   }
 
   public ViolationContext ignoreThreatBecause(String reason) {
-    this.ignoreThreat();
+    if (processCompleted) {
+      throw new UnsupportedOperationException();
+    }
     this.threatAssessment = reason;
-    return this;
+    return this.ignoreThreat();
   }
 
   public ViolationContext ignoreThreat() {
@@ -60,6 +64,10 @@ public final class ViolationContext {
     }
     this.counterThreat = false;
     return this;
+  }
+
+  public String threatAssessment() {
+    return threatAssessment;
   }
 
   public double violationLevelBefore() {

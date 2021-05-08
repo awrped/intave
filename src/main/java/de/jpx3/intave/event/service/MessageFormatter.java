@@ -38,13 +38,14 @@ public final class MessageFormatter {
     return output;
   }
 
-  public static String resolveCommandReplacements(Player player, String command) {
+  public static String resolveCommandReplacements(Player player, String command, ViolationPlaceholderContext violationPlaceholderContext) {
     User user = UserRepository.userOf(player);
     String output = Placeholders.replacePlaceholders(
       command,
       Placeholders.PLUGIN_CONTEXT,
       Placeholders.SERVER_CONTEXT,
-      user.placeholderContext()
+      user.placeholderContext(),
+      violationPlaceholderContext
     );
     output = ChatColor.translateAlternateColorCodes('&', output);
     output = output.trim().replace("  ", " ");

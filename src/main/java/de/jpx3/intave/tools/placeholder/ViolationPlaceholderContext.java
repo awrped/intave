@@ -31,6 +31,7 @@ public final class ViolationPlaceholderContext extends PlaceholderContext {
 
     builder.put("cheatdetected", check);
     builder.put("check", check);
+    builder.put("checkname", check);
 
     builder.put("message", message);
 

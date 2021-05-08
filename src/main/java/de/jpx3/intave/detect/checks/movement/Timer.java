@@ -94,22 +94,22 @@ public final class Timer extends IntaveMetaCheck<Timer.TimerData> {
     timerData.timerBalance += 10;
 //    }
 
-    int allowedLagInSeconds = trustFactorSetting("buffer-size", player);
+    int allowedLagInMilliseconds = trustFactorSetting("buffer-size", player);
 
     if(highToleranceMode) {
-      allowedLagInSeconds *= 1.5;
+      allowedLagInMilliseconds *= 1.5;
     }
 
     if (AccessHelper.now() - timerData.lastRespawn < 6000) {
-      allowedLagInSeconds = Math.max(allowedLagInSeconds, 8);
+      allowedLagInMilliseconds = Math.max(allowedLagInMilliseconds, 8000);
     }
     if(AccessHelper.now() - timerData.lastLagSpike < 12000 && !highToleranceMode) {
-      allowedLagInSeconds = Math.max(allowedLagInSeconds / 2, 1);
+      allowedLagInMilliseconds = Math.max(allowedLagInMilliseconds / 2, 500);
     }
 
-    int packetLimit = allowedLagInSeconds * -(20 * 10);
+    double lowerPacketBalanceLimit = (allowedLagInMilliseconds / 1000d) * -(20 * 10);
 
-    timerData.timerBalance = MathHelper.minmax(packetLimit, timerData.timerBalance, 200);
+    timerData.timerBalance = MathHelper.minmax(lowerPacketBalanceLimit, timerData.timerBalance, 200);
 
     if (delta > 500) {
       timerData.lastLagSpike = AccessHelper.now();

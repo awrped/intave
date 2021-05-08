@@ -4,12 +4,14 @@ import de.jpx3.intave.IntaveControl;
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.access.check.event.IntaveCommandExecutionEvent;
 import de.jpx3.intave.access.check.event.IntaveViolationEvent;
+import de.jpx3.intave.access.player.trust.TrustFactor;
 import de.jpx3.intave.connect.proxy.protocol.packets.IntavePacketOutKicked;
 import de.jpx3.intave.detect.IntaveCheck;
 import de.jpx3.intave.event.service.MessageFormatter;
 import de.jpx3.intave.tools.MathHelper;
 import de.jpx3.intave.tools.annotate.Native;
 import de.jpx3.intave.tools.placeholder.TextContext;
+import de.jpx3.intave.tools.placeholder.ViolationPlaceholderContext;
 import de.jpx3.intave.tools.placeholder.ViolationPlaceholderContext.DetailScope;
 import de.jpx3.intave.tools.sync.Synchronizer;
 import de.jpx3.intave.user.User;
@@ -42,6 +44,10 @@ public final class ViolationProcessor {
     User user = UserRepository.userOf(player);
     if(user.justJoined() || !user.hasOnlinePlayer()) {
       return violationContext.counterThreatBecause("Player is not reachable").complete();
+    }
+
+    if(user.trustFactor().atLeast(TrustFactor.BYPASS)) {
+      return violationContext.ignoreThreatBecause("Player has bypass trust factor").complete();
     }
 
     IntaveCheck check = violation.check();
@@ -114,7 +120,7 @@ public final class ViolationProcessor {
       if(counterThreat) {
         violationContext.counterThreatBecause("Intave access requested it");
       } else {
-        violationContext.ignoreThreatBecause("Intave access requested");
+        violationContext.ignoreThreatBecause("Intave access requested it");
       }
       violationContext.complete();
     }
@@ -199,6 +205,7 @@ public final class ViolationProcessor {
     }
   }
 
+  @Native
   private void processThresholdsEvents(
     ViolationContext violationContext
   ) {
@@ -208,7 +215,8 @@ public final class ViolationProcessor {
     Player player = violationContext.violation().player().orElseThrow(IllegalStateException::new);
     List<String> newCommands = new ArrayList<>();
     for (String command : violationContext.commands()) {
-      String executedCommand = MessageFormatter.resolveCommandReplacements(player, command);
+      ViolationPlaceholderContext placeholderContext = violationContext.placeholderContextOf(DetailScope.FULL /* automaticallly striped with not enterprise */);
+      String executedCommand = MessageFormatter.resolveCommandReplacements(player, command, placeholderContext);
       IntaveCommandExecutionEvent commandTriggerEvent = plugin.customEventService().invokeEvent(
         IntaveCommandExecutionEvent.class,
         event -> event.copy(player, executedCommand, false)

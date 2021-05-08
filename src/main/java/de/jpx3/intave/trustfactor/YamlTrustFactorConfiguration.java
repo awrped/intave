@@ -5,6 +5,8 @@ import de.jpx3.intave.logging.IntaveLogger;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public final class YamlTrustFactorConfiguration implements TrustFactorConfiguration {
   private final Map<String, EnumMap<TrustFactor, Integer>> settingsMap = new HashMap<>();
@@ -23,12 +25,10 @@ public final class YamlTrustFactorConfiguration implements TrustFactorConfigurat
   }
 
   private void apply(String key, List<Integer> values) {
-    EnumMap<TrustFactor, Integer> enumMap = new EnumMap<>(TrustFactor.class);
     TrustFactor[] trustFactors = TrustFactor.values();
-    for (int j = 0; j < trustFactors.length; j++) {
-      TrustFactor value = trustFactors[j];
-      enumMap.put(value, values.get(j));
-    }
+    EnumMap<TrustFactor, Integer> enumMap = IntStream.range(0, trustFactors.length)
+      .boxed()
+      .collect(Collectors.toMap(j -> trustFactors[j], values::get, (a, b) -> b, () -> new EnumMap<>(TrustFactor.class)));
     settingsMap.put(key, enumMap);
   }
 
@@ -36,7 +36,6 @@ public final class YamlTrustFactorConfiguration implements TrustFactorConfigurat
   public int resolveSetting(String key, TrustFactor trustFactor) {
     EnumMap<TrustFactor, Integer> trustFactorIntegerEnumMap = settingsMap.get(key.toLowerCase(Locale.ROOT));
     if(trustFactorIntegerEnumMap == null) {
-//      throw new IntaveInternalException("Unable to find trust-factor setting for " + key);
       return 0;
     }
     try {

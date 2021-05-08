@@ -74,7 +74,7 @@ public final class TransactionFeedbackService implements PacketEventSubscriber {
       // order verification
 
       long expected = synchronizeData.lastReceivedTransactionNum + 1;
-      if (transactionResponse.num() != expected) {
+      if (transactionResponse.num() != expected && !user.justJoined()) {
         Synchronizer.synchronize(() -> {
           System.out.println("[Intave] " + player.getName() + " sent invalid validation response (received " + transactionResponse.num() + ", but expected " + expected + ")");
           player.kickPlayer("Timed out");

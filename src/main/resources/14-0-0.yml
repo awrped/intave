@@ -38,10 +38,10 @@ protocolscanner:
 
 timer:
 
-  buffer-size: [100, 8, 4, 3, 2, 1]
+  buffer-size: [100000, 8000, 4000, 3000, 750, 500]
 
   prevention-activation: [100, 50, 15, 10, 10, 10]
 
 clickspeedlimiter:
 
-  prevention-activation: [ 100, 15, 15, 10, 5, 5 ]
+  prevention-activation: [100, 15, 15, 10, 5, 5 ]

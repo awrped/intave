@@ -72,7 +72,7 @@ public final class IntaveViolationEvent extends IntaveEvent implements Cancellab
   @Override
   @Deprecated
   public void setCancelled(boolean cancelled) {
-    this.reaction = cancelled ? Reaction.IGNORE : Reaction.INTERRUPT_AND_REPORT;
+    suggestReaction(cancelled ? Reaction.IGNORE : Reaction.INTERRUPT_AND_REPORT);
   }
 
   public void suggestReaction(Reaction reaction) {

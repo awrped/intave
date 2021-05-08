@@ -1,11 +1,13 @@
 package de.jpx3.intave.accessbackend;
 
+import com.google.common.base.Preconditions;
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.access.IntaveAccess;
 import de.jpx3.intave.access.IntaveEvent;
 import de.jpx3.intave.access.check.CheckAccess;
 import de.jpx3.intave.access.check.UnknownCheckException;
 import de.jpx3.intave.access.player.PlayerAccess;
+import de.jpx3.intave.access.player.UnknownPlayerException;
 import de.jpx3.intave.access.player.trust.TrustFactor;
 import de.jpx3.intave.access.player.trust.TrustFactorResolver;
 import de.jpx3.intave.access.server.ServerAccess;
@@ -14,6 +16,7 @@ import de.jpx3.intave.accessbackend.player.PlayerAccessor;
 import de.jpx3.intave.accessbackend.server.ServerAccessor;
 import de.jpx3.intave.logging.IntaveLogger;
 import de.jpx3.intave.tools.annotate.Native;
+import de.jpx3.intave.user.UserRepository;
 import org.bukkit.entity.Player;
 
 import java.io.PrintStream;
@@ -76,6 +79,10 @@ public final class IntaveAccessService {
 
       @Override
       public PlayerAccess player(Player player) {
+        Preconditions.checkNotNull(player);
+        if(!UserRepository.hasUser(player)) {
+          throw new UnknownPlayerException("Player " + player.getName() + " couldn't be found");
+        }
         return playerAccessor.playerAccessOf(player);
       }
 

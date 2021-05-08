@@ -54,7 +54,7 @@ public final class IntaveLogger {
   }
 
   public void commandExecution(String command) {
-    globalPrintLn("[Intave] Issued server command /" + ChatColor.stripColor(command) + "");
+    globalPrintLn("[Intave] Issued server command /" + ChatColor.stripColor(command));
     command = ChatColor.stripColor(command);
     logToFile("(EXE) " + command);
   }
@@ -87,13 +87,11 @@ public final class IntaveLogger {
   private final static DateTimeFormatter MESSAGE_DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH.mm.ss.SSS");
 
   private synchronized void logToFile(String message) {
-    if(!FILE_OUTPUT) {
+    if (!FILE_OUTPUT || !plugin.getDataFolder().exists()) {
       return;
     }
+
     try {
-      if (!plugin.getDataFolder().exists()) {
-        return;
-      }
       boolean compressLogsLater = false;
       if(activeFileName != null) {
         if(AccessHelper.now() - lastNameCheck > 10000) {
@@ -106,10 +104,7 @@ public final class IntaveLogger {
         }
       }
 
-      message = message
-        .replace("\n", "\\n")
-        .replace("\r", "\\r")
-        .replace("  ", " ");
+      message = message.replace("\n", "\\n").replace("\r", "\\r");
 
       String timestamp = "[" + LocalDateTime.now().format(MESSAGE_DATE_FORMATTER) + "] ";
       String clearMessage = ChatColor.stripColor(message);
@@ -144,7 +139,6 @@ public final class IntaveLogger {
     } catch (IOException e) {
       e.printStackTrace();
     }
-    BackgroundExecutor.execute(this::performCompression);
   }
 
   public void shutdown() {

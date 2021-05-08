@@ -54,6 +54,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.*;
+import java.lang.reflect.Field;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
@@ -109,6 +110,7 @@ public final class IntavePlugin extends JavaPlugin {
   public void stage2() {
     singletonInstance = this;
     version = getDescription().getVersion();
+    manifestDataFolder();
     this.logger = new IntaveLogger(this);
   }
 
@@ -476,7 +478,12 @@ public final class IntavePlugin extends JavaPlugin {
       logger.info(" Guessing gender of players..");
 
       versionList = new VersionList();
-      versionList.setup();
+      try {
+        versionList.setup();
+      } catch (Exception | Error exception) {
+        logger.error("Something went wrong checking version");
+        exception.printStackTrace();
+      }
 
       IntavePlugin.offlineMode = offlineMode;
 
@@ -545,12 +552,26 @@ public final class IntavePlugin extends JavaPlugin {
     logger.info(" sure..");
 
     GarbageCollector.setup();
-
     BackgroundExecutor.execute(this::clearIntegrityGarbage);
     BackgroundExecutor.execute(this::clearSaveFolderGarbage);
+    BackgroundExecutor.execute(() -> IntaveLogger.logger().performCompression());
     packetSubscriptionLinker.refreshLinkages();
     displayVersionInformation();
     logger.info("Intave booted successfully");
+  }
+
+  public void manifestDataFolder() {
+    try {
+      File dataFolder = new File(getServer().getUpdateFolderFile().getParentFile(), "Intave");
+      if (!(dataFolder.exists() || dataFolder.mkdirs())) {
+        logger.error("Failed to create Intave folder " + dataFolder.getAbsolutePath());
+      }
+      Field dataFolderField = JavaPlugin.class.getDeclaredField("dataFolder");
+      dataFolderField.setAccessible(true);
+      dataFolderField.set(this, dataFolder);
+    } catch (IllegalAccessException | NoSuchFieldException exception) {
+      exception.printStackTrace();
+    }
   }
 
   @Native
