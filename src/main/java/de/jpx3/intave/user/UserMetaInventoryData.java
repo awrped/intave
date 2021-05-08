@@ -7,6 +7,7 @@ import de.jpx3.intave.tools.sync.Synchronizer;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
 
 @Relocate
 public final class UserMetaInventoryData {
@@ -77,6 +78,9 @@ public final class UserMetaInventoryData {
   }
 
   public void applySlotSwitch() {
+    if (!necessarySlotSwitch(this.handSlot)) {
+      return;
+    }
     int previousItemSlot = this.handSlot;
     int newItemSlot = this.handSlot + 1;
     if (newItemSlot > 8) {
@@ -89,6 +93,15 @@ public final class UserMetaInventoryData {
       awaitingSlotSet = previousItemSlot;
       player.getInventory().setHeldItemSlot(finalNewItemSlot);
     });
+  }
+
+  private boolean necessarySlotSwitch(int slot) {
+    PlayerInventory inventory = player.getInventory();
+    ItemStack item = inventory.getItem(slot);
+    if (item == null) {
+      return false;
+    }
+    return InventoryUseItemHelper.isUseItem(player, item);
   }
 
   public void setHeldItemSlot(int slot) {
