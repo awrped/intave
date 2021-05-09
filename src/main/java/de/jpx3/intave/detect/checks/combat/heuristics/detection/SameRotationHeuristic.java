@@ -76,10 +76,10 @@ public class SameRotationHeuristic extends IntaveMetaCheckPart<Heuristics, SameR
         }
 
         if(isPartner || isEnterprise) {
-          user.applyAttackNerfer(AttackNerfStrategy.HT_MEDIUM);
-          user.applyAttackNerfer(AttackNerfStrategy.CANCEL_FIRST_HIT);
+//          user.applyAttackNerfer(AttackNerfStrategy.HT_MEDIUM);
+//          user.applyAttackNerfer(AttackNerfStrategy.CANCEL_FIRST_HIT);
 
-          Anomaly anomaly = Anomaly.anomalyOf("181", Confidence.LIKELY, Anomaly.Type.KILLAURA, description, options);
+          Anomaly anomaly = Anomaly.anomalyOf("181", Confidence.NONE, Anomaly.Type.KILLAURA, description, options);
           parentCheck().saveAnomaly(player, anomaly);
         }
       }
@@ -104,7 +104,7 @@ public class SameRotationHeuristic extends IntaveMetaCheckPart<Heuristics, SameR
           options = Anomaly.AnomalyOption.DELAY_128s;
         }
 
-        Anomaly anomaly = Anomaly.anomalyOf("182", Confidence.PROBABLE, Anomaly.Type.KILLAURA, description, options);
+        Anomaly anomaly = Anomaly.anomalyOf("182", Confidence.NONE, Anomaly.Type.KILLAURA, description, options);
         parentCheck().saveAnomaly(player, anomaly);
       }
 
