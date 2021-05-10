@@ -1,7 +1,7 @@
 package de.jpx3.intave.world.collision.resolver.pipeline;
 
 import de.jpx3.intave.tools.wrapper.WrappedAxisAlignedBB;
-import de.jpx3.intave.world.collision.resolver.BoundingBoxResolvePipelineElement;
+import de.jpx3.intave.world.collision.resolver.BoundingBoxResolvePipeline;
 import de.jpx3.intave.world.collision.resolver.pipeline.patcher.BoundingBoxPatcher;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -9,10 +9,10 @@ import org.bukkit.entity.Player;
 
 import java.util.List;
 
-public final class DynamicPatcherReshaper implements BoundingBoxResolvePipelineElement {
-  private final BoundingBoxResolvePipelineElement forward;
+public final class DynamicPatcherReshaper implements BoundingBoxResolvePipeline {
+  private final BoundingBoxResolvePipeline forward;
 
-  public DynamicPatcherReshaper(BoundingBoxResolvePipelineElement forward) {
+  public DynamicPatcherReshaper(BoundingBoxResolvePipeline forward) {
     this.forward = forward;
   }
 

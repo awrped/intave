@@ -9,7 +9,6 @@ import com.comphenix.protocol.wrappers.WrappedAttribute;
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.adapter.MinecraftVersions;
 import de.jpx3.intave.detect.EventProcessor;
-import de.jpx3.intave.detect.checks.combat.Heuristics;
 import de.jpx3.intave.event.bukkit.BukkitEventSubscription;
 import de.jpx3.intave.event.packet.ListenerPriority;
 import de.jpx3.intave.event.packet.PacketDescriptor;
@@ -43,7 +42,7 @@ public final class AttackDispatcher implements EventProcessor {
   public AttackDispatcher(IntavePlugin plugin) {
     plugin.packetSubscriptionLinker().linkSubscriptionsIn(this);
     plugin.eventLinker().registerEventsIn(this);
-    REDUCING_DISABLED = plugin.checkService().searchCheck(Heuristics.class).configuration().settings().boolBy("disable-reducing", true);
+    REDUCING_DISABLED = false;//plugin.checkService().searchCheck(Heuristics.class).configuration().settings().boolBy("disable-reducing", true);
 
     for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
       disableReducing(onlinePlayer);
@@ -159,7 +158,7 @@ public final class AttackDispatcher implements EventProcessor {
   private final static boolean COMBAT_UPDATE = MinecraftVersions.VER1_9_0.atOrAbove();
 
   private void disableReducing(Player player) {
-    if (COMBAT_UPDATE || !REDUCING_DISABLED) {
+    if (/*COMBAT_UPDATE || */!REDUCING_DISABLED) {
       return;
     }
     PacketContainer packet = ProtocolLibrary.getProtocolManager().createPacket(PacketType.Play.Server.UPDATE_ATTRIBUTES);

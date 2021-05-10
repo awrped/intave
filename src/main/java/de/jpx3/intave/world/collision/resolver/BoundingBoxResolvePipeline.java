@@ -7,7 +7,7 @@ import org.bukkit.entity.Player;
 
 import java.util.List;
 
-public interface BoundingBoxResolvePipelineElement {
+public interface BoundingBoxResolvePipeline {
   @Deprecated
   List<WrappedAxisAlignedBB> nativeResolve(World world, Player player, Material type, int blockState, int posX, int posY, int posZ);
 

@@ -9,7 +9,7 @@ import de.jpx3.intave.world.collision.resolver.pipeline.DynamicEmptyBlockPreFilt
 import de.jpx3.intave.world.collision.resolver.pipeline.DynamicPatcherReshaper;
 
 public final class BoundingBoxResolverFactory {
-  private static BoundingBoxResolvePipelineElement resolver;
+  private static BoundingBoxResolvePipeline resolver;
 
   public static void createNew() {
     // ugly, the way ZKM likes it
@@ -46,7 +46,7 @@ public final class BoundingBoxResolverFactory {
     resolver = new DynamicPatcherReshaper(resolver);
   }
 
-  public static BoundingBoxResolvePipelineElement resolver() {
+  public static BoundingBoxResolvePipeline resolver() {
     return resolver;
   }
 

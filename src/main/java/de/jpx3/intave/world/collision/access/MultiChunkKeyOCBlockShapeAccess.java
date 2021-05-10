@@ -5,7 +5,7 @@ import de.jpx3.intave.tools.AccessHelper;
 import de.jpx3.intave.tools.wrapper.WrappedAxisAlignedBB;
 import de.jpx3.intave.world.blockaccess.BlockDataAccess;
 import de.jpx3.intave.world.blockaccess.BukkitBlockAccess;
-import de.jpx3.intave.world.collision.resolver.BoundingBoxResolvePipelineElement;
+import de.jpx3.intave.world.collision.resolver.BoundingBoxResolvePipeline;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -21,7 +21,7 @@ import static de.jpx3.intave.IntaveControl.DISABLE_BLOCK_CACHING_ENTIRELY;
 
 public final class MultiChunkKeyOCBlockShapeAccess implements OCBlockShapeAccess {
   private final Player player;
-  private final BoundingBoxResolvePipelineElement resolver;
+  private final BoundingBoxResolvePipeline resolver;
   private final Map<Long, BlockShape> blockCache = new ConcurrentHashMap<>(4096);
   private long lastCacheReset = 0;
 
@@ -33,7 +33,7 @@ public final class MultiChunkKeyOCBlockShapeAccess implements OCBlockShapeAccess
   private int chunkX;
   private int chunkZ;
 
-  public MultiChunkKeyOCBlockShapeAccess(Player player, BoundingBoxResolvePipelineElement resolver) {
+  public MultiChunkKeyOCBlockShapeAccess(Player player, BoundingBoxResolvePipeline resolver) {
     this.player = player;
     this.resolver = resolver;
   }
@@ -214,10 +214,8 @@ public final class MultiChunkKeyOCBlockShapeAccess implements OCBlockShapeAccess
   @Override
   public void invalidateOverridesInBounds(int chunkXMinPos, int chunkXMaxPos, int chunkZMinPos, int chunkZMaxPos) {
     for (Location location : locatedReplacements.keySet()) {
-      if(
-        location.getX() >= chunkXMinPos && location.getX() < chunkXMaxPos &&
-          location.getZ() >= chunkZMinPos && location.getZ() < chunkZMaxPos
-      ) {
+      if(location.getX() >= chunkXMinPos && location.getX() < chunkXMaxPos &&
+        location.getZ() >= chunkZMinPos && location.getZ() < chunkZMaxPos) {
         long key = bigKey(location.getBlockX(), location.getBlockY(), location.getBlockZ());
         locatedReplacements.remove(location);
         indexedReplacements.remove(key);

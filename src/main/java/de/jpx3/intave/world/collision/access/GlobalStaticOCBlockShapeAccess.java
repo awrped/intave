@@ -5,7 +5,7 @@ import de.jpx3.intave.diagnostics.BoundingBoxAccessFlowStudy;
 import de.jpx3.intave.tools.wrapper.WrappedAxisAlignedBB;
 import de.jpx3.intave.world.blockaccess.BlockDataAccess;
 import de.jpx3.intave.world.blockaccess.BukkitBlockAccess;
-import de.jpx3.intave.world.collision.resolver.BoundingBoxResolvePipelineElement;
+import de.jpx3.intave.world.collision.resolver.BoundingBoxResolvePipeline;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -21,17 +21,17 @@ import java.util.concurrent.ConcurrentHashMap;
 import static de.jpx3.intave.IntaveControl.DISABLE_BLOCK_CACHING_ENTIRELY;
 
 public final class GlobalStaticOCBlockShapeAccess implements OCBlockShapeAccess {
-  public final static Map<World, Map<Long, BlockShape>> globalBlockCache = new ConcurrentHashMap<>(4096 * 64);
+  public final static Map<World, Map<Long, BlockShape>> globalBlockCache = new ConcurrentHashMap<>(4096 * 16);
 
   private final Player player;
-  private final BoundingBoxResolvePipelineElement resolver;
-  private final Map<Location, BlockShape> locatedReplacements = new ConcurrentHashMap<>(64);
+  private final BoundingBoxResolvePipeline resolver;
   private final Map<Long, BlockShape> indexedReplacements = new ConcurrentHashMap<>(64);
+  private final Map<Location, BlockShape> locatedReplacements = new ConcurrentHashMap<>(64);
 
   private int chunkX;
   private int chunkZ;
 
-  public GlobalStaticOCBlockShapeAccess(Player player, BoundingBoxResolvePipelineElement resolver) {
+  public GlobalStaticOCBlockShapeAccess(Player player, BoundingBoxResolvePipeline resolver) {
     this.player = player;
     this.resolver = resolver;
   }

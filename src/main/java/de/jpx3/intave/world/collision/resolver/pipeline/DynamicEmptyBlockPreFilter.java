@@ -3,7 +3,7 @@ package de.jpx3.intave.world.collision.resolver.pipeline;
 import de.jpx3.intave.diagnostics.BoundingBoxAccessFlowStudy;
 import de.jpx3.intave.tools.client.MaterialLogic;
 import de.jpx3.intave.tools.wrapper.WrappedAxisAlignedBB;
-import de.jpx3.intave.world.collision.resolver.BoundingBoxResolvePipelineElement;
+import de.jpx3.intave.world.collision.resolver.BoundingBoxResolvePipeline;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -11,10 +11,10 @@ import org.bukkit.entity.Player;
 import java.util.Collections;
 import java.util.List;
 
-public final class DynamicEmptyBlockPreFilter implements BoundingBoxResolvePipelineElement {
-  private final BoundingBoxResolvePipelineElement forward;
+public final class DynamicEmptyBlockPreFilter implements BoundingBoxResolvePipeline {
+  private final BoundingBoxResolvePipeline forward;
 
-  public DynamicEmptyBlockPreFilter(BoundingBoxResolvePipelineElement forward) {
+  public DynamicEmptyBlockPreFilter(BoundingBoxResolvePipeline forward) {
     this.forward = forward;
   }
 

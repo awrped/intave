@@ -18,7 +18,7 @@ import de.jpx3.intave.tools.placeholder.PlayerContext;
 import de.jpx3.intave.tools.sync.Synchronizer;
 import de.jpx3.intave.world.collider.Collider;
 import de.jpx3.intave.world.collider.processor.ComplexColliderProcessor;
-import de.jpx3.intave.world.collision.access.BlankUserBlockShapeAccess;
+import de.jpx3.intave.world.collision.access.BlankUserBlockOCShapeAccess;
 import de.jpx3.intave.world.collision.access.GlobalStaticOCBlockShapeAccess;
 import de.jpx3.intave.world.collision.access.MultiChunkKeyOCBlockShapeAccess;
 import de.jpx3.intave.world.collision.access.OCBlockShapeAccess;
@@ -106,8 +106,8 @@ public final class User {
     if (userCustomCheckMeta == null) {
       try {
         customMetaPool.put(classTarget, userCustomCheckMeta = classTarget.newInstance());
-      } catch (InstantiationException | IllegalAccessException e) {
-        e.printStackTrace();
+      } catch (InstantiationException | IllegalAccessException exception) {
+        exception.printStackTrace();
       }
     }
     return userCustomCheckMeta;
@@ -166,7 +166,7 @@ public final class User {
   }
 
   public void useBlankBlockShapeAccess() {
-    setBlockShapeAccess(new BlankUserBlockShapeAccess());
+    setBlockShapeAccess(new BlankUserBlockOCShapeAccess());
   }
 
   public void useGlobalStaticBlockShapeAccess() {

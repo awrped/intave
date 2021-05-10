@@ -3,7 +3,7 @@ package de.jpx3.intave.world.collision.resolver.server;
 import de.jpx3.intave.patchy.annotate.PatchyAutoTranslation;
 import de.jpx3.intave.tools.wrapper.WrappedAxisAlignedBB;
 import de.jpx3.intave.tools.wrapper.link.WrapperLinkage;
-import de.jpx3.intave.world.collision.resolver.BoundingBoxResolvePipelineElement;
+import de.jpx3.intave.world.collision.resolver.BoundingBoxResolvePipeline;
 import de.jpx3.intave.world.collision.resolver.acbbs.v9AlwaysCollidingBoundingBox;
 import net.minecraft.server.v1_9_R2.*;
 import org.bukkit.World;
@@ -16,7 +16,7 @@ import java.util.Collections;
 import java.util.List;
 
 @PatchyAutoTranslation
-public final class v9BoundingBoxResolver implements BoundingBoxResolvePipelineElement {
+public final class v9BoundingBoxResolver implements BoundingBoxResolvePipeline {
   private final static v9AlwaysCollidingBoundingBox ALWAYS_COLLIDING_BOX = new v9AlwaysCollidingBoundingBox();
 
   @Override

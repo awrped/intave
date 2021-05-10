@@ -4,7 +4,7 @@ import de.jpx3.intave.patchy.annotate.PatchyAutoTranslation;
 import de.jpx3.intave.tools.wrapper.WrappedAxisAlignedBB;
 import de.jpx3.intave.world.blockaccess.BlockDataAccess;
 import de.jpx3.intave.world.blockaccess.BukkitBlockAccess;
-import de.jpx3.intave.world.collision.resolver.BoundingBoxResolvePipelineElement;
+import de.jpx3.intave.world.collision.resolver.BoundingBoxResolvePipeline;
 import net.minecraft.server.v1_13_R2.*;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @PatchyAutoTranslation
-public final class v13BoundingBoxResolver implements BoundingBoxResolvePipelineElement {
+public final class v13BoundingBoxResolver implements BoundingBoxResolvePipeline {
   @Override
   @PatchyAutoTranslation
   public List<WrappedAxisAlignedBB> nativeResolve(World world, Player player, Material type, int blockState, int posX, int posY, int posZ) {

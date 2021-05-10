@@ -1,7 +1,6 @@
 package de.jpx3.intave.user;
 
 import com.google.common.collect.Maps;
-import de.jpx3.intave.access.player.trust.TrustFactor;
 import de.jpx3.intave.tools.annotate.Relocate;
 
 import java.util.Map;
@@ -16,5 +15,4 @@ public final class UserMetaViolationLevelData {
   public Map<String, Map<String, Double>> violationLevel = Maps.newConcurrentMap();
   public Map<String, Map<String, Double>> violationLevelGainedCounter = Maps.newConcurrentMap();
   public Map<String, Map<String, Long>> lastViolationLevelGainedCounterReset = Maps.newConcurrentMap();
-  public TrustFactor trustFactor = TrustFactor.YELLOW;
 }

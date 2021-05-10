@@ -26,27 +26,85 @@ import java.util.Map;
 public final class TransactionFeedbackService implements PacketEventSubscriber {
   private final static long TRANSACTION_TIMEOUT = 3000;
   private final static long TRANSACTION_TIMEOUT_KICK = 12000;
-  public final static short TRANSACTION_MIN_CODE = -32768;
+  public final static short TRANSACTION_MIN_CODE = -22222;//-32768;
   public final static short TRANSACTION_MAX_CODE = -16370;
   private final static ProtocolManager protocolManager = ProtocolLibrary.getProtocolManager();
 
   public TransactionFeedbackService(IntavePlugin plugin) {
     plugin.packetSubscriptionLinker().linkSubscriptionsIn(this);
-
-//    plugin.getServer().getScheduler().scheduleAsyncRepeatingTask(plugin, this::nettyThreadDump, 20 * 10, 20 * 10);
-
     plugin.getServer().getScheduler().scheduleAsyncRepeatingTask(plugin, this::checkTransactionTimeout, 20 * 2, 20 * 2);
   }
 
   private void checkTransactionTimeout() {
     for (Player player : Bukkit.getOnlinePlayers()) {
-      User user = UserRepository.userOf(player);
-      if (oldestPendingTransaction(user) > TRANSACTION_TIMEOUT_KICK) {
-        Synchronizer.synchronize(() -> {
-          System.out.println("[Intave] " + player.getName() + " is not responding to validation packets");
-          player.kickPlayer("Timed out");
-        });
-      }
+      checkTransactionTimeoutFor(player);
+    }
+  }
+
+  private void checkTransactionTimeoutFor(Player player) {
+    User user = UserRepository.userOf(player);
+    if (oldestPendingTransaction(user) > TRANSACTION_TIMEOUT_KICK) {
+      Synchronizer.synchronize(() -> {
+        System.out.println("[Intave] " + player.getName() + " is not responding to validation packets");
+        player.kickPlayer("Timed out");
+      });
+    }
+  }
+
+  public <T> void requestPong(Player player, T target, TransactionFeedbackCallback<T> callback) {
+    Short id = acquireNewId(player, target, callback);
+    if (id != null) {
+      sendTransactionPacket(player, id);
+    }
+  }
+
+  private final static Object FALLBACK_OBJECT = new Object();
+
+  private /* synchronized (is already always sync) */ <T> Short acquireNewId(Player player, T obj, TransactionFeedbackCallback<T> callback) {
+    User user = UserRepository.userOf(player);
+    if (user == null || !user.hasOnlinePlayer()) {
+      return null;
+    }
+    UserMetaSynchronizeData synchronizeData = user.meta().synchronizeData();
+    short transactionCounter = findAvailableTransactionIdFor(player);//synchronizeData.transactionCounter++;
+    if (transactionCounter >= TRANSACTION_MAX_CODE) {
+      synchronizeData.transactionCounter = TRANSACTION_MIN_CODE;
+    }
+    long transactionNumCounter = synchronizeData.transactionNumCounter++;
+    if(obj == null) {
+      //noinspection unchecked
+      obj = (T) FALLBACK_OBJECT;
+    }
+    TransactionCallBackData<T> feedbackEntry = new TransactionCallBackData<>(callback, obj, transactionNumCounter);
+    synchronizeData.transactionFeedBackMap().put(transactionCounter, feedbackEntry);
+    return transactionCounter;
+  }
+
+  private synchronized short findAvailableTransactionIdFor(Player player) {
+    User user = UserRepository.userOf(player);
+    UserMetaSynchronizeData synchronizeData = user.meta().synchronizeData();
+    Map<Short, TransactionCallBackData<?>> transactionFeedBackMap = synchronizeData.transactionFeedBackMap();
+    short counter = (short) (TRANSACTION_MIN_CODE /*+ transactionFeedBackMap.size()*/);
+    while (transactionFeedBackMap.containsKey(counter)) counter++;
+    return counter;
+  }
+
+  private void sendTransactionPacket(Player receiver, short id) {
+    if(!Bukkit.isPrimaryThread()) {
+      IntaveLogger.logger().error("Can't perform tick-validation off main thread.");
+      IntaveLogger.logger().error("Please check if you sent a packet / performed a bukkit player action asynchronously in the following trace:");
+      Thread.dumpStack();
+      Synchronizer.synchronize(() -> sendTransactionPacket(receiver, id));
+      return;
+    }
+    PacketContainer transactionPacket = protocolManager.createPacket(PacketType.Play.Server.TRANSACTION);
+    transactionPacket.getIntegers().write(0, 0);
+    transactionPacket.getShorts().write(0, id);
+    transactionPacket.getBooleans().write(0, false);
+    try {
+      protocolManager.sendServerPacket(receiver, transactionPacket);
+    } catch (InvocationTargetException e) {
+      e.printStackTrace();
     }
   }
 
@@ -72,7 +130,6 @@ public final class TransactionFeedbackService implements PacketEventSubscriber {
       }
 
       // order verification
-
       long expected = synchronizeData.lastReceivedTransactionNum + 1;
       if (transactionResponse.num() != expected && !user.justJoined()) {
         Synchronizer.synchronize(() -> {
@@ -80,11 +137,8 @@ public final class TransactionFeedbackService implements PacketEventSubscriber {
           player.kickPlayer("Timed out");
         });
       }
-//      Synchronizer.synchronize(() -> {
-//        player.sendMessage(String.valueOf(transactionResponse.num()));
-//      });
-      synchronizeData.lastReceivedTransactionNum = transactionResponse.num();
 
+      synchronizeData.lastReceivedTransactionNum = transactionResponse.num();
       transactionResponse.transactionFeedbackCallback().success(
         player,
         convertInstanceOfObject(transactionResponse.obj())
@@ -150,13 +204,6 @@ public final class TransactionFeedbackService implements PacketEventSubscriber {
     }
   }
 
-  public <T> void requestPong(Player player, T target, TransactionFeedbackCallback<T> callback) {
-    Short id = acquireNewId(player, target, callback);
-    if (id != null) {
-      sendTransactionPacket(player, id);
-    }
-  }
-
   private static boolean transactionResponseTimeout(User user) {
     UserMetaSynchronizeData synchronizeData = user.meta().synchronizeData();
     Map<Short, TransactionCallBackData<?>> transactionFeedBackMap = synchronizeData.transactionFeedBackMap();
@@ -175,50 +222,5 @@ public final class TransactionFeedbackService implements PacketEventSubscriber {
       duration = Math.min(duration, value.requested());
     }
     return duration == 0 ? 0 : AccessHelper.now() - duration;
-  }
-
-  private final static Object FALLBACK_OBJECT = new Object();
-
-  private <T> Short acquireNewId(Player player, T obj, TransactionFeedbackCallback<T> callback) {
-    User user = UserRepository.userOf(player);
-    if (user == null || !user.hasOnlinePlayer()) {
-      return null;
-    }
-    UserMetaSynchronizeData synchronizeData = user.meta().synchronizeData();
-    short transactionCounter = synchronizeData.transactionCounter++;
-    long transactionNumCounter = synchronizeData.transactionNumCounter++;
-    if (transactionCounter >= TRANSACTION_MAX_CODE) {
-      synchronizeData.transactionCounter = TRANSACTION_MIN_CODE;
-    }
-    if(obj == null) {
-      //noinspection unchecked
-      obj = (T) FALLBACK_OBJECT;
-    }
-    TransactionCallBackData<T> feedbackEntry = new TransactionCallBackData<>(callback, obj, transactionNumCounter);
-    synchronizeData.transactionFeedBackMap().put(transactionCounter, feedbackEntry);
-    return transactionCounter;
-  }
-
-  private void sendTransactionPacket(Player receiver, short id) {
-    if(!Bukkit.isPrimaryThread()) {
-      IntaveLogger.logger().error("Can't perform tick-validation off main thread.");
-      IntaveLogger.logger().error("Please check if you sent a packet / performed a bukkit player action asynchronously in the following trace:");
-      Thread.dumpStack();
-      Synchronizer.synchronize(() -> sendTransactionPacket(receiver, id));
-      return;
-    }
-
-//    IntaveLogger.logger().globalPrintLn("Transaction packet to " + receiver + ", id: " + id + ")");
-    PacketContainer transactionPacket = protocolManager.createPacket(PacketType.Play.Server.TRANSACTION);
-
-    transactionPacket.deepClone();
-    transactionPacket.getIntegers().write(0, 0);
-    transactionPacket.getShorts().write(0, id);
-    transactionPacket.getBooleans().write(0, false);
-    try {
-      protocolManager.sendServerPacket(receiver, transactionPacket);
-    } catch (InvocationTargetException e) {
-      e.printStackTrace();
-    }
   }
 }
