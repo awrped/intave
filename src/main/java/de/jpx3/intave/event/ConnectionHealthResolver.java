@@ -1,4 +1,4 @@
-package de.jpx3.intave.event.service;
+package de.jpx3.intave.event;
 
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;

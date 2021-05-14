@@ -1,4 +1,4 @@
-package de.jpx3.intave.event.service;
+package de.jpx3.intave.event.transaction;
 
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLibrary;
@@ -6,9 +6,6 @@ import com.comphenix.protocol.ProtocolManager;
 import com.comphenix.protocol.events.PacketContainer;
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.event.packet.PacketEventSubscriber;
-import de.jpx3.intave.event.service.transaction.TFCallback;
-import de.jpx3.intave.event.service.transaction.TFRequest;
-import de.jpx3.intave.event.service.transaction.TransactionResponseLocker;
 import de.jpx3.intave.logging.IntaveLogger;
 import de.jpx3.intave.tools.sync.Synchronizer;
 import de.jpx3.intave.user.User;
@@ -20,8 +17,8 @@ import org.bukkit.entity.Player;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 
-import static de.jpx3.intave.event.service.TransactionFeedbackService.TransactionOptions.ENFORCE_SYNCHRONIZATION;
-import static de.jpx3.intave.event.service.TransactionFeedbackService.TransactionOptions.OPTIONAL;
+import static de.jpx3.intave.event.transaction.TransactionFeedbackService.TransactionOptions.ENFORCE_SYNCHRONIZATION;
+import static de.jpx3.intave.event.transaction.TransactionFeedbackService.TransactionOptions.OPTIONAL;
 
 public final class TransactionFeedbackService implements PacketEventSubscriber {
   public final static long TRANSACTION_TIMEOUT = 3000;

@@ -1,6 +1,7 @@
 package de.jpx3.intave.reflect.hitbox.typeaccess;
 
 import de.jpx3.intave.adapter.MinecraftVersions;
+import de.jpx3.intave.logging.IntaveLogger;
 import de.jpx3.intave.reflect.hitbox.HitBoxBoundaries;
 
 import java.util.HashMap;
@@ -20,10 +21,14 @@ public final class DualEntityTypeAccess {
         entityNameMap.put(id, EntityTypeResolverNew.resolveNameOf(id));
       }
     } else {
-      EntityTypeResolverLegacy.pollTo(
-        entityHitBoxMap,
-        entityNameMap
-      );
+      try {
+        EntityTypeResolverLegacy.pollTo(
+          entityHitBoxMap,
+          entityNameMap
+        );
+      } catch (Exception | Error throwable) {
+        IntaveLogger.logger().info("Failed to perform ETRL setup procedure");
+      }
     }
   }
 

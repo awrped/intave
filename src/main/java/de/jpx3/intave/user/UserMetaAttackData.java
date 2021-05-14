@@ -2,9 +2,9 @@ package de.jpx3.intave.user;
 
 import de.jpx3.intave.detect.checks.combat.heuristics.MiningStrategy;
 import de.jpx3.intave.detect.checks.combat.heuristics.mining.MiningStrategyContainer;
-import de.jpx3.intave.event.service.entity.ClientSideEntityService;
-import de.jpx3.intave.event.service.entity.WrappedEntity;
-import de.jpx3.intave.event.service.entity.WrappedEntity.EntityPositionContext;
+import de.jpx3.intave.event.entity.ClientSideEntityService;
+import de.jpx3.intave.event.entity.WrappedEntity;
+import de.jpx3.intave.event.entity.WrappedEntity.EntityPositionContext;
 import de.jpx3.intave.fakeplayer.FakePlayer;
 import de.jpx3.intave.tools.AccessHelper;
 import de.jpx3.intave.tools.annotate.Nullable;

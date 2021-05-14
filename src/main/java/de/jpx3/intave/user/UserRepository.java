@@ -2,7 +2,7 @@ package de.jpx3.intave.user;
 
 import com.google.common.collect.Maps;
 import de.jpx3.intave.IntaveControl;
-import de.jpx3.intave.event.punishment.EntityNoDamageTickChanger;
+import de.jpx3.intave.event.violation.EntityNoDamageTickChanger;
 import de.jpx3.intave.tools.AccessHelper;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;

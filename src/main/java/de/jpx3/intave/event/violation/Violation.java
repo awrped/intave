@@ -1,4 +1,4 @@
-package de.jpx3.intave.event.service.violation;
+package de.jpx3.intave.event.violation;
 
 import com.google.common.base.Preconditions;
 import de.jpx3.intave.IntavePlugin;

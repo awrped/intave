@@ -1,4 +1,4 @@
-package de.jpx3.intave.event.service.entity;
+package de.jpx3.intave.event.entity;
 
 import de.jpx3.intave.IntaveControl;
 import de.jpx3.intave.IntavePlugin;

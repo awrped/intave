@@ -1,4 +1,4 @@
-package de.jpx3.intave.event.service.violation;
+package de.jpx3.intave.event.violation;
 
 import de.jpx3.intave.IntaveControl;
 import de.jpx3.intave.IntavePlugin;
@@ -8,7 +8,6 @@ import de.jpx3.intave.access.player.trust.TrustFactor;
 import de.jpx3.intave.connect.proxy.protocol.packets.IntavePacketOutKicked;
 import de.jpx3.intave.detect.CheckStatistics;
 import de.jpx3.intave.detect.IntaveCheck;
-import de.jpx3.intave.event.service.MessageFormatter;
 import de.jpx3.intave.tools.MathHelper;
 import de.jpx3.intave.tools.annotate.Native;
 import de.jpx3.intave.tools.placeholder.TextContext;
@@ -24,7 +23,7 @@ import org.bukkit.entity.Player;
 
 import java.util.*;
 
-import static de.jpx3.intave.event.service.violation.Violation.ViolationFlags;
+import static de.jpx3.intave.event.violation.Violation.ViolationFlags;
 
 public final class ViolationProcessor {
   private final IntavePlugin plugin;

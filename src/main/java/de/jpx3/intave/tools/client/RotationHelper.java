@@ -1,6 +1,6 @@
 package de.jpx3.intave.tools.client;
 
-import de.jpx3.intave.event.service.entity.WrappedEntity;
+import de.jpx3.intave.event.entity.WrappedEntity;
 import de.jpx3.intave.tools.wrapper.WrappedMathHelper;
 import de.jpx3.intave.tools.wrapper.WrappedVector;
 import org.bukkit.util.Vector;

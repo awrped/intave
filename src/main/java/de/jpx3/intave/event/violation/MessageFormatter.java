@@ -1,4 +1,4 @@
-package de.jpx3.intave.event.service;
+package de.jpx3.intave.event.violation;
 
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.tools.placeholder.Placeholders;

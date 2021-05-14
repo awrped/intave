@@ -156,17 +156,12 @@ final class TinyProtocolReflection {
         && Arrays.equals(method.getParameterTypes(), params)) {
         method.setAccessible(true);
 
-        return new MethodInvoker() {
-
-          @Override
-          public Object invoke(Object target, Object... arguments) {
-            try {
-              return method.invoke(target, arguments);
-            } catch (Exception e) {
-              throw new RuntimeException("Cannot invoke method " + method, e);
-            }
+        return (target, arguments) -> {
+          try {
+            return method.invoke(target, arguments);
+          } catch (Exception e) {
+            throw new RuntimeException("Cannot invoke method " + method, e);
           }
-
         };
       }
     }

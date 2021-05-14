@@ -1,8 +1,8 @@
 package de.jpx3.intave.user;
 
 import com.google.common.collect.Lists;
-import de.jpx3.intave.event.punishment.AttackNerfStrategy;
-import de.jpx3.intave.event.punishment.EntityNoDamageTickChanger;
+import de.jpx3.intave.event.violation.AttackNerfStrategy;
+import de.jpx3.intave.event.violation.EntityNoDamageTickChanger;
 import de.jpx3.intave.tools.AccessHelper;
 import de.jpx3.intave.tools.annotate.Relocate;
 import org.bukkit.entity.Entity;

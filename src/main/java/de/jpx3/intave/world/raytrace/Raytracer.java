@@ -3,7 +3,7 @@ package de.jpx3.intave.world.raytrace;
 import de.jpx3.intave.adapter.MinecraftVersions;
 import de.jpx3.intave.detect.checks.combat.AttackRaytrace;
 import de.jpx3.intave.diagnostics.timings.Timings;
-import de.jpx3.intave.event.service.entity.WrappedEntity;
+import de.jpx3.intave.event.entity.WrappedEntity;
 import de.jpx3.intave.patchy.PatchyLoadingInjector;
 import de.jpx3.intave.tools.client.RotationHelper;
 import de.jpx3.intave.tools.client.SinusCache;

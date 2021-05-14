@@ -12,7 +12,7 @@ import de.jpx3.intave.event.packet.ListenerPriority;
 import de.jpx3.intave.event.packet.PacketDescriptor;
 import de.jpx3.intave.event.packet.PacketSubscription;
 import de.jpx3.intave.event.packet.Sender;
-import de.jpx3.intave.event.punishment.AttackNerfStrategy;
+import de.jpx3.intave.event.violation.AttackNerfStrategy;
 import de.jpx3.intave.user.*;
 import org.bukkit.entity.Player;
 

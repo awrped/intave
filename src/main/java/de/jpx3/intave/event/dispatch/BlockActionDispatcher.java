@@ -26,8 +26,8 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.comphenix.protocol.wrappers.EnumWrappers.PlayerDigType.*;
-import static de.jpx3.intave.event.service.TransactionFeedbackService.TransactionOptions.ENFORCE_SYNCHRONIZATION;
-import static de.jpx3.intave.event.service.TransactionFeedbackService.TransactionOptions.OPTIONAL;
+import static de.jpx3.intave.event.transaction.TransactionFeedbackService.TransactionOptions.ENFORCE_SYNCHRONIZATION;
+import static de.jpx3.intave.event.transaction.TransactionFeedbackService.TransactionOptions.OPTIONAL;
 
 public final class BlockActionDispatcher implements EventProcessor {
   private final IntavePlugin plugin;

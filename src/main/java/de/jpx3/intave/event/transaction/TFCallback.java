@@ -1,4 +1,4 @@
-package de.jpx3.intave.event.service.transaction;
+package de.jpx3.intave.event.transaction;
 
 import org.bukkit.entity.Player;
 

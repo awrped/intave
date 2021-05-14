@@ -1,4 +1,4 @@
-package de.jpx3.intave.event.service.transaction;
+package de.jpx3.intave.event.transaction;
 
 public final class TFRequest<T> {
   private final TFCallback<T> TFCallback;

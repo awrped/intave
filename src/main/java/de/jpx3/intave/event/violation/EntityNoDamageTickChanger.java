@@ -1,4 +1,4 @@
-package de.jpx3.intave.event.punishment;
+package de.jpx3.intave.event.violation;
 
 import de.jpx3.intave.logging.IntaveLogger;
 import de.jpx3.intave.reflect.ReflectiveHandleAccess;

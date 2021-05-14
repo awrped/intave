@@ -8,7 +8,7 @@ import de.jpx3.intave.detect.IntaveMetaCheck;
 import de.jpx3.intave.event.packet.PacketDescriptor;
 import de.jpx3.intave.event.packet.PacketSubscription;
 import de.jpx3.intave.event.packet.Sender;
-import de.jpx3.intave.event.service.violation.Violation;
+import de.jpx3.intave.event.violation.Violation;
 import de.jpx3.intave.reflect.ReflectiveAccess;
 import de.jpx3.intave.tools.MathHelper;
 import de.jpx3.intave.tools.annotate.KeepEnumInternalNames;

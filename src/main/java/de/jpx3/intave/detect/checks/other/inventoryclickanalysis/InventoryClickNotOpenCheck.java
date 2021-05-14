@@ -4,7 +4,7 @@ import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.detect.IntaveCheckPart;
 import de.jpx3.intave.detect.checks.other.InventoryClickAnalysis;
 import de.jpx3.intave.event.bukkit.BukkitEventSubscription;
-import de.jpx3.intave.event.service.violation.Violation;
+import de.jpx3.intave.event.violation.Violation;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserMetaClientData;
 import de.jpx3.intave.user.UserMetaInventoryData;

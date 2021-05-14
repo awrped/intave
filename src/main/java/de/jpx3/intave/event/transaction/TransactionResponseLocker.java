@@ -1,4 +1,4 @@
-package de.jpx3.intave.event.service.transaction;
+package de.jpx3.intave.event.transaction;
 
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
@@ -14,7 +14,7 @@ import org.bukkit.entity.Player;
 
 import java.util.Map;
 
-import static de.jpx3.intave.event.service.TransactionFeedbackService.*;
+import static de.jpx3.intave.event.transaction.TransactionFeedbackService.*;
 
 public final class TransactionResponseLocker implements PacketEventSubscriber {
   private final IntavePlugin plugin;

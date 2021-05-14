@@ -9,8 +9,8 @@ import de.jpx3.intave.detect.checks.world.PlacementAnalysis;
 import de.jpx3.intave.event.packet.PacketDescriptor;
 import de.jpx3.intave.event.packet.PacketSubscription;
 import de.jpx3.intave.event.packet.Sender;
-import de.jpx3.intave.event.punishment.AttackNerfStrategy;
-import de.jpx3.intave.event.service.violation.Violation;
+import de.jpx3.intave.event.violation.AttackNerfStrategy;
+import de.jpx3.intave.event.violation.Violation;
 import de.jpx3.intave.user.User;
 import org.bukkit.entity.Player;
 
