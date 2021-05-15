@@ -10,9 +10,9 @@ import org.bukkit.entity.Player;
 import java.util.List;
 import java.util.UUID;
 
+@PatchyAutoTranslation
 public final class ReflectiveScoreboardAccess {
-  @PatchyAutoTranslation
-  private static ScoreboardTeam scoreboardTeam;
+  private static Object scoreboardTeam;
 
   @PatchyAutoTranslation
   public static void applyNoCollisionRule(
@@ -21,7 +21,7 @@ public final class ReflectiveScoreboardAccess {
     String teamContent
   ) {
     teamName = teamName + "-" + findTeamName();
-    ScoreboardTeam team = scoreboardTeam == null ? new ScoreboardTeam(new Scoreboard(), teamName) : scoreboardTeam;
+    ScoreboardTeam team = scoreboardTeam == null ? new ScoreboardTeam(new Scoreboard(), teamName) : (ScoreboardTeam) scoreboardTeam;
     ReflectiveScoreboardAccess.scoreboardTeam = team;
     team.setCollisionRule(ScoreboardTeamBase.EnumTeamPush.NEVER);
     PlayerConnection connection = ((CraftPlayer) player).getHandle().playerConnection;
