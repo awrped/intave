@@ -103,7 +103,7 @@ public final class PacketEntityTypeResolver {
     }
   }
 
-  public EntityTypeData entityTypeDataOfEntityMetaData(PacketEvent event, boolean isChild, int entityTypeId) {
+  public EntityTypeData entityTypeDataOfEntityMetaData(PacketEvent event, Boolean isChild, int entityTypeId) {
     PacketContainer packet = event.getPacket();
     int entityId = packet.getIntegers().read(0);
     Entity entity = ClientSideEntityService.serverEntityByIdentifier(event.getPlayer(), entityId);
@@ -113,7 +113,9 @@ public final class PacketEntityTypeResolver {
     } else {
       EntityTypeData entityTypeData = entityTypeDataOfEntityType(entityTypeId);
 
-      if (isChild) {
+      if(isChild == null) {
+        return null;
+      } else if (isChild) {
         return convertHitboxBoundariesToBaby(entityTypeData);
       } else {
         return entityTypeData;

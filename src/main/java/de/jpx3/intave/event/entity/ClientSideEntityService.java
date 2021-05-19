@@ -208,7 +208,7 @@ public final class ClientSideEntityService implements PacketEventSubscriber {
       entity = createEntityByMovePacket(event);
     }
     if (entity == null) {
-      IntaveLogger.logger().info("Unable to create entity (id " + entityId + ")");
+//      IntaveLogger.logger().info("Unable to create entity (id " + entityId + ")");
 //        throw new NullPointerException("entity could not be created");
       return;
     }
@@ -413,9 +413,11 @@ public final class ClientSideEntityService implements PacketEventSubscriber {
     List<WrappedWatchableObject> watchableObjects = packet.getWatchableCollectionModifier().read(0);
     if(watchableObjects != null) {
       Boolean isChild = isChildByWatchableObjects(watchableObjects);
-      if (isChild != null) {
-        EntityTypeData entityTypeData = entityTypeResolver.entityTypeDataOfEntityMetaData(event, isChild, entity.entityTypeData.entityTypeId());
+      EntityTypeData entityTypeData = entityTypeResolver.entityTypeDataOfEntityMetaData(event, isChild, entity.entityTypeData.entityTypeId());
+      if (entityTypeData != null) {
         entity.entityTypeData = entityTypeData;
+      } else {
+        IntaveLogger.logger().info("Unable to update enttiy by EntityMetaData packet.");
       }
 
       Float health = readHealthOf(watchableObjects);
@@ -496,7 +498,7 @@ public final class ClientSideEntityService implements PacketEventSubscriber {
               // packet here should be ignored because for other vanilla use cases (for example when a bat is hanging on the ceiling)
             }
           } else {
-            IntaveLogger.logger().info("Failed to read EntityMetaData packet. " + object.getClass());
+//            IntaveLogger.logger().info("Failed to read EntityMetaData packet. " + object.getClass());
             return null;
           }
         }
