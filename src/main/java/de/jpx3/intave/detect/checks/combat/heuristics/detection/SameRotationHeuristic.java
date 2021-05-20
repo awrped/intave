@@ -83,13 +83,16 @@ public class SameRotationHeuristic extends IntaveMetaCheckPart<Heuristics, SameR
         }
       }
 
+      boolean lastYawWholeNumber = meta.lastLastTick.yawMotion % 1 == 0;
+      boolean lastPitchWholeNumber = meta.lastLastTick.pitchMotion % 1 == 0;
+
       boolean yawWholeNumber = meta.lastTick.yawMotion % 1 == 0;
       boolean pitchWholeNumber = meta.lastTick.pitchMotion % 1 == 0;
-
-      if (yawWholeNumber || pitchWholeNumber) {
+      if ((yawWholeNumber && meta.lastTick.yawMotion != 0 && !lastYawWholeNumber)
+        || (pitchWholeNumber && Math.abs(meta.lastTick.pitchMotion) != 90) && meta.lastTick.pitchMotion != 0 && !lastPitchWholeNumber) {
         String description = "whole rotation ("
-          + "yaw: " + (yawWholeNumber)
-          + ", pitch: " + (pitchWholeNumber) + ")";
+          + "yaw: " + yawWholeNumber + ", " + meta.lastTick.yawMotion
+          + ", pitch: " + pitchWholeNumber + ", " + meta.lastTick.pitchMotion + ")";
 
         boolean isPartner = (UserMetaClientData.VERSION_DETAILS & 0x100) != 0;
         boolean isEnterprise = (UserMetaClientData.VERSION_DETAILS & 0x200) != 0;
@@ -106,6 +109,28 @@ public class SameRotationHeuristic extends IntaveMetaCheckPart<Heuristics, SameR
         Anomaly anomaly = Anomaly.anomalyOf("182", Confidence.NONE, Anomaly.Type.KILLAURA, description, options);
         parentCheck().saveAnomaly(player, anomaly);
       }
+
+      boolean yawWholeExactNumber = meta.lastTick.yaw % 1 == 0;
+      boolean pitchWholeExactNumber = meta.lastTick.pitch % 1 == 0;
+      if(yawWholeExactNumber || pitchWholeExactNumber) {
+        String description = "whole exact rotation ("
+          + "yaw: " + yawWholeExactNumber + ", " + meta.lastTick.yaw
+          + ", pitch: " + pitchWholeExactNumber + ", " + meta.lastTick.pitch + ")";
+
+        boolean isPartner = (UserMetaClientData.VERSION_DETAILS & 0x100) != 0;
+        int options;
+        if (IntaveControl.GOMME_MODE) {
+          options = Anomaly.AnomalyOption.DELAY_32s;
+        } else if (isPartner) {
+          options = Anomaly.AnomalyOption.DELAY_64s;
+        } else {
+          options = Anomaly.AnomalyOption.DELAY_128s;
+        }
+
+        Anomaly anomaly = Anomaly.anomalyOf("183", Confidence.NONE, Anomaly.Type.KILLAURA, description, options);
+        parentCheck().saveAnomaly(player, anomaly);
+      }
+
 
       meta.yawRotations.add(meta.lastLastTick.yaw);
       meta.yawRotations.add(meta.lastTick.yaw);
