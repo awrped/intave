@@ -12,7 +12,10 @@ import de.jpx3.intave.event.packet.PacketDescriptor;
 import de.jpx3.intave.event.packet.PacketSubscription;
 import de.jpx3.intave.event.packet.Sender;
 import de.jpx3.intave.event.violation.AttackNerfStrategy;
-import de.jpx3.intave.user.*;
+import de.jpx3.intave.user.User;
+import de.jpx3.intave.user.UserCustomCheckMeta;
+import de.jpx3.intave.user.UserMetaInventoryData;
+import de.jpx3.intave.user.UserMetaMovementData;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -34,7 +37,7 @@ public final class AttackReduceIgnoreHeuristic extends IntaveMetaCheckPart<Heuri
   )
   public void receiveMovement(PacketEvent event) {
     Player player = event.getPlayer();
-    User user = UserRepository.userOf(player);
+    User user = userOf(player);
     UserMetaMovementData movementData = user.meta().movementData();
     UserMetaInventoryData inventoryData = user.meta().inventoryData();
     AttackReduceMeta heuristicMeta = metaOf(user);

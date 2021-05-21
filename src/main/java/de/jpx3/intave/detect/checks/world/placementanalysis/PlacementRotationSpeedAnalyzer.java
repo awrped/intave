@@ -70,7 +70,7 @@ public final class PlacementRotationSpeedAnalyzer extends IntaveMetaCheckPart<Pl
       double rotationSum = rotationHistory.stream().mapToDouble(value -> value).sum();
       if(rotationSum > 3000) {
         Violation violation = Violation.builderFor(PlacementAnalysis.class)
-          .withPlayer(player).withDefaultThreshold()
+          .forPlayer(player).withDefaultThreshold()
           .withMessage(COMMON_FLAG_MESSAGE)
           .withDetails("high rotation activity while placing blocks (" + ((int) rotationSum) + " degrees)")
           .withDefaultThreshold().withVL(0).build();

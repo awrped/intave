@@ -8,7 +8,6 @@ import de.jpx3.intave.event.violation.Violation;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserMetaClientData;
 import de.jpx3.intave.user.UserMetaInventoryData;
-import de.jpx3.intave.user.UserRepository;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
@@ -29,7 +28,7 @@ public final class InventoryClickNotOpenCheck extends IntaveCheckPart<InventoryC
       return;
     }
     Player player = ((Player) whoClicked).getPlayer();
-    User user = UserRepository.userOf(player);
+    User user = userOf(player);
     User.UserMeta meta = user.meta();
     UserMetaClientData clientData = meta.clientData();
     UserMetaInventoryData inventoryData = meta.inventoryData();
@@ -50,7 +49,7 @@ public final class InventoryClickNotOpenCheck extends IntaveCheckPart<InventoryC
     if (inventoryData.forceInventoryOnClickOpen && !inventoryOpen && pastInventoryOpen > 1) {
       String message = "insufficient inventory-click (inventory not open)";
       Violation violation = Violation.builderFor(InventoryClickAnalysis.class)
-        .withPlayer(player).withMessage(message)
+        .forPlayer(player).withMessage(message)
         .withVL(1)
         .build();
       plugin.violationProcessor().processViolation(violation);

@@ -93,7 +93,7 @@ public final class Violation {
       this.checkClass = checkClass;
     }
 
-    public Builder withPlayer(Player player) {
+    public Builder forPlayer(Player player) {
       this.playerid = player.getUniqueId();
       return this;
     }

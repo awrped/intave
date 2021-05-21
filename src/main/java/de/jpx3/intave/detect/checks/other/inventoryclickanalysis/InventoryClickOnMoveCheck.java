@@ -8,7 +8,6 @@ import de.jpx3.intave.event.violation.Violation;
 import de.jpx3.intave.tools.sync.Synchronizer;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserMetaMovementData;
-import de.jpx3.intave.user.UserRepository;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
@@ -29,7 +28,7 @@ public final class InventoryClickOnMoveCheck extends IntaveCheckPart<InventoryCl
       return;
     }
     Player player = ((Player) whoClicked).getPlayer();
-    User user = UserRepository.userOf(player);
+    User user = userOf(player);
     User.UserMeta meta = user.meta();
 
     ClickType click = event.getClick();
@@ -51,7 +50,7 @@ public final class InventoryClickOnMoveCheck extends IntaveCheckPart<InventoryCl
     if ((keyForward != 0 || keyStrafe != 0) && distanceMoved > 0.1) {
       String message = "performed inventory-click whilst walking";
       Violation violation = Violation.builderFor(InventoryClickAnalysis.class)
-        .withPlayer(player)
+        .forPlayer(player)
         .withMessage(message)
         .withVL(0)
         .build();

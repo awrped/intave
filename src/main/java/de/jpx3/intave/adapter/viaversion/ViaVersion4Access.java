@@ -32,7 +32,9 @@ public final class ViaVersion4Access implements ViaVersionAccess {
       if(!maxPPSField.isAccessible()) {
         maxPPSField.setAccessible(true);
       }
-      maxPPSField.set(configuration, 300);
+
+      int maxpps = maxPPSField.getInt(configuration);
+      maxPPSField.set(configuration, Math.max(maxpps, 300));
     } catch (Exception exception) {
       throw new IllegalStateException("Failed to alter ViaVersion configuration", exception);
     }

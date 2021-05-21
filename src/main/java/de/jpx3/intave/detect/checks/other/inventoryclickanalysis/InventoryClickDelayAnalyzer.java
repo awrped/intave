@@ -107,7 +107,7 @@ public final class InventoryClickDelayAnalyzer extends IntaveMetaCheckPart<Inven
 
       if (std < 2) {
         Violation violation = Violation.builderFor(InventoryClickAnalysis.class)
-          .withPlayer(player).withDefaultThreshold()
+          .forPlayer(player).withDefaultThreshold()
           .withMessage("is clicking suspiciously on items")
           .withDetails("standard deviation: " + MathHelper.formatDouble(std,2))
           .withVL(5).build();
@@ -122,7 +122,7 @@ public final class InventoryClickDelayAnalyzer extends IntaveMetaCheckPart<Inven
 
     if (distance > 2 && flag && (flag2 || AccessHelper.now() - meta.lastFlagTimeStamp < 5000)) {
       Violation violation = Violation.builderFor(InventoryClickAnalysis.class)
-        .withPlayer(player).withDefaultThreshold()
+        .forPlayer(player).withDefaultThreshold()
         .withMessage("is switching too quickly between item slots")
         .withDetails("moved from slot " + meta.lastClickedSlot + " to slot " + slot + " in " + MathHelper.formatDouble(time, 3) + " seconds")
         .withVL(time > 0.01 ? 10 : 5).build();

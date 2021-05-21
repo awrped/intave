@@ -13,6 +13,7 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
 
@@ -36,7 +37,7 @@ public final class UserMetaPunishmentData {
   public long timeLastBlockCancel;
   public long timeLastSneakToggleCancel;
 
-  private long lastTimeValidHurttimeAttack = 0;
+  private Map<Integer, Long> lastTimeValidHurttimeAttack = new ConcurrentHashMap<>();
 
   public UserMetaPunishmentData(Player player) {
     this.attackNerfers = Lists.newArrayList(
@@ -75,11 +76,12 @@ public final class UserMetaPunishmentData {
         }
       }),
       new AttackNerfer(AttackNerfStrategy.GARBAGE_HITS, GARBAGE_HITS_DURATION, event -> {
-        long lastValidAttack = AccessHelper.now() - lastTimeValidHurttimeAttack;
-        if(lastValidAttack < 575) {
+        int entityId = event.getEntity().getEntityId();
+        long lastValidAttack = AccessHelper.now() - lastTimeValidHurttimeAttack.computeIfAbsent(entityId, x -> 0L);
+        if(lastValidAttack < 600) {
           event.setCancelled(true);
         } else {
-          lastTimeValidHurttimeAttack = AccessHelper.now();
+          lastTimeValidHurttimeAttack.put(entityId, AccessHelper.now());
         }
       })
     );

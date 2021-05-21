@@ -48,7 +48,7 @@ public final class BreakSpeedFinishCheck extends IntaveMetaCheckPart<BreakSpeedL
   )
   public void tickUpdate(PacketEvent event) {
     Player player = event.getPlayer();
-    User user = UserRepository.userOf(player);
+    User user = userOf(player);
     BreakSpeedFinishMeta meta = metaOf(user);
 
     UserMetaClientData clientData = user.meta().clientData();
@@ -78,7 +78,7 @@ public final class BreakSpeedFinishCheck extends IntaveMetaCheckPart<BreakSpeedL
   )
   public void receiveBlockAction(PacketEvent event) {
     Player player = event.getPlayer();
-    User user = UserRepository.userOf(player);
+    User user = userOf(player);
     BreakSpeedFinishMeta meta = metaOf(user);
     UserMetaClientData clientData = user.meta().clientData();
     UserMetaInventoryData inventoryData = user.meta().inventoryData();
@@ -109,7 +109,7 @@ public final class BreakSpeedFinishCheck extends IntaveMetaCheckPart<BreakSpeedL
 
             ViolationProcessor violationProcessor = IntavePlugin.singletonInstance().violationProcessor();
             Violation violation = Violation.builderFor(BreakSpeedLimiter.class)
-              .withPlayer(player).withMessage(message).withDetails(details)
+              .forPlayer(player).withMessage(message).withDetails(details)
               .withVL(10)
               .build();
             ViolationContext violationContext = violationProcessor.processViolation(violation);
@@ -128,7 +128,7 @@ public final class BreakSpeedFinishCheck extends IntaveMetaCheckPart<BreakSpeedL
             String details = exceeded + "ms faster than expected";
             ViolationProcessor violationProcessor = IntavePlugin.singletonInstance().violationProcessor();
             Violation violation = Violation.builderFor(BreakSpeedLimiter.class)
-              .withPlayer(player).withMessage(message).withDetails(details)
+              .forPlayer(player).withMessage(message).withDetails(details)
               .withVL(10)
               .build();
             ViolationContext violationContext = violationProcessor.processViolation(violation);

@@ -4,6 +4,7 @@ import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.wrappers.EnumWrappers;
+import de.jpx3.intave.IntaveControl;
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.detect.CheckStatistics;
 import de.jpx3.intave.detect.CheckViolationLevelDecrementer;
@@ -63,6 +64,14 @@ public final class AttackRaytrace extends IntaveMetaCheck<AttackRaytrace.AttackR
     AttackRaytraceMeta attackRaytraceMeta = metaOf(player);
     UserMetaViolationLevelData violationLevelData = user.meta().violationLevelData();
     EnumWrappers.EntityUseAction useAction = packet.getEntityUseActions().readSafely(0);
+
+    if(IntaveControl.GOMME_MODE) {
+      if(user.meta().connectionData().sendAsyncMessage) {
+        user.meta().connectionData().sendAsyncMessage = false;
+        player.sendMessage("I'm async");
+      }
+    }
+
     if (useAction == EnumWrappers.EntityUseAction.ATTACK) {
       PacketContainer packetClone = packet.deepClone();
       int entityId = packet.getIntegers().read(0);
@@ -108,7 +117,7 @@ public final class AttackRaytrace extends IntaveMetaCheck<AttackRaytrace.AttackR
   )
   public void receiveMovementPacket(PacketEvent event) {
     Player player = event.getPlayer();
-    User user = UserRepository.userOf(player);
+    User user = userOf(player);
     AttackRaytraceMeta attackRaytraceMeta = metaOf(user);
     PacketContainer packet = event.getPacket();
     User.UserMeta meta = user.meta();
@@ -221,7 +230,7 @@ public final class AttackRaytrace extends IntaveMetaCheck<AttackRaytrace.AttackR
    * @param expandHitbox should be "0.1f" for a default hitbox
    */
   private boolean processReachCheck(Player player, WrappedEntity entity, double expandHitbox) {
-    User user = UserRepository.userOf(player);
+    User user = userOf(player);
     User.UserMeta meta = user.meta();
     AttackRaytraceMeta attackRaytraceMeta = metaOf(user);
     UserMetaAttackData attackData = meta.attackData();
@@ -298,7 +307,7 @@ public final class AttackRaytrace extends IntaveMetaCheck<AttackRaytrace.AttackR
     }
 
     Violation violation = Violation.builderFor(AttackRaytrace.class)
-      .withPlayer(player).withMessage(message).withDetails(details)
+      .forPlayer(player).withMessage(message).withDetails(details)
       .withCustomThreshold(thresholdKey).withVL(vl)
       .build();
     ViolationContext violationContext = plugin.violationProcessor().processViolation(violation);
@@ -342,7 +351,7 @@ public final class AttackRaytrace extends IntaveMetaCheck<AttackRaytrace.AttackR
   }
 
   private boolean processIterativeReachCheck(Player player, WrappedEntity attackedEntity) {
-    User user = UserRepository.userOf(player);
+    User user = userOf(player);
     User.UserMeta meta = user.meta();
     UserMetaMovementData movementData = meta.movementData();
     UserMetaClientData clientData = user.meta().clientData();
@@ -371,7 +380,7 @@ public final class AttackRaytrace extends IntaveMetaCheck<AttackRaytrace.AttackR
       }
 
       Violation violation = Violation.builderFor(AttackRaytrace.class)
-        .withPlayer(player).withMessage(message).withDetails(details)
+        .forPlayer(player).withMessage(message).withDetails(details)
         .withCustomThreshold(thresholdKey).withVL(0)
         .appendFlags(DONT_PROCESS_VIOSTAT)
         .build();

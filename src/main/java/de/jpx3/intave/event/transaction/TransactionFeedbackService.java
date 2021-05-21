@@ -9,7 +9,7 @@ import de.jpx3.intave.event.packet.PacketEventSubscriber;
 import de.jpx3.intave.logging.IntaveLogger;
 import de.jpx3.intave.tools.sync.Synchronizer;
 import de.jpx3.intave.user.User;
-import de.jpx3.intave.user.UserMetaSynchronizeData;
+import de.jpx3.intave.user.UserMetaConnectionData;
 import de.jpx3.intave.user.UserRepository;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -26,7 +26,7 @@ public final class TransactionFeedbackService implements PacketEventSubscriber {
   public final static short TRANSACTION_MIN_CODE = -32768;
   public final static short TRANSACTION_MAX_CODE = -16370;
 
-  public final static long OPTIONAL_LIMIT = 120;
+  public final static long OPTIONAL_LIMIT = 20;
 
   private final static ProtocolManager protocolManager = ProtocolLibrary.getProtocolManager();
 
@@ -72,7 +72,7 @@ public final class TransactionFeedbackService implements PacketEventSubscriber {
     if (user == null || !user.hasOnlinePlayer()) {
       return null;
     }
-    UserMetaSynchronizeData synchronizeData = user.meta().synchronizeData();
+    UserMetaConnectionData synchronizeData = user.meta().connectionData();
     short transactionCounter = findAvailableTransactionIdFor(player);//synchronizeData.transactionCounter++;
     if (transactionCounter >= TRANSACTION_MAX_CODE) {
       synchronizeData.transactionCounter = TRANSACTION_MIN_CODE;
@@ -89,7 +89,7 @@ public final class TransactionFeedbackService implements PacketEventSubscriber {
 
   private synchronized short findAvailableTransactionIdFor(Player player) {
     User user = UserRepository.userOf(player);
-    UserMetaSynchronizeData synchronizeData = user.meta().synchronizeData();
+    UserMetaConnectionData synchronizeData = user.meta().connectionData();
     Map<Short, TFRequest<?>> transactionFeedBackMap = synchronizeData.transactionFeedBackMap();
     short counter = TRANSACTION_MIN_CODE;
     while (transactionFeedBackMap.containsKey(counter)) counter++;
@@ -109,7 +109,7 @@ public final class TransactionFeedbackService implements PacketEventSubscriber {
   }
 
   private static long pendingTransactions(User user) {
-    return user.meta().synchronizeData().transactionFeedBackMap().size();
+    return user.meta().connectionData().transactionFeedBackMap().size();
   }
 
   public User userOf(Player player) {

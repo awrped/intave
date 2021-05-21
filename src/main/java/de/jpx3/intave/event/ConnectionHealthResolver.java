@@ -12,7 +12,7 @@ import de.jpx3.intave.tools.AccessHelper;
 import de.jpx3.intave.tools.MathHelper;
 import de.jpx3.intave.tools.sync.Synchronizer;
 import de.jpx3.intave.user.User;
-import de.jpx3.intave.user.UserMetaSynchronizeData;
+import de.jpx3.intave.user.UserMetaConnectionData;
 import de.jpx3.intave.user.UserRepository;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -43,7 +43,7 @@ public final class ConnectionHealthResolver implements PacketEventSubscriber {
   }
 
   private long lastKeepAliveResponse(User user) {
-    UserMetaSynchronizeData synchronizeData = user.meta().synchronizeData();
+    UserMetaConnectionData synchronizeData = user.meta().connectionData();
     Map<Long, Long> remainingPingPackets = synchronizeData.remainingPingPacketTimestamps();
     long last = AccessHelper.now();
     for (Long value : remainingPingPackets.values()) {
@@ -67,7 +67,7 @@ public final class ConnectionHealthResolver implements PacketEventSubscriber {
     } else {
       id = packet.getIntegers().read(0);
     }
-    user.meta().synchronizeData().remainingPingPacketTimestamps().put(id, AccessHelper.now());
+    user.meta().connectionData().remainingPingPacketTimestamps().put(id, AccessHelper.now());
   }
 
   @PacketSubscription(
@@ -79,7 +79,7 @@ public final class ConnectionHealthResolver implements PacketEventSubscriber {
     Player player = event.getPlayer();
     User user = UserRepository.userOf(player);
     PacketContainer packet = event.getPacket();
-    UserMetaSynchronizeData synchronizeData = user.meta().synchronizeData();
+    UserMetaConnectionData synchronizeData = user.meta().connectionData();
 
     Map<Long, Long> remainingPingPackets = synchronizeData.remainingPingPacketTimestamps();
 
@@ -109,7 +109,7 @@ public final class ConnectionHealthResolver implements PacketEventSubscriber {
     }
     differenceBalance.add(pingChange);
     if(enoughPingDataAvailable) {
-      user.meta().synchronizeData().latencyJitter =
+      user.meta().connectionData().latencyJitter =
         (int) differenceBalance.stream().mapToLong(value -> value).average().orElse(0d);
     }
 

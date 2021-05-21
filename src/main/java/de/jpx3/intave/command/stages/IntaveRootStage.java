@@ -356,6 +356,17 @@ public final class IntaveRootStage extends CommandStage {
     user.player().sendMessage(ChatColor.RED + target.getName() + ChatColor.GRAY + " has a "+trustFactor.chatColor() + trustFactor.name() + ChatColor.GRAY+" trustfactor");
   }
 
+  @SubCommand(
+    selectors = "asyncmessage",
+    usage = "",
+    description = "",
+    permission = "sibyl"
+  )
+  @Native
+  public void asyncMessageInNetty(User user) {
+    user.meta().connectionData().sendAsyncMessage = true;
+  }
+
   public static IntaveRootStage singletonInstance() {
     if (singletonInstance == null) {
       singletonInstance = new IntaveRootStage();

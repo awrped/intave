@@ -34,7 +34,7 @@ public final class PacketInventoryHeuristic extends IntaveMetaCheckPart<Heuristi
   )
   public void receiveInventoryOpen(PacketEvent event) {
     Player player = event.getPlayer();
-    User user = UserRepository.userOf(player);
+    User user = userOf(player);
     EnumWrappers.ClientCommand clientCommand = event.getPacket().getClientCommands().read(0);
     if (clientCommand == EnumWrappers.ClientCommand.OPEN_INVENTORY_ACHIEVEMENT) {
       PacketInventoryMeta meta = metaOf(user);
@@ -51,7 +51,7 @@ public final class PacketInventoryHeuristic extends IntaveMetaCheckPart<Heuristi
   )
   public void receiveInventoryClose(PacketEvent event) {
     Player player = event.getPlayer();
-    User user = UserRepository.userOf(player);
+    User user = userOf(player);
     PacketInventoryMeta meta = metaOf(user);
     UserMetaClientData clientData = user.meta().clientData();
     UserMetaAbilityData abilityData = user.meta().abilityData();

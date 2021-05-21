@@ -15,7 +15,6 @@ import de.jpx3.intave.event.violation.AttackNerfStrategy;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserCustomCheckMeta;
 import de.jpx3.intave.user.UserMetaClientData;
-import de.jpx3.intave.user.UserRepository;
 import org.bukkit.entity.Player;
 
 public final class PacketOrderSwingHeuristic extends IntaveMetaCheckPart<Heuristics, PacketOrderSwingHeuristic.PacketOrderSwingHeuristicMeta> {
@@ -48,7 +47,7 @@ public final class PacketOrderSwingHeuristic extends IntaveMetaCheckPart<Heurist
   )
   public void receiveUseEntity(PacketEvent event) {
     Player player = event.getPlayer();
-    User user = UserRepository.userOf(player);
+    User user = userOf(player);
     UserMetaClientData clientData = user.meta().clientData();
     PacketOrderSwingHeuristicMeta heuristicMeta = metaOf(player);
     EnumWrappers.EntityUseAction action = event.getPacket().getEntityUseActions().read(0);

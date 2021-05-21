@@ -247,11 +247,11 @@ public final class User {
   }
 
   public int latency() {
-    return meta().synchronizeData().latency;
+    return meta().connectionData().latency;
   }
 
   public int latencyJitter() {
-    return meta().synchronizeData().latencyJitter;
+    return meta().connectionData().latencyJitter;
   }
 
   public PlayerContext placeholderContext() {
@@ -284,7 +284,7 @@ public final class User {
     private final UserMetaAbilityData abilityData;
     private final UserMetaPotionData potionData;
     private final UserMetaClientData clientData;
-    private final UserMetaSynchronizeData synchronizeData;
+    private final UserMetaConnectionData connectionData;
     private final UserMetaInventoryData inventoryData;
     private final UserMetaAttackData attackData;
     private final UserMetaPunishmentData punishmentData;
@@ -295,7 +295,7 @@ public final class User {
       this.abilityData = new UserMetaAbilityData(player);
       this.potionData = new UserMetaPotionData(player);
       this.inventoryData = new UserMetaInventoryData(player);
-      this.synchronizeData = new UserMetaSynchronizeData(player);
+      this.connectionData = new UserMetaConnectionData(player);
       this.movementData = new UserMetaMovementData(player, user);
       this.attackData = new UserMetaAttackData(player);
       this.punishmentData = new UserMetaPunishmentData(player);
@@ -321,8 +321,8 @@ public final class User {
       return potionData;
     }
 
-    public UserMetaSynchronizeData synchronizeData() {
-      return synchronizeData;
+    public UserMetaConnectionData connectionData() {
+      return connectionData;
     }
 
     public UserMetaClientData clientData() {

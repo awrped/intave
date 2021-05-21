@@ -14,7 +14,6 @@ import de.jpx3.intave.event.violation.AttackNerfStrategy;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserCustomCheckMeta;
 import de.jpx3.intave.user.UserMetaMovementData;
-import de.jpx3.intave.user.UserRepository;
 import org.bukkit.entity.Player;
 
 public final class NoSwingHeuristic extends IntaveMetaCheckPart<Heuristics, NoSwingHeuristic.NoSwingMeta> {
@@ -72,7 +71,7 @@ public final class NoSwingHeuristic extends IntaveMetaCheckPart<Heuristics, NoSw
   )
   public void receiveMovementPacket(PacketEvent event) {
     Player player = event.getPlayer();
-    User user = UserRepository.userOf(player);
+    User user = userOf(player);
     UserMetaMovementData movementData = user.meta().movementData();
     NoSwingMeta meta = metaOf(user);
 

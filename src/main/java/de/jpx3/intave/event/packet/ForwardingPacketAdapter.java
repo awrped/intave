@@ -6,6 +6,7 @@ import com.comphenix.protocol.events.PacketEvent;
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserRepository;
+import org.bukkit.entity.Player;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -33,21 +34,21 @@ public final class ForwardingPacketAdapter extends IntavePacketAdapter {
     if (TEMP_PLAYER_CHECK) {
       // perform temporary check
       if(event.isPlayerTemporary()) {
-//          Timings.packetProcessing.stop();
         return;
       }
     }
-
-    User user = UserRepository.userOf(event.getPlayer());
+    Player player = event.getPlayer();
+    if(player == null) {
+      return;
+    }
+    User user = UserRepository.userOf(player);
     if(user == null) {
       return;
     }
     if(user.shouldIgnoreNextOutboundPacket()) {
       user.receiveNextOutboundPacket();
-//      Bukkit.broadcastMessage(Bukkit.isPrimaryThread() + " " + event.getPacketType());
       return;
     }
-
     for (LocalPacketAdapter localPacketAdapter : targetList) {
       localPacketAdapter.onPacketSending(event);
     }

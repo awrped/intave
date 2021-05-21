@@ -97,7 +97,7 @@ public final class PlacementSpeedAnalyzer extends IntaveMetaCheckPart<PlacementA
 
         if(average < minAverage) {
           Violation violation = Violation.builderFor(PlacementAnalysis.class)
-            .withPlayer(player).withDefaultThreshold()
+            .forPlayer(player).withDefaultThreshold()
             .withMessage(COMMON_FLAG_MESSAGE)
             .withDetails(((int) average) + "ms/block, limit at " + ((int) minAverage) + "ms/block")
             .withDefaultThreshold().withVL(5).build();

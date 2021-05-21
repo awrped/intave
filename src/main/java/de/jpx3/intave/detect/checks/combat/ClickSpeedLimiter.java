@@ -140,7 +140,7 @@ public final class ClickSpeedLimiter extends IntaveMetaCheck<ClickSpeedLimiter.C
       }
 
       Violation violation = Violation.builderFor(ClickSpeedLimiter.class)
-        .withPlayer(player).withMessage("attacked too quickly").withDetails(sum + " c/s")
+        .forPlayer(player).withMessage("attacked too quickly").withDetails(sum + " c/s")
         .withVL(addedVL)
         .build();
       ViolationContext violationContext = plugin.violationProcessor().processViolation(violation);

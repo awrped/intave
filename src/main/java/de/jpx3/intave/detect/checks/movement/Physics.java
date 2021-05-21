@@ -402,7 +402,7 @@ public final class Physics extends IntaveCheck {
         blockShapeAccess.identityInvalidate();
 
         Violation violation = Violation.builderFor(Physics.class)
-          .withPlayer(player).withMessage(message).withDetails(details)
+          .forPlayer(player).withMessage(message).withDetails(details)
           .withVL(0).build();
         plugin.violationProcessor().processViolation(violation);
 
@@ -439,7 +439,7 @@ public final class Physics extends IntaveCheck {
           boolean multipleBoxes = intersectionBoundingBoxesCurrent.size() > 1;
           String details = (multipleBoxes ? intersectionBoundingBoxesCurrent.size() : "one") + " box" + (multipleBoxes ? "es" : "");
           Violation violation = Violation.builderFor(Physics.class)
-            .withPlayer(player).withMessage(message).withDetails(details)
+            .forPlayer(player).withMessage(message).withDetails(details)
             .withVL(0)
             .build();
           plugin.violationProcessor().processViolation(violation);
@@ -484,7 +484,7 @@ public final class Physics extends IntaveCheck {
       }
 
       Violation violation = Violation.builderFor(Physics.class)
-        .withPlayer(player).withMessage(message).withDetails(details)
+        .forPlayer(player).withMessage(message).withDetails(details)
         .withVL(violationLevelIncrease / (highToleranceMode ? 75d : 50d)).build();
       ViolationContext violationContext = plugin.violationProcessor().processViolation(violation);
 

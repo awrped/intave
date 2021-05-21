@@ -45,7 +45,7 @@ public final class PlacementFacingAnalyzer extends IntaveCheckPart<PlacementAnal
     float f3 = floatStructureModifier.read(2);
     if (f1 < 0 || f2 < 0 || f3 < 0 || f1 > 1 || f2 > 1 || f3 > 1) {
       Violation violation = Violation.builderFor(PlacementAnalysis.class)
-        .withPlayer(player)
+        .forPlayer(player)
         .withMessage(COMMON_FLAG_MESSAGE)
         .withVL(5)
         .build();

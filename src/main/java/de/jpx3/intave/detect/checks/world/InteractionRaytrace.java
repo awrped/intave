@@ -691,7 +691,7 @@ public final class InteractionRaytrace extends IntaveMetaCheck<InteractionRaytra
       mustFlag = true;
     }
     Violation violation = Violation.builderFor(InteractionRaytrace.class)
-      .withPlayer(player).withMessage(message).withDetails(details).withVL(vl)
+      .forPlayer(player).withMessage(message).withDetails(details).withVL(vl)
       .build();
     ViolationContext violationContext = plugin.violationProcessor().processViolation(violation);
     return violationContext.shouldCounterThreat() || mustFlag;

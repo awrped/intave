@@ -132,7 +132,7 @@ public class RotationSnapHeuristic extends IntaveMetaCheckPart<Heuristics, Rotat
       return;
     }
     Player player = event.getPlayer();
-    User user = UserRepository.userOf(player);
+    User user = userOf(player);
     UserMetaMovementData movementData = user.meta().movementData();
 
     if (movementData.lastTeleport == 0) {
@@ -175,7 +175,7 @@ public class RotationSnapHeuristic extends IntaveMetaCheckPart<Heuristics, Rotat
       );
       meta.movementAtTick[0] = tick;
 
-      for (Map.Entry<Integer, WrappedEntity> entry : user.meta().synchronizeData().synchronizedEntityMap().entrySet()) {
+      for (Map.Entry<Integer, WrappedEntity> entry : user.meta().connectionData().synchronizedEntityMap().entrySet()) {
         WrappedEntity value = entry.getValue();
         if(value != null) {
           meta.entityPositions.put(entry.getKey(), value.positionHistory.get(Math.max(value.positionHistory.size() - 1, 0)));

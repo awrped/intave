@@ -31,7 +31,7 @@ public final class RotationModuloResetHeuristic extends IntaveMetaCheckPart<Heur
   )
   public void receiveMovementPacket(PacketEvent event) {
     Player player = event.getPlayer();
-    User user = UserRepository.userOf(player);
+    User user = userOf(player);
     UserMetaMovementData movementData = user.meta().movementData();
     UserMetaAttackData attackData = user.meta().attackData();
     RotationModuloResetHeuristicMeta heuristicMeta = metaOf(user);

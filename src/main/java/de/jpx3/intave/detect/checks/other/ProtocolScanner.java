@@ -41,7 +41,7 @@ public final class ProtocolScanner extends IntaveMetaCheck<ProtocolScanner.Proto
       String message = "sent invalid rotation";
       String details = "pitch at " + MathHelper.formatDouble(rotationPitch, 4);
       Violation violation = Violation.builderFor(ProtocolScanner.class)
-        .withPlayer(player).withMessage(message).withDetails(details)
+        .forPlayer(player).withMessage(message).withDetails(details)
         .withVL(100)
         .build();
       plugin.violationProcessor().processViolation(violation);
@@ -61,7 +61,7 @@ public final class ProtocolScanner extends IntaveMetaCheck<ProtocolScanner.Proto
     int slot = packet.getIntegers().read(0);
     if (meta.lastSlot == slot && slot > 0) {
       Violation violation = Violation.builderFor(ProtocolScanner.class)
-        .withPlayer(player).withMessage("sent slot twice").withDetails("slot " + slot)
+        .forPlayer(player).withMessage("sent slot twice").withDetails("slot " + slot)
         .withVL(meta.slotPacketsSent > 4 ? 100 : 0)
         .build();
       plugin.violationProcessor().processViolation(violation);
@@ -98,7 +98,7 @@ public final class ProtocolScanner extends IntaveMetaCheck<ProtocolScanner.Proto
     int keyStrafe = movementData.keyStrafe;
     if (keyForward != 0 || keyStrafe != 0) {
       Violation violation = Violation.builderFor(ProtocolScanner.class)
-        .withPlayer(player)
+        .forPlayer(player)
         .withMessage("updated client settings whilst walking")
         .withDetails("version " + clientData.versionString())
         .withVL(0)

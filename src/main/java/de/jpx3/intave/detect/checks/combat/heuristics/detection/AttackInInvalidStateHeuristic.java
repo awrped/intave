@@ -71,7 +71,7 @@ public final class AttackInInvalidStateHeuristic extends IntaveMetaCheckPart<Heu
   }
 
   private void checkDeadEntity(Player player, PacketContainer packet) {
-    User user = UserRepository.userOf(player);
+    User user = userOf(player);
     UserMetaAttackData attackData = user.meta().attackData();
     UserMetaClientData clientData = user.meta().clientData();
     WrappedEntity entity = attackData.lastAttackedEntity();

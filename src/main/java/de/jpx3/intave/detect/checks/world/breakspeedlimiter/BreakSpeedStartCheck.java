@@ -17,7 +17,6 @@ import de.jpx3.intave.tools.AccessHelper;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserCustomCheckMeta;
 import de.jpx3.intave.user.UserMetaClientData;
-import de.jpx3.intave.user.UserRepository;
 import org.bukkit.entity.Player;
 
 public final class BreakSpeedStartCheck extends IntaveMetaCheckPart<BreakSpeedLimiter, BreakSpeedStartCheck.BreakSpeedStartMeta> {
@@ -37,7 +36,7 @@ public final class BreakSpeedStartCheck extends IntaveMetaCheckPart<BreakSpeedLi
   )
   public void tickUpdate(PacketEvent event) {
     Player player = event.getPlayer();
-    User user = UserRepository.userOf(player);
+    User user = userOf(player);
     BreakSpeedStartMeta meta = metaOf(user);
     meta.ticks++;
   }
@@ -50,7 +49,7 @@ public final class BreakSpeedStartCheck extends IntaveMetaCheckPart<BreakSpeedLi
   )
   public void receiveBlockAction(PacketEvent event) {
     Player player = event.getPlayer();
-    User user = UserRepository.userOf(player);
+    User user = userOf(player);
     BreakSpeedStartCheck.BreakSpeedStartMeta meta = metaOf(user);
     UserMetaClientData clientData = user.meta().clientData();
 
@@ -66,7 +65,7 @@ public final class BreakSpeedStartCheck extends IntaveMetaCheckPart<BreakSpeedLi
             String details = ticksBetween + " " + (ticksBetween == 1 ? "tick" : "ticks") + " between";
             ViolationProcessor violationProcessor = IntavePlugin.singletonInstance().violationProcessor();
             Violation violation = Violation.builderFor(BreakSpeedLimiter.class)
-              .withPlayer(player).withMessage(message).withDetails(details).withVL(5)
+              .forPlayer(player).withMessage(message).withDetails(details).withVL(5)
               .build();
             ViolationContext violationContext = violationProcessor.processViolation(violation);
             if (violationContext.shouldCounterThreat()) {
@@ -81,7 +80,7 @@ public final class BreakSpeedStartCheck extends IntaveMetaCheckPart<BreakSpeedLi
               String details = milliseconds + "ms between";
               ViolationProcessor violationProcessor = IntavePlugin.singletonInstance().violationProcessor();
               Violation violation = Violation.builderFor(BreakSpeedLimiter.class)
-                .withPlayer(player).withMessage(message).withDetails(details)
+                .forPlayer(player).withMessage(message).withDetails(details)
                 .withVL(1)
                 .build();
               ViolationContext violationContext = violationProcessor.processViolation(violation);

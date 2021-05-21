@@ -49,18 +49,12 @@ public final class UserRepository {
       if(closed) {
         return deadUser;
       }
-
       // check if player is offline
       boolean isOnline = AccessHelper.isOnline(player);
       // online -> recreate user object
       if(isOnline) {
-        try {
-//          lock.lock();
-          registerUser(player);
-          return userRepository.get(player.getUniqueId());
-        } finally {
-//          lock.unlock();
-        }
+        registerUser(player);
+        return userRepository.get(player.getUniqueId());
       } else {
         // offline -> return dead user
         return deadUser;

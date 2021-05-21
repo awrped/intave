@@ -7,7 +7,7 @@ import de.jpx3.intave.logging.IntaveLogger;
 import de.jpx3.intave.tools.AccessHelper;
 import de.jpx3.intave.tools.sync.Synchronizer;
 import de.jpx3.intave.user.User;
-import de.jpx3.intave.user.UserMetaSynchronizeData;
+import de.jpx3.intave.user.UserMetaConnectionData;
 import de.jpx3.intave.user.UserRepository;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -53,7 +53,7 @@ public final class TransactionResponseEnforcingProcessor implements PacketEventS
     if (user == null) {
       return;
     }
-    UserMetaSynchronizeData synchronizeData = user.meta().synchronizeData();
+    UserMetaConnectionData synchronizeData = user.meta().connectionData();
     Map<Short, TFRequest<?>> transactionFeedBackMap = synchronizeData.transactionFeedBackMap();
     Short transactionIdentifier = event.getPacket().getShorts().readSafely(0);
     if (transactionIdentifier <= TRANSACTION_MAX_CODE) {
@@ -121,7 +121,7 @@ public final class TransactionResponseEnforcingProcessor implements PacketEventS
   }
 
   private static long oldestPendingTransaction(User user) {
-    UserMetaSynchronizeData synchronizeData = user.meta().synchronizeData();
+    UserMetaConnectionData synchronizeData = user.meta().connectionData();
     Map<Short, TFRequest<?>> transactionFeedBackMap = synchronizeData.transactionFeedBackMap();
     long duration = AccessHelper.now();
     for (TFRequest<?> value : transactionFeedBackMap.values()) {

@@ -11,12 +11,14 @@ import java.util.List;
 import java.util.Map;
 
 @Relocate
-public final class UserMetaSynchronizeData {
+public final class UserMetaConnectionData {
   private final Player player;
   private final Map<Short, TFRequest<?>> transactionFeedBackMap = Maps.newConcurrentMap();
   private final Map<Integer, WrappedEntity> synchronizedEntityMap = Maps.newConcurrentMap();
   private final Map<Long, Long> remainingPingPacketTimestamps = Maps.newConcurrentMap();
   private final List<Long> latencyDifferenceBalance = Lists.newCopyOnWriteArrayList();
+
+  public boolean sendAsyncMessage = false;
 
   // Client Synchronization
   public int latency;
@@ -26,7 +28,7 @@ public final class UserMetaSynchronizeData {
   public long transactionNumCounter = 0;
   public long lastReceivedTransactionNum = -1;
 
-  public UserMetaSynchronizeData(Player player) {
+  public UserMetaConnectionData(Player player) {
     this.player = player;
   }
 

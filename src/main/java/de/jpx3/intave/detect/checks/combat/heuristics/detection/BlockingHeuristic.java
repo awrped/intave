@@ -16,7 +16,10 @@ import de.jpx3.intave.event.violation.AttackNerfStrategy;
 import de.jpx3.intave.reflect.ReflectiveDataWatcherAccess;
 import de.jpx3.intave.tools.AccessHelper;
 import de.jpx3.intave.tools.sync.Synchronizer;
-import de.jpx3.intave.user.*;
+import de.jpx3.intave.user.User;
+import de.jpx3.intave.user.UserCustomCheckMeta;
+import de.jpx3.intave.user.UserMetaMovementData;
+import de.jpx3.intave.user.UserMetaPunishmentData;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
@@ -41,7 +44,7 @@ public final class BlockingHeuristic extends IntaveMetaCheckPart<Heuristics, Blo
   )
   public void receiveMovementPacket(PacketEvent event) {
     Player player = event.getPlayer();
-    User user = UserRepository.userOf(player);
+    User user = userOf(player);
     BlockingMeta meta = metaOf(user);
 
     if (event.getPacketType() != PacketType.Play.Client.ARM_ANIMATION) {
@@ -62,7 +65,7 @@ public final class BlockingHeuristic extends IntaveMetaCheckPart<Heuristics, Blo
   )
   public void receiveInteractionPacket(PacketEvent event) {
     Player player = event.getPlayer();
-    User user = UserRepository.userOf(player);
+    User user = userOf(player);
     UserMetaPunishmentData punishmentData = user.meta().punishmentData();
     BlockingMeta meta = metaOf(user);
     PacketContainer packet = event.getPacket();

@@ -178,7 +178,7 @@ public final class Heuristics extends IntaveMetaCheck<Heuristics.HeuristicMeta> 
       String message = "is fighting suspiciously";
       String details = type.details() + ": " + define(overallConfidence) + " / " + identifier;
       Violation violation = Violation.builderFor(Heuristics.class)
-        .withPlayer(player).withMessage(message).withDetails(details)
+        .forPlayer(player).withMessage(message).withDetails(details)
         .withCustomThreshold(threshold).withVL(25)
         .build();
       plugin.violationProcessor().processViolation(violation);

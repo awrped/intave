@@ -39,7 +39,7 @@ public final class AttackRequiredHeuristic extends IntaveMetaCheckPart<Heuristic
   )
   public void receiveSwing(PacketEvent event) {
     Player player = event.getPlayer();
-    User user = UserRepository.userOf(player);
+    User user = userOf(player);
     metaOf(user).didSwing = true;
   }
 

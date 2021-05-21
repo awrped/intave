@@ -16,7 +16,10 @@ import de.jpx3.intave.logging.IntaveLogger;
 import de.jpx3.intave.tools.AccessHelper;
 import de.jpx3.intave.tools.MathHelper;
 import de.jpx3.intave.tools.sync.Synchronizer;
-import de.jpx3.intave.user.*;
+import de.jpx3.intave.user.User;
+import de.jpx3.intave.user.UserCustomCheckMeta;
+import de.jpx3.intave.user.UserMetaMovementData;
+import de.jpx3.intave.user.UserMetaViolationLevelData;
 import de.jpx3.intave.world.collider.result.ComplexColliderSimulationResult;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -140,7 +143,7 @@ public final class Timer extends IntaveMetaCheck<Timer.TimerData> {
       String balanceAsString = MathHelper.formatDouble(timerData.timerBalance / 10, 2);
       statisticApply(user, CheckStatistics::increaseFails);
 
-      Violation violation = Violation.builderFor(Timer.class).withPlayer(player)
+      Violation violation = Violation.builderFor(Timer.class).forPlayer(player)
         .withMessage("moved too frequently").withDetails(balanceAsString + " ticks ahead").withVL(0.5)
         .build();
       ViolationContext violationContext = plugin.violationProcessor().processViolation(violation);
@@ -187,7 +190,7 @@ public final class Timer extends IntaveMetaCheck<Timer.TimerData> {
   }
 
   private void cancelOnPacketOverflow(Player player, Cancellable cancellable) {
-    User user = UserRepository.userOf(player);
+    User user = userOf(player);
     Timer.TimerData timerData = metaOf(user);
     long lastTimerFlag = timerData.lastTimerFlag;
     long msSinceFlag = AccessHelper.now() - lastTimerFlag;
@@ -206,7 +209,7 @@ public final class Timer extends IntaveMetaCheck<Timer.TimerData> {
 
   public void checkSetback(PacketEvent event) {
     Player player = event.getPlayer();
-    User user = UserRepository.userOf(player);
+    User user = userOf(player);
     UserMetaMovementData movementData = user.meta().movementData();
     TimerData timerData = metaOf(user);
     if (timerData.flagTick) {
