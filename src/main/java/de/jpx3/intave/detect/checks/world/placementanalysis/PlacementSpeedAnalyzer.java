@@ -13,9 +13,7 @@ import de.jpx3.intave.event.packet.Sender;
 import de.jpx3.intave.event.violation.Violation;
 import de.jpx3.intave.event.violation.ViolationContext;
 import de.jpx3.intave.tools.AccessHelper;
-import de.jpx3.intave.user.User;
-import de.jpx3.intave.user.UserCustomCheckMeta;
-import de.jpx3.intave.user.UserMetaMovementData;
+import de.jpx3.intave.user.*;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -68,6 +66,7 @@ public final class PlacementSpeedAnalyzer extends IntaveMetaCheckPart<PlacementA
     User user = userOf(player);
     PlacementSpeedMeta meta = metaOf(user);
     UserMetaMovementData movementData = user.meta().movementData();
+    UserMetaPotionData potionData = user.meta().potionData();
 
     Block block = place.getBlockPlaced();
     Block blockAgainst = place.getBlockAgainst();
@@ -94,6 +93,9 @@ public final class PlacementSpeedAnalyzer extends IntaveMetaCheckPart<PlacementA
         boolean noSneaking = AccessHelper.now() - movementData.lastSneakingTimestamps > 8000;
         boolean recentJump = AccessHelper.now() - movementData.lastJumpTimestamps < 750;
         double minAverage = (inOneLine ? ((recentJump ? 450 : noHardFault ? (noSneaking ? 500 : 300) : (noSneaking ? 300 : 200))) : 150);
+
+        int speedAmplifier = potionData.potionEffectSpeedAmplifier();
+        minAverage /= 0.15 * speedAmplifier * speedAmplifier + 1;
 
         if(average < minAverage) {
           Violation violation = Violation.builderFor(PlacementAnalysis.class)
