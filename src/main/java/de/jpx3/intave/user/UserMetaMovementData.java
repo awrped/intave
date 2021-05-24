@@ -307,6 +307,9 @@ public final class UserMetaMovementData {
     if (inventoryData.inventoryOpen()) {
       sprintingAllowed = false;
     }
+    if (player.getFoodLevel() <= 5) {
+      sprintingAllowed = false;
+    }
     boolean sneakingAllowed = sneaking && !inventoryData.inventoryOpen();
     if (clientData.delayedSneak()) {
       actualSneaking = lastSneaking;
