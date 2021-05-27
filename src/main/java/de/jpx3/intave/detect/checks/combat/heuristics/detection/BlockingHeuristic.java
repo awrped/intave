@@ -1,6 +1,7 @@
 package de.jpx3.intave.detect.checks.combat.heuristics.detection;
 
 import com.comphenix.protocol.PacketType;
+import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.wrappers.EnumWrappers;
@@ -22,6 +23,10 @@ import de.jpx3.intave.user.UserMetaMovementData;
 import de.jpx3.intave.user.UserMetaPunishmentData;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.List;
 
 import static de.jpx3.intave.detect.checks.combat.heuristics.Anomaly.AnomalyOption.*;
 
@@ -46,6 +51,11 @@ public final class BlockingHeuristic extends IntaveMetaCheckPart<Heuristics, Blo
     Player player = event.getPlayer();
     User user = userOf(player);
     BlockingMeta meta = metaOf(user);
+    UserMetaMovementData movementData = user.meta().movementData();
+
+    if(movementData.lastTeleport == 0) {
+      return;
+    }
 
     if (event.getPacketType() != PacketType.Play.Client.ARM_ANIMATION) {
       meta.releasedItemAfterClientTick = false;
@@ -54,7 +64,31 @@ public final class BlockingHeuristic extends IntaveMetaCheckPart<Heuristics, Blo
     if (meta.ventosFreundlicherBoolean) {
       meta.clientTicksBetweenBlockingToggle++;
     }
+
+    if (meta.heldItemOperations > 1) {
+      if(meta.blocksPlacedThisTick == 0) {
+        String description = "sent too many item operations (operations: " + meta.heldItemOperations + ")";
+        description += " (version " + user.meta().clientData().versionString() + ")";
+        Anomaly anomaly = Anomaly.anomalyOf("144", Confidence.NONE, Anomaly.Type.KILLAURA, description, 0);
+        parentCheck().saveAnomaly(player, anomaly);
+      } else {
+        PacketContainer packetContainer = meta.unsendPackets.get(0);
+        receiveExcludedPacket(player, packetContainer);
+      }
+      meta.unsendPackets.clear();
+    }
+
+    meta.blocksPlacedThisTick = 0;
     meta.heldItemOperations = 0;
+  }
+
+  private void receiveExcludedPacket(Player player, PacketContainer packet) {
+    try {
+      userOf(player).ignoreNextPacket();
+      ProtocolLibrary.getProtocolManager().recieveClientPacket(player, packet);
+    } catch (InvocationTargetException | IllegalAccessException exception) {
+      exception.printStackTrace();
+    }
   }
 
   @PacketSubscription(
@@ -95,6 +129,7 @@ public final class BlockingHeuristic extends IntaveMetaCheckPart<Heuristics, Blo
 
       }
     } else { // BLOCK_PLACE
+      meta.blocksPlacedThisTick++;
       ItemStack itemInHand = packet.getItemModifier().readSafely(0);
       boolean sword = itemInHand != null && itemInHand.getType().name().endsWith("_SWORD");
 
@@ -144,31 +179,23 @@ public final class BlockingHeuristic extends IntaveMetaCheckPart<Heuristics, Blo
   public void receiveHeldItemSlot(PacketEvent event) {
     Player player = event.getPlayer();
     User user = userOf(player);
-    BlockingMeta blockingMeta = metaOf(player);
+    BlockingMeta meta = metaOf(player);
     if (user.meta().abilityData().ignoringMovementPackets()) {
       return;
     }
-    boolean flyingPackets = user.meta().clientData().flyingPacketStream();
-    UserMetaMovementData movementData = user.meta().movementData();
-    if (!flyingPackets && movementData.recentlyEncounteredFlyingPacket(20) || movementData.inWeb) {
-      return;
+
+    if(meta.heldItemOperations > 0) {
+      PacketContainer clonedPacket = event.getPacket().deepClone();
+      meta.unsendPackets.add(clonedPacket);
+      event.setCancelled(true);
     }
-    if (blockingMeta.heldItemOperations++ >= 1) {
-      boolean cancel = blockingMeta.heldItemOperations >= 2;
-      String description = "sent too many item operations (operations: " + blockingMeta.heldItemOperations + ")";
-      description += " (version " + user.meta().clientData().versionString() + ")";
-      if (cancel) {
-        description += " cancelled";
-      }
-      Anomaly anomaly = Anomaly.anomalyOf("144", Confidence.NONE, Anomaly.Type.KILLAURA, description, 0);
-      parentCheck().saveAnomaly(player, anomaly);
-      if (cancel) {
-        event.setCancelled(true);
-      }
-    }
+
+    meta.heldItemOperations++;
   }
 
   public final static class BlockingMeta extends UserCustomCheckMeta {
+    private List<PacketContainer> unsendPackets = new ArrayList<>();
+    private int blocksPlacedThisTick;
     public boolean releasedItemAfterClientTick;
     public int ticksBetweenBlockAndUnblock, clientTicksBetweenBlockingToggle;
     public boolean ventosFreundlicherBoolean;
