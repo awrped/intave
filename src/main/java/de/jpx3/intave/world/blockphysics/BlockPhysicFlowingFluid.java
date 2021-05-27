@@ -16,7 +16,7 @@ import org.bukkit.util.Vector;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class BlockPhysicsFlowingFluid implements BlockPhysic {
+public final class BlockPhysicFlowingFluid implements BlockPhysic {
   private List<Material> materials;
 
   @Override
