@@ -17,6 +17,7 @@ import de.jpx3.intave.tools.annotate.KeepEnumInternalNames;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserCustomCheckMeta;
 import de.jpx3.intave.user.UserMetaClientData;
+import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -93,6 +94,7 @@ public final class InventoryClickDelayAnalyzer extends IntaveMetaCheckPart<Inven
   }
 
   private void checkWindowClick(Player player, ClickDelayMeta meta, int slot) {
+    User user = userOf(player);
     double distance = distanceBetween(slot, meta.lastClickedSlot);
     double time = (System.nanoTime() - meta.lastClickedTimeStamp) / 1000000000d;
     double speedAttr = distance / time;
@@ -105,7 +107,9 @@ public final class InventoryClickDelayAnalyzer extends IntaveMetaCheckPart<Inven
       double std = RotationMathHelper.calculateStandardDeviation(meta.clickDelayList) * 100;
 //      player.sendMessage("sdt " + MathHelper.formatDouble(std,4));
 
-      if (std < 2) {
+//      Bukkit.broadcastMessage("" + Math.abs(averageMovementPacketTimestamp - 50) < 10);
+      double averageMovementPacketTimestamp = user.meta().connectionData().averageMovementPacketTimestamp();
+      if (std < 2 && averageMovementPacketTimestamp < 50) {
         Violation violation = Violation.builderFor(InventoryClickAnalysis.class)
           .forPlayer(player).withDefaultThreshold()
           .withMessage("is clicking suspiciously on items")
