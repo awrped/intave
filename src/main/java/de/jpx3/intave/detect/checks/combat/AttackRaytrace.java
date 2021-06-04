@@ -133,65 +133,68 @@ public final class AttackRaytrace extends IntaveMetaCheck<AttackRaytrace.AttackR
         boolean invalid = false;
         UserMetaAbilityData abilityData = user.meta().abilityData();
         float health = abilityData.health;
-        if (entity != null && health > 0) {
-          if (entity.isEntityLiving) {
-            if (clientData.protocolVersion() >= PROTOCOL_VERSION_COMBAT_UPDATE) {
-              // >= 1.9.x
-              if (entity.clientSynchronized
-                && !movementData.recentlyEncounteredFlyingPacket(2)
-                && attackRaytraceMeta.lastFlyPacketCounterReach > 1
-              ) {
-                // 1.9+ beim bewegen
-                invalid = processReachCheck(player, entity, 0.1f);
-              } else {
-                // 1.9+ beim still stehen oder wenn das entity nicht synchronisiert ist
-                invalid = processIterativeReachCheck(player, entity);
-              }
-            }
-            if (clientData.protocolVersion() <= PROTOCOL_VERSION_BOUNTIFUL_UPDATE) {
-              // <= 1.8.9
-              if (!entity.clientSynchronized) {
-                // 1.8.x wenn das entity nicht synchronisiert ist
-                invalid = processIterativeReachCheck(player, entity);
-              } else if (attackRaytraceMeta.lastFlyPacketCounterReach > 1) {
-                // 1.8.x beim bewegen
-                invalid = processReachCheck(player, entity, 0.1f);
-              } else {
-                // 1.8.x beim still stehen
-                invalid = processReachCheck(player, entity, 0.13f);
-              }
-            }
-          } else {
-            // wenn entity tot ist
-            if (entity.entityTypeData.entityTypeId() != -2) {
-              // entity type id -2 = wenn das entity auf neuen mc versionen nicht erstellt werden konnte
-              invalid = processIterativeReachCheck(player, entity);
-            }
-          }
 
-          if (invalid) {
-            statisticApply(user, CheckStatistics::increaseFails);
-          } else {
-            statisticApply(user, CheckStatistics::increasePasses);
-          }
-        } else {
-          Synchronizer.synchronize(new Runnable() {
-            @Native
-            @Override
-            public void run() {
-              for (Player authenticatedPlayer : Bukkit.getOnlinePlayers()) {
-                if (plugin.sibylIntegrationService().isAuthenticated(authenticatedPlayer)) {
-                  String message;
-                  if (entity == null) {
-                    message = ChatColor.RED + "[R] " + player.getName() + " attacked a null entity";
-                  } else {
-                    message = ChatColor.RED + "[R] " + player.getName() + " attacked entity while beeing dead";
-                  }
-                  authenticatedPlayer.sendMessage(message);
+        if(!player.isInsideVehicle()) {
+          if (entity != null && health > 0) {
+            if (entity.isEntityLiving) {
+              if (clientData.protocolVersion() >= PROTOCOL_VERSION_COMBAT_UPDATE) {
+                // >= 1.9.x
+                if (entity.clientSynchronized
+                  && !movementData.recentlyEncounteredFlyingPacket(2)
+                  && attackRaytraceMeta.lastFlyPacketCounterReach > 1
+                ) {
+                  // 1.9+ beim bewegen
+                  invalid = processReachCheck(player, entity, 0.1f);
+                } else {
+                  // 1.9+ beim still stehen oder wenn das entity nicht synchronisiert ist
+                  invalid = processIterativeReachCheck(player, entity);
                 }
               }
+              if (clientData.protocolVersion() <= PROTOCOL_VERSION_BOUNTIFUL_UPDATE) {
+                // <= 1.8.9
+                if (!entity.clientSynchronized) {
+                  // 1.8.x wenn das entity nicht synchronisiert ist
+                  invalid = processIterativeReachCheck(player, entity);
+                } else if (attackRaytraceMeta.lastFlyPacketCounterReach > 1) {
+                  // 1.8.x beim bewegen
+                  invalid = processReachCheck(player, entity, 0.1f);
+                } else {
+                  // 1.8.x beim still stehen
+                  invalid = processReachCheck(player, entity, 0.13f);
+                }
+              }
+            } else {
+              // wenn entity tot ist
+              if (entity.entityTypeData.entityTypeId() != -2) {
+                // entity type id -2 = wenn das entity auf neuen mc versionen nicht erstellt werden konnte
+                invalid = processIterativeReachCheck(player, entity);
+              }
             }
-          });
+
+            if (invalid) {
+              statisticApply(user, CheckStatistics::increaseFails);
+            } else {
+              statisticApply(user, CheckStatistics::increasePasses);
+            }
+          } else {
+            Synchronizer.synchronize(new Runnable() {
+              @Native
+              @Override
+              public void run() {
+                for (Player authenticatedPlayer : Bukkit.getOnlinePlayers()) {
+                  if (plugin.sibylIntegrationService().isAuthenticated(authenticatedPlayer)) {
+                    String message;
+                    if (entity == null) {
+                      message = ChatColor.RED + "[R] " + player.getName() + " attacked a null entity";
+                    } else {
+                      message = ChatColor.RED + "[R] " + player.getName() + " attacked entity while beeing dead";
+                    }
+                    authenticatedPlayer.sendMessage(message);
+                  }
+                }
+              }
+            });
+          }
         }
         // Do not exclude packets if the player has bypass TrustFactor
         invalid &= user.trustFactor() != TrustFactor.BYPASS;
