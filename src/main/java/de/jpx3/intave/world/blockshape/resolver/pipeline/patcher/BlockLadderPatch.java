@@ -15,7 +15,7 @@ import org.bukkit.entity.Player;
 import java.util.List;
 
 public final class BlockLadderPatch extends BoundingBoxPatch {
-  private static final boolean EMULATE_NEW_REQUIRED = MinecraftVersions.VER1_13_0.atOrAbove();
+  private static final boolean EMULATE_NEW_REDUNDANT = MinecraftVersions.VER1_13_0.atOrAbove();
 
   protected BlockLadderPatch() {
     super(Material.LADDER);
@@ -32,7 +32,9 @@ public final class BlockLadderPatch extends BoundingBoxPatch {
     BoundingBoxBuilder builder = BoundingBoxBuilder.create();
     WrappedEnumDirection direction = WrappedEnumDirection.getFront(blockState);
     if (user.meta().clientData().combatUpdate()) {
-      if (EMULATE_NEW_REQUIRED) {
+      if (EMULATE_NEW_REDUNDANT) {
+        return super.patch(world, player, posX, posY, posZ, type, blockState, bbs);
+      } else {
         emulateNew(builder, direction);
       }
     } else {
