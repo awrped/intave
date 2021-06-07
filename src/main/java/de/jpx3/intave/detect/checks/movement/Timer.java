@@ -68,8 +68,6 @@ public final class Timer extends IntaveMetaCheck<Timer.TimerData> {
   )
   public void sentPosition(PacketEvent event) {
     User user = userOf(event.getPlayer());
-//    if (user.meta().clientData().flyingPacketStream()) {
-//    }
     double leniency = user.meta().violationLevelData().isInActiveTeleportBundle ? 2 : 12.5;
     TimerData timerData = metaOf(user);
     timerData.timerBalance -= leniency;
@@ -81,43 +79,25 @@ public final class Timer extends IntaveMetaCheck<Timer.TimerData> {
     if (player == null) {
       return;
     }
-
-//    if (teleportConf) {
-//      return;
-//    }
-
     User user = userOf(player);
     TimerData timerData = metaOf(user);
-
     long time = AccessHelper.now();
     long delta = time - timerData.lastFlyingPacket;
     timerData.lastFlyingPacket = AccessHelper.now();
     timerData.timerBalance -= delta / 5.0;
-
-//    if (!user.meta().clientData().flyingPacketStream() && event.getPacketType() == PacketType.Play.Client.POSITION) {
-//      // account missing flying packets
-//      timerData.timerBalance += 200;
-//    } else {
     timerData.timerBalance += 10;
-//    }
-
     int allowedLagInMilliseconds = trustFactorSetting("buffer-size", player);
-
     if (highToleranceMode) {
       allowedLagInMilliseconds *= 1.5;
     }
-
     if (AccessHelper.now() - timerData.lastRespawn < 6000) {
       allowedLagInMilliseconds = Math.max(allowedLagInMilliseconds, 8000);
     }
     if (AccessHelper.now() - timerData.lastLagSpike < 12000 && !highToleranceMode) {
       allowedLagInMilliseconds = Math.max(allowedLagInMilliseconds / 2, 500);
     }
-
     double lowerPacketBalanceLimit = (allowedLagInMilliseconds / 1000d) * -(20 * 10);
-
     timerData.timerBalance = MathHelper.minmax(lowerPacketBalanceLimit, timerData.timerBalance, 200);
-
     if (delta > 500) {
       timerData.lastLagSpike = AccessHelper.now();
       Synchronizer.synchronize(() -> {
@@ -127,35 +107,25 @@ public final class Timer extends IntaveMetaCheck<Timer.TimerData> {
         });
       });
     }
-
-    // fast recover
     if (timerData.timerBalance < -50 && AccessHelper.now() - timerData.lastLagSpike > 500) {
       int adder = timerData.timerBalance < -400 ? 9 : 3;
       timerData.timerBalance += adder;
     }
-
-//    player.sendMessage(timerData.timerBalance + " " + highToleranceMode);
-
     statisticApply(user, CheckStatistics::increaseTotal);
-
     int overflowLimit = highToleranceMode ? 150 : 20;
-
     if (timerData.timerBalance > overflowLimit) {
       String balanceAsString = MathHelper.formatDouble(timerData.timerBalance / 10, 2);
       statisticApply(user, CheckStatistics::increaseFails);
-
       Violation violation = Violation.builderFor(Timer.class).forPlayer(player)
         .withMessage("moved too frequently").withDetails(balanceAsString + " ticks ahead").withVL(0.5)
         .build();
       ViolationContext violationContext = plugin.violationProcessor().processViolation(violation);
-
       if (violationContext.shouldCounterThreat()) {
         UserMetaMovementData movementData = user.meta().movementData();
         movementData.invalidMovement = true;
         plugin.eventService().emulationEngine().emulationSetBack(player, new Vector(movementData.physicsMotionX, movementData.physicsMotionY, movementData.physicsMotionZ), 12, false);
       }
       timerData.lastTimerFlag = AccessHelper.now();
-      // leniency
       timerData.timerBalance -= highToleranceMode || timerData.timerBalance > overflowLimit ? 2.5 : 0.5;
     } else {
       statisticApply(user, CheckStatistics::increasePasses);

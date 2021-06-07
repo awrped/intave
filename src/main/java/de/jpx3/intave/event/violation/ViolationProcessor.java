@@ -8,16 +8,14 @@ import de.jpx3.intave.access.player.trust.TrustFactor;
 import de.jpx3.intave.connect.proxy.protocol.packets.IntavePacketOutKicked;
 import de.jpx3.intave.detect.CheckStatistics;
 import de.jpx3.intave.detect.IntaveCheck;
+import de.jpx3.intave.tools.AccessHelper;
 import de.jpx3.intave.tools.MathHelper;
 import de.jpx3.intave.tools.annotate.Native;
 import de.jpx3.intave.tools.placeholder.TextContext;
 import de.jpx3.intave.tools.placeholder.ViolationPlaceholderContext;
 import de.jpx3.intave.tools.placeholder.ViolationPlaceholderContext.DetailScope;
 import de.jpx3.intave.tools.sync.Synchronizer;
-import de.jpx3.intave.user.User;
-import de.jpx3.intave.user.UserMessageChannel;
-import de.jpx3.intave.user.UserMetaClientData;
-import de.jpx3.intave.user.UserRepository;
+import de.jpx3.intave.user.*;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -60,6 +58,7 @@ public final class ViolationProcessor {
     fillInVLContext(violationContext);
 
     processViolationEvent(violationContext);
+    processViolationOverflow(violationContext);
     processViolationStatistics(violationContext);
     processViolationVerbose(violationContext);
     processViolationLevelIncrease(violationContext);
@@ -125,6 +124,25 @@ public final class ViolationProcessor {
         violationContext.ignoreThreatBecause("Intave access requested it");
       }
       violationContext.complete();
+    }
+  }
+
+  private void processViolationOverflow(
+    ViolationContext violationContext
+  ) {
+    if (violationContext.completed()) {
+      return;
+    }
+    User user = UserRepository.userOf(violationContext.violation().findPlayer().orElseThrow(IllegalStateException::new));
+    UserMetaViolationLevelData violationLevelData = user.meta().violationLevelData();
+
+    if (AccessHelper.now() - violationLevelData.detectionCounterReset > 10000) {
+      violationLevelData.detectionCounter = 0;
+      violationLevelData.detectionCounterReset = AccessHelper.now();
+    }
+
+    if (violationLevelData.detectionCounter++ > 500) {
+      user.synchronizedDisconnect("You are sending too many packets :[");
     }
   }
 

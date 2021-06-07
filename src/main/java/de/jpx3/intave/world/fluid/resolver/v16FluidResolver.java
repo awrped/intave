@@ -14,6 +14,7 @@ import net.minecraft.server.v1_16_R3.*;
 @PatchyAutoTranslation
 public final class v16FluidResolver extends FluidEngine {
   @Override
+  @PatchyAutoTranslation
   protected WrappedFluid fluidAt(User user, int x, int y, int z) {
     UserMetaMovementData movementData = user.meta().movementData();
     World world = (World) movementData.nmsWorld();

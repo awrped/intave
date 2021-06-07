@@ -157,6 +157,9 @@ public final class BreakSpeedFinishCheck extends IntaveMetaCheckPart<BreakSpeedL
 
   private void refreshBlock(Player player, Location location) {
     PacketContainer packet = ProtocolLibrary.getProtocolManager().createPacket(PacketType.Play.Server.BLOCK_CHANGE);
+    if (!BukkitBlockAccess.isInLoadedChunk(location.getWorld(), location.getBlockX(), location.getBlockZ())) {
+      return;
+    }
     Block block = BukkitBlockAccess.blockAccess(location);
     WrappedBlockData blockData = WrappedBlockData.createData(block.getType(), BlockDataAccess.dataIndexOf(block));
     BlockPosition position = new BlockPosition(location.getBlockX(), location.getBlockY(), location.getBlockZ());

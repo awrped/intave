@@ -56,7 +56,6 @@ import org.bukkit.plugin.PluginLogger;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.*;
-import java.lang.management.ManagementFactory;
 import java.lang.reflect.Field;
 import java.net.URL;
 import java.net.URLConnection;
@@ -196,23 +195,23 @@ public final class IntavePlugin extends JavaPlugin {
       InterceptorDetection.revert();
 
       // search for debuggers
-      boolean debuggerFound = false;
-      for (String string : ManagementFactory.getRuntimeMXBean().getInputArguments()) {
-        if (string.contains("-agentlib:jdwp")) {
-          debuggerFound = true;
-        }
-        if (string.contains("-Xdebug")) {
-          debuggerFound = true;
-        }
-        if (string.contains("-Xrunjdwp:")) {
-          debuggerFound = true;
-        }
-      }
-
-      if (debuggerFound) {
-        System.exit(1);
-        return;
-      }
+//      boolean debuggerFound = false;
+//      for (String string : ManagementFactory.getRuntimeMXBean().getInputArguments()) {
+//        if (string.contains("-agentlib:jdwp")) {
+//          debuggerFound = true;
+//        }
+//        if (string.contains("-Xdebug")) {
+//          debuggerFound = true;
+//        }
+//        if (string.contains("-Xrunjdwp:")) {
+//          debuggerFound = true;
+//        }
+//      }
+//
+//      if (debuggerFound) {
+//        System.exit(1);
+//        return;
+//      }
 
       EncryptedResource contextStatusResource = new EncryptedResource("context-status", false);
 
@@ -223,7 +222,6 @@ public final class IntavePlugin extends JavaPlugin {
       if (IntaveControl.DISABLE_LICENSE_CHECK) {
         logger().info("This self-signed version bypasses certification requirements");
         System.setProperty("java.net.serviceprovider.key", "~bypass");
-
         VERSION_DETAILS |= 0x100;
         VERSION_DETAILS |= 0x200;
       } else {
@@ -239,11 +237,9 @@ public final class IntavePlugin extends JavaPlugin {
           byte value = (byte) ((identificationKey >> (i * 8) & 0xFF));
           bytes[7 - i] = value;
         }
-
         long longOne = ThreadLocalRandom.current().nextLong(0x4000000000000000L, Long.MAX_VALUE);
         long longTwo = ThreadLocalRandom.current().nextLong(0x4000000000000000L, Long.MAX_VALUE);
         String requestedId = String.valueOf(new UUID(longOne, longTwo));
-
         String idKey = identificationKey > 0 ? new String(bytes) : "aaaaaaaa", response = "";
         try {
           String path = "https://intave.de/auth.php";
@@ -274,11 +270,9 @@ public final class IntavePlugin extends JavaPlugin {
         } catch (IOException exception) {
           response = "timeout";
         }
-
         String message = "";
         boolean bad = false;
         boolean clearReloCache = false;
-
         // VMProtect doesn't like switches :(
         //noinspection IfCanBeSwitch
         if ("banned".equals(response) || "invalid".equals(response) || "error".equals(response)) {
@@ -299,11 +293,9 @@ public final class IntavePlugin extends JavaPlugin {
         } else if ("timeout".equals(response)) {
           message = "Unable to connect to service";
         }
-
         if (!message.isEmpty()) {
           logger.error(message);
         }
-
         if (clearReloCache) {
           String operatingSystem = System.getProperty("os.name").toLowerCase(Locale.ROOT);
           String filePath = null;
@@ -320,14 +312,12 @@ public final class IntavePlugin extends JavaPlugin {
             }
           }
         }
-
         if (bad) {
           contextStatusResource.write(new ByteArrayInputStream(("failure-"+response).getBytes(StandardCharsets.UTF_8)));
           boolFailure();
           performShutdown();
           return;
         }
-
         if (response.equals("timeout")) {
           System.setProperty("java.net.serviceprovider.key", "~timeout");
           offlineMode = true;
@@ -337,7 +327,6 @@ public final class IntavePlugin extends JavaPlugin {
           String[] split = response.split("#");
           String licenseName = split[0];
           System.setProperty("java.net.serviceprovider.key", licenseName);
-
           Map<String, String> properties = new HashMap<>();
           boolean first = true;
           for (String propertyPair : split) {
@@ -348,7 +337,6 @@ public final class IntavePlugin extends JavaPlugin {
             String[] split1 = propertyPair.split("=");
             properties.put(split1[0], split1[1]);
           }
-
           if (properties.isEmpty()) {
             logger.error("Invalid server response " + response);
             contextStatusResource.write(new ByteArrayInputStream(("failure-"+response).getBytes(StandardCharsets.UTF_8)));
@@ -356,7 +344,6 @@ public final class IntavePlugin extends JavaPlugin {
             performShutdown();
             return;
           }
-
           if (VERSION_DETAILS == 97) {
             requiredState = properties.get("configuration-hash");
             if (properties.containsKey("partner")) {
@@ -368,9 +355,7 @@ public final class IntavePlugin extends JavaPlugin {
           } else {
             VERSION_DETAILS = 97;
           }
-
           String keyResponse = properties.get("exchange-key");
-
           // verify the server integrity
           boolean validResponse = false;
           long receivedMSB = 0;

@@ -14,9 +14,7 @@ public final class InventoryClickAnalysis extends IntaveCheck {
 
   public InventoryClickAnalysis(IntavePlugin plugin) {
     super("InventoryClickAnalysis", "inventoryclickanalysis");
-
     decrementer = new CheckViolationLevelDecrementer(this, MAX_VL_DECREMENT_PER_SECOND);
-
     this.setupChecks();
   }
 
