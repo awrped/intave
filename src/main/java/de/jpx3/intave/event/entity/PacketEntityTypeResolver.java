@@ -108,11 +108,11 @@ public final class PacketEntityTypeResolver {
           return entityTypeDataOfDataWatcher(dataWatcher);
         } else {
           int entityTypeId = packet.getIntegers().read(1);
-          return DualEntityTypeAccess.resolveFromId(entityTypeId);
+          return DualEntityTypeAccess.resolveFromId(entityTypeId, true);
         }
       } else {
         int entityTypeId = packet.getIntegers().read(1);
-        return DualEntityTypeAccess.resolveFromId(entityTypeId);
+        return DualEntityTypeAccess.resolveFromId(entityTypeId, true);
       }
     }
   }
@@ -188,7 +188,7 @@ public final class PacketEntityTypeResolver {
     if (entity != null) {
       return entityTypeDataOfBukkitEntity(entity);
     } else {
-      EntityTypeData entityTypeData = DualEntityTypeAccess.resolveFromId(entityTypeId);
+      EntityTypeData entityTypeData = DualEntityTypeAccess.resolveFromId(entityTypeId, false);
 
       if (isChild == null) {
         return null;

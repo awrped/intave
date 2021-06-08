@@ -210,6 +210,12 @@ public final class ClientSideEntityService implements PacketEventSubscriber {
       livingEntity = true;
       entityTypeData = new EntityTypeData(entityName, hitBoxBoundaries, 105, true);
     }
+    if (entityTypeData == null) {
+      if (IntaveControl.DISABLE_LICENSE_CHECK) {
+        IntavePlugin.singletonInstance().logger().error("Cannot resolve entityType: " + entityId);
+      }
+      return;
+    }
     processPacketSpawnMob(user, event.getPacketType(), entityTypeData, packet, livingEntity, entityId);
   }
 
