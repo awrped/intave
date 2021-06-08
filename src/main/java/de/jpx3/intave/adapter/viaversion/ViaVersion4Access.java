@@ -25,9 +25,9 @@ public final class ViaVersion4Access implements ViaVersionAccess {
   @Override
   public void patchConfiguration() {
     try {
-      Class<?> viaVersion = Class.forName("us.myles.ViaVersion.ViaVersionPlugin");
+      Class<?> viaVersion = Class.forName("com.viaversion.viaversion.ViaVersionPlugin");
       Object configuration = viaVersion.getMethod("getConfigurationProvider").invoke(Bukkit.getPluginManager().getPlugin("ViaVersion"));
-      Class<?> configurationClass = Class.forName("us.myles.ViaVersion.AbstractViaConfig");
+      Class<?> configurationClass = Class.forName("com.viaversion.viaversion.configuration.AbstractViaConfig");
       Field maxPPSField = configurationClass.getDeclaredField("warningPPS");
       if (!maxPPSField.isAccessible()) {
         maxPPSField.setAccessible(true);
@@ -54,12 +54,7 @@ public final class ViaVersion4Access implements ViaVersionAccess {
   }
 
   @Override
-  public boolean available() {
-    try {
-      Class.forName("com.viaversion.viaversion.api.Via");
-      return true;
-    } catch (ClassNotFoundException exception) {
-      return false;
-    }
+  public boolean available(String version) {
+    return version.startsWith("4");
   }
 }

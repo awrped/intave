@@ -9,6 +9,8 @@ import de.jpx3.intave.adapter.viaversion.ViaVersionAccess;
 import de.jpx3.intave.logging.IntaveLogger;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.PluginManager;
 
 import java.util.List;
 
@@ -28,15 +30,22 @@ public class ViaVersionAdapter {
   private static ViaVersionAccess access;
 
   public static void setup() {
-    if (Bukkit.getServer().getPluginManager().getPlugin("ViaVersion") == null) {
+    PluginManager pluginManager = Bukkit.getServer().getPluginManager();
+    Plugin viaVersion = pluginManager.getPlugin("ViaVersion");
+    if (viaVersion == null) {
       return;
     }
-    access = available.stream().filter(ViaVersionAccess::available).findFirst().orElse(null);
+    String version = viaVersion.getDescription().getVersion();
+    access = available
+      .stream()
+      .filter(access -> access.available(version))
+      .findFirst()
+      .orElse(null);
     available.clear();
     if (access != null) {
       access.setup();
     } else {
-      IntaveLogger.logger().error("Unknown ViaVersion version, linkage failed");
+      IntaveLogger.logger().error("Unknown ViaVersion version, linkage failed (ViaVersion version: " + version + ")");
     }
   }
 

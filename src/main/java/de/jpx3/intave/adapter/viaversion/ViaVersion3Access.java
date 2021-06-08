@@ -54,12 +54,7 @@ public final class ViaVersion3Access implements ViaVersionAccess {
   }
 
   @Override
-  public boolean available() {
-    try {
-      Class.forName("us.myles.ViaVersion.api.Via");
-      return true;
-    } catch (ClassNotFoundException e) {
-      return false;
-    }
+  public boolean available(String version) {
+    return version.startsWith("3");
   }
 }

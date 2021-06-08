@@ -11,5 +11,5 @@ public interface ViaVersionAccess {
 
   boolean ignoreBlocking(Player player);
 
-  boolean available();
+  boolean available(String version);
 }
