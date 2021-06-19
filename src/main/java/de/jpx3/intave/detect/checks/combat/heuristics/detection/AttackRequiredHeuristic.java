@@ -23,11 +23,11 @@ import static de.jpx3.intave.event.packet.PacketId.Client.*;
 import static de.jpx3.intave.user.UserMetaClientData.VER_1_8;
 import static de.jpx3.intave.world.raytrace.Raytracer.distanceOf;
 
-public final class AttackRequiredHeuristic extends IntaveMetaCheckPart<Heuristics, AttackRequiredHeuristic.VentolotlMeta> {
+public final class AttackRequiredHeuristic extends IntaveMetaCheckPart<Heuristics, AttackRequiredHeuristic.AttackRequiredMeta> {
   private final IntavePlugin plugin;
 
   public AttackRequiredHeuristic(Heuristics parentCheck) {
-    super(parentCheck, AttackRequiredHeuristic.VentolotlMeta.class);
+    super(parentCheck, AttackRequiredMeta.class);
     this.plugin = IntavePlugin.singletonInstance();
   }
 
@@ -66,7 +66,7 @@ public final class AttackRequiredHeuristic extends IntaveMetaCheckPart<Heuristic
   )
   public void receiveSlotSwitch(PacketEvent event) {
     Player player = event.getPlayer();
-    VentolotlMeta meta = metaOf(player);
+    AttackRequiredMeta meta = metaOf(player);
     PacketContainer packet = event.getPacket();
     Integer slot = packet.getIntegers().read(0);
 
@@ -101,7 +101,7 @@ public final class AttackRequiredHeuristic extends IntaveMetaCheckPart<Heuristic
     if (dead) {
       return;
     }
-    VentolotlMeta meta = metaOf(player);
+    AttackRequiredMeta meta = metaOf(player);
 
     // FishingRod overrides onItemRightClick and sends an arm-animation packet
     boolean recentlyUsedRot = meta.ticksSinceFishingRodItemSwitch < 5;
@@ -180,7 +180,7 @@ public final class AttackRequiredHeuristic extends IntaveMetaCheckPart<Heuristic
     return (creative ? 5.0F : 3.0F) - 0.005f;
   }
 
-  public final static class VentolotlMeta extends UserCustomCheckMeta {
+  public final static class AttackRequiredMeta extends UserCustomCheckMeta {
     public boolean expectedAttack;
     public boolean didAttack, didSwing;
     public long lastFlag;
