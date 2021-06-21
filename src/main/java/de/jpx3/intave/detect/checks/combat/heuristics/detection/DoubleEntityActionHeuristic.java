@@ -56,6 +56,7 @@ public final class DoubleEntityActionHeuristic extends IntaveMetaCheckPart<Heuri
     }
 
     if(message != null) {
+      // Be careful before setting a confidence because it false flags when reloading the server
       Anomaly anomaly = Anomaly.anomalyOf("190",
         Confidence.NONE,
         Anomaly.Type.KILLAURA,
