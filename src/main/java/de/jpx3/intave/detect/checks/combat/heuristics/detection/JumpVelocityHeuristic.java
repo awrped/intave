@@ -31,17 +31,14 @@ public final class JumpVelocityHeuristic extends IntaveMetaCheckPart<Heuristics,
     User user = userOf(player);
     UserMetaMovementData movementData = user.meta().movementData();
 
-    if(movementData.physicsJumped) {
+    if (movementData.physicsJumped) {
       double motionY = movementData.motionY();
       double diffY = motionY - 0.42d;
-
-      if(Math.abs(diffY) < 0.000000000000017) {
+      if (Math.abs(diffY) < 0.000000000000017) {
         String message = "jumped with wrong motion";
-
-        if(movementData.pastVelocity == 0) {
+        if (movementData.pastVelocity == 0) {
           message += " and got velocity";
         }
-
         Anomaly anomaly = Anomaly.anomalyOf("200",
           Confidence.NONE,
           Anomaly.Type.KILLAURA,
@@ -51,7 +48,6 @@ public final class JumpVelocityHeuristic extends IntaveMetaCheckPart<Heuristics,
       }
     }
   }
-
 
   public static class JumpVelocityHeuristicMeta extends UserCustomCheckMeta {
   }
