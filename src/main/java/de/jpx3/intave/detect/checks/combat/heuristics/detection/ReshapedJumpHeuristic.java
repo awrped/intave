@@ -9,6 +9,7 @@ import de.jpx3.intave.detect.checks.combat.heuristics.Confidence;
 import de.jpx3.intave.event.packet.ListenerPriority;
 import de.jpx3.intave.event.packet.PacketSubscription;
 import de.jpx3.intave.event.violation.AttackNerfStrategy;
+import de.jpx3.intave.tools.MathHelper;
 import de.jpx3.intave.tools.client.SinusCache;
 import de.jpx3.intave.user.*;
 import org.bukkit.enchantments.Enchantment;
@@ -40,10 +41,7 @@ public final class ReshapedJumpHeuristic extends IntaveMetaCheckPart<Heuristics,
     UserMetaAttackData attackData = user.meta().attackData();
     UserMetaInventoryData inventoryData = user.meta().inventoryData();
 
-    if (!attackData.recentlyAttacked(1000)) {
-      return;
-    }
-
+    boolean recentlyAttacked = attackData.recentlyAttacked(1000);
     boolean jump = Math.abs(movementData.jumpMotion() - movementData.motionY()) < 1e-5;
     if (jump && movementData.sprinting && movementData.lastTeleport > 5) {
       float rotationYaw = movementData.rotationYaw;
@@ -69,20 +67,24 @@ public final class ReshapedJumpHeuristic extends IntaveMetaCheckPart<Heuristics,
       physicsCalculateRelativeMovement(motion, friction, yawSine, yawCosine, moveForward, moveStrafe);
       double preDistance = Math.hypot(motion.getX() - movementData.motionX(), motion.getZ() - movementData.motionZ());
 
-      double leniency = 0.0001;
+      double leniency = 0.001;
       if (preDistance > leniency) {
         motion = new Vector(physicsMotionX, 0.0, physicsMotionZ);
         physicsCalculateRelativeMovement(motion, friction, yawSine, yawCosine, moveForward, moveStrafe);
         double postDistance = Math.hypot(motion.getX() - movementData.motionX(), motion.getZ() - movementData.motionZ());
-        if (Math.abs(postDistance - 0.2) < leniency) {
-          if (heuristicMeta.balance++ >= 1) {
-            String description = "xz-motion not corrected with jump";
+        if (Math.abs(postDistance - 0.2) < leniency * 2) {
+//          if (heuristicMeta.balance++ >= 1) {
+          heuristicMeta.balance++;
+            String description = "xz-motion not corrected with jump vl:" + MathHelper.formatDouble(heuristicMeta.balance, 1);
+            if (recentlyAttacked) {
+              description += " | attacked";
+            }
             int options = Anomaly.AnomalyOption.LIMIT_8 | Anomaly.AnomalyOption.SUGGEST_MINING;
-            Anomaly anomaly = Anomaly.anomalyOf("61", Confidence.PROBABLE, Anomaly.Type.KILLAURA, description, options);
+            Anomaly anomaly = Anomaly.anomalyOf("61", Confidence.NONE, Anomaly.Type.KILLAURA, description, options);
             parentCheck().saveAnomaly(player, anomaly);
             //dmc15
-            user.applyAttackNerfer(AttackNerfStrategy.HT_MEDIUM, "15");
-          }
+//            user.applyAttackNerfer(AttackNerfStrategy.HT_MEDIUM, "15");
+//          }
         }
       } else {
         heuristicMeta.balance -= heuristicMeta.balance > 0 ? 0.2 : 0;
