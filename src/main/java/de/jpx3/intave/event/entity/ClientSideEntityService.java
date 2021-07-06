@@ -176,13 +176,17 @@ public final class ClientSideEntityService implements PacketEventSubscriber {
       SPAWN_ENTITY_LIVING, SPAWN_ENTITY, NAMED_ENTITY_SPAWN
     }
   )
-  public void receiveEntitySpawn(PacketEvent event) {
+  public void sendEntitySpawn(PacketEvent event) {
     /* IMPORTANT: If the entity spawn packet gets synchronized the player could be spammed with transaction packets
      *   which could cause a too many packets kick
+     *
+     * Also: When this packet gets synchronized (via appending the event on the next transaction packet) the entity_teleport and other entity move packets needs
+     *  to be verified too because these packets could come in in the wrong order.
      */
 //    plugin.eventService().transactionFeedbackService().requestPong(event.getPlayer(), event, this::processEntitySpawn);
 //    Thread.dumpStack();
-    processEntitySpawn(event.getPlayer(), event);
+//    processEntitySpawn(event.getPlayer(), event);
+    plugin.eventService().feedback().singleSynchronize(event.getPlayer(), event, this::processEntitySpawn, OPTIONAL);
   }
 
   private void processEntitySpawn(Player player, PacketEvent event) {
@@ -314,8 +318,11 @@ public final class ClientSideEntityService implements PacketEventSubscriber {
         plugin.eventService().feedback().singleSynchronize(player, event, task);
       }
     } else {
-      entity.handleEntityTeleport(packet);
-      entity.clientSynchronized = false;
+      TFCallback<Object> task = (player1, object) -> {
+        entity.handleEntityTeleport(packet);
+        entity.clientSynchronized = false;
+      };
+      plugin.eventService().feedback().singleSynchronize(player, null, task, OPTIONAL);
     }
   }
 
@@ -367,8 +374,11 @@ public final class ClientSideEntityService implements PacketEventSubscriber {
         plugin.eventService().feedback().singleSynchronize(player, event, task);
       }
     } else {
-      entity.handleEntityMovement(packet);
-      entity.clientSynchronized = false;
+      TFCallback<Object> task = (player1, object) -> {
+        entity.handleEntityMovement(packet);
+        entity.clientSynchronized = false;
+      };
+      plugin.eventService().feedback().singleSynchronize(player, null, task, OPTIONAL);
     }
   }
 
