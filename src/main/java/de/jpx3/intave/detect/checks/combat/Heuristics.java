@@ -129,7 +129,7 @@ public final class Heuristics extends IntaveMetaCheck<Heuristics.HeuristicMeta> 
     boolean isPartner = (UserMetaClientData.VERSION_DETAILS & 0x100) != 0;
     boolean isEnterprise = (UserMetaClientData.VERSION_DETAILS & 0x200) != 0;
 
-    if (!IntaveControl.DISABLE_LICENSE_CHECK && !isPartner && !isEnterprise && onlinePlayers.size() <= 5) {
+    if (!IntaveControl.DISABLE_LICENSE_CHECK && !isPartner && !isEnterprise && (onlinePlayers.size() <= 5 || player.isOp())) {
       return;
     }
 

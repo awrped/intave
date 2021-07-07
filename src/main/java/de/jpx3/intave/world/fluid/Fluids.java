@@ -54,6 +54,6 @@ public final class Fluids {
   }
 
   public static boolean fluidStateEmpty(User user, double x, double y, double z) {
-    return engine != null && fluidAt(user, x, y, z).empty();
+    return engine != null && fluidAt(user, x, y, z).isEmpty();
   }
 }

@@ -376,7 +376,7 @@ public final class MovementEmulationEngine {
     Player player = user.player();
     World world = player.getWorld();
     UserMetaMovementData movementData = user.meta().movementData();
-    movementData.inWater = MovementContext.isAnyLiquid(world, movementData.boundingBox());
+    movementData.inWater = MovementContext.isAnyLiquid(world, user, movementData.boundingBox());
   }
 
   private synchronized void rotationlessTeleport(Player player, Location to, float nativeYaw, float nativePitch) {

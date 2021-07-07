@@ -18,6 +18,9 @@ public final class v16FluidResolver extends FluidEngine {
   protected WrappedFluid fluidAt(User user, int x, int y, int z) {
     UserMetaMovementData movementData = user.meta().movementData();
     World world = (World) movementData.nmsWorld();
+    if (!world.isChunkLoaded(x >> 4, z >> 4)) {
+      return WrappedFluid.empty();
+    }
     Fluid fluid = world.getFluid(new BlockPosition(x, y, z));
     float height = fluid.d();
     FluidTag fluidTag = fluid.isEmpty() ? FluidTag.EMPTY : resolveFluidTagOf(fluid);

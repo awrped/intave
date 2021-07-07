@@ -9,13 +9,11 @@ import org.bukkit.entity.Player;
 
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 public final class UserRepository {
-  private final static Map<UUID, User> userRepository = Maps.newConcurrentMap();
+  private final static Map<UUID, User> repository = Maps.newConcurrentMap();
   private final static User deadUser = User.empty();
-  private final static Lock lock = new ReentrantLock();
+//  private final static Lock lock = new ReentrantLock();
   private static boolean closed;
 
   // used to load the class on startup
@@ -24,14 +22,14 @@ public final class UserRepository {
   }
 
   public static void registerUser(Player player) {
-    userRepository.put(player.getUniqueId(), User.userFor(player));
+    repository.put(player.getUniqueId(), User.userFor(player));
     if (IntaveControl.RESET_HURT_TIME_ON_JOIN) {
       EntityNoDamageTickChanger.setNoDamageTicksOf(player, 20);
     }
   }
 
   public static boolean hasUser(Player player) {
-    return userRepository.containsKey(player.getUniqueId());
+    return repository.containsKey(player.getUniqueId());
   }
 
   public static void unregisterUser(Player player) {
@@ -39,11 +37,11 @@ public final class UserRepository {
       User user = userOf(player);
       user.unregister();
     }
-    userRepository.remove(player.getUniqueId());
+    repository.remove(player.getUniqueId());
   }
 
   public static User userOf(Player player) {
-    User user = userRepository.get(player.getUniqueId());
+    User user = repository.get(player.getUniqueId());
     if (user == null) {
       if (closed) {
         return deadUser;
@@ -53,7 +51,7 @@ public final class UserRepository {
       // online -> recreate user object
       if (isOnline) {
         registerUser(player);
-        return userRepository.get(player.getUniqueId());
+        return repository.get(player.getUniqueId());
       } else {
         // offline -> return dead user
         return deadUser;
@@ -65,11 +63,11 @@ public final class UserRepository {
   public static void die() {
     closed = true;
     unregisterAll();
-    userRepository.clear();
+    repository.clear();
   }
 
   private static void unregisterAll() {
-    for (UUID uuid : userRepository.keySet()) {
+    for (UUID uuid : repository.keySet()) {
       Player player = Bukkit.getPlayer(uuid);
       if (player != null) {
         unregisterUser(player);

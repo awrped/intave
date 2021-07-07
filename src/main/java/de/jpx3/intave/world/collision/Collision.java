@@ -2,7 +2,7 @@ package de.jpx3.intave.world.collision;
 
 import de.jpx3.intave.tools.annotate.DoNotFlowObfuscate;
 import de.jpx3.intave.tools.annotate.Relocate;
-import de.jpx3.intave.tools.client.SpecialMaterials;
+import de.jpx3.intave.tools.client.Materials;
 import de.jpx3.intave.tools.wrapper.WrappedAxisAlignedBB;
 import de.jpx3.intave.tools.wrapper.WrappedMathHelper;
 import de.jpx3.intave.user.User;
@@ -71,6 +71,10 @@ public final class Collision {
             for (int z = zstart; z < zend; ++z) {
               for (int y = ystart; y < maxY; ++y) {
                 List<WrappedAxisAlignedBB> resolve = blockShapeAccess.resolveBoxes(chunkx, chunkz, x, y, z);
+                Material material = blockShapeAccess.resolveType(chunkx, chunkz, x, y, z);
+                if (CollisionModifiers.isModified(material)) {
+                  resolve = CollisionModifiers.modified(material, user, playerBoundingBox, x, y, z, resolve);
+                }
                 boolean blockOutsideBorder = !blockInsideBorder(world, x, z);
                 if (blockOutsideBorder && !movementData.outsideBorder) {
                   if (resolvedBoundingBoxes == null) {
@@ -226,7 +230,7 @@ public final class Collision {
         for (int z = minZ; z <= maxZ; z++) {
           Block block = BukkitBlockAccess.blockAccess(world, x, y, z);
           Material type = BlockTypeAccess.typeAccess(block);
-          if (!SpecialMaterials.isLiquid(type) && BlockTypeAccess.typeAccess(block) != Material.AIR) {
+          if (!Materials.isLiquid(type) && BlockTypeAccess.typeAccess(block) != Material.AIR) {
             return true;
           }
         }

@@ -5,8 +5,8 @@ import de.jpx3.intave.detect.checks.movement.physics.MotionVector;
 import de.jpx3.intave.detect.checks.movement.physics.PoseSimulator;
 import de.jpx3.intave.event.entity.WrappedEntity;
 import de.jpx3.intave.tools.client.EffectLogic;
+import de.jpx3.intave.tools.client.Materials;
 import de.jpx3.intave.tools.client.MovementContext;
-import de.jpx3.intave.tools.client.SpecialMaterials;
 import de.jpx3.intave.tools.items.PlayerEnchantmentHelper;
 import de.jpx3.intave.tools.wrapper.WrappedAxisAlignedBB;
 import de.jpx3.intave.tools.wrapper.WrappedMathHelper;
@@ -80,7 +80,7 @@ public class DefaultPoseSimulator extends PoseSimulator {
         float heightPercentage = LegacyWaterflow.resolveLiquidHeightPercentage(blockData);
         if (movementData.onGround) {
           heightPercentage += movementData.positionY % 1;
-          allowJumpInWater = !SpecialMaterials.isWater(material) || heightPercentage > 0.5;
+          allowJumpInWater = !Materials.isWater(material) || heightPercentage > 0.5;
         }
       }
       if (inWater && !allowJumpInWater) {

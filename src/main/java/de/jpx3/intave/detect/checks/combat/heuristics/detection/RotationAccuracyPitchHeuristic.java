@@ -14,7 +14,8 @@ import de.jpx3.intave.user.UserMetaAttackData;
 import de.jpx3.intave.user.UserMetaMovementData;
 import org.bukkit.entity.Player;
 
-import static de.jpx3.intave.detect.checks.combat.heuristics.Anomaly.AnomalyOption.*;
+import static de.jpx3.intave.detect.checks.combat.heuristics.Anomaly.AnomalyOption.DELAY_128s;
+import static de.jpx3.intave.detect.checks.combat.heuristics.Anomaly.AnomalyOption.SUGGEST_MINING;
 import static de.jpx3.intave.event.packet.PacketId.Client.LOOK;
 import static de.jpx3.intave.event.packet.PacketId.Client.POSITION_LOOK;
 

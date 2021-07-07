@@ -1,7 +1,7 @@
 package de.jpx3.intave.world.blockshape.resolver.pipeline;
 
 import de.jpx3.intave.diagnostics.BoundingBoxAccessFlowStudy;
-import de.jpx3.intave.tools.client.SpecialMaterials;
+import de.jpx3.intave.tools.client.Materials;
 import de.jpx3.intave.tools.wrapper.WrappedAxisAlignedBB;
 import de.jpx3.intave.world.blockshape.resolver.BoundingBoxResolvePipeline;
 import org.bukkit.Material;
@@ -37,7 +37,7 @@ public final class DynamicEmptyBlockPreFilter implements BoundingBoxResolvePipel
   }
 
   private boolean isEmpty(Material type) {
-    if (SpecialMaterials.isLiquid(type)) {
+    if (Materials.isLiquid(type)) {
       return true;
     }
     switch (type) {

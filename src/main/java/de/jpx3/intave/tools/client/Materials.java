@@ -3,7 +3,7 @@ package de.jpx3.intave.tools.client;
 import de.jpx3.intave.world.blockaccess.BlockTypeAccess;
 import org.bukkit.Material;
 
-public final class SpecialMaterials {
+public final class Materials {
   public static boolean blocksMovement(Material material) {
     // Liquids don't block movement
     if (isLiquid(material)) {

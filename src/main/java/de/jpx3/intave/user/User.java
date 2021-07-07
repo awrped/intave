@@ -314,7 +314,7 @@ public final class User {
     if (connectionData.hardTransactionResponse++ > 100 && hasPlayer) {
       Player player = player();
       IntaveLogger.logger().error(player.getName() + " has been removed for repeated validation faults");
-      UserRepository.userOf(player).synchronizedDisconnect("Timed out");
+      synchronizedDisconnect("Timed out");
     }
   }
 

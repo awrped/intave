@@ -67,10 +67,10 @@ public final class MovementContext {
 
   private static boolean isLiquidPresentInAABB(Player player, WrappedAxisAlignedBB boundingBox) {
     List<WrappedAxisAlignedBB> collisionBoxes = Collision.resolve(player, boundingBox);
-    return collisionBoxes.isEmpty() && !isAnyLiquid(player.getWorld(), boundingBox);
+    return collisionBoxes.isEmpty() && !isAnyLiquid(player.getWorld(), UserRepository.userOf(player), boundingBox);
   }
 
-  public static boolean isAnyLiquid(World world, WrappedAxisAlignedBB boundingBox) {
+  public static boolean isAnyLiquid(World world, User user, WrappedAxisAlignedBB boundingBox) {
     int minX = WrappedMathHelper.floor(boundingBox.minX);
     int minY = WrappedMathHelper.floor(boundingBox.minY);
     int minZ = WrappedMathHelper.floor(boundingBox.minZ);
@@ -80,8 +80,8 @@ public final class MovementContext {
     for (int x = minX; x <= maxX; ++x) {
       for (int y = minY; y <= maxY; ++y) {
         for (int z = minZ; z <= maxZ; ++z) {
-          Material material = BlockTypeAccess.typeAccess(BukkitBlockAccess.blockAccess(world, x, y, z));
-          if (SpecialMaterials.isLiquid(material)) {
+          Material material = BukkitBlockAccess.cacheAppliedTypeAccess(user, world, x, y, z);
+          if (Materials.isLiquid(material)) {
             return true;
           }
         }
@@ -101,7 +101,7 @@ public final class MovementContext {
       for (int y = minY; y <= maxY; ++y) {
         for (int z = minZ; z <= maxZ; ++z) {
           Material material = BukkitBlockAccess.blockAccess(world, x, y, z).getType();
-          if (!SpecialMaterials.isLiquid(material)) {
+          if (!Materials.isLiquid(material)) {
             return false;
           }
         }
@@ -120,7 +120,7 @@ public final class MovementContext {
     for (int x = minX; x < maxX; ++x) {
       for (int y = minY; y < maxY; ++y) {
         for (int z = minZ; z < maxZ; ++z) {
-          if (SpecialMaterials.isLava(BukkitBlockAccess.blockAccess(world, x, y, z).getType())) {
+          if (Materials.isLava(BukkitBlockAccess.blockAccess(world, x, y, z).getType())) {
             return true;
           }
         }

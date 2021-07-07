@@ -87,7 +87,7 @@ public final class UserMetaPunishmentData {
           event.setCancelled(true);
         } else {
           double random = ThreadLocalRandom.current().nextDouble();
-          delay = (long) projectDistribution(GARBAGE_HITS_RANDOM_DISTRIBUTION_CURVE.apply(random), 0, 1, 550, 700);
+          delay = (long) projectDistribution(GARBAGE_HITS_RANDOM_DISTRIBUTION_CURVE.apply(random), 0, 1, 550, 750);
           lastTimeValidHurttimeAttack.put(entityId, AccessHelper.now());
         }
       })

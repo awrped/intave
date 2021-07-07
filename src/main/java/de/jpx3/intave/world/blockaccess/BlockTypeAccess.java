@@ -6,6 +6,7 @@ import de.jpx3.intave.tools.annotate.Relocate;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserRepository;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 
@@ -46,12 +47,28 @@ public final class BlockTypeAccess {
     translations.forEach(user::applyTypeTranslation);
   }
 
+  /**
+   * This method performs a direct type lookup, which will be quite heavy
+   * if the underlying chunk has not been loaded yet.
+   *
+   * To avoid performance-bottlenecks, use <code>{@link BukkitBlockAccess#cacheAppliedTypeAccess(User, World, int, int, int)}</code> instead,
+   * providing fast performance, cache implementation and stable chunk fallback
+   */
+  @Deprecated
   public static Material typeAccess(Block block) {
     return block.getType();
   }
 
+  /**
+   * This method performs a direct type lookup, which will be quite heavy
+   * if the underlying chunk has not been loaded yet.
+   *
+   * To avoid performance-bottlenecks, use <code>{@link BukkitBlockAccess#cacheAppliedTypeAccess(User, World, int, int, int)}</code> instead,
+   * providing fast performance, cache implementation and stable chunk fallback
+   */
+  @Deprecated
   public static Material typeAccess(Block block, Player player) {
-    return translate(UserRepository.userOf(player), block.getType());
+    return translate(UserRepository.userOf(player), typeAccess(block));
   }
 
   public static boolean hasTranslation(User user, Material origin) {
