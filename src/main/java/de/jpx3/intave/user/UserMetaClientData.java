@@ -15,6 +15,8 @@ public final class UserMetaClientData {
   public static int VER_1_13_2 = 404; // 1.13.2
   public static int VER_1_13 = 393; // 1.13
   public static int VER_1_12 = 335; // 1.12
+  public static int VER_1_11 = 315;
+  public static int VER_1_10 = 210;
   public static int VER_1_9 = 107; // 1.9
   public static int VERSION_DETAILS = 97; // secret integer for security - DO NOT MODIFY
   public static int VER_1_8 = 47; // 1.8

@@ -3,11 +3,7 @@ package de.jpx3.intave.world.state;
 public final class BlockStateBoolean extends BlockStateData<Boolean> {
   private Object converter;
 
-  public BlockStateBoolean(String name) {
-    super(name, false);
-  }
-
-  public BlockStateBoolean(String name, boolean defaultValue) {
+  private BlockStateBoolean(String name, boolean defaultValue) {
     super(name, defaultValue);
   }
 
@@ -22,7 +18,7 @@ public final class BlockStateBoolean extends BlockStateData<Boolean> {
   }
 
   public static BlockStateBoolean of(String name) {
-    return new BlockStateBoolean(name);
+    return new BlockStateBoolean(name, false);
   }
 
   public static BlockStateBoolean of(String name, boolean defaultValue) {
