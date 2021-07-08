@@ -1,5 +1,6 @@
 package de.jpx3.intave.world.state;
 
+import de.jpx3.intave.adapter.MinecraftVersions;
 import de.jpx3.intave.patchy.annotate.PatchyAutoTranslation;
 import net.minecraft.server.v1_16_R3.BlockStateBoolean;
 import net.minecraft.server.v1_16_R3.BlockStateInteger;
@@ -32,13 +33,33 @@ public abstract class BlockStateData<T> {
 
   @PatchyAutoTranslation
   public static final class BlockStateServerBridge {
+    private final static boolean INTERFACE_RESOLVE = !MinecraftVersions.VER1_14_0.atOrAbove();
 
     @PatchyAutoTranslation
     public static <T> T valueOf(Block block, BlockStateData<T> blockStateData) {
+      return INTERFACE_RESOLVE ? invokeInterfaceResolve(block, blockStateData) : invokeSpecialResolve(block, blockStateData);
+    }
+
+    private static <T> T invokeSpecialResolve(Block block, BlockStateData<T> blockStateData) {
       CraftBlock craftBlock = (CraftBlock) block;
       CraftBlockData craftBlockData = (CraftBlockData) craftBlock.getBlockData();
       IBlockState<?> blockState = (IBlockState<?>) blockStateData.convert();
       IBlockData state = craftBlockData.getState();
+      // containsKey
+      if (state.b(blockState)) {
+        //noinspection unchecked
+        return (T) state.get(blockState);
+      } else {
+        return blockStateData.defaultValue;
+      }
+    }
+
+    // Fixes an IncompatibleClassChangeError
+    private static <T> T invokeInterfaceResolve(Block block, BlockStateData<T> blockStateData) {
+      org.bukkit.craftbukkit.v1_13_R2.block.CraftBlock craftBlock = (org.bukkit.craftbukkit.v1_13_R2.block.CraftBlock) block;
+      org.bukkit.craftbukkit.v1_13_R2.block.data.CraftBlockData craftBlockData = (org.bukkit.craftbukkit.v1_13_R2.block.data.CraftBlockData) craftBlock.getBlockData();
+      net.minecraft.server.v1_13_R2.IBlockState<?> blockState = (net.minecraft.server.v1_13_R2.IBlockState<?>) blockStateData.convert();
+      net.minecraft.server.v1_13_R2.IBlockData state = craftBlockData.getState();
       // containsKey
       if (state.b(blockState)) {
         //noinspection unchecked
