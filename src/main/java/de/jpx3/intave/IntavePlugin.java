@@ -492,10 +492,10 @@ public final class IntavePlugin extends JavaPlugin {
       WrapperLinkage.setup();
       Raytracing.setup();
       Collider.setup();
-      CollisionModifiers.setup();
       Fluids.setup();
       BukkitBlockAccess.setup();
       BlockDataAccess.setup();
+      CollisionModifiers.setup();
       ViaVersionAdapter.setup();
       BoundingBoxResolverFactory.createNew();
       WorldPermission.setup();
