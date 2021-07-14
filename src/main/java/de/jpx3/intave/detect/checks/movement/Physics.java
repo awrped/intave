@@ -79,7 +79,9 @@ public final class Physics extends IntaveCheck {
     Class<?> entityLivingClass = ReflectiveAccess.lookupServerClass("EntityLiving");
     // Search method name
     String methodName = "e";
-    if (MinecraftVersions.VER1_14_0.atOrAbove()) {
+    if (MinecraftVersions.VER1_17_0.atOrAbove()) {
+      methodName = "a";
+    } else if (MinecraftVersions.VER1_14_0.atOrAbove()) {
       // >= 1.14
       methodName = "b";
     } else if (MinecraftVersions.VER1_13_0.atOrAbove()) {
@@ -88,7 +90,10 @@ public final class Physics extends IntaveCheck {
     }
     // Search method descriptor
     MethodType methodType;
-    if (MinecraftVersions.VER1_15_0.atOrAbove()) {
+    if (MinecraftVersions.VER1_17_0.atOrAbove()) {
+      Class<?> damageSource = ReflectiveAccess.lookupServerClass("DamageSource");
+      methodType = MethodType.methodType(Boolean.TYPE, Float.TYPE, Float.TYPE, damageSource);
+    } else if (MinecraftVersions.VER1_15_0.atOrAbove()) {
       // >= 1.15
       methodType = MethodType.methodType(Boolean.TYPE, Float.TYPE, Float.TYPE);
     } else {
@@ -121,9 +126,18 @@ public final class Physics extends IntaveCheck {
     }
   }
 
+  private static Object FALL_DAMAGE_SOURCE = null;
+
   private void dealFallDamage(Object playerHandle, float fallDistance) {
     try {
-      fallDamageInvokeMethod.invoke(playerHandle, fallDistance, 1.0f);
+      if (MinecraftVersions.VER1_17_0.atOrAbove()) {
+        if (FALL_DAMAGE_SOURCE == null) {
+          FALL_DAMAGE_SOURCE = ReflectiveAccess.lookupServerClass("DamageSource").getField("k").get(null);
+        }
+        fallDamageInvokeMethod.invoke(playerHandle, fallDistance, 1.0f, FALL_DAMAGE_SOURCE);
+      } else {
+        fallDamageInvokeMethod.invoke(playerHandle, fallDistance, 1.0f);
+      }
     } catch (Throwable throwable) {
       throwable.printStackTrace();
     }

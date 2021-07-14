@@ -11,6 +11,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.Queue;
 
 public final class Synchronizer {
@@ -36,8 +37,13 @@ public final class Synchronizer {
 
     try {
       minecraftServer = ReflectiveAccess.lookupServerClass("MinecraftServer").getMethod("getServer").invoke(null);
-      boolean useSuperClass = isDedicatedServer(minecraftServer.getClass());
-      Class<?> serverClass = useSuperClass ? minecraftServer.getClass().getSuperclass() : minecraftServer.getClass();
+      Class<?> serverClass = minecraftServer.getClass();
+      while ((serverClass = serverClass.getSuperclass()) != Object.class) {
+        Method[] declaredMethods = serverClass.getDeclaredMethods();
+        if (Arrays.stream(declaredMethods).anyMatch(method -> method.getName().equals("postToMainThread"))) {
+          break;
+        }
+      }
       Method postToMainThreadMethod = serverClass.getDeclaredMethod("postToMainThread", Runnable.class);
       if (!postToMainThreadMethod.isAccessible()) {
         postToMainThreadMethod.setAccessible(true);
@@ -45,15 +51,6 @@ public final class Synchronizer {
       postToMainThreadMethodHandle = MethodHandles.lookup().unreflect(postToMainThreadMethod);
     } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException exception) {
       throw new IllegalStateException(exception);
-    }
-  }
-
-  private static boolean isDedicatedServer(Class<?> clazz) {
-    String dedicatedServer = ReflectiveAccess.appendNMSPrefixToClass("DedicatedServer");
-    try {
-      return Class.forName(dedicatedServer) == clazz;
-    } catch (ClassNotFoundException e) {
-      return false;
     }
   }
 

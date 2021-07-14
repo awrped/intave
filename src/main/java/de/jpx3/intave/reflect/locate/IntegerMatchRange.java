@@ -1,6 +1,6 @@
 package de.jpx3.intave.reflect.locate;
 
-public final class IntegerMatchRange extends IntegerMatcher {
+final class IntegerMatchRange extends IntegerMatcher {
   private final int start, end;
 
   public IntegerMatchRange(int start, int end) {

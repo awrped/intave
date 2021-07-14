@@ -9,7 +9,7 @@ import de.jpx3.intave.event.packet.PacketSubscription;
 import de.jpx3.intave.event.violation.Violation;
 import de.jpx3.intave.event.violation.ViolationContext;
 import de.jpx3.intave.tools.AccessHelper;
-import de.jpx3.intave.tools.RotationMathHelper;
+import de.jpx3.intave.tools.Rotation;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserCustomCheckMeta;
 import org.bukkit.entity.Player;
@@ -58,7 +58,7 @@ public final class PlacementPacketOrderAnalyzer extends IntaveMetaCheckPart<Plac
     meta.placementDifferences.add(timeDiff);
 
     if (meta.placementDifferences.size() == 4) {
-      double average = RotationMathHelper.averageOf(meta.placementDifferences);
+      double average = Rotation.averageOf(meta.placementDifferences);
 
       if (average < 20) {
         long permutePacketIncrementDiff = now - meta.lastIncrement;

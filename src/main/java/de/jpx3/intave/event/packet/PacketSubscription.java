@@ -14,4 +14,5 @@ public @interface PacketSubscription {
   String identifier() default "no identifier assigned";
   PacketId.Client[] packetsIn() default {};
   PacketId.Server[] packetsOut() default {};
+  boolean ignoreCancelled() default true;
 }

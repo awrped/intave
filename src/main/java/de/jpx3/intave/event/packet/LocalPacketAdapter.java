@@ -19,18 +19,20 @@ public final class LocalPacketAdapter extends IntavePacketAdapter implements Com
   private final PacketEventSubscriber subscriber;
   private final PacketSubscriptionMethodExecutor executor;
   private final Map<PacketType, Timing> localTimings = new ConcurrentHashMap<>();
+  private final boolean ignoreCancelled;
 
   public LocalPacketAdapter(
     IntavePlugin plugin,
     PacketEventSubscriber subscriber,
     ListenerPriority priority, PacketType[] packetTypes,
-    String methodName, PacketSubscriptionMethodExecutor executor
-  ) {
+    String methodName, PacketSubscriptionMethodExecutor executor,
+    boolean ignoreCancelled) {
     super(plugin, priority.toProtocolLibPriority(), packetTypes);
     this.subscriber = subscriber;
     this.methodName = methodName;
     this.priority = priority;
     this.executor = executor;
+    this.ignoreCancelled = ignoreCancelled;
   }
 
   @Override
@@ -77,7 +79,7 @@ public final class LocalPacketAdapter extends IntavePacketAdapter implements Com
   }
 
   private boolean validateEvent(PacketEvent event) {
-    return event.getPlayer() != null && UserRepository.hasUser(event.getPlayer());
+    return event.getPlayer() != null && (ignoreCancelled || !event.isCancelled()) && UserRepository.hasUser(event.getPlayer());
   }
 
   public PacketEventSubscriber subscriber() {

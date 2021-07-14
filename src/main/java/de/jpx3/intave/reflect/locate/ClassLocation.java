@@ -21,4 +21,24 @@ public final class ClassLocation {
       throw new IllegalStateException(exception);
     }
   }
+
+  public String compiledLocation() {
+    return location.replace("{version}", ReflectiveAccess.version());
+  }
+
+  public String name() {
+    return name;
+  }
+
+  public IntegerMatcher versionMatcher() {
+    return versionMatcher;
+  }
+
+  public String location() {
+    return location;
+  }
+
+  public static ClassLocation nmsDefaultFor(String name) {
+    return new ClassLocation(name, IntegerMatcher.inRange(8, 16), "net.minecraft.server.{version}." + name);
+  }
 }

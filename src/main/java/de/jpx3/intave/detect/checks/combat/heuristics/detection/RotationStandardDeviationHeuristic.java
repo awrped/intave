@@ -12,7 +12,7 @@ import de.jpx3.intave.event.packet.ListenerPriority;
 import de.jpx3.intave.event.packet.PacketSubscription;
 import de.jpx3.intave.event.violation.AttackNerfStrategy;
 import de.jpx3.intave.tools.MathHelper;
-import de.jpx3.intave.tools.RotationMathHelper;
+import de.jpx3.intave.tools.Rotation;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserCustomCheckMeta;
 import de.jpx3.intave.user.UserMetaAttackData;
@@ -81,7 +81,7 @@ public final class RotationStandardDeviationHeuristic extends IntaveMetaCheckPar
   private void evaluateYawPatterns(User user) {
     Player player = user.player();
     RotationStandardDeviationMeta heuristicMeta = metaOf(user);
-    double standardDeviation = RotationMathHelper.calculateStandardDeviation(heuristicMeta.distancesToPerfectYaw);
+    double standardDeviation = Rotation.calculateStandardDeviation(heuristicMeta.distancesToPerfectYaw);
 
     if (standardDeviation < 1.0) {
       if (heuristicMeta.rotationBalanceYaw++ >= 2) {
@@ -101,7 +101,7 @@ public final class RotationStandardDeviationHeuristic extends IntaveMetaCheckPar
   private void evaluatePitchPatterns(User user) {
     Player player = user.player();
     RotationStandardDeviationMeta heuristicMeta = metaOf(user);
-    double standardDeviation = RotationMathHelper.calculateStandardDeviation(heuristicMeta.distancesToPerfectPitch);
+    double standardDeviation = Rotation.calculateStandardDeviation(heuristicMeta.distancesToPerfectPitch);
 
     if (standardDeviation < 3.0) {
       if (heuristicMeta.rotationBalancePitch++ >= 4) {

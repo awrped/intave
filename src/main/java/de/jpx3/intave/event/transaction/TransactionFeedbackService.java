@@ -6,6 +6,7 @@ import com.comphenix.protocol.ProtocolManager;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import de.jpx3.intave.IntavePlugin;
+import de.jpx3.intave.adapter.MinecraftVersions;
 import de.jpx3.intave.event.packet.PacketEventSubscriber;
 import de.jpx3.intave.logging.IntaveLogger;
 import de.jpx3.intave.tools.AccessHelper;
@@ -30,6 +31,7 @@ public final class TransactionFeedbackService implements PacketEventSubscriber {
   public final static short TRANSACTION_MAX_CODE = -16370;
   public final static long OPTIONAL_PENDING_LIMIT = 20;
   public final static long OPTIONAL_SENT_LIMIT = 100;
+  public final static int K_APPLIER = 0b11110101010101010100000000000000;
 
   private final static ProtocolManager protocolManager = ProtocolLibrary.getProtocolManager();
   private final TransactionResponseEnforcingProcessor responseLocker;
@@ -181,10 +183,16 @@ public final class TransactionFeedbackService implements PacketEventSubscriber {
   }
 
   private void sendTransactionPacket(Player receiver, short id) {
-    PacketContainer transactionPacket = protocolManager.createPacket(PacketType.Play.Server.TRANSACTION);
-    transactionPacket.getIntegers().write(0, 0);
-    transactionPacket.getShorts().write(0, id);
-    transactionPacket.getBooleans().write(0, false);
+    PacketContainer transactionPacket;
+    if (MinecraftVersions.VER1_17_0.atOrAbove()) {
+      transactionPacket = protocolManager.createPacket(PacketType.Play.Server.PING);
+      transactionPacket.getIntegers().write(0, ((int)id) | K_APPLIER);
+    } else {
+      transactionPacket = protocolManager.createPacket(PacketType.Play.Server.TRANSACTION);
+      transactionPacket.getIntegers().write(0, 0);
+      transactionPacket.getShorts().write(0, id);
+      transactionPacket.getBooleans().write(0, false);
+    }
     sendPacket(receiver, transactionPacket);
   }
 

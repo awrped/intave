@@ -1,15 +1,12 @@
 package de.jpx3.intave.patchy;
 
-import de.jpx3.intave.IntaveControl;
 import de.jpx3.intave.lib.asm.ClassReader;
 import de.jpx3.intave.lib.asm.ClassWriter;
-import de.jpx3.intave.lib.asm.MethodVisitor;
+import de.jpx3.intave.lib.asm.Handle;
 import de.jpx3.intave.lib.asm.Type;
 import de.jpx3.intave.lib.asm.tree.*;
-import de.jpx3.intave.lib.asm.util.Textifier;
-import de.jpx3.intave.lib.asm.util.TraceMethodVisitor;
-import de.jpx3.intave.logging.IntaveLogger;
 import de.jpx3.intave.patchy.annotate.PatchyAutoTranslation;
+import de.jpx3.intave.reflect.locate.ClassLocator;
 import de.jpx3.intave.tools.annotate.Native;
 import org.bukkit.Bukkit;
 
@@ -19,72 +16,37 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static de.jpx3.intave.lib.asm.Opcodes.*;
+
 final class PatchyTranslator {
   public static final String TRANSLATION_MARKER_ANNOTATION_PATH = slashify(PatchyAutoTranslation.class.getName());
   public static final String CURRENT_SERVER_VERSION;
 
   static {
     String packageName = Bukkit.getServer().getClass().getPackage().getName();
-    CURRENT_SERVER_VERSION =  packageName.substring(packageName.lastIndexOf(".") + 1);
+    CURRENT_SERVER_VERSION = packageName.substring(packageName.lastIndexOf(".") + 1);
   }
 
-  @Native
   public static byte[] translateClass(byte[] inputBytes) {
     ClassNode classNode = classNodeOf(inputBytes);
-    if (IntaveControl.OUTPUT_PATCHY_RESULT) {
-      IntaveLogger.logger().pushPrintln("[Intave/Patchy] Translating " + classNode.name);
-    }
+    System.out.println("translating " + classNode.name);
     translateClassDependencies(classNode);
-//    IntaveLogger.logger().globalPrintLn("Translating methods..");
     processMethods(selectedMethodsIn(classNode));
-
-    if (IntaveControl.OUTPUT_PATCHY_RESULT) {
-      IntaveLogger.logger().pushPrintln(classNode.name + " " + classNode.superName);
-      IntaveLogger.logger().pushPrintln(classNode.name + " " + classNode.superName);
-      for (MethodNode method : classNode.methods) {
-        IntaveLogger.logger().pushPrintln(method.name);
-
-        Textifier textifier;
-        MethodVisitor methodVisitor = new TraceMethodVisitor(textifier = new Textifier());
-        method.accept(methodVisitor);
-        IntaveLogger.logger().pushPrintln(textifier.text);
-      }
-    }
-
-    if (IntaveControl.OUTPUT_PATCHY_RESULT) {
-      IntaveLogger.logger().pushPrintln("[Intave/Patchy] Done");
-    }
-
     return byteArrayOf(classNode);
   }
 
-  @Native
   private static void translateClassDependencies(ClassNode classNode) {
-    String newSuperName = translateDependency(classNode.superName);
-//    IntaveLogger.logger().globalPrintLn("Patched " + classNode.superName + " to " + newSuperName);
-    classNode.superName = newSuperName;
+    classNode.superName = translate(classNode.superName);
     String[] strings = classNode.interfaces.toArray(new String[0]);
     for (int i = 0; i < strings.length; i++) {
-      String newName = translateDependency(strings[i]);
-//      IntaveLogger.logger().globalPrintLn("Patched " + strings[i] + " to " + newName);
+      String newName = translate(strings[i]);
       strings[i] = newName;
     }
     classNode.interfaces = Arrays.stream(strings).collect(Collectors.toList());
   }
 
-  private static String translateDependency(String original) {
-    int versionBeginIndex = original.indexOf("/v") + 1;
-    int versionEndIndex = original.indexOf("/", versionBeginIndex);
-    if (versionBeginIndex <= 0 || versionEndIndex <= 0) {
-      return original;
-    }
-    String extractedVersion = original.substring(versionBeginIndex, versionEndIndex);
-    return original.replace(extractedVersion, CURRENT_SERVER_VERSION);
-  }
-
   private static void processMethods(List<MethodNode> methodNodes) {
     for (MethodNode methodNode : methodNodes) {
-//      IntaveLogger.logger().globalPrintLn("Processing " + methodNode.name + methodNode.desc + "..");
       processMethod(methodNode);
     }
   }
@@ -94,68 +56,34 @@ final class PatchyTranslator {
     processMethodInstructions(methodNode);
   }
 
-  @Native
   private static void processMethodDescription(MethodNode methodNode) {
     PatchyTranslationConfiguration configuration = PatchyTranslationConfiguration.createFrom(methodNode);
-
     if (!configuration.translateParameters()) {
       return;
     }
-
     if (!configuration.translateEverything()) {
       throw new IllegalStateException("Custom translations not yet supported for parameters");
     }
-
     methodNode.signature = null;
-
-    String desc = methodNode.desc;
-
-    int versionBeginIndex = desc.indexOf("/v") + 1;
-    int versionEndIndex = desc.indexOf("/", versionBeginIndex);
-    if (versionBeginIndex <= 0 || versionEndIndex <= 0) {
-      return;
-    }
-
-    String extractedVersion = desc.substring(versionBeginIndex, versionEndIndex);
-    String newDesc = desc.replace(extractedVersion, CURRENT_SERVER_VERSION);
-
-//    IntaveLogger.logger().globalPrintLn("Patched " + methodNode.desc + " with " + newDesc + " (method desc)");
-    methodNode.desc = newDesc;
+    methodNode.desc = translate(methodNode.desc);
   }
 
   @Native
   private static void processMethodInstructions(MethodNode methodNode) {
     PatchyTranslationConfiguration configuration = PatchyTranslationConfiguration.createFrom(methodNode);
-
     for (AbstractInsnNode instruction : methodNode.instructions) {
       if (instruction instanceof MethodInsnNode) {
         MethodInsnNode methodInsnNode = (MethodInsnNode) instruction;
         InstructionTarget originalInstruction = InstructionTarget.methodInstructionTarget(
           methodInsnNode.owner, methodInsnNode.name, methodInsnNode.desc
         ), instructionTarget = originalInstruction;
-
         instructionTarget = process(instructionTarget, configuration);
-
-        if (!instructionTarget.equals(originalInstruction)) {
-//          IntaveLogger.logger().globalPrintLn("Patched " + originalInstruction.owner + "." + originalInstruction.name + originalInstruction.desc + " with " + instructionTarget.owner + "." + instructionTarget.name + instructionTarget.desc);
-        }
-
-//        IntaveLogger.logger().globalPrintLn(instructionTarget);
-
         methodInsnNode.owner = instructionTarget.owner;
         methodInsnNode.name = instructionTarget.name;
         methodInsnNode.desc = instructionTarget.desc;
-
-        // TODO: 08/18/20 permute stack load order to account for parameter changes?
       } else if (instruction instanceof TypeInsnNode) {
         TypeInsnNode typeInsnNode = (TypeInsnNode) instruction;
-        int versionBeginIndex = typeInsnNode.desc.indexOf("/v") + 1;
-        int versionEndIndex = typeInsnNode.desc.indexOf("/", versionBeginIndex);
-        if (versionBeginIndex <= 0 || versionEndIndex <= 0) {
-          continue;
-        }
-        String extractedVersion = typeInsnNode.desc.substring(versionBeginIndex, versionEndIndex);
-        typeInsnNode.desc = typeInsnNode.desc.replace(extractedVersion, CURRENT_SERVER_VERSION);
+        typeInsnNode.desc = translate(typeInsnNode.desc);
       } else if (instruction instanceof FieldInsnNode) {
         FieldInsnNode fieldInsnNode = (FieldInsnNode) instruction;
         InstructionTarget instructionTarget = InstructionTarget.fieldInstructionTarget(
@@ -167,67 +95,82 @@ final class PatchyTranslator {
         fieldInsnNode.desc = instructionTarget.desc;
       } else if (instruction instanceof InvokeDynamicInsnNode) {
         InvokeDynamicInsnNode invokeDynamicInsnNode = (InvokeDynamicInsnNode) instruction;
-        //todo lambda resolve
+        invokeDynamicInsnNode.desc = translate(invokeDynamicInsnNode.desc);
+        for (Object bsmArg : invokeDynamicInsnNode.bsmArgs) {
+          if(bsmArg instanceof Handle) {
+            Handle arg = (Handle) bsmArg;
+            int tag = arg.getTag();
+            InstructionTarget instructionTarget;
+            if (tag == H_PUTFIELD || tag == H_GETFIELD || tag == H_GETSTATIC || tag == H_PUTSTATIC) {
+              instructionTarget = InstructionTarget.fieldInstructionTarget(
+                arg.getOwner(), arg.getName(), arg.getDesc()
+              );
+            } else {
+              instructionTarget = InstructionTarget.methodInstructionTarget(
+                arg.getOwner(), arg.getName(), arg.getDesc()
+              );
+            }
+            instructionTarget = process(instructionTarget, configuration);
+            arg.setOwner(instructionTarget.owner);
+            arg.setDescriptor(instructionTarget.desc);
+          }
+        }
       }
     }
     methodNode.localVariables = null;
   }
 
-  @Native
   private static InstructionTarget process(InstructionTarget original, PatchyTranslationConfiguration configuration) {
-//    if (!isServerClass(original.owner)) {
-//      return original;
-//    }
-
-//    IntaveLogger.logger().globalPrintLn("Processing method instruction " + original);
-
-//    if (original.isMethod()) {
-      VersionMethodReference translatedversionMethodReference =
-        configuration.resolveCustomMethodDescriptor(original.owner, original.name, original.desc);
-
-      if (translatedversionMethodReference == null) {
-//        IntaveLogger.logger().globalPrintLn("No custom translation configuration found");
-        if (configuration.translateEverything()) {
-//          IntaveLogger.logger().globalPrintLn("Attempting heuristic replacement..");
-          // heuristic replacement
-          // maybe find better solution?
-          String newOwner;
-          String newDesc;
-          String extractedVersion;
-
-          int versionBeginIndex = original.owner.indexOf("/v") + 1;
-          int versionEndIndex = original.owner.indexOf("/", versionBeginIndex);
-          if (versionBeginIndex <= 0 || versionEndIndex <= 0) {
-            newOwner = original.owner;
-          } else {
-            extractedVersion = original.owner.substring(versionBeginIndex, versionEndIndex);
-            newOwner = original.owner.replace(extractedVersion, CURRENT_SERVER_VERSION);
-          }
-
-          versionBeginIndex = original.desc.indexOf("/v") + 1;
-          versionEndIndex = original.desc.indexOf("/", versionBeginIndex);
-          if (versionBeginIndex <= 0 || versionEndIndex <= 0) {
-            newDesc = original.desc;
-          } else {
-            extractedVersion = original.desc.substring(versionBeginIndex, versionEndIndex);
-            newDesc = original.desc.replace(extractedVersion, CURRENT_SERVER_VERSION);
-          }
-
-//          IntaveLogger.logger().globalPrintLn(newOwner + " " + newDesc);
-
-          return InstructionTarget.methodInstructionTarget(newOwner, original.name, newDesc);
-        }
-        return original;
-      } else {
-        return InstructionTarget.from(translatedversionMethodReference);
+    VersionMethodReference methodReference = configuration.resolveCustomMethodDescriptor(original.owner, original.name, original.desc);
+    if (methodReference == null) {
+      if (configuration.translateEverything()) {
+        return InstructionTarget.methodInstructionTarget(translate(original.owner), original.name, translate(original.desc));
       }
-//    }
-//    return original;
+      return original;
+    } else {
+      return InstructionTarget.from(methodReference);
+    }
   }
 
-  @Native
-  private static boolean isServerClass(String className) {
-    return className.startsWith("net/minecraft/server") || className.startsWith("org/bukkit/craftbukkit");
+  private static String translate(String input) {
+    if (input.contains(".")) {
+      throw new IllegalArgumentException("Input contains dot: " + input);
+    }
+    String output;
+    if (input.startsWith("L") && input.endsWith(";")) { // is class descriptor
+      output = typeTranslate(Type.getType(input)).getDescriptor();
+    } else if (input.startsWith("(") && input.contains(")")) { // is method descriptor
+      Type[] argumentTypes = Type.getArgumentTypes(input);
+      Arrays.setAll(argumentTypes, i -> typeTranslate(argumentTypes[i]));
+      Type returnType = typeTranslate(Type.getReturnType(input));
+      output = Type.getMethodDescriptor(returnType, argumentTypes);
+    } else {
+      if (input.contains("craftbukkit")) {
+        int versionBeginIndex = input.indexOf("/v") + 1;
+        int versionEndIndex = input.indexOf("/", versionBeginIndex);
+        if (versionBeginIndex <= 0 || versionEndIndex <= 0) {
+          return input;
+        }
+        String extractedVersion = input.substring(versionBeginIndex, versionEndIndex);
+        output = input.replace(extractedVersion, CURRENT_SERVER_VERSION);
+      } else {
+        output = ClassLocator.patchyConvert(input);
+      }
+    }
+//    System.out.println("[Patchy] " + input + " -> " + output);
+    return output;
+  }
+
+  private static Type typeTranslate(Type input) {
+    int dimensions = 0;
+    if (input.getSort() == Type.ARRAY) {
+      dimensions = input.getDimensions();
+      input = input.getElementType();
+    }
+    if (input.getSort() == Type.OBJECT) {
+      input = Type.getObjectType(translate(input.getInternalName()));
+    }
+    return input.convertToArrayType(dimensions);
   }
 
   private static List<MethodNode> selectedMethodsIn(ClassNode classNode) {
@@ -239,15 +182,11 @@ final class PatchyTranslator {
   @Native
   private static boolean methodSelected(MethodNode methodNode) {
     List<AnnotationNode> annotationNodes = new ArrayList<>();
-
     annotationNodes.addAll(methodNode.visibleAnnotations == null ? Collections.emptyList() : methodNode.visibleAnnotations);
     annotationNodes.addAll(methodNode.visibleTypeAnnotations == null ? Collections.emptyList() : methodNode.visibleTypeAnnotations);
-
     if (!annotationNodes.isEmpty()) {
       for (AnnotationNode visibleAnnotation : annotationNodes) {
         String annotationClassName = className(visibleAnnotation);
-
-        //todo add other two annotations
         if (annotationClassName.equals(TRANSLATION_MARKER_ANNOTATION_PATH)) {
           return true;
         }
@@ -278,6 +217,10 @@ final class PatchyTranslator {
     return input.replace('.', '/');
   }
 
+  private enum InstructionTargetType {
+    METHOD, FIELD
+  }
+
   private static class InstructionTarget {
     private final InstructionTargetType type;
     private final String owner;
@@ -289,6 +232,18 @@ final class PatchyTranslator {
       this.owner = owner;
       this.name = name;
       this.desc = desc;
+    }
+
+    public static InstructionTarget from(VersionMethodReference methodDescriptor) {
+      return methodInstructionTarget(methodDescriptor.owner(), methodDescriptor.name(), methodDescriptor.description());
+    }
+
+    public static InstructionTarget methodInstructionTarget(String owner, String name, String desc) {
+      return new InstructionTarget(InstructionTargetType.METHOD, owner, name, desc);
+    }
+
+    public static InstructionTarget fieldInstructionTarget(String owner, String name, String desc) {
+      return new InstructionTarget(InstructionTargetType.FIELD, owner, name, desc);
     }
 
     public InstructionTargetType type() {
@@ -307,7 +262,7 @@ final class PatchyTranslator {
     public String toString() {
       return "InstructionTarget{" +
         "type=" + type +
-        ", name=" + owner +"#" + name + desc +
+        ", name=" + owner + "#" + name + desc +
         '}';
     }
 
@@ -332,21 +287,5 @@ final class PatchyTranslator {
       result = 31 * result + desc.hashCode();
       return result;
     }
-
-    public static InstructionTarget from(VersionMethodReference methodDescriptor) {
-      return methodInstructionTarget(methodDescriptor.owner(), methodDescriptor.name(), methodDescriptor.description());
-    }
-
-    public static InstructionTarget methodInstructionTarget(String owner, String name, String desc) {
-      return new InstructionTarget(InstructionTargetType.METHOD, owner, name, desc);
-    }
-
-    public static InstructionTarget fieldInstructionTarget(String owner, String name, String desc) {
-      return new InstructionTarget(InstructionTargetType.FIELD, owner, name, desc);
-    }
-  }
-
-  private enum InstructionTargetType {
-    METHOD, FIELD
   }
 }

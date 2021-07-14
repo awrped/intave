@@ -5,6 +5,14 @@ import java.util.function.BiFunction;
 public abstract class IntegerMatcher {
   public abstract boolean matches(int integer);
 
+  public static IntegerMatcher inRange(int from, int to) {
+    return new IntegerMatchRange(from, to);
+  }
+
+  public static IntegerMatcher exact(int val) {
+    return new IntegerMatchValue(val);
+  }
+
   public static IntegerMatcher mergeOr(IntegerMatcher... matchers) {
     return merge(MergeOperation.OR, matchers);
   }

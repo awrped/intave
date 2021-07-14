@@ -7,9 +7,6 @@ import de.jpx3.intave.adapter.MinecraftVersions;
 import de.jpx3.intave.event.packet.ListenerPriority;
 import de.jpx3.intave.event.packet.PacketEventSubscriber;
 import de.jpx3.intave.event.packet.PacketSubscription;
-import de.jpx3.intave.reflect.ReflectiveScoreboardAccess;
-import de.jpx3.intave.tools.sync.Synchronizer;
-import org.bukkit.entity.Player;
 
 import static de.jpx3.intave.event.packet.PacketId.Server.SCOREBOARD_TEAM;
 
@@ -65,7 +62,7 @@ public final class EntityNoCollisionService implements PacketEventSubscriber {
     packet.getStrings().write(COLLISION_RULE_FIELD, "never");
   }
 
-  private void disableCollisions(Player player, String entityScoreboardName) {
-    Synchronizer.synchronize(() -> ReflectiveScoreboardAccess.applyNoCollisionRule(player, SCOREBOARD_NAME, entityScoreboardName));
-  }
+//  private void disableCollisions(Player player, String entityScoreboardName) {
+//    Synchronizer.synchronize(() -> ReflectiveScoreboardAccess.applyNoCollisionRule(player, SCOREBOARD_NAME, entityScoreboardName));
+//  }
 }

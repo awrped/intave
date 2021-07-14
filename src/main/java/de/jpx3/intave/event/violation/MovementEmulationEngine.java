@@ -4,6 +4,7 @@ import de.jpx3.intave.IntaveControl;
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.access.IntaveException;
 import de.jpx3.intave.access.IntaveInternalException;
+import de.jpx3.intave.adapter.MinecraftVersions;
 import de.jpx3.intave.detect.checks.movement.Physics;
 import de.jpx3.intave.logging.IntaveLogger;
 import de.jpx3.intave.reflect.ReflectiveAccess;
@@ -51,8 +52,13 @@ public final class MovementEmulationEngine {
     try {
       Class<?> teleportFlagsClass = ReflectiveAccess.lookupServerClass("PacketPlayOutPosition$EnumPlayerTeleportFlags");
       if (teleportFlags.isEmpty()) {
-        teleportFlags.add(teleportFlagsClass.getField("X_ROT").get(null));
-        teleportFlags.add(teleportFlagsClass.getField("Y_ROT").get(null));
+        if (MinecraftVersions.VER1_17_0.atOrAbove()) {
+          teleportFlags.add(teleportFlagsClass.getField("d").get(null));
+          teleportFlags.add(teleportFlagsClass.getField("e").get(null));
+        } else {
+          teleportFlags.add(teleportFlagsClass.getField("X_ROT").get(null));
+          teleportFlags.add(teleportFlagsClass.getField("Y_ROT").get(null));
+        }
       }
     } catch (IllegalAccessException | NoSuchFieldException e) {
       throw new IntaveInternalException(e);

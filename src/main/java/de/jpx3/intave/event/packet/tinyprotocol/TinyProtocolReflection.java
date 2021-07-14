@@ -1,5 +1,6 @@
 package de.jpx3.intave.event.packet.tinyprotocol;
 
+import de.jpx3.intave.reflect.locate.ClassLocator;
 import org.bukkit.Bukkit;
 
 import java.lang.reflect.Constructor;
@@ -109,7 +110,7 @@ final class TinyProtocolReflection {
     if (target.getSuperclass() != null)
       return getField(target.getSuperclass(), name, fieldType, index);
 
-    throw new IllegalArgumentException("Cannot find field with type " + fieldType);
+    throw new IllegalArgumentException("Cannot find field " + name + " with type " + fieldType + " in " + target);
   }
 
   /**
@@ -263,7 +264,7 @@ final class TinyProtocolReflection {
    * @throws IllegalArgumentException If the class doesn't exist.
    */
   public static Class<?> getMinecraftClass(String name) {
-    return getCanonicalClass(NMS_PREFIX + "." + name);
+    return ClassLocator.classByKey(name);//getCanonicalClass(NMS_PREFIX + "." + name);
   }
 
   /**
@@ -283,11 +284,7 @@ final class TinyProtocolReflection {
    * @return The class.
    */
   private static Class<?> getCanonicalClass(String canonicalName) {
-    try {
-      return Class.forName(canonicalName);
-    } catch (ClassNotFoundException e) {
-      throw new IllegalArgumentException("Cannot find " + canonicalName, e);
-    }
+    return ClassLocator.byFullClassName(canonicalName);
   }
 
   /**

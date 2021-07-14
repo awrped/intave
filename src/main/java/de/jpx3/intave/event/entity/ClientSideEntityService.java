@@ -108,7 +108,8 @@ public final class ClientSideEntityService implements PacketEventSubscriber {
   @PacketSubscription(
     packetsOut = {
       MOUNT, ATTACH_ENTITY
-    }
+    },
+    ignoreCancelled = false
   )
   public void sendAttachEntityPacket(PacketEvent event) {
     PacketContainer packet = event.getPacket();
@@ -174,7 +175,8 @@ public final class ClientSideEntityService implements PacketEventSubscriber {
   @PacketSubscription(
     packetsOut = {
       SPAWN_ENTITY_LIVING, SPAWN_ENTITY, NAMED_ENTITY_SPAWN
-    }
+    },
+    ignoreCancelled = false
   )
   public void sendEntitySpawn(PacketEvent event) {
     /* IMPORTANT: If the entity spawn packet gets synchronized the player could be spammed with transaction packets
@@ -232,7 +234,8 @@ public final class ClientSideEntityService implements PacketEventSubscriber {
     priority = ListenerPriority.HIGH,
     packetsOut = {
       ENTITY_DESTROY
-    }
+    },
+    ignoreCancelled = false
   )
   public void receiveEntityDestroy(PacketEvent event) {
     Player player = event.getPlayer();
@@ -302,7 +305,8 @@ public final class ClientSideEntityService implements PacketEventSubscriber {
     priority = ListenerPriority.HIGH,
     packetsOut = {
       ENTITY_TELEPORT
-    }
+    },
+    ignoreCancelled = false
   )
   public void receiveEntityTeleport(PacketEvent event) {
     Player player = event.getPlayer();
@@ -353,7 +357,8 @@ public final class ClientSideEntityService implements PacketEventSubscriber {
     priority = ListenerPriority.HIGH,
     packetsOut = {
       REL_ENTITY_MOVE, REL_ENTITY_MOVE_LOOK, ENTITY_LOOK
-    }
+    },
+    ignoreCancelled = false
   )
   public void receiveEntityMovement(PacketEvent event) {
     Player player = event.getPlayer();
@@ -515,7 +520,8 @@ public final class ClientSideEntityService implements PacketEventSubscriber {
     priority = ListenerPriority.HIGH,
     packetsOut = {
       ENTITY_STATUS
-    }
+    },
+    ignoreCancelled = false
   )
   public void receiveEntityStatus(PacketEvent event) {
     Player player = event.getPlayer();
@@ -548,7 +554,8 @@ public final class ClientSideEntityService implements PacketEventSubscriber {
     priority = ListenerPriority.HIGH,
     packetsOut = {
       ENTITY_METADATA
-    }
+    },
+    ignoreCancelled = false
   )
   public void receiveEntityMetaData(PacketEvent event) {
     Player player = event.getPlayer();

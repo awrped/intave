@@ -146,7 +146,25 @@ public final class CachedResource {
     File lockFile = new File(file + ".sig");
     try {
       lockFile.createNewFile();
-      RandomAccessFile accessFile = new RandomAccessFile(lockFile, "rw");
+      RandomAccessFile accessFile = null;
+      Exception exceptionReserve = null;
+      int k = 4 * 8;
+      while (k-- > 0) {
+        try {
+          accessFile = new RandomAccessFile(lockFile, "rw");
+          break;
+        } catch (Exception exception) {
+          exceptionReserve = exception;
+          try {
+            Thread.sleep(250);
+          } catch (InterruptedException e) {
+            e.printStackTrace();
+          }
+        }
+      }
+      if (accessFile == null) {
+        throw new IllegalStateException(exceptionReserve);
+      }
       lockChannel = accessFile.getChannel();
       String hash = HashAccess.hashOf(file);
       lockChannel.write(ByteBuffer.wrap(hash.getBytes(StandardCharsets.UTF_8)));

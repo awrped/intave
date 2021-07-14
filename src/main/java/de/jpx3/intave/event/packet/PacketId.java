@@ -27,6 +27,7 @@ public final class PacketId {
     KEEP_ALIVE("KEEP_ALIVE"),
     LOOK("LOOK"),
     PICK_ITEM("PICK_ITEM"),
+    PONG("PONG"),
     POSITION("POSITION"),
     POSITION_LOOK("POSITION_LOOK"),
     RECIPE_DISPLAYED("RECIPE_DISPLAYED"),
@@ -43,6 +44,7 @@ public final class PacketId {
     TAB_COMPLETE("TAB_COMPLETE"),
     TELEPORT_ACCEPT("TELEPORT_ACCEPT"),
     TILE_NBT_QUERY("TILE_NBT_QUERY"),
+    @Deprecated
     TRANSACTION("TRANSACTION"),
     TR_SEL("TR_SEL"),
     UPDATE_SIGN("UPDATE_SIGN"),
@@ -50,7 +52,6 @@ public final class PacketId {
     USE_ITEM("USE_ITEM"),
     VEHICLE_MOVE("VEHICLE_MOVE"),
     WINDOW_CLICK("WINDOW_CLICK"),
-
     ;
 
     private final String lookupName;
@@ -120,6 +121,7 @@ public final class PacketId {
     OPEN_WINDOW("OPEN_WINDOW"),
     OPEN_WINDOW_HORSE("OPEN_WINDOW_HORSE"),
     OPEN_WINDOW_MERCHANT("OPEN_WINDOW_MERCHANT"),
+    PING("PING"),
     PLAYER_INFO("PLAYER_INFO"),
     PLAYER_LIST_HEADER_FOOTER("PLAYER_LIST_HEADER_FOOTER"),
     POSITION("POSITION"),
@@ -152,6 +154,7 @@ public final class PacketId {
     TAGS("TAGS"),
     TILE_ENTITY_DATA("TILE_ENTITY_DATA"),
     TITLE("TITLE"),
+    @Deprecated
     TRANSACTION("TRANSACTION"),
     UNLOAD_CHUNK("UNLOAD_CHUNK"),
     UPDATE_ATTRIBUTES("UPDATE_ATTRIBUTES"),

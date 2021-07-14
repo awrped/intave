@@ -62,6 +62,7 @@ public final class EventService implements BukkitEventSubscriber {
     new ClientSideEntityService(plugin);
     new LazyEntityCollisionService(plugin);
     new ConnectionHealthResolver(plugin);
+    new PacketResynchronizer(plugin);
     if (DISABLE_ENTITY_COLLISIONS) {
       new EntityNoCollisionService(plugin);
     }

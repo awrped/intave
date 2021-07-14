@@ -12,7 +12,7 @@ import de.jpx3.intave.event.violation.Violation;
 import de.jpx3.intave.reflect.ReflectiveAccess;
 import de.jpx3.intave.tools.AccessHelper;
 import de.jpx3.intave.tools.MathHelper;
-import de.jpx3.intave.tools.RotationMathHelper;
+import de.jpx3.intave.tools.Rotation;
 import de.jpx3.intave.tools.annotate.KeepEnumInternalNames;
 import de.jpx3.intave.tools.annotate.Native;
 import de.jpx3.intave.user.User;
@@ -145,7 +145,7 @@ public final class InventoryClickDelayAnalyzer extends IntaveMetaCheckPart<Inven
 
   private void processStandardDeviationCheck(Player player, ClickDelayMeta meta) {
     User user = userOf(player);
-    double std = RotationMathHelper.calculateStandardDeviation(meta.clickDelayList) * 100;
+    double std = Rotation.calculateStandardDeviation(meta.clickDelayList) * 100;
 
     double averageMovementPacketTimestamp = user.meta().connectionData().averageMovementPacketTimestamp();
     if (std < 2 && Math.abs(averageMovementPacketTimestamp - 50) < 40) {

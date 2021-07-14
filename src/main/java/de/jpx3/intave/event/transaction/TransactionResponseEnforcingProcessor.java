@@ -1,5 +1,6 @@
 package de.jpx3.intave.event.transaction;
 
+import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.event.packet.ListenerPriority;
@@ -45,7 +46,7 @@ public final class TransactionResponseEnforcingProcessor implements PacketEventS
   @PacketSubscription(
     priority = ListenerPriority.LOWEST,
     packetsIn = {
-      TRANSACTION
+      TRANSACTION, PONG
     }
   )
   public void onPacketReceiving(PacketEvent event) {
@@ -57,7 +58,19 @@ public final class TransactionResponseEnforcingProcessor implements PacketEventS
     UserMetaConnectionData synchronizeData = user.meta().connectionData();
     Map<Long, TFRequest<?>> transactionGlobalKeyMap = synchronizeData.transactionGlobalKeyMap();
     Map<Short, TFRequest<?>> transactionShortKeyMap = synchronizeData.transactionShortKeyMap();
-    Short transactionIdentifier = event.getPacket().getShorts().readSafely(0);
+    PacketContainer packet = event.getPacket();
+    short transactionIdentifier;
+    if (packet.getShorts().size() == 0) {
+      int inputInteger = packet.getIntegers().readSafely(0);
+      boolean hasMask = (inputInteger ^ K_APPLIER) >> Short.SIZE - 1 == 0;
+      if (!hasMask) {
+        return;
+      }
+      transactionIdentifier = (short) (inputInteger & Short.MAX_VALUE);
+    } else {
+      transactionIdentifier = packet.getShorts().readSafely(0);
+    }
+
     if (transactionIdentifier <= TRANSACTION_MAX_CODE) {
       TFRequest<?> transactionResponse = transactionShortKeyMap.get(transactionIdentifier);
       if (transactionResponse == null) {

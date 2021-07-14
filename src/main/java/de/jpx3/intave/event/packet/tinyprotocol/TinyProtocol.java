@@ -28,8 +28,8 @@ public class TinyProtocol {
 
   // Used in order to lookup a channel
   private static final MethodInvoker getPlayerHandle = getMethod("{obc}.entity.CraftPlayer", "getHandle");
-  private static final FieldAccessor<Object> getConnection = getField("{nms}.EntityPlayer", "playerConnection", Object.class);
-  private static final FieldAccessor<Object> getManager = getField("{nms}.PlayerConnection", "networkManager", Object.class);
+  private static final FieldAccessor<?> getConnection = getField("{nms}.EntityPlayer", getMinecraftClass("PlayerConnection"), 0);
+  private static final FieldAccessor<?> getManager = getField("{nms}.PlayerConnection", getMinecraftClass("NetworkManager"), 0);
   private static final FieldAccessor<Channel> getChannel = getField("{nms}.NetworkManager", Channel.class, 0);
 
   // Looking up ServerConnection

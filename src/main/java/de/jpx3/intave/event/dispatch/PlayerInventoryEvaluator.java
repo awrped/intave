@@ -82,7 +82,8 @@ public final class PlayerInventoryEvaluator implements PacketEventSubscriber, Bu
     priority = ListenerPriority.HIGH,
     packetsOut = {
       RESPAWN
-    }
+    },
+    ignoreCancelled = false
   )
   public void sentRespawn(PacketEvent event) {
     Player player = event.getPlayer();
@@ -105,7 +106,8 @@ public final class PlayerInventoryEvaluator implements PacketEventSubscriber, Bu
     priority = ListenerPriority.HIGH,
     packetsOut = {
       OPEN_WINDOW
-    }
+    },
+    ignoreCancelled = false
   )
   public void sentOpenInventory(PacketEvent event) {
     Player player = event.getPlayer();
@@ -159,7 +161,8 @@ public final class PlayerInventoryEvaluator implements PacketEventSubscriber, Bu
     priority = ListenerPriority.HIGH,
     packetsOut = {
       PacketId.Server.CLOSE_WINDOW
-    }
+    },
+    ignoreCancelled = false
   )
   public void sentCloseInventory(PacketEvent event) {
     Player player = event.getPlayer();

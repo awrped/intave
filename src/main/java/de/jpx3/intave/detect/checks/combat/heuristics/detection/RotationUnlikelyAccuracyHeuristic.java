@@ -20,7 +20,7 @@ import java.util.List;
 
 import static de.jpx3.intave.event.packet.PacketId.Client.LOOK;
 import static de.jpx3.intave.event.packet.PacketId.Client.POSITION_LOOK;
-import static de.jpx3.intave.tools.RotationMathHelper.averageOf;
+import static de.jpx3.intave.tools.Rotation.averageOf;
 
 public final class RotationUnlikelyAccuracyHeuristic extends IntaveMetaCheckPart<Heuristics, RotationUnlikelyAccuracyHeuristic.ULMeta> {
   public RotationUnlikelyAccuracyHeuristic(Heuristics parentCheck) {

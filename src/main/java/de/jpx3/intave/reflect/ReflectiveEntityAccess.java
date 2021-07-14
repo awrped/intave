@@ -17,7 +17,7 @@ public final class ReflectiveEntityAccess {
   public final static boolean REFLECTIVE_ACCESS = ProtocolLibraryAdapter.serverVersion().isAtLeast(MinecraftVersions.VER1_16_0);
 
   private final static Class<?> ENTITY_CLASS = ReflectiveAccess.NMS_ENTITY_CLASS;
-  private final static Field ENTITY_GROUND_FIELD = ReflectiveAccess.searchDeclaredFieldIn(ENTITY_CLASS, "onGround");
+  private final static Field ENTITY_GROUND_FIELD = ReflectiveAccess.searchDeclaredFieldIn(ENTITY_CLASS, MinecraftVersions.VER1_17_0.atOrAbove() ? "z" :"onGround");
 
   static {
     ENTITY_GROUND_FIELD.setAccessible(true);

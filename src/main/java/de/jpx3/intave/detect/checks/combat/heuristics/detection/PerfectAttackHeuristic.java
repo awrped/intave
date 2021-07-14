@@ -15,7 +15,7 @@ import de.jpx3.intave.event.packet.ListenerPriority;
 import de.jpx3.intave.event.packet.PacketSubscription;
 import de.jpx3.intave.event.violation.AttackNerfStrategy;
 import de.jpx3.intave.tools.MathHelper;
-import de.jpx3.intave.tools.RotationMathHelper;
+import de.jpx3.intave.tools.Rotation;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserCustomCheckMeta;
 import de.jpx3.intave.user.UserMetaAttackData;
@@ -89,8 +89,8 @@ public final class PerfectAttackHeuristic extends IntaveMetaCheckPart<Heuristics
     float pitchSpeed = MathHelper.distanceInDegrees(movementData.rotationPitch, movementData.lastRotationPitch);
 
     if (heuristicMeta.distanceToPerfectYawList.size() > 20) {
-      double distanceAverage = RotationMathHelper.averageOf(heuristicMeta.distanceToPerfectYawList);
-      double yawSpeedAverage = RotationMathHelper.averageOf(heuristicMeta.yawSpeedList);
+      double distanceAverage = Rotation.averageOf(heuristicMeta.distanceToPerfectYawList);
+      double yawSpeedAverage = Rotation.averageOf(heuristicMeta.yawSpeedList);
       double failRate = (heuristicMeta.swings / heuristicMeta.attacks) * 100.0;
 
       if (failRate < 5 && (yawSpeedAverage > 10 || distanceAverage > 10)) {

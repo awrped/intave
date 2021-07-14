@@ -8,16 +8,24 @@ import java.util.stream.Collectors;
 
 public final class ClassLocationFileCompiler implements CompilerStreamFunctionProvider<ClassLocations> {
   public ClassLocations apply(List<String> lines) {
+    lines.removeIf(String::isEmpty);
+    lines.removeIf(string -> string.trim().isEmpty());
     List<ClassLocation> classLocations = new ArrayList<>();
     for (int i = 0; i < lines.size(); i++) {
       String line = lines.get(i);
-      int classNameEndIndex = line.indexOf(" ");
-      String className = line.substring(0, classNameEndIndex);
-      List<String> affectedLines = new ArrayList<>();
-      while (!(line = lines.get(++i)).equals("}")) {
-        affectedLines.add(line.trim());
+      String className;
+      List<String> affectedLines;
+      try {
+        int classNameEndIndex = line.indexOf(" ");
+        className = line.substring(0, classNameEndIndex);
+        affectedLines = new ArrayList<>();
+        while (!(line = lines.get(++i)).equals("}")) {
+          affectedLines.add(line.trim());
+        }
+        classLocations.addAll(compile(className, affectedLines));
+      } catch (Exception exception) {
+        throw new IllegalStateException("Unable to compile line " + i + ": " + line, exception);
       }
-      classLocations.addAll(compile(className, affectedLines));
     }
     return new ClassLocations(classLocations);
   }
@@ -46,9 +54,9 @@ public final class ClassLocationFileCompiler implements CompilerStreamFunctionPr
           throw new IllegalStateException();
         }
         String[] numbers = input.substring(1, input.length() - 1).split("-");
-        return new IntegerMatchRange(Integer.parseInt(numbers[0]), Integer.parseInt(numbers[1]));
+        return IntegerMatcher.inRange(Integer.parseInt(numbers[0]), Integer.parseInt(numbers[1]));
       }
-      return new IntegerMatchValue(Integer.parseInt(input));
+      return IntegerMatcher.exact(Integer.parseInt(input));
     } catch (Exception exception) {
       throw new IllegalStateException("Unable to resolve matcher from input " + input);
     }

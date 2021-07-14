@@ -124,13 +124,14 @@ public final class PacketSubscriptionLinker {
     String methodName = method.getName();
     ListenerPriority priority = metadata.priority();
     PacketType[] packetTypes = translatePacketTypes(metadata.packetsIn(), metadata.packetsOut());
+    boolean ignoreCancelled = metadata.ignoreCancelled();
     if(metadata.engine() == Engine.INTERNAL) {
-      performCustomLinkage(subscriber, priority, packetTypes, methodName, executor);
+      performCustomLinkage(subscriber, priority, packetTypes, ignoreCancelled, methodName, executor);
     } else {
       if(metadata.prioritySlot() == PrioritySlot.INTERNAL) {
-        performInternalLinkage(subscriber, priority, packetTypes, methodName, executor);
+        performInternalLinkage(subscriber, priority, packetTypes, ignoreCancelled, methodName, executor);
       } else {
-        performExternalLinkage(subscriber, priority, packetTypes, methodName, executor);
+        performExternalLinkage(subscriber, priority, packetTypes, ignoreCancelled, methodName, executor);
       }
     }
   }
@@ -177,7 +178,7 @@ public final class PacketSubscriptionLinker {
     return searchByName(selectPacketTypesFor(ConnectionSide.SERVER_SIDE), serverPacket.lookupName());
   }
 
-  private Set<PacketType> selectPacketTypesFor(ConnectionSide connectionSide) {
+  private Collection<PacketType> selectPacketTypesFor(ConnectionSide connectionSide) {
     Set<PacketType> availableTypes = new HashSet<>();
     if (connectionSide.isForServer()) availableTypes.addAll(PacketRegistry.getServerPacketTypes());
     if (connectionSide.isForClient()) availableTypes.addAll(PacketRegistry.getClientPacketTypes());
@@ -262,12 +263,13 @@ public final class PacketSubscriptionLinker {
   private void performCustomLinkage(
     PacketEventSubscriber subscriber,
     ListenerPriority priority, PacketType[] translatePacketTypes,
+    boolean ignoreCancelled,
     String methodName, PacketSubscriptionMethodExecutor executor
   ) {
     if (translatePacketTypes.length == 0) {
       return;
     }
-    LocalPacketAdapter adapter = new LocalPacketAdapter(plugin, subscriber, priority, translatePacketTypes, methodName, executor);
+    LocalPacketAdapter adapter = new LocalPacketAdapter(plugin, subscriber, priority, translatePacketTypes, methodName, executor, ignoreCancelled);
     for (PacketType translatePacketType : translatePacketTypes) {
       SCOWAList<LocalPacketAdapter> adapters =
         customEngineListenerMappings.computeIfAbsent(translatePacketType, x -> new SCOWAList<>());
@@ -278,12 +280,13 @@ public final class PacketSubscriptionLinker {
   private void performInternalLinkage(
     PacketEventSubscriber subscriber,
     ListenerPriority priority, PacketType[] translatePacketTypes,
+    boolean ignoreCancelled,
     String methodName, PacketSubscriptionMethodExecutor executor
   ) {
     if (translatePacketTypes.length == 0) {
       return;
     }
-    LocalPacketAdapter adapter = new LocalPacketAdapter(plugin, subscriber, priority, translatePacketTypes, methodName, executor);
+    LocalPacketAdapter adapter = new LocalPacketAdapter(plugin, subscriber, priority, translatePacketTypes, methodName, executor, ignoreCancelled);
     for (PacketType translatePacketType : translatePacketTypes) {
       internalPacketListenerMappings.computeIfAbsent(translatePacketType, x -> new SCOWAList<>()).add(adapter);
     }
@@ -292,12 +295,13 @@ public final class PacketSubscriptionLinker {
   private void performExternalLinkage(
     PacketEventSubscriber subscriber,
     ListenerPriority priority, PacketType[] translatePacketTypes,
+    boolean ignoreCancelled,
     String methodName, PacketSubscriptionMethodExecutor executor
   ) {
     if (translatePacketTypes.length == 0) {
       return;
     }
-    LocalPacketAdapter adapter = new LocalPacketAdapter(plugin, subscriber, priority, translatePacketTypes, methodName, executor);
+    LocalPacketAdapter adapter = new LocalPacketAdapter(plugin, subscriber, priority, translatePacketTypes, methodName, executor, ignoreCancelled);
     linkAdapter(adapter);
     externalPacketListener.add(adapter);
   }

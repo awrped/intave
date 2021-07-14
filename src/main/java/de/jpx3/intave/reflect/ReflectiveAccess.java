@@ -24,7 +24,6 @@ public final class ReflectiveAccess {
   public final static Class<?> NMS_AABB_CLASS = lookupServerClass("AxisAlignedBB");
 
   public static void setup() {
-    new ClassLocator();
     ReflectiveBlockAccess.setup();
     ReflectiveEntityHitBoxAccess.setup();
     PatchyLoadingInjector.loadUnloadedClassPatched(IntavePlugin.class.getClassLoader(), "de.jpx3.intave.reflect.ReflectiveHandleAccess");
@@ -67,9 +66,8 @@ public final class ReflectiveAccess {
     return NMS_PACKAGE_NAME;
   }
 
-  @Deprecated
   public static Class<?> lookupServerClass(String className) {
-    return classByName(appendNMSPrefixToClass(className));
+    return ClassLocator.classByKey(className);
   }
 
   public static Class<?> lookupCraftBukkitClass(String className) {
