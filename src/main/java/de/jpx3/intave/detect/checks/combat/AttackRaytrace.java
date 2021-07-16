@@ -186,10 +186,8 @@ public final class AttackRaytrace extends IntaveMetaCheck<AttackRaytrace.AttackR
           }
         });
       }
-      System.out.println("CancelHit: " + cancelHit);
       if (cancelHit == null || !cancelHit) {
         if (!violationLevelData.isInActiveTeleportBundle && remainingAttack.shouldResend) {
-          System.out.println("Receives packets");
           receiveExcludedPacket(player, remainingAttack.packet);
         }
         // increaseFails should not be increased here because hits can be canceled when health are under 0
