@@ -88,11 +88,13 @@ public final class IntaveViolationEvent extends IntaveEvent implements Cancellab
     suggestReaction(cancelled ? Reaction.IGNORE : Reaction.INTERRUPT_AND_REPORT);
   }
 
+  @Deprecated
   public void suggestReaction(Reaction reaction) {
     Preconditions.checkNotNull(reaction);
     this.reaction = reaction;
   }
 
+  @Deprecated
   public Reaction reaction() {
     return reaction;
   }

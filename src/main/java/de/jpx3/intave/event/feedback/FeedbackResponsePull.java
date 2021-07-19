@@ -60,7 +60,7 @@ public final class FeedbackResponsePull implements PacketEventSubscriber {
     Map<Short, Request<?>> transactionShortKeyMap = synchronizeData.transactionShortKeyMap();
     PacketContainer packet = event.getPacket();
     short transactionIdentifier;
-    if (packet.getShorts().size() == 0) {
+    if (USE_PING_PONG_PACKETS) {
       int inputInteger = packet.getIntegers().readSafely(0);
       if ((inputInteger & 0xffff0000) != PING_MASK) {
         return;
@@ -104,11 +104,11 @@ public final class FeedbackResponsePull implements PacketEventSubscriber {
     Queue<Request<?>> appendixRequests = appendixMap.get(transactionResponse.num());
     if (appendixRequests != null && !appendixRequests.isEmpty()) {
       for (Request<?> appendixRequest : appendixRequests) {
-        appendixRequest.callback().success(player, convertInstanceOfObject(appendixRequest.obj()));
+        appendixRequest.acknowledge(player);
       }
       appendixMap.remove(transactionResponse.num());
     }
-    transactionResponse.callback().success(player, convertInstanceOfObject(transactionResponse.obj()));
+    transactionResponse.acknowledge(player);
   }
 
   private <T> T convertInstanceOfObject(Object o) {

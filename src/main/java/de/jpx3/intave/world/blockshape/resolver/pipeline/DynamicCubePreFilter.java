@@ -19,6 +19,16 @@ public final class DynamicCubePreFilter implements BoundingBoxResolvePipeline {
 
   public DynamicCubePreFilter(BoundingBoxResolvePipeline forward) {
     this.forward = forward;
+    this.preloadBlocks();
+  }
+
+  public void preloadBlocks() {
+    for (Material type : Material.values()) {
+      String typeName = type.name();
+      if (typeName.contains("SLAB") /* can be doubled */) {
+        otherMaterials.add(type);
+      }
+    }
   }
 
   @Override
