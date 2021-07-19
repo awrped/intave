@@ -32,6 +32,10 @@ BlockPosition -> {
   17 -> "net/minecraft/core/BlockPosition"
 }
 
+Chunk -> {
+  17 -> "net/minecraft/world/level/chunk/Chunk"
+}
+
 DataWatcher -> {
   17 -> "net/minecraft/network/syncher/DataWatcher"
 }
@@ -51,6 +55,15 @@ Entity -> {
       "yaw" -> "ay"
       "pitch" -> "az"
       "onGround" -> "z"
+    }
+  }
+}
+
+EntityHuman -> {
+  17 -> "net/minecraft/world/entity/player/EntityHuman"
+  fields {
+    17 -> {
+      "inventory" -> "co"
     }
   }
 }
@@ -83,12 +96,17 @@ EntityPlayer -> {
   fields {
     17 -> {
       "playerConnection" -> "b"
+      "inventory" -> "co"
     }
   }
 }
 
 EnumMainHand -> {
   17 -> "net/minecraft/world/entity/EnumMainHand"
+}
+
+Fluid -> {
+  17 -> "net/minecraft/world/level/material/Fluid"
 }
 
 IBlockAccess -> {
@@ -118,6 +136,10 @@ IRegistry -> {
       "ENTITY_TYPE" -> "Y"
     }
   }
+}
+
+IWorldReader -> {
+  17 -> "net/minecraft/world/level/IWorldReader"
 }
 
 MinecraftServer -> {
@@ -183,6 +205,32 @@ PlayerConnection -> {
   17 -> "net/minecraft/server/network/PlayerConnection"
 }
 
+RayTrace -> {
+  17 -> "net/minecraft/world/level/RayTrace"
+}
+
+RayTrace$BlockCollisionOption -> {
+  17 -> "net/minecraft/world/level/RayTrace$BlockCollisionOption"
+  fields {
+    17 -> {
+      "COLLIDER" -> "a"
+      "OUTLINE" -> "b"
+      "VISUAL" -> "c"
+    }
+  }
+}
+
+RayTrace$FluidCollisionOption -> {
+  17 -> "net/minecraft/world/level/RayTrace$FluidCollisionOption"
+  fields {
+    17 -> {
+      "NONE" -> "a"
+      "SOURCE_ONLY" -> "b"
+      "ANY" -> "c"
+    }
+  }
+}
+
 RegistryBlocks -> {
   17 -> "net/minecraft/core/RegistryBlocks"
 }
@@ -234,6 +282,10 @@ Vec3D -> {
 
 VoxelShape -> {
   17 -> "net/minecraft/world/phys/shapes/VoxelShape"
+}
+
+World -> {
+  17 -> "net/minecraft/world/level/World"
 }
 
 WorldServer -> {

@@ -17,7 +17,7 @@ import org.bukkit.inventory.ItemStack;
 @PatchyAutoTranslation
 public final class v17BlockAccessor implements BlockAccessor {
   @Override
-//  @PatchyAutoTranslation
+  @PatchyAutoTranslation
   public float blockDamage(Player player, ItemStack itemInHand, BlockPosition nativeBlockPosition) {
     WorldServer worldServer = ((CraftWorld) player.getWorld()).getHandle();
     Chunk chunk = worldServer.getChunkIfLoaded(nativeBlockPosition.getX() >> 4, nativeBlockPosition.getZ() >> 4);
@@ -30,7 +30,7 @@ public final class v17BlockAccessor implements BlockAccessor {
   }
 
   @Override
-//  @PatchyAutoTranslation
+  @PatchyAutoTranslation
   public boolean replacementPlace(World world, Player player, BlockPosition nativeBlockPosition) {
     WorldServer worldServer = ((CraftWorld) world).getHandle();
     Chunk chunk = worldServer.getChunkIfLoaded(nativeBlockPosition.getX() >> 4, nativeBlockPosition.getZ() >> 4);

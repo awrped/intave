@@ -14,9 +14,7 @@ public final class Fluids {
 
   public static void setup() {
     String className;
-    if (MinecraftVersions.VER1_17_0.atOrAbove()) {
-      className = "de.jpx3.intave.world.fluid.resolver.v17FluidResolver";
-    } else if (MinecraftVersions.VER1_16_0.atOrAbove()) {
+    if (MinecraftVersions.VER1_16_0.atOrAbove()) {
       className = "de.jpx3.intave.world.fluid.resolver.v16FluidResolver";
     } else if (MinecraftVersions.VER1_14_0.atOrAbove()) {
       className = "de.jpx3.intave.world.fluid.resolver.v14FluidResolver";

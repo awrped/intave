@@ -22,9 +22,7 @@ public final class Raytracing {
 
   public static void setup() {
     String className;
-    if (MinecraftVersions.VER1_17_0.atOrAbove()) {
-      className = "de.jpx3.intave.world.raytrace.v17Raytracer";
-    } else if (MinecraftVersions.VER1_16_2.atOrAbove())  {
+    if (MinecraftVersions.VER1_16_2.atOrAbove())  {
       className = "de.jpx3.intave.world.raytrace.v16Raytracer";
     } else if (MinecraftVersions.VER1_14_0.atOrAbove()) {/* 14 / 15 discrepancy indented */
       className = "de.jpx3.intave.world.raytrace.v15Raytracer";
