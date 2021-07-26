@@ -256,36 +256,35 @@ public final class RotationSnapHeuristic extends IntaveMetaCheckPart<Heuristics,
         user.applyAttackNerfer(AttackNerfStrategy.CANCEL_FIRST_HIT, "23");
       }
 
-      Confidence confidence = Confidence.confidenceFrom((int) (vl + meta.internalViolation));
-      meta.internalViolation += vl;
-
-      if (confidence.level() >= 30) {
-        meta.internalViolation -= confidence.level();
-        description += " conf:" + confidence.level();
-
-        if (user.meta().clientData().protocolVersion() > 47) {
-          description += " " + user.meta().clientData().protocolVersion();
-        }
-
-        if (isPartner() || isEnterprise()) {
-          Anomaly anomaly = Anomaly.anomalyOf("102", confidence, Anomaly.Type.KILLAURA, description, anomalyOptions(isPartner()));
-          parentCheck().saveAnomaly(player, anomaly);
-        }
-      }
+      handleConfidence(user, "102", (int) vl, description);
 
       meta.entityPositions.clear();
     }
 
     if (liteFlag) {
       String description = "rotation snap scaffold [" +  MathHelper.formatDouble(meta.yawMotions[0], 2) + "]";
-
-      if (isPartner() || isEnterprise()) {
-        Anomaly anomaly = Anomaly.anomalyOf("103", Confidence.MAYBE, Anomaly.Type.KILLAURA, description, anomalyOptions(isPartner()));
-        parentCheck().saveAnomaly(player, anomaly);
-      }
+      handleConfidence(user, "103", 10, description);
     }
 
     prepareNextTick(meta, yawMotion, user);
+  }
+
+  private void handleConfidence(User user, String key, int violationToAdd, String description) {
+    RotationSnapHeuristicMeta meta = metaOf(user);
+    Player player = user.player();
+
+    Confidence confidence = Confidence.confidenceFrom(violationToAdd + meta.internalViolation);
+    meta.internalViolation += violationToAdd;
+
+    if (confidence.level() >= 30 && IntaveControl.GOMME_MODE) {
+      meta.internalViolation -= confidence.level();
+      if (user.meta().clientData().protocolVersion() > 47) {
+        description += " " + user.meta().clientData().protocolVersion();
+      }
+
+      Anomaly anomaly = Anomaly.anomalyOf(key, confidence, Anomaly.Type.KILLAURA, description, anomalyOptions(isPartner()));
+      parentCheck().saveAnomaly(player, anomaly);
+    }
   }
 
   @Native
