@@ -76,6 +76,29 @@ public final class RotationSensitivityHeuristic extends IntaveMetaCheckPart<Heur
       } else if (heuristicMeta.decimalVL > 0) {
         heuristicMeta.decimalVL--;
       }
+
+      // Another check
+      yawDecimal = decimalPlacesOf(yawDifference);
+      pitchDecimal = decimalPlacesOf(pitchDifference);
+
+      if (yawDifference != 0 && yawDecimal < 3 && pitchDifference != 0 && pitchDecimal < 3) {
+        heuristicMeta.decimalSpeedVL += 50;
+        heuristicMeta.decimalSpeedVL = Math.min(heuristicMeta.decimalSpeedVL, 1000);
+        if (heuristicMeta.decimalSpeedVL++ > 200) {
+          parentCheck().saveAnomaly(
+            player,
+            Anomaly.anomalyOf(
+              "113",
+              Confidence.NONE,
+              Anomaly.Type.KILLAURA,
+              "rotation speeds have too few decimals, vl:" + (heuristicMeta.decimalSpeedVL / 200.0),
+              LIMIT_2 | DELAY_16s | SUGGEST_MINING
+            )
+          );
+        }
+      } else if (heuristicMeta.decimalSpeedVL > 0){
+        heuristicMeta.decimalSpeedVL--;
+      }
     }
 
     if (attackData.recentlyAttacked(200)) {
@@ -144,6 +167,7 @@ public final class RotationSensitivityHeuristic extends IntaveMetaCheckPart<Heur
 
   public static class RotationGCDMeta extends UserCustomCheckMeta {
     private int decimalVL;
+    private int decimalSpeedVL;
     private int sensitivityVL;
     private float prevPitchGCD;
   }
