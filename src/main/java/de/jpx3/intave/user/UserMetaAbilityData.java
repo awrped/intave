@@ -79,7 +79,6 @@ public final class UserMetaAbilityData {
   }
 
   public double attributeValue(String key) {
-    key = keyTranslation(key);
     return attributeValue(key, x -> true);
   }
 
@@ -135,7 +134,7 @@ public final class UserMetaAbilityData {
   }
 
   private String keyTranslation(String key) {
-    return KEY_WRAPPED ? REMAP.get(key) : key;
+    return KEY_WRAPPED ? REMAP.getOrDefault(key, key) : key;
   }
 
   public void modifyBaseValue(String key, double baseValue) {
