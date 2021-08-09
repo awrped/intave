@@ -2,12 +2,12 @@ package de.jpx3.intave.world.blockshape.resolver.pipeline.drill;
 
 import de.jpx3.intave.patchy.annotate.PatchyAutoTranslation;
 import de.jpx3.intave.tools.wrapper.WrappedAxisAlignedBB;
+import de.jpx3.intave.world.blockaccess.RuntimeBlockDataIndexer;
 import de.jpx3.intave.world.blockshape.resolver.pipeline.ResolverPipeline;
-import net.minecraft.server.v1_13_R2.*;
+import net.minecraft.server.v1_14_R1.*;
 import org.bukkit.Material;
 import org.bukkit.World;
-import org.bukkit.craftbukkit.v1_13_R2.CraftWorld;
-import org.bukkit.craftbukkit.v1_13_R2.util.CraftMagicNumbers;
+import org.bukkit.craftbukkit.v1_14_R1.CraftWorld;
 import org.bukkit.entity.Player;
 
 import java.util.Collections;
@@ -15,13 +15,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @PatchyAutoTranslation
-public final class v13BoundingBoxDrill implements ResolverPipeline {
+public final class v14BoundingBoxDrill implements ResolverPipeline {
   @Override
   @PatchyAutoTranslation
   public List<WrappedAxisAlignedBB> resolve(World world, Player player, Material type, int blockState, int posX, int posY, int posZ) {
     WorldServer handle = ((CraftWorld) world).getHandle();
     BlockPosition blockPosition = new BlockPosition(posX, posY, posZ);
-    IBlockData blockData = CraftMagicNumbers.getBlock(type, (byte) blockState);
+    IBlockData blockData = (IBlockData) RuntimeBlockDataIndexer.modernStateFromIndex(type, blockState);
     if (blockData == null) {
       return Collections.emptyList();
     }

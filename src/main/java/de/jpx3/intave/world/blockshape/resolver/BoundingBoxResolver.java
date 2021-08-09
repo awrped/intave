@@ -17,6 +17,9 @@ public final class BoundingBoxResolver {
     if (MinecraftVersions.VER1_17_1.atOrAbove()) {
       drillClassName = "de.jpx3.intave.world.blockshape.resolver.pipeline.drill.v17b1BoundingBoxDrill";
       acClass = "";
+    } else if (MinecraftVersions.VER1_14_0.atOrAbove()) {
+      drillClassName = "de.jpx3.intave.world.blockshape.resolver.pipeline.drill.v14BoundingBoxDrill";
+      acClass = "";
     } else if (MinecraftVersions.VER1_13_0.atOrAbove()) {
       drillClassName = "de.jpx3.intave.world.blockshape.resolver.pipeline.drill.v13BoundingBoxDrill";
       acClass = "";
