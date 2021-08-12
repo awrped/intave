@@ -106,10 +106,12 @@ public final class SimulationProcessor {
     MovementMetadata movementData = meta.movement();
     inventoryData.setHandActive(false);
     ItemStack itemStack = inventoryData.heldItem();
+
     if (itemStack != null && !InventoryUseItemHelper.isSwordItem(user.player(), itemStack)) {
-      boolean hasShield = user.meta().protocol().combatUpdate();
-      int threshold = itemStack.getType() == Material.BOW || hasShield ? 5 : 3;
-      if (movementData.physicsEatingSlotSwitchVL++ > threshold) {
+      boolean ignoredItem = itemStack.getType() == Material.BOW;
+      boolean combatUpdate = user.meta().protocol().combatUpdate();
+      int threshold = combatUpdate ? 5 : 3;
+      if (!ignoredItem && movementData.physicsEatingSlotSwitchVL++ > threshold) {
         inventoryData.applySlotSwitch();
       } else {
         inventoryData.setHandActive(true);
