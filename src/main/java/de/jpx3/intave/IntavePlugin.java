@@ -27,6 +27,8 @@ import de.jpx3.intave.filter.Filters;
 import de.jpx3.intave.lib.asm.Frame;
 import de.jpx3.intave.logging.IntaveLogger;
 import de.jpx3.intave.metrics.Metrics;
+import de.jpx3.intave.module.BootSegment;
+import de.jpx3.intave.module.Modules;
 import de.jpx3.intave.reflect.ReflectiveAccess;
 import de.jpx3.intave.reflect.hitbox.typeaccess.DualEntityTypeAccess;
 import de.jpx3.intave.reflect.locate.Locator;
@@ -86,6 +88,7 @@ public final class IntavePlugin extends JavaPlugin {
   }
 
   private IntaveLogger logger;
+  private Modules modules = new Modules();
   private ProxyMessenger proxyMessenger;
   private SibylIntegrationService sibylIntegrationService;
   private ConfigurationService configurationService;
@@ -120,6 +123,8 @@ public final class IntavePlugin extends JavaPlugin {
     manifestDataFolder();
     this.logger = new IntaveLogger(this);
     this.logger.checkColorAvailability();
+    modules.prepareModules();
+    modules.proceedBoot(BootSegment.STAGE_2);
     redirectPluginLogger();
     checkClassLoaderAvailability();
   }
@@ -129,6 +134,7 @@ public final class IntavePlugin extends JavaPlugin {
   public void onLoad() {
     // stage 3
 
+    modules.proceedBoot(BootSegment.STAGE_3);
     // event links must be available throughout the entire onEnable call
     eventLinker = new BukkitEventLinker(this);
   }
@@ -138,7 +144,8 @@ public final class IntavePlugin extends JavaPlugin {
   public void onEnable() {
     logger.info("Please stand by..");
     // stage 4
-
+    modules.proceedBoot(BootSegment.STAGE_4);
+    
     if (AgentAccessor.agentAvailable()) {
       logger.info("Using agent :{~"+"-"+"~}:");
     }
@@ -166,6 +173,7 @@ public final class IntavePlugin extends JavaPlugin {
 
       // version mambo jumbo
       // stage 5
+      modules.proceedBoot(BootSegment.STAGE_5);
 
       Locator.setup();
       SinusCache.setup();
@@ -177,6 +185,7 @@ public final class IntavePlugin extends JavaPlugin {
       trustFactorService = new TrustFactorService(this);
 
       // stage 6
+      modules.proceedBoot(BootSegment.STAGE_6);
 
       // we need to put this here
       BackgroundExecutor.start();
@@ -463,6 +472,9 @@ public final class IntavePlugin extends JavaPlugin {
           contextStatusResource.write(new ByteArrayInputStream(("success/" + AccessHelper.now()).getBytes(StandardCharsets.UTF_8)));
         }
       }
+      
+      // stage 7
+      modules.proceedBoot(BootSegment.STAGE_7);
 
       SSLConnectionVerifier.setup();
       RuntimeBlockDataIndexer.prepareIndex();
@@ -504,6 +516,8 @@ public final class IntavePlugin extends JavaPlugin {
       prefix = ChatColor.translateAlternateColorCodes('&', prefix);
       defaultColor = ChatColor.getLastColors(prefix);
 
+      // stage 8
+      modules.proceedBoot(BootSegment.STAGE_8);
       filters = new Filters(this);
       filters.setup();
       shadowIntegration = new LabymodShadowIntegration(this);
@@ -529,7 +543,8 @@ public final class IntavePlugin extends JavaPlugin {
         logger().info("This version does not cache block-accesses");
       }
 
-      // stage 8
+      // stage 9
+      modules.proceedBoot(BootSegment.STAGE_9);
       metrics = new Metrics(this, 6019);
 
       trustFactorService.setup();
@@ -548,6 +563,9 @@ public final class IntavePlugin extends JavaPlugin {
       return;
     }
 
+    // stage 10
+    modules.proceedBoot(BootSegment.STAGE_10);
+
     ViaVersionAdapter.patchConfiguration();
 
     GarbageCollector.setup();
@@ -564,6 +582,11 @@ public final class IntavePlugin extends JavaPlugin {
     packetSubscriptionLinker.refreshLinkages();
     displayVersionInformation();
     logger.info( "Intave booted successfully");
+
+    Synchronizer.synchronize(() -> {
+      // stage 11
+      modules.proceedBoot(BootSegment.STAGE_11);
+    });
   }
 
   public void manifestDataFolder() {
@@ -761,6 +784,7 @@ public final class IntavePlugin extends JavaPlugin {
     BackgroundExecutor.stopBlocking();
     GarbageCollector.die();
     UserRepository.die();
+    modules.shutdown();
     if (shadowIntegration != null) {
       shadowIntegration.shutdown();
     }
