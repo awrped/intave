@@ -31,6 +31,7 @@ import de.jpx3.intave.reflect.ReflectiveAccess;
 import de.jpx3.intave.reflect.hitbox.typeaccess.DualEntityTypeAccess;
 import de.jpx3.intave.reflect.locate.Locator;
 import de.jpx3.intave.security.*;
+import de.jpx3.intave.security.blacklist.BlackListService;
 import de.jpx3.intave.tools.*;
 import de.jpx3.intave.tools.annotate.Native;
 import de.jpx3.intave.tools.client.SinusCache;
@@ -104,6 +105,7 @@ public final class IntavePlugin extends JavaPlugin {
   private CustomClientSupportService customClientSupportService;
   private IntaveAccessService accessService;
   private IntaveAccess access;
+  private BlackListService blackListService;
   private Metrics metrics;
 
   public IntavePlugin() {
@@ -519,6 +521,7 @@ public final class IntavePlugin extends JavaPlugin {
       fakePlayerEventService = new FakePlayerEventService(this);
       proxyMessenger = new ProxyMessenger(this);
       sibylIntegrationService = new SibylIntegrationService(this);
+      blackListService = new BlackListService(this);
 
       getCommand("intave").setExecutor(new CommandProcessor());
 
@@ -534,6 +537,7 @@ public final class IntavePlugin extends JavaPlugin {
       customEventService.setup();
       eventService.setup();
       fakePlayerEventService.setup();
+      blackListService.setup();
     } catch (Exception exception) {
       logger.error("Unable to boot: " + exception.getMessage());
       exception.printStackTrace();
