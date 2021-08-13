@@ -15,6 +15,7 @@ import de.jpx3.intave.event.entity.WrappedEntity;
 import de.jpx3.intave.event.packet.ListenerPriority;
 import de.jpx3.intave.event.packet.PacketSubscription;
 import de.jpx3.intave.fakeplayer.FakePlayer;
+import de.jpx3.intave.tools.RomanNumberConverter;
 import de.jpx3.intave.tools.sync.Synchronizer;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserRepository;
@@ -40,8 +41,6 @@ import static de.jpx3.intave.event.packet.PacketId.Server.RESPAWN;
 import static de.jpx3.intave.event.packet.PacketId.Server.SET_SLOT;
 
 public final class AttackDispatcher implements EventProcessor {
-  private final static int[] ROMAN_STEPS = {1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1};
-  private final static String[] ROMAN_LITERALS = {"M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I"};
   public static boolean REDUCING_DISABLED;
 
   public AttackDispatcher(IntavePlugin plugin) {
@@ -150,7 +149,7 @@ public final class AttackDispatcher implements EventProcessor {
         ItemMeta itemMeta = item.getItemMeta().clone();
         if (!itemMeta.hasItemFlag(ItemFlag.HIDE_ENCHANTS)) {
           List<String> lore = itemMeta.getLore() == null ? new ArrayList<>() : new ArrayList<>(itemMeta.getLore());
-          lore.add(ChatColor.GRAY + "Sharpness " + toRoman(level));
+          lore.add(ChatColor.GRAY + "Sharpness " + RomanNumberConverter.toRomanLiteral(level));
           itemMeta.setLore(lore);
         }
         if (!itemMeta.hasEnchants()) {
@@ -178,17 +177,6 @@ public final class AttackDispatcher implements EventProcessor {
 //      }
 //    }
     packet.getItemModifier().write(0, item);
-  }
-
-  private String toRoman(int number) {
-    StringBuilder roman = new StringBuilder();
-    for (int i = 0; i < ROMAN_STEPS.length; i++) {
-      while (number >= ROMAN_STEPS[i]) {
-        number -= ROMAN_STEPS[i];
-        roman.append(ROMAN_LITERALS[i]);
-      }
-    }
-    return roman.toString();
   }
 
   @BukkitEventSubscription
