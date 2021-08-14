@@ -61,7 +61,7 @@ public final class PacketDependenciesHeuristic extends MetaCheckPart<Heuristics,
     PacketDependentHeuristicMeta meta = metaOf(user);
 
     HashMap<Integer, SaveMultipleTicks> multipleDependencies = new HashMap<>();
-    for (int firstTick = meta.packetTypeList.size(); firstTick > meta.currentTick - 500; firstTick--) {
+    for (int firstTick = meta.currentTick; firstTick > meta.currentTick - 500; firstTick--) {
       ArrayList<PacketType> firstPacketTypes = meta.packetTypeList.get(firstTick);
       if(firstPacketTypes != null) {
         HashMap<Integer, SaveOneTick> dependencies = new HashMap<>();
