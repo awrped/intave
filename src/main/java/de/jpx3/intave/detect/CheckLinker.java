@@ -6,6 +6,9 @@ import de.jpx3.intave.event.packet.PacketSubscriptionLinker;
 
 import java.util.Collection;
 
+/**
+ * A {@link CheckLinker} provides the basic ability to link
+ */
 public final class CheckLinker {
   private final IntavePlugin plugin;
 

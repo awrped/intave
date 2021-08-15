@@ -21,38 +21,35 @@ import java.util.function.Consumer;
 /**
  * A {@link Check} provides a skeletal architecture for both detection algorithms and detection clusters.<br />
  * It is stored, linked, unlinked and deleted by a {@link CheckService}, where it is
- * made accessible to external modules. <br> All instances of complete implementation classes must be singleton,
- * as they can only be addressed and distinguished by {@code class}.
- * They have a unique name, a unique configuration key, an enabled state,
+ * made accessible to external modules. <br> All instances of implementation classes must be singleton,
+ * only to be addressed and distinguished by their {@code class}.
+ * They hold a unique name in {@link String} that should equal their classname, a unique configuration key, an enabled state,
  * a {@link CheckConfiguration} and {@link CheckStatistics}.
- * Instances hold a reference to the singleton instance of the {@link IntavePlugin} class and are equipped
- * with a {@link Check#userOf(Player)} utility method.
+ * <br />
+ * <br />
  * Instances of the class hold subordinate {@link CheckPart}s, as well as an {@link Check#appendCheckPart(CheckPart)}
  * method to append {@link CheckPart}s to themself.
- * <br />
- * <br />
- * A {@link Check} is either a <i>detection algorithm itself</i> or severs as a <i>detection cluster</i>.
- * Once a single {@link CheckPart} is added, the {@link Check} must become a <i>detection cluster</i> and must not contain code for detection,
- * though it still can and should have code to interpret, delay, contextualize or analyse the gathered data, as long as it comes from the held {@link CheckPart}s.
+ * A {@link Check} is either a <i>detection algorithm</i> itself or serves as a <i>detection cluster</i>.
+ * Once a single {@link CheckPart} is added, the {@link Check} must become a <i>detection cluster</i> and must not contain code for detection though it still can (and probably should)
+ * have code to interpret, delay, contextualize or analyse the gathered data, as long as it comes from the held {@link CheckPart}s.
  * <br />
  * <br />
  *
  * @see de.jpx3.intave.detect.CheckPart
- * @see de.jpx3.intave.detect.MetaCheck
- * @see de.jpx3.intave.detect.MetaCheckPart
+ * @see de.jpx3.intave.detect.CheckService
  * @see de.jpx3.intave.detect.CheckStatistics
  * @see de.jpx3.intave.detect.CheckConfiguration
- * @see de.jpx3.intave.detect.CheckService
- * @see de.jpx3.intave.detect.EventProcessor
+ * @see de.jpx3.intave.detect.MetaCheck
+ * @see de.jpx3.intave.detect.MetaCheckPart
  */
  public abstract class Check implements EventProcessor {
   private final IntavePlugin plugin;
   private final String checkName;
   private final String configurationKey;
-  private final CheckStatistics statistics;
-  private final Map<TrustFactor, CheckStatistics> perTrustFactorStatistics;
+  private final CheckStatistics statistics = new CheckStatistics();
+  private final Map<TrustFactor, CheckStatistics> perTrustFactorStatistics = new EnumMap<>(TrustFactor.class);
   private final List<CheckPart<?>> checkParts = new ArrayList<>();
-  private final CheckConfiguration checkConfiguration;
+  private final CheckConfiguration checkConfiguration = new CheckConfiguration(this);
   private final boolean enabled;
   private MitigationStrategy mitigationStrategy;
   private MitigationStrategy defaultMitigationStrategy = MitigationStrategy.NOT_SUPPORTED;
@@ -61,11 +58,8 @@ import java.util.function.Consumer;
     this.plugin = IntavePlugin.singletonInstance();
     this.checkName = checkName;
     this.configurationKey = configurationKey;
-    this.statistics = new CheckStatistics();
-    this.checkConfiguration = new CheckConfiguration(this);
-    this.perTrustFactorStatistics = new EnumMap<>(TrustFactor.class);
     this.enterConfiguration();
-    this.enabled = checkConfiguration.settings().boolBy("enabled");
+    this.enabled = checkConfiguration.settings().checkEnabled();
     this.mitigationStrategy = checkConfiguration.settings().mitigationStrategy();
   }
 
@@ -96,21 +90,20 @@ import java.util.function.Consumer;
 
   /**
    * Append a {@link CheckPart} to the pool, making them affected by the {@link CheckService}
-   * loading and unloading sequence. When appending check parts, it is definitely
-   * not recommended that the implementation class holds <b>any</b> code for detection, so
-   * the use of this method consequently constraints the class to follow the standard
-   * of clear differentiation between <i>detection algorithm</i> and <i>detection cluster</i>.
+   * loading and unloading sequence. When appending check parts, the implementation class must not
+   * hold <b>any</b> code for detection, so the use of this method consequently constraints the class
+   * to follow the standard of clear differentiation between <i>detection algorithm</i> and <i>detection cluster</i>.
    * @param checkPart the checkpart to append
    */
   protected void appendCheckPart(CheckPart<?> checkPart) {
     if (checkPart.parentCheck() != this) {
-      throw new IntaveInternalException("Child lacks reference to parent");
+      throw new IntaveInternalException("Partial check lacks correct reference to parent check");
     }
     checkParts.add(checkPart);
   }
 
   /**
-   * Retrieves a trustfactor setting for a given key using the trustfactor of the given player.
+   * Retrieves a {@link TrustFactor} setting for a given key using the trustfactor of the given {@link Player}.
    * @param key the trustfactor setting key
    * @param player the affected player
    * @return trustfactor setting
@@ -164,7 +157,7 @@ import java.util.function.Consumer;
   }
 
   /**
-   * Retrieve a checks mitigation strategy
+   * Retrieve a checks mitigation strategy.
    * Will return {@link MitigationStrategy#NOT_SUPPORTED} when the child-class
    * does not support {@link MitigationStrategy}s.
    * @return the checks mitigation strategy
@@ -177,7 +170,7 @@ import java.util.function.Consumer;
   }
 
   /**
-   * Override the current mitigation strategy
+   * Override the current mitigation strategy.
    * @param mitigationStrategy the new mitigation strategy
    */
   public void setMitigationStrategy(MitigationStrategy mitigationStrategy) {
@@ -191,7 +184,8 @@ import java.util.function.Consumer;
 
   /**
    * Retrieve whether the check is enabled.
-   * The {@link Physics} and {@link Timer} check always return {@code true}, as they can not be be disabled.
+   * The {@link Physics} and {@link Timer} check override this method to always return {@code true},
+   * as they must be enabled and can never be disabled.
    * @return whether the check is enabled
    */
   public boolean enabled() {

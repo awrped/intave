@@ -15,16 +15,13 @@ public final class CheckViolationLevelDecrementer {
   private final double limitPerSecond;
 
   public CheckViolationLevelDecrementer(
-    Check check,
-    double limitPerSecond
+    Check check, double limitPerSecond
   ) {
     this(check, "thresholds", limitPerSecond);
   }
 
   public CheckViolationLevelDecrementer(
-    Check check,
-    String thresholdKey,
-    double limitPerSecond
+    Check check, String thresholdKey, double limitPerSecond
   ) {
     this.check = check;
     this.checkName = check.configurationKey();
