@@ -11,11 +11,9 @@ import de.jpx3.intave.tools.MathHelper;
 import de.jpx3.intave.tools.RotationUtilities;
 import de.jpx3.intave.user.*;
 import de.jpx3.intave.user.meta.CheckCustomMetadata;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
 import java.util.*;
-import java.util.List;
 
 import static de.jpx3.intave.event.packet.PacketId.Client.*;
 
@@ -32,25 +30,24 @@ public final class PacketDependenciesHeuristic extends MetaCheckPart<Heuristics,
   Some packets could false flagg which should then can be blacklisted manually.
 
   Example:
-  Current Tick      PacketType
+  Current Tick        PacketType
   1                   HELD_ITEM_SLOT ----|
-  2                                      |-> time diffrence is 2
+  2                                      |-> tick diffrence is 2
   3                   BLOCK_PLACE -------|
   4                   HELD_ITEM_SLOT -------|
-  5                                         |-> time diffrence is 2
+  5                                         |-> tick diffrence is 2
   6                   BLOCK_PLACE ----------|
   7                   HELD_ITEM_SLOT ----|
-  8                                      |-> time diffrence is 2
+  8                                      |-> tick diffrence is 2
   9                   BLOCK_PLACE -------|
 
-  calculateStandardDeviation(2, 2, 2) was dann 0 ergeben sollte
-   */
+  calculateStandardDeviation(2, 2, 2) which should be near 0
+  */
   public PacketDependenciesHeuristic(Heuristics parentCheck) {
     super(parentCheck, PacketDependenciesHeuristic.PacketDependentHeuristicMeta.class);
     this.plugin = IntavePlugin.singletonInstance();
   }
 
-  private static List<Integer> diffrences = new ArrayList<>();
 
   @PacketSubscription(
     priority = ListenerPriority.HIGH,
@@ -62,58 +59,73 @@ public final class PacketDependenciesHeuristic extends MetaCheckPart<Heuristics,
     Player player = event.getPlayer();
     User user = userOf(player);
     PacketDependentHeuristicMeta meta = metaOf(user);
-    player.sendMessage("-----------------------");
 
-    for (Map.Entry<PacketType, ArrayList<Integer>> firstIntegerArrayListEntry : meta.packetTypeList.entrySet()) {
-      PacketType firstPacketType = firstIntegerArrayListEntry.getKey();
-      ArrayList<Integer> firstTicks = firstIntegerArrayListEntry.getValue();
+    HashMap<Integer, SaveMultipleTicks> multipleDependencies = new HashMap<>();
+    for (int firstTick = meta.currentTick; firstTick > meta.currentTick - 500; firstTick--) {
+      ArrayList<PacketType> firstPacketTypes = meta.packetTypeList.get(firstTick);
+      if(firstPacketTypes != null) {
+        HashMap<Integer, SaveOneTick> dependencies = new HashMap<>();
+        /*
+        Speicher pro PacketType ein anderes packetType was davor gesendet wurde in der abhängigkeit mit dem ersten packetType ab.
+         */
+        for (int secondTick = firstTick - 1; secondTick > meta.currentTick - 500; secondTick--) {
+          ArrayList<PacketType> secondPacketTypes = meta.packetTypeList.get(secondTick);
+          if(secondPacketTypes != null) {
 
-      for (Map.Entry<PacketType, ArrayList<Integer>> secondIntegerArrayListEntry : meta.packetTypeList.entrySet()) {
-        PacketType secondPacketType = secondIntegerArrayListEntry.getKey();
-        ArrayList<Integer> secondTicks = secondIntegerArrayListEntry.getValue();
-
-        diffrences.clear();
-        if(firstPacketType != secondPacketType && firstTicks.size() > 5 && secondTicks.size() > 5) {
-          for (int firstTick : firstTicks) {
-            for (int secondTick : secondTicks) {
-              if(firstTick < secondTick) {
-                int diffrence = secondTick - firstTick;
-
-                if(diffrence < 60) {
-                  diffrences.add(diffrence);
+            for (PacketType firstPacketType : firstPacketTypes) {
+              for (PacketType secondPacketType : secondPacketTypes) {
+                int id = packetTypesToInt(firstPacketType, secondPacketType);
+                if(!dependencies.containsKey(id)) {
+                  int tickDiffrence = firstTick - secondTick;
+                  if(tickDiffrence < 20) {
+                    SaveOneTick save = new SaveOneTick(firstPacketType, secondPacketType, tickDiffrence);
+                    dependencies.put(id, save);
+                  }
                 }
               }
             }
           }
         }
 
-        if(diffrences.size() > 9) {
-          double standardDeviation = RotationUtilities.calculateStandardDeviation(diffrences);
-          player.sendMessage("std: " + MathHelper.formatDouble(standardDeviation, 4) +
-            ChatColor.GREEN + " " + firstPacketType.name().toLowerCase() +
-                              " " + secondPacketType.name().toLowerCase() +
-            ChatColor.RESET + " " + diffrences.size());
-        }
+        for (Map.Entry<Integer, SaveOneTick> entry : dependencies.entrySet()) {
+          int id = entry.getKey();
+          SaveOneTick save = entry.getValue();
 
-        if(firstTicks.size() > 10) {
-          firstTicks.remove(0);
-        }
-        if(secondTicks.size() > 10) {
-          secondTicks.remove(0);
+          SaveMultipleTicks saveMultipleTicks = multipleDependencies.get(id);
+          if(saveMultipleTicks != null) {
+            saveMultipleTicks.ticks.add(save.tickDiffrence);
+          } else {
+            saveMultipleTicks = new SaveMultipleTicks(save.firstPacketType, save.secondPacketType);
+            saveMultipleTicks.ticks.add(save.tickDiffrence);
+            multipleDependencies.put(id, saveMultipleTicks);
+          }
         }
       }
     }
 
+
+    for (SaveMultipleTicks value : multipleDependencies.values()) {
+      double standardDeviation = RotationUtilities.calculateStandardDeviation(value.ticks);
+      String standardDeviationString = MathHelper.formatDouble(standardDeviation, 4);
+      player.sendMessage("std: " + standardDeviationString
+        + " " + value.firstPacketType.name().toLowerCase()
+        + " " + value.secondPacketType.name().toLowerCase()
+        + " " + value.ticks.size());
+    }
     prepareNextTick(meta);
   }
 
+  private int packetTypesToInt(PacketType first, PacketType second) {
+    return first.getCurrentId() + second.getCurrentId() * 10000;
+  }
+
   private void addTickToPacketTypeList(PacketDependentHeuristicMeta meta, PacketType packetType) {
-    ArrayList<Integer> ticks = meta.packetTypeList.get(packetType);
-    if(ticks == null) {
-      ticks = new ArrayList<>();
-      meta.packetTypeList.put(packetType, ticks);
+    ArrayList<PacketType> packetTypeArrayList = meta.packetTypeList.get(meta.currentTick);
+    if(packetTypeArrayList == null) {
+      packetTypeArrayList = new ArrayList<>();
+      meta.packetTypeList.put(meta.currentTick, packetTypeArrayList);
     }
-    ticks.add(meta.currentTick);
+    packetTypeArrayList.add(packetType);
   }
 
   private void prepareNextTick(PacketDependentHeuristicMeta meta) {
@@ -141,7 +153,28 @@ public final class PacketDependenciesHeuristic extends MetaCheckPart<Heuristics,
   }
 
   public final static class PacketDependentHeuristicMeta extends CheckCustomMetadata {
+
     int currentTick;
-    HashMap<PacketType, ArrayList<Integer>> packetTypeList = new HashMap<>();
+    HashMap<Integer, ArrayList<PacketType>> packetTypeList = new HashMap<>();
+  }
+}
+
+class SaveOneTick {
+  PacketType firstPacketType;
+  PacketType secondPacketType;
+  int tickDiffrence;
+  public SaveOneTick(PacketType firstPacketType, PacketType secondPacketType, int tickDiffrence) {
+    this.firstPacketType = firstPacketType;
+    this.secondPacketType = secondPacketType;
+    this.tickDiffrence = tickDiffrence;
+  }
+}
+class SaveMultipleTicks {
+  PacketType firstPacketType;
+  PacketType secondPacketType;
+  List<Integer> ticks = new ArrayList<>();
+  public SaveMultipleTicks(PacketType firstPacketType, PacketType secondPacketType) {
+    this.firstPacketType = firstPacketType;
+    this.secondPacketType = secondPacketType;
   }
 }
