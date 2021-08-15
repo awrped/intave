@@ -72,6 +72,10 @@ public final class CheckConfiguration {
       return thresholdMap;
     }
 
+    public boolean checkEnabled() {
+      return boolBy("enabled");
+    }
+
     public MitigationStrategy mitigationStrategy() {
       return MitigationStrategy.byName(stringBy("mitigation"));
     }
