@@ -48,6 +48,7 @@ public final class PacketDependenciesHeuristic extends MetaCheckPart<Heuristics,
     this.plugin = IntavePlugin.singletonInstance();
   }
 
+  private static int ticksToSave = 200;
 
   @PacketSubscription(
     priority = ListenerPriority.HIGH,
@@ -61,14 +62,14 @@ public final class PacketDependenciesHeuristic extends MetaCheckPart<Heuristics,
     PacketDependentHeuristicMeta meta = metaOf(user);
 
     HashMap<Integer, SaveMultipleTicks> multipleDependencies = new HashMap<>();
-    for (int firstTick = meta.currentTick; firstTick > meta.currentTick - 500; firstTick--) {
+    for (int firstTick = meta.currentTick; firstTick > meta.currentTick - ticksToSave; firstTick--) {
       ArrayList<PacketType> firstPacketTypes = meta.packetTypeList.get(firstTick);
       if(firstPacketTypes != null) {
         HashMap<Integer, SaveOneTick> dependencies = new HashMap<>();
         /*
         Speicher pro PacketType ein anderes packetType was davor gesendet wurde in der abhängigkeit mit dem ersten packetType ab.
          */
-        for (int secondTick = firstTick - 1; secondTick > meta.currentTick - 500; secondTick--) {
+        for (int secondTick = firstTick - 1; secondTick > meta.currentTick - ticksToSave; secondTick--) {
           ArrayList<PacketType> secondPacketTypes = meta.packetTypeList.get(secondTick);
           if(secondPacketTypes != null) {
 
@@ -103,7 +104,6 @@ public final class PacketDependenciesHeuristic extends MetaCheckPart<Heuristics,
       }
     }
 
-
     for (SaveMultipleTicks value : multipleDependencies.values()) {
       double standardDeviation = RotationUtilities.calculateStandardDeviation(value.ticks);
       String standardDeviationString = MathHelper.formatDouble(standardDeviation, 4);
@@ -131,8 +131,8 @@ public final class PacketDependenciesHeuristic extends MetaCheckPart<Heuristics,
   private void prepareNextTick(PacketDependentHeuristicMeta meta) {
     meta.currentTick++;
 
-    if(meta.currentTick > 500) {
-      meta.packetTypeList.remove(meta.currentTick - 500);
+    if(meta.currentTick > ticksToSave) {
+      meta.packetTypeList.remove(meta.currentTick - ticksToSave);
     }
   }
 

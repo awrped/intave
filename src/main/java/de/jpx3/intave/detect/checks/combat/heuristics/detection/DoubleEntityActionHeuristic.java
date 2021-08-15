@@ -1,13 +1,14 @@
 package de.jpx3.intave.detect.checks.combat.heuristics.detection;
 
 import com.comphenix.protocol.events.PacketEvent;
-import com.comphenix.protocol.wrappers.EnumWrappers;
 import de.jpx3.intave.detect.MetaCheckPart;
 import de.jpx3.intave.detect.checks.combat.Heuristics;
 import de.jpx3.intave.detect.checks.combat.heuristics.Anomaly;
 import de.jpx3.intave.detect.checks.combat.heuristics.Confidence;
 import de.jpx3.intave.event.packet.ListenerPriority;
 import de.jpx3.intave.event.packet.PacketSubscription;
+import de.jpx3.intave.tools.packet.PlayerAction;
+import de.jpx3.intave.tools.packet.PlayerActionResolver;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.meta.CheckCustomMetadata;
 import de.jpx3.intave.user.meta.MovementMetadata;
@@ -31,25 +32,25 @@ public final class DoubleEntityActionHeuristic extends MetaCheckPart<Heuristics,
     Player player = event.getPlayer();
     User user = userOf(player);
     MovementMetadata movementData = user.meta().movement();
-    EnumWrappers.PlayerAction action = event.getPacket().getPlayerActions().read(0);
+    PlayerAction action = PlayerActionResolver.resolveActionFromPacket(event.getPacket());
 
     String message = null;
-    if(action == EnumWrappers.PlayerAction.START_SNEAKING) {
+    if(action == PlayerAction.START_SNEAKING) {
       if(movementData.sneaking) {
         message = "sent start_sneak packet twice";
       }
     }
-    if(action == EnumWrappers.PlayerAction.STOP_SNEAKING) {
+    if(action == PlayerAction.STOP_SNEAKING) {
       if(!movementData.sneaking) {
         message = "sent stop_sneak packet twice";
       }
     }
-    if(action == EnumWrappers.PlayerAction.START_SPRINTING) {
+    if(action == PlayerAction.START_SPRINTING) {
       if(movementData.sprinting) {
         message = "sent start_sprint packet twice";
       }
     }
-    if(action == EnumWrappers.PlayerAction.STOP_SPRINTING) {
+    if(action == PlayerAction.STOP_SPRINTING) {
       if(!movementData.sprinting) {
         message = "sent stop_sprint packet twice";
       }

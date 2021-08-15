@@ -10,6 +10,8 @@ import de.jpx3.intave.detect.checks.combat.heuristics.Confidence;
 import de.jpx3.intave.event.packet.ListenerPriority;
 import de.jpx3.intave.event.packet.PacketSubscription;
 import de.jpx3.intave.tools.MathHelper;
+import de.jpx3.intave.tools.packet.PlayerAction;
+import de.jpx3.intave.tools.packet.PlayerActionResolver;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.meta.CheckCustomMetadata;
 import de.jpx3.intave.user.meta.MovementMetadata;
@@ -33,11 +35,11 @@ public final class SprintOnAttackHeuristic extends MetaCheckPart<Heuristics, Spr
     Player player = event.getPlayer();
     User user = userOf(player);
     SprintOnAttackHeuristicMeta meta = metaOf(user);
-    EnumWrappers.PlayerAction action = event.getPacket().getPlayerActions().read(0);
+    PlayerAction action = PlayerActionResolver.resolveActionFromPacket(event.getPacket());
 
-    if(action == EnumWrappers.PlayerAction.START_SPRINTING) {
+    if(action == PlayerAction.START_SPRINTING) {
       meta.startSprint = true;
-    } else if(action == EnumWrappers.PlayerAction.STOP_SPRINTING) {
+    } else if(action == PlayerAction.STOP_SPRINTING) {
       meta.stopSprint = true;
     }
   }

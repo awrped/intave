@@ -11,6 +11,8 @@ import de.jpx3.intave.detect.checks.combat.heuristics.Confidence;
 import de.jpx3.intave.event.packet.ListenerPriority;
 import de.jpx3.intave.event.packet.PacketSubscription;
 import de.jpx3.intave.tools.items.InventoryUseItemHelper;
+import de.jpx3.intave.tools.packet.PlayerAction;
+import de.jpx3.intave.tools.packet.PlayerActionResolver;
 import de.jpx3.intave.tools.wrapper.WrappedAxisAlignedBB;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.meta.*;
@@ -42,13 +44,13 @@ public final class SprintResetHeuristic extends MetaCheckPart<Heuristics, Sprint
     Player player = event.getPlayer();
     User user = userOf(player);
     SprintResetHeuristicMeta meta = metaOf(user);
-    EnumWrappers.PlayerAction playerAction = event.getPacket().getPlayerActions().read(0);
+    PlayerAction playerAction = PlayerActionResolver.resolveActionFromPacket(event.getPacket());
 
-    if(playerAction == EnumWrappers.PlayerAction.START_SPRINTING) {
+    if(playerAction == PlayerAction.START_SPRINTING) {
       meta.startSprint = true;
-    } else if(playerAction == EnumWrappers.PlayerAction.STOP_SPRINTING) {
+    } else if(playerAction == PlayerAction.STOP_SPRINTING) {
       meta.stopSprint = true;
-    } else if(playerAction == EnumWrappers.PlayerAction.START_SNEAKING) {
+    } else if(playerAction == PlayerAction.START_SNEAKING) {
       meta.startSneak = true;
     }
   }

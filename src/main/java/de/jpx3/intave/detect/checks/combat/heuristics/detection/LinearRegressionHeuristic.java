@@ -1,12 +1,13 @@
 package de.jpx3.intave.detect.checks.combat.heuristics.detection;
 
 import com.comphenix.protocol.events.PacketEvent;
-import com.comphenix.protocol.wrappers.EnumWrappers;
 import de.jpx3.intave.detect.MetaCheckPart;
 import de.jpx3.intave.detect.checks.combat.Heuristics;
 import de.jpx3.intave.event.packet.ListenerPriority;
 import de.jpx3.intave.event.packet.PacketSubscription;
 import de.jpx3.intave.executor.IntaveThreadFactory;
+import de.jpx3.intave.tools.packet.PlayerAction;
+import de.jpx3.intave.tools.packet.PlayerActionResolver;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.meta.CheckCustomMetadata;
 import org.bukkit.entity.Player;
@@ -37,9 +38,9 @@ public final class LinearRegressionHeuristic extends MetaCheckPart<Heuristics, L
   )
   public void sneakStart(PacketEvent event) {
     Player player = event.getPlayer();
-    EnumWrappers.PlayerAction action = event.getPacket().getPlayerActions().read(0);
+    PlayerAction action = PlayerActionResolver.resolveActionFromPacket(event.getPacket());
 
-    if (action == EnumWrappers.PlayerAction.START_SNEAKING) {
+    if (action == PlayerAction.START_SNEAKING) {
       createNewWindow(player);
     }
   }
