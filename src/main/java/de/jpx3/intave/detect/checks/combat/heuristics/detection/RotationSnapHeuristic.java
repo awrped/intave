@@ -14,7 +14,7 @@ import de.jpx3.intave.detect.checks.combat.heuristics.Confidence;
 import de.jpx3.intave.event.mitigate.AttackNerfStrategy;
 import de.jpx3.intave.module.linker.packet.ListenerPriority;
 import de.jpx3.intave.module.linker.packet.PacketSubscription;
-import de.jpx3.intave.module.tracker.entity.DeadWrappedEntity;
+import de.jpx3.intave.module.tracker.entity.DestroyedWrappedEntity;
 import de.jpx3.intave.module.tracker.entity.WrappedEntity;
 import de.jpx3.intave.tools.MathHelper;
 import de.jpx3.intave.user.User;
@@ -183,7 +183,7 @@ public final class RotationSnapHeuristic extends MetaCheckPart<Heuristics, Rotat
 
       for (Map.Entry<Integer, WrappedEntity> entry : user.meta().connection().synchronizedEntityMap().entrySet()) {
         WrappedEntity value = entry.getValue();
-        if (value != null && !(value instanceof DeadWrappedEntity)) {
+        if (value != null && !(value instanceof DestroyedWrappedEntity)) {
           meta.entityPositions.put(entry.getKey(), value.positionHistory.get(Math.max(value.positionHistory.size() - 1, 0)));
         }
       }
@@ -293,7 +293,7 @@ public final class RotationSnapHeuristic extends MetaCheckPart<Heuristics, Rotat
       Anomaly anomaly = Anomaly.anomalyOf(key, confidence, Anomaly.Type.KILLAURA, description, anomalyOptions(isPartner()));
       parentCheck().saveAnomaly(player, anomaly);
     } else {
-      description += "NONFLAG";
+      description += " nonflag";
       Anomaly anomaly = Anomaly.anomalyOf(key, Confidence.NONE, Anomaly.Type.KILLAURA, description, anomalyOptions(isPartner()));
       parentCheck().saveAnomaly(player, anomaly);
     }

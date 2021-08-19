@@ -14,13 +14,18 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class WrappedEntity implements Cloneable {
-  private static WrappedEntity DEAD_ENTITY;
+  /*
+  Dead entities are used to identify recently removed entities.
+
+  Some packets are synchronized and some are processed immediately so
+  this type of entity ensures that the synchrosized packets are handled correctly.
+ */
+  private static WrappedEntity DESTROYED_ENTITY;
   private final static boolean NEW_POSITION_PROCESSING_1_9 = ProtocolLibraryAdapter.serverVersion().isAtLeast(MinecraftVersions.VER1_9_0);
   private final static boolean NEW_POSITION_PROCESSING_1_14 = ProtocolLibraryAdapter.serverVersion().isAtLeast(MinecraftVersions.VER1_14_0);
   public EntityTypeData entityTypeData;
 
   private final int entityId;
-  final public boolean isEntityLiving;
 
   /**
    * Indicates if the entity position is synchronized with the client
@@ -60,13 +65,11 @@ public class WrappedEntity implements Cloneable {
   public WrappedEntity(
     int entityId,
     EntityTypeData entityTypeData,
-    boolean isEntityLiving,
     boolean player
   ) {
     this.player = player;
     this.entityId = entityId;
     this.entityTypeData = entityTypeData;
-    this.isEntityLiving = isEntityLiving;
 
     this.position = new EntityPositionContext();
     this.lastPosition = new EntityPositionContext();
@@ -115,7 +118,7 @@ public class WrappedEntity implements Cloneable {
    * FLYING, LOOK, POSITION, POSITION_LOOK
    */
   private void onLivingUpdate() {
-    if (isEntityLiving) {
+    if (entityTypeData.isLivingEntity()) {
       if (position.newPosRotationIncrements > 0) {
         double newPosX = position.posX + (position.newPosX - position.posX) / (double) position.newPosRotationIncrements;
         double newPosY = position.posY + (position.newPosY - position.posY) / (double) position.newPosRotationIncrements;
@@ -285,7 +288,7 @@ public class WrappedEntity implements Cloneable {
    * @param newPosRotationIncrements the value which is used to interpolate the movement of the entity in new ticks
    */
   public void setPositionAndRotationEntityLiving(double x, double y, double z, int newPosRotationIncrements) {
-    if (!isEntityLiving) {
+    if (!entityTypeData.isLivingEntity()) {
       setPosition(x, y, z);
       return;
     }
@@ -297,7 +300,7 @@ public class WrappedEntity implements Cloneable {
   }
 
   public void setPositionAndRotationEntityLiving(double alternativeY) {
-    if (!isEntityLiving) {
+    if (!entityTypeData.isLivingEntity()) {
       setPosition(alternativeY);
       return;
     }
@@ -359,7 +362,7 @@ public class WrappedEntity implements Cloneable {
 
   @Override
   public WrappedEntity clone()  {
-    WrappedEntity clone = new WrappedEntity(entityId, entityTypeData, isEntityLiving, player);
+    WrappedEntity clone = new WrappedEntity(entityId, entityTypeData, player);
     clone.isClone = true;
     clone.position = position.clone();
     clone.alternativePosition = alternativePosition.clone();
@@ -384,10 +387,16 @@ public class WrappedEntity implements Cloneable {
     /*
       Avoid possible class order deadlock
      */
-    DEAD_ENTITY = new DeadWrappedEntity();
+    DESTROYED_ENTITY = new DestroyedWrappedEntity();
   }
 
-  public static WrappedEntity deadEntity() {
-    return DEAD_ENTITY;
+  /*
+  Dead entities are used to identify recently removed entities.
+
+  Some packets are synchronized and some are processed immediately so
+  this type of entity ensures that the synchrosized packets are handled correctly.
+   */
+  public static WrappedEntity destroyedEntity() {
+    return DESTROYED_ENTITY;
   }
 }

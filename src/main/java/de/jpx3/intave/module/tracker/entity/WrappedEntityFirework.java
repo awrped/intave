@@ -15,7 +15,7 @@ public final class WrappedEntityFirework extends WrappedEntity {
     int entityId,
     EntityTypeData entityTypeData
   ) {
-    super(entityId, entityTypeData, false, false);
+    super(entityId, entityTypeData, false);
     this.attachedUser = attachedUser;
   }
 

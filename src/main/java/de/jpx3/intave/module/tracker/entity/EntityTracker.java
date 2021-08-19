@@ -87,7 +87,7 @@ public final class EntityTracker extends Module {
     List<WrappedEntity> validEntities = new ArrayList<>();
     for (WrappedEntity entity : synchronizeData.synchronizedEntityMap().values()) {
       boolean firstSurvive = false;
-      if (entity.isEntityLiving) {
+      if (entity.entityTypeData.isLivingEntity()) {
         WrappedEntity.EntityPositionContext positions = entity.position;
         location.setX(positions.posX);
         location.setY(positions.posY);
@@ -173,7 +173,7 @@ public final class EntityTracker extends Module {
       if (movementData.hasRidingEntity()) {
         movementData.dismountRidingEntity();
       }
-      if (ridingEntity != null && !(ridingEntity instanceof DeadWrappedEntity)) {
+      if (ridingEntity != null && !(ridingEntity instanceof DestroyedWrappedEntity)) {
         movementData.setRidingEntity(ridingEntity);
       }
     }
@@ -211,17 +211,14 @@ public final class EntityTracker extends Module {
     PacketType packetType = event.getPacketType();
     PacketContainer packet = event.getPacket();
     EntityTypeData entityTypeData;
-    boolean livingEntity;
     boolean entityIsPlayer = false;
     Integer entityId = packet.getIntegers().read(0);
     if (packetType == PacketType.Play.Server.SPAWN_ENTITY) {
       // dead entities
       entityTypeData = entityTypeResolver.entityTypeDataOfDeadEntity(event);
-      livingEntity = false;
     } else if (packetType == PacketType.Play.Server.SPAWN_ENTITY_LIVING) {
       // entities
       entityTypeData = entityTypeResolver.entityTypeDataOfLivingEntity(event);
-      livingEntity = true;
     } else {
       // player
       FakePlayer fakePlayer = attackData.fakePlayer();
@@ -233,7 +230,6 @@ public final class EntityTracker extends Module {
       }
 
       HitBoxBoundaries hitBoxBoundaries = HitBoxBoundaries.player();
-      livingEntity = true;
       entityIsPlayer = true;
       entityTypeData = new EntityTypeData(entityName, hitBoxBoundaries, 105, true);
     }
@@ -243,7 +239,7 @@ public final class EntityTracker extends Module {
       }
       return;
     }
-    processPacketSpawnMob(user, event.getPacketType(), entityTypeData, packet, livingEntity, entityId, entityIsPlayer);
+    processPacketSpawnMob(user, event.getPacketType(), entityTypeData, packet, entityId, entityIsPlayer);
   }
 
   private final static boolean INT_LIST_ENTITY_DESTROY = MinecraftVersions.VER1_17_1.atOrAbove();;
@@ -301,7 +297,7 @@ public final class EntityTracker extends Module {
     if (entity != null && movementData.ridingEntity() == entity) {
       movementData.dismountRidingEntity();
     }
-    synchronizedEntityMap.put(entityId, WrappedEntity.deadEntity());
+    synchronizedEntityMap.put(entityId, WrappedEntity.destroyedEntity());
 
     if (attackData.lastAttackedEntity() != null && attackData.lastAttackedEntityID() == entityId) {
       attackData.nullifyLastAttackedEntity();
@@ -352,7 +348,7 @@ public final class EntityTracker extends Module {
 
     if(entity == null) return;
 
-    if (entity.isEntityLiving && entity.tracingEnabled()) {
+    if (entity.entityTypeData.isLivingEntity() && entity.tracingEnabled()) {
       Callback<PacketEvent> task = (player1, event1) -> {
         entity.verifiedPosition = false;
         entity.handleEntityTeleport(packet);
@@ -408,7 +404,7 @@ public final class EntityTracker extends Module {
 
     if(entity == null) return;
 
-    if (entity.isEntityLiving && entity.tracingEnabled()) {
+    if (entity.entityTypeData.isLivingEntity() && entity.tracingEnabled()) {
       Callback<PacketEvent> task = (player1, event1) -> {
         entity.verifiedPosition = false;
         entity.handleEntityMovement(packet);
@@ -427,7 +423,6 @@ public final class EntityTracker extends Module {
 
   private WrappedEntity spawnMobByBukkitEntity(User user, Entity bukkitEntity) {
     Location location = bukkitEntity.getLocation();
-    boolean isEntityLiving = !bukkitEntity.isDead();
     int entityID = bukkitEntity.getEntityId();
 
     long serverPosX;
@@ -447,7 +442,7 @@ public final class EntityTracker extends Module {
 
     WrappedEntity entity = processEntitySpawn(
       user,
-      isEntityLiving, entityID, entityTypeData,
+      entityID, entityTypeData,
       serverPosX, serverPosY, serverPosZ,
       bukkitEntity.getType() == EntityType.PLAYER
     );
@@ -464,7 +459,7 @@ public final class EntityTracker extends Module {
     User user,
     PacketType packetType,
     EntityTypeData entityTypeData, PacketContainer packet,
-    boolean isEntityLiving, int entityId, boolean player
+    int entityId, boolean player
   ) {
     if (NEW_POSITION_PROCESSING_1_9) {
       double posX = packet.getDoubles().read(0);
@@ -472,7 +467,7 @@ public final class EntityTracker extends Module {
       double posZ = packet.getDoubles().read(2);
 
       processEntitySpawnNewVersion(
-        user, entityTypeData, isEntityLiving, entityId,
+        user, entityTypeData, entityId,
         posX, posY, posZ,
         player
       );
@@ -495,7 +490,7 @@ public final class EntityTracker extends Module {
       }
 
       processEntitySpawn(
-        user, isEntityLiving, entityId, entityTypeData,
+        user, entityId, entityTypeData,
         serverPosX, serverPosY, serverPosZ,
         player
       );
@@ -507,14 +502,13 @@ public final class EntityTracker extends Module {
   }
 
   private void processEntitySpawnNewVersion(
-    User user, EntityTypeData entityTypeData,
-    boolean isEntityLiving, int entityId,
+    User user, EntityTypeData entityTypeData, int entityId,
     double posX, double posY, double posZ,
     boolean player
   ) {
     ConnectionMetadata synchronizeData = user.meta().connection();
     Map<Integer, WrappedEntity> synchronizedEntityMap = synchronizeData.synchronizedEntityMap();
-    WrappedEntity entity = createEntityOf(user, entityId, isEntityLiving, entityTypeData, player);
+    WrappedEntity entity = createEntityOf(user, entityId, entityTypeData, player);
     entity.serverPosX = WrappedMathHelper.getPositionLong(posX);
     entity.serverPosY = WrappedMathHelper.getPositionLong(posY);
     entity.serverPosZ = WrappedMathHelper.getPositionLong(posZ);
@@ -523,8 +517,7 @@ public final class EntityTracker extends Module {
   }
 
   private WrappedEntity processEntitySpawn(
-    User user,
-    boolean isEntityLiving, int entityId, EntityTypeData entityTypeData,
+    User user, int entityId, EntityTypeData entityTypeData,
     long serverPosX, long serverPosY, long serverPosZ,
     boolean player
   ) {
@@ -533,7 +526,7 @@ public final class EntityTracker extends Module {
     double posX = serverPosX / 32d;
     double posY = serverPosY / 32d;
     double posZ = serverPosZ / 32d;
-    WrappedEntity entity = createEntityOf(user, entityId, isEntityLiving, entityTypeData, player);
+    WrappedEntity entity = createEntityOf(user, entityId, entityTypeData, player);
     entity.serverPosX = serverPosX;
     entity.serverPosY = serverPosY;
     entity.serverPosZ = serverPosZ;
@@ -546,7 +539,6 @@ public final class EntityTracker extends Module {
   private WrappedEntity createEntityOf(
     User user,
     int entityId,
-    boolean isEntityLiving,
     EntityTypeData entityTypeData,
     boolean player
   ) {
@@ -554,7 +546,7 @@ public final class EntityTracker extends Module {
     if (entityTypeData.entityName() != null && entityTypeData.entityName().contains("Firework")) {
       entity = new WrappedEntityFirework(user, entityId, entityTypeData);
     } else {
-      entity = new WrappedEntity(entityId, entityTypeData, isEntityLiving, player);
+      entity = new WrappedEntity(entityId, entityTypeData, player);
     }
     return entity;
   }
@@ -613,7 +605,7 @@ public final class EntityTracker extends Module {
     if (entity == null) {
       return;
     }
-    if (!entity.isEntityLiving) {
+    if (!entity.entityTypeData.isLivingEntity()) {
       return;
     }
 

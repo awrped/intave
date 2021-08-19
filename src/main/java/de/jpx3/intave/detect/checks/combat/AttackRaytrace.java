@@ -15,7 +15,7 @@ import de.jpx3.intave.event.mitigate.AttackNerfStrategy;
 import de.jpx3.intave.executor.Synchronizer;
 import de.jpx3.intave.module.linker.packet.ListenerPriority;
 import de.jpx3.intave.module.linker.packet.PacketSubscription;
-import de.jpx3.intave.module.tracker.entity.DeadWrappedEntity;
+import de.jpx3.intave.module.tracker.entity.DestroyedWrappedEntity;
 import de.jpx3.intave.module.tracker.entity.WrappedEntity;
 import de.jpx3.intave.tools.MathHelper;
 import de.jpx3.intave.user.MessageChannelSubscriptions;
@@ -78,7 +78,7 @@ public final class AttackRaytrace extends MetaCheck<AttackRaytrace.AttackRaytrac
       AbilityMetadata abilityData = user.meta().abilities();
       float unsynchroniszedHealth = abilityData.unsynchronizedHealth;
 
-      if (entity == null || entity instanceof DeadWrappedEntity || unsynchroniszedHealth <= 0) {
+      if (entity == null || entity instanceof DestroyedWrappedEntity || unsynchroniszedHealth <= 0) {
         shouldResend = true;
       } else {
         if (movementData.lastTeleport == 0 || violationLevelData.isInActiveTeleportBundle) {
@@ -134,8 +134,8 @@ public final class AttackRaytrace extends MetaCheck<AttackRaytrace.AttackRaytrac
       // bypass when the entity is null or on entities which are riding and players which are mounted on entities
       if (entity != null) {
         // stops raytrace if the entity is null or the player is in the death screen
-        if (unsynchronizedHealth > 0 && !(entity instanceof DeadWrappedEntity)) {
-          if (entity.mountedEntity() == null && !player.isInsideVehicle() && entity.isEntityLiving && !abilityData.ignoringMovementPackets()) {
+        if (unsynchronizedHealth > 0 && !(entity instanceof DestroyedWrappedEntity)) {
+          if (entity.mountedEntity() == null && !player.isInsideVehicle() && entity.entityTypeData.isLivingEntity() && !abilityData.ignoringMovementPackets()) {
             if (clientData.protocolVersion() >= VER_1_9) {
               // >= 1.9.x
               if (entity.clientSynchronized
