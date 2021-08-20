@@ -5,6 +5,7 @@ import com.google.common.collect.Maps;
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.access.player.PlayerClicks;
 import de.jpx3.intave.cleanup.GarbageCollector;
+import de.jpx3.intave.cleanup.ReferenceMap;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
@@ -15,7 +16,7 @@ import java.util.function.Consumer;
 
 public final class PlayerClickStatisticsAccessor {
   private final IntavePlugin plugin;
-  private final Map<UUID, PlayerClicks> playerClickStatisticAccessCache = GarbageCollector.watch(Maps.newConcurrentMap());
+  private final Map<UUID, PlayerClicks> playerClickStatisticAccessCache = GarbageCollector.watch(ReferenceMap.soft(Maps.newConcurrentMap()));
   private final Map<UUID, List<Consumer<Integer>>> subscriptions = GarbageCollector.watch(Maps.newConcurrentMap());
 
   public PlayerClickStatisticsAccessor(IntavePlugin plugin) {

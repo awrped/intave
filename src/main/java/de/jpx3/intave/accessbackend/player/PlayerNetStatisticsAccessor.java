@@ -5,6 +5,7 @@ import com.google.common.collect.Maps;
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.access.player.PlayerConnection;
 import de.jpx3.intave.cleanup.GarbageCollector;
+import de.jpx3.intave.cleanup.ReferenceMap;
 import de.jpx3.intave.user.UserRepository;
 import org.bukkit.entity.Player;
 
@@ -16,7 +17,7 @@ import java.util.function.BiConsumer;
 
 public final class PlayerNetStatisticsAccessor {
   private final IntavePlugin plugin;
-  private final Map<UUID, PlayerConnection> netStatisticsCache = GarbageCollector.watch(Maps.newConcurrentMap());
+  private final Map<UUID, PlayerConnection> netStatisticsCache = GarbageCollector.watch(ReferenceMap.soft(Maps.newConcurrentMap()));
   private final Map<UUID, List<BiConsumer<Integer, Integer>>> pingUpdateSubscriptions = GarbageCollector.watch(Maps.newConcurrentMap());
 
   public PlayerNetStatisticsAccessor(IntavePlugin plugin) {

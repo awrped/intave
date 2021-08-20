@@ -269,7 +269,7 @@ public final class CachedResource implements Resource {
 
   @Native
   private String resourceId() {
-    return new UUID(~name.hashCode(), ~intaveVersion().hashCode()).toString() + "e";
+    return new UUID(~name.hashCode(), ~intaveVersion().hashCode()) + "e";
   }
 
   private String intaveVersion() {

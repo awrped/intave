@@ -5,7 +5,7 @@ import com.google.common.collect.Lists;
 import java.util.List;
 import java.util.UUID;
 
-public final class IRXFactory {
+public final class IRXClassFactory {
   public static <T> Class<T> assembleCallerClass(
     ClassLoader classLoader,
     Class<? super T> superClass, String sourceClassName,

@@ -8,6 +8,7 @@ import de.jpx3.intave.access.check.CheckStatisticsAccess;
 import de.jpx3.intave.access.check.MitigationStrategy;
 import de.jpx3.intave.access.check.UnknownCheckException;
 import de.jpx3.intave.access.player.UnknownPlayerException;
+import de.jpx3.intave.cleanup.ReferenceMap;
 import de.jpx3.intave.detect.Check;
 import de.jpx3.intave.user.UserRepository;
 import org.bukkit.entity.Player;
@@ -19,7 +20,7 @@ import java.util.Map;
 import static de.jpx3.intave.access.check.Check.fromString;
 
 public final class CheckAccessor {
-  private final Map<String, CheckAccess> checkAccessCache = Maps.newConcurrentMap();
+  private final Map<String, CheckAccess> checkAccessCache = ReferenceMap.soft(Maps.newConcurrentMap());
   private final IntavePlugin plugin;
   private final CheckStatisticsAccessor statisticsAccessor;
 

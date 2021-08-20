@@ -66,7 +66,7 @@ final class PlayerUser implements User {
   private final Map<MessageChannel, Predicate<Player>> channelConstraints = Maps.newEnumMap(MessageChannel.class);
   private final Map<Material, Material> typeTranslations = Maps.newHashMap();
   private final Map<Pose, HitBoxBoundaries> poseSizes;
-  private OCBlockShapeAccess blockShapeAccess;
+  private final OCBlockShapeAccess blockShapeAccess;
   private boolean ignoreNextInboundPacket;
   private boolean ignoreNextOutboundPacket;
   private boolean hasShadow;

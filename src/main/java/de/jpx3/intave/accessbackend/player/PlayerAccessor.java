@@ -11,6 +11,7 @@ import de.jpx3.intave.access.player.PlayerClicks;
 import de.jpx3.intave.access.player.PlayerConnection;
 import de.jpx3.intave.access.player.trust.TrustFactor;
 import de.jpx3.intave.cleanup.GarbageCollector;
+import de.jpx3.intave.cleanup.ReferenceMap;
 import de.jpx3.intave.reflect.caller.CallerResolver;
 import de.jpx3.intave.reflect.caller.PluginInvocation;
 import de.jpx3.intave.user.User;
@@ -24,7 +25,7 @@ import java.util.UUID;
 
 public final class PlayerAccessor {
   private final IntavePlugin plugin;
-  private final Map<UUID, PlayerAccess> playerAccessCache = GarbageCollector.watch(Maps.newConcurrentMap());
+  private final Map<UUID, PlayerAccess> playerAccessCache = GarbageCollector.watch(ReferenceMap.soft(Maps.newConcurrentMap()));
   private final PlayerNetStatisticsAccessor netStatisticsAccessor;
   private final PlayerClickStatisticsAccessor clickStatisticsAccessor;
 

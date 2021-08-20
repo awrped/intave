@@ -20,7 +20,7 @@ public final class IntaveVersionList {
 
   public void setup() {
     CachedResource cachedResource = new CachedResource(
-      "license-map",
+      "versions",
       "https://intave.de/api/versions.json",
       TimeUnit.DAYS.toMillis(2)
     );

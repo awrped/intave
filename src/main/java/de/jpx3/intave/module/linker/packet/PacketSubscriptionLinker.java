@@ -10,7 +10,7 @@ import de.jpx3.intave.annotate.DoNotFlowObfuscate;
 import de.jpx3.intave.lib.asm.Type;
 import de.jpx3.intave.module.Module;
 import de.jpx3.intave.module.linker.packet.tinyprotocol.InjectionService;
-import de.jpx3.intave.reflect.irx.IRXFactory;
+import de.jpx3.intave.reflect.irx.IRXClassFactory;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
@@ -202,7 +202,7 @@ public final class PacketSubscriptionLinker extends Module {
     String packetSubscriberSuperClassPath = canonicalRepresentation(className(PacketEventSubscriber.class));
     String packetSubscriberClassPath = canonicalRepresentation(className(target.getClass()));
     String packetEventClassPath = canonicalRepresentation(className(PacketEvent.class));
-    Class<PacketSubscriptionMethodExecutor> executorClass = IRXFactory.assembleCallerClass(
+    Class<PacketSubscriptionMethodExecutor> executorClass = IRXClassFactory.assembleCallerClass(
       PacketSubscriptionLinker.class.getClassLoader(),
       PacketSubscriptionMethodExecutor.class,
       "<generated>",

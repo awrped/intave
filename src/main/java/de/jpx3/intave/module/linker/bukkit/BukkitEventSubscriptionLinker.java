@@ -7,7 +7,7 @@ import de.jpx3.intave.access.IntaveInternalException;
 import de.jpx3.intave.annotate.Relocate;
 import de.jpx3.intave.lib.asm.Type;
 import de.jpx3.intave.module.Module;
-import de.jpx3.intave.reflect.irx.IRXFactory;
+import de.jpx3.intave.reflect.irx.IRXClassFactory;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventException;
 import org.bukkit.event.HandlerList;
@@ -86,7 +86,7 @@ public final class BukkitEventSubscriptionLinker extends Module {
         Set<RegisteredListener> registeredListeners = ret.computeIfAbsent(eventClass, k -> new HashSet<>());
         String listenerClassPath = listenerClass.getCanonicalName().replaceAll("\\.", "/");
         String eventClassPath = eventClass.getCanonicalName().replaceAll("\\.", "/");
-        Class<EventExecutor> executorClass = IRXFactory.assembleCallerClass(
+        Class<EventExecutor> executorClass = IRXClassFactory.assembleCallerClass(
           BukkitEventSubscriptionLinker.class.getClassLoader(),
           EventExecutor.class,
           "<generated>",

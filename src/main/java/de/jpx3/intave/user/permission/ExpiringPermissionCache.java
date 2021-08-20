@@ -28,7 +28,10 @@ public final class ExpiringPermissionCache implements PermissionCache {
 
   @Override
   public void save(String permission, boolean access) {
-    permissionEntries.computeIfAbsent(permission, s -> new ExpiringPermissionCacheEntry(cacheExpiration)).setAccess(access);
+    permissionEntries
+      .computeIfAbsent(permission, s ->
+        new ExpiringPermissionCacheEntry(cacheExpiration))
+      .setAccess(access);
   }
 
   public static class ExpiringPermissionCacheEntry {

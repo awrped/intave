@@ -1,6 +1,7 @@
 package de.jpx3.intave.world.blockshape.boxresolver;
 
 import de.jpx3.intave.adapter.MinecraftVersions;
+import de.jpx3.intave.cleanup.ReferenceMap;
 import de.jpx3.intave.diagnostics.MemoryWatchdog;
 import de.jpx3.intave.world.wrapper.WrappedAxisAlignedBB;
 import org.bukkit.Material;
@@ -15,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public final class VariantCachePipe implements ResolverPipeline {
   private final ResolverPipeline forward;
-  private final Map<Material, Map<Integer, List<WrappedAxisAlignedBB>>> cache = MemoryWatchdog.watch("variant-cache", new ConcurrentHashMap<>());
+  private final Map<Material, ReferenceMap<Integer, List<WrappedAxisAlignedBB>>> cache = MemoryWatchdog.watch("variant-cache", new ConcurrentHashMap<>());
 
   public VariantCachePipe(ResolverPipeline forward) {
     this.forward = forward;
@@ -30,7 +31,7 @@ public final class VariantCachePipe implements ResolverPipeline {
 
   @Override
   public List<WrappedAxisAlignedBB> resolve(World world, Player player, Material type, int blockState, int posX, int posY, int posZ) {
-    Map<Integer, List<WrappedAxisAlignedBB>> variantCache = cache.computeIfAbsent(type, material -> new ConcurrentHashMap<>());
+    Map<Integer, List<WrappedAxisAlignedBB>> variantCache = cache.computeIfAbsent(type, material -> ReferenceMap.soft(new ConcurrentHashMap<>()));
     return transpose(variantCache.computeIfAbsent(blockState, integer -> reposeIfRequired(forward.resolve(world, player, type, blockState, posX, posY, posZ), posX, posY, posZ)), posX, posY, posZ);
   }
 
@@ -48,6 +49,7 @@ public final class VariantCachePipe implements ResolverPipeline {
     for (int i = 0; i < boundingBoxes.size(); i++) {
       WrappedAxisAlignedBB boundingBox = boundingBoxes.get(i);
       if (boundingBox.isOriginBox()) {
+        // use add, since the result list is empty
         result.add(i, boundingBox.offset(posX, posY, posZ));
       }
     }
