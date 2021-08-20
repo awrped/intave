@@ -50,7 +50,7 @@ public final class EntityTracker extends Module {
    TODO: maybe remove entities when their live gets below 0 for 20 ticks. Or debug if entities gets really removed in some kind of root command
    */
   private final IntavePlugin plugin;
-  private final PacketEntityTypeResolver entityTypeResolver;
+  private final EntityTypeResolver entityTypeResolver;
 
   private final static boolean NEW_POSITION_PROCESSING_1_9 = ProtocolLibraryAdapter.serverVersion().isAtLeast(MinecraftVersions.VER1_9_0);
   private final static boolean HEALTH_PROCESSING_1_10 = ProtocolLibraryAdapter.serverVersion().isAtLeast(MinecraftVersions.VER1_10_0);
@@ -58,7 +58,7 @@ public final class EntityTracker extends Module {
 
   public EntityTracker(IntavePlugin plugin) {
     this.plugin = plugin;
-    this.entityTypeResolver = new PacketEntityTypeResolver(plugin);
+    this.entityTypeResolver = new EntityTypeResolver(plugin);
 //    plugin.packetSubscriptionLinker().linkSubscriptionsIn(this);
 //    this.setupSynchronizer();
   }

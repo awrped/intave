@@ -5,6 +5,7 @@ package de.jpx3.intave.connect.shadow;
  * Created by Richard Strunk 2021
  */
 
+@Deprecated
 public enum ShadowStatus {
   RESET_ID(0),
   ENABLE(1),

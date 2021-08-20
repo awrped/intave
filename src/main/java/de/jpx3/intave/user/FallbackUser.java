@@ -23,13 +23,12 @@ import de.jpx3.intave.world.collider.simple.SimpleColliderProcessor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 @Relocate
-public final class FallbackUser implements User {
+final class FallbackUser implements User {
   private final MetadataBundle metadata;
   private final PermissionCache permissionCache;
   private final ComplexColliderProcessor complexColliderProcessor;
@@ -154,14 +153,6 @@ public final class FallbackUser implements User {
   }
 
   @Override
-  public void setBlockShapeAccess(OCBlockShapeAccess newBlockShapeAccess) {
-    if (blockShapeAccess != null) {
-      newBlockShapeAccess.applyFrom(blockShapeAccess);
-    }
-    blockShapeAccess = newBlockShapeAccess;
-  }
-
-  @Override
   public OCBlockShapeAccess blockShapeAccess() {
     return blockShapeAccess;
   }
@@ -242,8 +233,8 @@ public final class FallbackUser implements User {
   }
 
   @Override
-  public Map<Pose, HitBoxBoundaries> poseSizes() {
-    return poseSizes;
+  public HitBoxBoundaries sizeOf(Pose pose) {
+    return poseSizes.get(pose);
   }
 
   @Override
@@ -255,8 +246,8 @@ public final class FallbackUser implements User {
   }
 
   @Override
-  public Map<Material, Material> typeTranslations() {
-    return Collections.emptyMap();
+  public Material typeTranslationOf(Material source) {
+    return null;
   }
 
   @Override

@@ -75,11 +75,11 @@ public final class BlockTypeAccess {
   }
 
   public static boolean hasTranslation(User user, Material origin) {
-    return user.typeTranslations().get(origin) != null;
+    return user.typeTranslationOf(origin) != null;
   }
 
   private static Material translate(User user, Material origin) {
-    Material alternative = user.typeTranslations().get(origin);
+    Material alternative = user.typeTranslationOf(origin);
     return alternative == null ? origin : alternative;
   }
 }

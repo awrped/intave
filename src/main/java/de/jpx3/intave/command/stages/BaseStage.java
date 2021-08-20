@@ -54,6 +54,7 @@ public final class BaseStage extends CommandStage {
     }
 
     user.toggleReceive(MessageChannel.VERBOSE);
+    user.removeChannelConstraint(MessageChannel.VERBOSE);
 
     if (receivesVerbose) {
       player.sendMessage(IntavePlugin.prefix() + "You are " + ChatColor.RED + "no longer " + IntavePlugin.defaultColor() + "receiving verbose output");

@@ -19,7 +19,6 @@ import de.jpx3.intave.user.meta.MovementMetadata;
 import de.jpx3.intave.user.meta.ViolationMetadata;
 import de.jpx3.intave.violation.Violation;
 import de.jpx3.intave.violation.ViolationContext;
-import de.jpx3.intave.world.collider.complex.ComplexColliderSimulationResult;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
@@ -181,18 +180,19 @@ public final class Timer extends MetaCheck<Timer.TimerData> {
     }
   }
 
-  public void checkSetback(PacketEvent event) {
-    Player player = event.getPlayer();
-    User user = userOf(player);
-    MovementMetadata movementData = user.meta().movement();
-    TimerData timerData = metaOf(user);
-    if (timerData.flagTick) {
-      ComplexColliderSimulationResult result = this.simulationProcessor.simulateMovementWithoutKeyPress(user);
-      Vector bukkitVector = result.context().toBukkitVector();
-      plugin.eventService().emulationEngine().emulationSetBack(player, bukkitVector, 6, false);
-      movementData.invalidMovement = true;
-    }
-  }
+//  @Deprecated
+//  public void checkSetback(PacketEvent event) {
+//    Player player = event.getPlayer();
+//    User user = userOf(player);
+//    MovementMetadata movementData = user.meta().movement();
+//    TimerData timerData = metaOf(user);
+//    if (timerData.flagTick) {
+//      ComplexColliderSimulationResult result = this.simulationProcessor.simulateMovementWithoutKeyPress(user);
+//      Vector bukkitVector = result.context().toBukkitVector();
+//      plugin.eventService().emulationEngine().emulationSetBack(player, bukkitVector, 6, false);
+//      movementData.invalidMovement = true;
+//    }
+//  }
 
   @Override
   public boolean enabled() {

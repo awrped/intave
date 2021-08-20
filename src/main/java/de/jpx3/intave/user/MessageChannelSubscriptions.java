@@ -28,12 +28,12 @@ public final class MessageChannelSubscriptions {
 
   private final static Map<MessageChannel, List<Player>> messageChannelSubscriptions = new ConcurrentHashMap<>();
 
-  public static Collection<? extends Player> receiverOf(MessageChannel channel) {
+  public static Collection<Player> receiverOf(MessageChannel channel) {
     return messageChannelSubscriptions.computeIfAbsent(channel, theChannel -> new CopyOnWriteArrayList<>());
   }
 
   public static void setChannelActivation(Player player, MessageChannel channel, boolean status) {
-    Collection<Player> players = messageChannelSubscriptions.computeIfAbsent(channel, theChannel -> new CopyOnWriteArrayList<>());
+    Collection<Player> players = receiverOf(channel);
     if (status) {
       if (!players.contains(player)) {
         players.add(player);

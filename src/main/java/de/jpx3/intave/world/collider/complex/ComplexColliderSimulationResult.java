@@ -3,7 +3,7 @@ package de.jpx3.intave.world.collider.complex;
 import de.jpx3.intave.detect.checks.movement.physics.MotionVector;
 import de.jpx3.intave.math.MathHelper;
 
-public class ComplexColliderSimulationResult {
+public final class ComplexColliderSimulationResult {
   private final static ComplexColliderSimulationResult INVALID_SIMULATION = new ComplexColliderSimulationResult(
     new MotionVector(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE), false, false, false, false, false, false
   );
@@ -34,7 +34,7 @@ public class ComplexColliderSimulationResult {
     return MathHelper.distanceOf(context, motionVector);
   }
 
-  public MotionVector context() {
+  public MotionVector motion() {
     return context;
   }
 

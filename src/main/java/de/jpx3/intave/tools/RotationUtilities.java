@@ -16,6 +16,7 @@ public final class RotationUtilities {
     return sum / data.size();
   }
 
+  @Deprecated
   public static double calculateStandardDeviation(List<? extends Number> sd) {
     double sum = 0, newSum = 0;
     for (Number v : sd) {
@@ -28,6 +29,7 @@ public final class RotationUtilities {
     return Math.sqrt(newSum / sd.size());
   }
 
+  /*
   public static double gcdExact(double a, double b) {
     double r;
     while ((r = a % b) > 0) {
@@ -50,5 +52,5 @@ public final class RotationUtilities {
 
   public static float resolveSensitivity(float gcd) {
     return (float) ((Math.cbrt(gcd / 8.0f) - 0.2f) / 0.6f * 2f);
-  }
+  }*/
 }

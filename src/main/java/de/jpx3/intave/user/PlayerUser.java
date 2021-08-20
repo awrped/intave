@@ -52,7 +52,7 @@ import static de.jpx3.intave.user.meta.ProtocolMetadata.VER_1_13;
 import static de.jpx3.intave.user.meta.ProtocolMetadata.VER_1_9;
 
 @Relocate
-public final class PlayerUser implements User {
+final class PlayerUser implements User {
   private final Map<Class<? extends CheckCustomMetadata>, CheckCustomMetadata> customMetaPool = new ConcurrentHashMap<>();
 
   private final WeakReference<Player> player;
@@ -63,7 +63,7 @@ public final class PlayerUser implements User {
   private final ComplexColliderProcessor complexColliderProcessor;
   private final SimpleColliderProcessor simpleColliderProcessor;
   private final List<MessageChannel> receivingUserChannels = new ArrayList<>();
-  private final Map<MessageChannel, Predicate<Player>> receiveWhitelist = Maps.newEnumMap(MessageChannel.class);
+  private final Map<MessageChannel, Predicate<Player>> channelConstraints = Maps.newEnumMap(MessageChannel.class);
   private final Map<Material, Material> typeTranslations = Maps.newHashMap();
   private final Map<Pose, HitBoxBoundaries> poseSizes;
   private OCBlockShapeAccess blockShapeAccess;
@@ -104,6 +104,7 @@ public final class PlayerUser implements User {
     for (MessageChannel channel : MessageChannel.values()) {
       if (channel.enabledByDefault && BukkitPermissionCheck.permissionCheck(player(), channel.permission())) {
         toggleReceive(channel);
+        removeChannelConstraint(channel);
       }
     }
   }
@@ -165,15 +166,13 @@ public final class PlayerUser implements User {
 
   @Override
   public CheckCustomMetadata checkMetadata(Class<? extends CheckCustomMetadata> classTarget) {
-    CheckCustomMetadata checkCustomMetadata = customMetaPool.get(classTarget);
-    if (checkCustomMetadata == null) {
+    return customMetaPool.computeIfAbsent(classTarget, aClass -> {
       try {
-        customMetaPool.put(classTarget, checkCustomMetadata = classTarget.newInstance());
+        return aClass.newInstance();
       } catch (InstantiationException | IllegalAccessException exception) {
-        exception.printStackTrace();
+        throw new IllegalStateException(exception);
       }
-    }
-    return checkCustomMetadata;
+    });
   }
 
   @Override
@@ -242,14 +241,6 @@ public final class PlayerUser implements User {
   }
 
   @Override
-  public void setBlockShapeAccess(OCBlockShapeAccess newBlockShapeAccess) {
-    if (blockShapeAccess != null) {
-      newBlockShapeAccess.applyFrom(blockShapeAccess);
-    }
-    blockShapeAccess = newBlockShapeAccess;
-  }
-
-  @Override
   public OCBlockShapeAccess blockShapeAccess() {
     return blockShapeAccess;
   }
@@ -300,24 +291,23 @@ public final class PlayerUser implements User {
       receivingUserChannels.remove(channel);
     } else {
       receivingUserChannels.add(channel);
-      removeChannelConstraint(channel);
     }
     MessageChannelSubscriptions.setChannelActivation(player(), channel, !remove);
   }
 
   @Override
   public void setChannelConstraint(MessageChannel channel, Predicate<Player> constraint) {
-    receiveWhitelist.put(channel, constraint);
+    channelConstraints.put(channel, constraint);
   }
 
   @Override
   public boolean hasChannelConstraint(MessageChannel channel) {
-    return receiveWhitelist.containsKey(channel);
+    return channelConstraints.containsKey(channel);
   }
 
   @Override
   public Predicate<Player> channelPlayerConstraint(MessageChannel channel) {
-    return receiveWhitelist.get(channel);
+    return channelConstraints.get(channel);
   }
 
   @Override
@@ -331,7 +321,7 @@ public final class PlayerUser implements User {
 
   @Override
   public void removeChannelConstraint(MessageChannel channel) {
-    receiveWhitelist.remove(channel);
+    channelConstraints.remove(channel);
   }
 
   @Override
@@ -350,8 +340,8 @@ public final class PlayerUser implements User {
   }
 
   @Override
-  public Map<Pose, HitBoxBoundaries> poseSizes() {
-    return poseSizes;
+  public HitBoxBoundaries sizeOf(Pose pose) {
+    return poseSizes.get(pose);
   }
 
   @Override
@@ -366,8 +356,8 @@ public final class PlayerUser implements User {
   }
 
   @Override
-  public Map<Material, Material> typeTranslations() {
-    return typeTranslations;
+  public Material typeTranslationOf(Material source) {
+    return typeTranslations.get(source);
   }
 
   @Override

@@ -21,6 +21,7 @@ import org.bukkit.entity.Player;
 
 import java.lang.reflect.InvocationTargetException;
 
+@Deprecated
 public final class LabymodShadowIntegration {
   private final static int SHADOW_VERSION = 1;
   private final IntavePlugin plugin;

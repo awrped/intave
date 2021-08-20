@@ -298,7 +298,7 @@ public class DefaultSimulator extends Simulator {
 
   public void notePossibleFlyingPacket(User user, ComplexColliderSimulationResult collisionResult) {
     MovementMetadata movementData = user.meta().movement();
-    MotionVector context = collisionResult.context();
+    MotionVector context = collisionResult.motion();
     if (flyingPacket(context.motionX, context.motionY, context.motionZ)) {
       movementData.resetFlyingPacketAccurate();
     }

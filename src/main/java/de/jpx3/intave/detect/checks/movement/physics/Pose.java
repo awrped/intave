@@ -62,6 +62,6 @@ public enum Pose {
   }
 
   private HitBoxBoundaries size(User user) {
-    return user.poseSizes().get(this);
+    return user.sizeOf(this);
   }
 }

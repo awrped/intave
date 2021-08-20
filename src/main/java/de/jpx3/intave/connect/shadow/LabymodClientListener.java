@@ -17,6 +17,7 @@ import java.util.function.BiConsumer;
 
 import static de.jpx3.intave.module.linker.packet.PacketId.Client.CUSTOM_PAYLOAD;
 
+@Deprecated
 public final class LabymodClientListener implements PacketEventSubscriber {
   private final static JsonParser jsonParser = new JsonParser();
 

@@ -24,7 +24,7 @@ import java.util.concurrent.*;
 import java.util.logging.Level;
 import java.util.zip.GZIPOutputStream;
 
-public class Metrics {
+public final class Metrics {
 
   // The version of this bStats class
   public static final int B_STATS_VERSION = 1;

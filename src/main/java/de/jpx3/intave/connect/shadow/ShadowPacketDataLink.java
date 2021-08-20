@@ -5,6 +5,7 @@ import de.jpx3.intave.user.User;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Deprecated
 public final class ShadowPacketDataLink {
   private final User user;
   private Map<Object, ShadowContext> movementLink = new ConcurrentHashMap<>(512);

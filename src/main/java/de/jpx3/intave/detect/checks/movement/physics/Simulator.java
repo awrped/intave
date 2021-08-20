@@ -27,7 +27,7 @@ public abstract class Simulator {
     return "";
   }
 
-  public Physics physics() {
+  protected Physics physics() {
     return physics;
   }
 

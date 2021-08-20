@@ -1,5 +1,6 @@
 package de.jpx3.intave.connect.shadow;
 
+@Deprecated
 public final class ShadowContext {
   private final long time;
   private final double moveForward;

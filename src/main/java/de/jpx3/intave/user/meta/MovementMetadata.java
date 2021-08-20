@@ -8,13 +8,15 @@ import de.jpx3.intave.annotate.DispatchTarget;
 import de.jpx3.intave.annotate.Nullable;
 import de.jpx3.intave.annotate.Relocate;
 import de.jpx3.intave.annotate.refactoring.IdoNotBelongHere;
-import de.jpx3.intave.detect.checks.movement.physics.*;
+import de.jpx3.intave.detect.checks.movement.physics.MotionVector;
+import de.jpx3.intave.detect.checks.movement.physics.Pose;
+import de.jpx3.intave.detect.checks.movement.physics.Simulator;
+import de.jpx3.intave.detect.checks.movement.physics.Simulators;
 import de.jpx3.intave.math.SinusCache;
 import de.jpx3.intave.module.tracker.entity.WrappedEntity;
 import de.jpx3.intave.reflect.access.ReflectiveDataWatcherAccess;
 import de.jpx3.intave.reflect.access.ReflectiveHandleAccess;
 import de.jpx3.intave.tools.MovementContext;
-import de.jpx3.intave.tools.RotationHelper;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserRepository;
 import de.jpx3.intave.world.blockaccess.BukkitBlockAccess;
@@ -78,7 +80,6 @@ public final class MovementMetadata {
   public float lastRotationYaw, lastRotationPitch;
   private Pose pose = Pose.STANDING;
   private Simulator simulator = Simulators.PLAYER;
-  private final SimulationProcessor.IterativeSimulationContext iterativeSimulation = new SimulationProcessor.IterativeSimulationContext();
   private Material blockOnPosition = Material.AIR;
 
   // Timestamps
@@ -265,7 +266,7 @@ public final class MovementMetadata {
       StructureModifier<Float> modifier = packet.getFloat();
       rotationYaw = modifier.read(0);
       rotationPitch = modifier.read(1);
-      lookVector = RotationHelper.vectorForRotation(rotationPitch, rotationYaw);
+      lookVector = vectorForRotation(rotationYaw, rotationPitch);
       yawSine = SinusCache.sin(rotationYaw * (float) Math.PI / 180.0F, false);
       yawCosine = SinusCache.cos(rotationYaw * (float) Math.PI / 180.0F, false);
     }
@@ -274,6 +275,16 @@ public final class MovementMetadata {
       updateElytra();
     }
     updatePose();
+  }
+
+  private Vector vectorForRotation(float yaw, float pitch) {
+    float f = pitch * ((float)Math.PI / 180F);
+    float f1 = -yaw * ((float)Math.PI / 180F);
+    float f2 = WrappedMathHelper.cos(f1);
+    float f3 = WrappedMathHelper.sin(f1);
+    float f4 = WrappedMathHelper.cos(f);
+    float f5 = WrappedMathHelper.sin(f);
+    return new Vector(f3 * f4, -f5, (double)(f2 * f4));
   }
 
   @IdoNotBelongHere
@@ -636,10 +647,6 @@ public final class MovementMetadata {
 
   public WrappedAxisAlignedBB boundingBox() {
     return boundingBox;
-  }
-
-  public SimulationProcessor.IterativeSimulationContext iterativeSimulation() {
-    return iterativeSimulation;
   }
 
   public double resetMotion() {

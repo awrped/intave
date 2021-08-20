@@ -65,7 +65,7 @@ public final class Physics extends Check {
     super("Physics", "physics");
     this.plugin = plugin;
     this.decrementer = new CheckViolationLevelDecrementer(this, VL_DECREMENT_PER_VALID_MOVE * 20);
-    this.simulationProcessor = new SimulationProcessor();
+    this.simulationProcessor = new DoublePredictionSimulationProcessor();
     this.simulationEvaluator = new SimulationEvaluator();
 
     highToleranceMode = configuration().settings().boolBy("high-tolerance", false);
@@ -260,7 +260,7 @@ public final class Physics extends Check {
     ViolationMetadata violationLevelData = meta.violationLevel();
     AbilityMetadata abilityData = meta.abilities();
     OCBlockShapeAccess blockShapeAccess = user.blockShapeAccess();
-    MotionVector context = expectedMovement.context();
+    MotionVector context = expectedMovement.motion();
 
     int keyForward = movementData.keyForward;
     int keyStrafe = movementData.keyStrafe;
@@ -329,8 +329,8 @@ public final class Physics extends Check {
     }
     if (distance > 1e-3) {
       movementData.suspiciousMovement = true;
-      ComplexColliderSimulationResult entityCollisionResult = simulationProcessor.simulateMovementWithoutKeyPress(user);
-      MotionVector setbackMotion = entityCollisionResult.context();
+      ComplexColliderSimulationResult simulation = simulationProcessor.simulateMovementWithoutKeyPress(user, selectSimulator(user));
+      MotionVector setbackMotion = simulation.motion();
       predictedX = setbackMotion.motionX;
       predictedY = setbackMotion.motionY;
       predictedZ = setbackMotion.motionZ;
@@ -365,7 +365,7 @@ public final class Physics extends Check {
         double blockPositionZ = (boundingBox.minZ + boundingBox.maxZ) / 2.0;
         Block block = BukkitBlockAccess.blockAccess(player.getWorld(), blockPositionX, blockPositionY, blockPositionZ);
         boolean currentlyInOverride = blockShapeAccess.currentlyInOverride(WrappedMathHelper.floor(blockPositionX), WrappedMathHelper.floor(blockPositionY), WrappedMathHelper.floor(blockPositionZ));
-        boolean altered = BlockTypeAccess.hasTranslation(user, block.getType());
+        boolean altered = BlockTypeAccess.hasTranslation(user, BlockTypeAccess.typeAccess(block));
 
         String colliderName;
         if (!Collision.blockInsideBorder(player.getWorld(), blockPositionX, blockPositionZ)) {
