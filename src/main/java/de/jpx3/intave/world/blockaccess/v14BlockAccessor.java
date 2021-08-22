@@ -62,7 +62,7 @@ public final class v14BlockAccessor implements BlockAccessor {
     if (blockAccess == null) {
       return Blocks.AIR;
     }
-    return blockAccess.getType(positionOfBlock(block)).getBlock();
+    return blockAccess.getType(positionOfBlock(block));
   }
 
   @Override
