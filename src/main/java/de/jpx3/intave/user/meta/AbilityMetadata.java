@@ -27,8 +27,8 @@ public final class AbilityMetadata {
   private boolean flying;
   private boolean allowFlying;
 
-  private PlayerAbilityTracker.GameMode gameMode;
-  private PlayerAbilityTracker.GameMode pendingGameMode;
+  private PlayerAbilityTracker.GameMode gameMode = PlayerAbilityTracker.GameMode.NOT_SET;
+  private PlayerAbilityTracker.GameMode pendingGameMode = PlayerAbilityTracker.GameMode.NOT_SET;
 
   private float flySpeed = 0.05f;
   private float walkSpeed = 0.1f;

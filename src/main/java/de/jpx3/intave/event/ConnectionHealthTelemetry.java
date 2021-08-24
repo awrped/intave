@@ -2,8 +2,10 @@ package de.jpx3.intave.event;
 
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
+import de.jpx3.intave.IntaveControl;
 import de.jpx3.intave.IntaveLogger;
 import de.jpx3.intave.IntavePlugin;
+import de.jpx3.intave.executor.TaskTracker;
 import de.jpx3.intave.math.MathHelper;
 import de.jpx3.intave.module.linker.packet.PacketEventSubscriber;
 import de.jpx3.intave.module.linker.packet.PacketId;
@@ -26,16 +28,27 @@ public final class ConnectionHealthTelemetry implements PacketEventSubscriber {
     this.plugin = plugin;
     this.plugin.packetSubscriptionLinker().linkSubscriptionsIn(this);
 
-    this.plugin.getServer().getScheduler().scheduleAsyncRepeatingTask(plugin, () -> {
+    int taskId = this.plugin.getServer().getScheduler().scheduleAsyncRepeatingTask(plugin, () -> {
       for (Player player : Bukkit.getOnlinePlayers()) {
         User user = UserRepository.userOf(player);
         long dur = AccessHelper.now() - lastKeepAliveResponse(user);
         if (TIMEOUT_DURATION < dur) {
           IntaveLogger.logger().pushPrintln("[Intave] " + player.getName() + " was not responding to keep-alive packets for at least 30 seconds");
           user.synchronizedDisconnect("Timed out");
+          if (IntaveControl.NETTY_DUMP_ON_TIMEOUT) {
+            Thread.getAllStackTraces().forEach((thread, stackTraceElements) -> {
+              if (thread.getName().contains("Netty")) {
+                System.out.println("Thread:" + thread.getName());
+                Exception exception = new Exception();
+                exception.setStackTrace(stackTraceElements);
+                exception.printStackTrace();
+              }
+            });
+          }
         }
       }
     }, 0, (TIMEOUT_DURATION / 50) / 2);
+    TaskTracker.begun(taskId);
   }
 
   private long lastKeepAliveResponse(User user) {

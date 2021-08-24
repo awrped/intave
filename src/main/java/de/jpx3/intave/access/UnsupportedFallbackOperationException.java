@@ -1,5 +1,7 @@
 package de.jpx3.intave.access;
 
+import de.jpx3.intave.IntaveControl;
+
 /**
  * This exception is not used
  */
@@ -16,12 +18,16 @@ public final class UnsupportedFallbackOperationException extends IntaveInternalE
 
   @Override
   public void setStackTrace(StackTraceElement[] stackTrace) {
-    super.setStackTrace(new StackTraceElement[0]);
+    super.setStackTrace(stackTrace);
   }
 
   @Override
   public synchronized Throwable fillInStackTrace() {
-    this.setStackTrace(new StackTraceElement[0]);
-    return this;
+    if (!IntaveControl.FILL_UFOE_STACKTRACE) {
+      this.setStackTrace(new StackTraceElement[0]);
+      return this;
+    } else {
+      return super.fillInStackTrace();
+    }
   }
 }

@@ -27,7 +27,7 @@ import static de.jpx3.intave.event.feedback.FeedbackService.TransactionOptions.*
 
 public final class FeedbackService implements PacketEventSubscriber {
   public final static boolean USE_PING_PONG_PACKETS = MinecraftVersions.VER1_17_0.atOrAbove();
-  public final static long TRANSACTION_TIMEOUT = 3000;
+  public final static long TRANSACTION_TIMEOUT = 2000;
   public final static long TRANSACTION_TIMEOUT_KICK = TimeUnit.SECONDS.toMillis(40);
   public final static short TRANSACTION_MIN_CODE = -32768;
   public final static short TRANSACTION_MAX_CODE = -16370;
@@ -47,15 +47,24 @@ public final class FeedbackService implements PacketEventSubscriber {
     Player player, PacketEvent event, T target,
     Callback<T> firstCallback, Callback<T> secondCallback
   ) {
-    doubleSynchronize(player, event, target, firstCallback, secondCallback, 0);
+    doubleSynchronize(player, event, target, firstCallback, secondCallback, null, null);
   }
 
   public <T> void doubleSynchronize(
     Player player, PacketEvent event, T target,
     Callback<T> firstCallback, Callback<T> secondCallback,
+    FeedbackTracker firstTracker, FeedbackTracker secondTracker
+  ) {
+    doubleSynchronize(player, event, target, firstCallback, secondCallback, firstTracker, secondTracker, 0);
+  }
+
+  public <T> void doubleSynchronize(
+    Player player, PacketEvent event, T target,
+    Callback<T> firstCallback, Callback<T> secondCallback,
+    FeedbackTracker firstTracker, FeedbackTracker secondTracker,
     int options
   ) {
-    doubleSynchronize(player, event.getPacket(), target, firstCallback, secondCallback, options);
+    doubleSynchronize(player, event.getPacket(), target, firstCallback, secondCallback, firstTracker, secondTracker, options);
     event.setCancelled(true);
   }
 
@@ -63,18 +72,19 @@ public final class FeedbackService implements PacketEventSubscriber {
     Player player, PacketContainer encapsulate,
     T target, Callback<T> firstCallback, Callback<T> secondCallback
   ) {
-    doubleSynchronize(player, encapsulate, target, firstCallback, secondCallback, 0);
+    doubleSynchronize(player, encapsulate, target, firstCallback, secondCallback, null, null, 0);
   }
 
   public <T> void doubleSynchronize(
     Player player,
     PacketContainer encapsulate, T target,
     Callback<T> firstCallback, Callback<T> secondCallback,
+    FeedbackTracker firstTracker, FeedbackTracker secondTracker,
     int options
   ) {
     if (!Bukkit.isPrimaryThread()) {
       if (TransactionOptions.matches(SELF_SYNCHRONIZATION, options)) {
-        Synchronizer.synchronize(() -> doubleSynchronize(player, encapsulate, target, firstCallback, secondCallback, options));
+        Synchronizer.synchronize(() -> doubleSynchronize(player, encapsulate, target, firstCallback, secondCallback, firstTracker, secondTracker, options));
       } else {
         IntaveLogger.logger().error("Can't perform tick-validation off main thread");
         IntaveLogger.logger().error("Please check if you sent a packet / performed a bukkit player action asynchronously in the following trace:");
@@ -88,24 +98,30 @@ public final class FeedbackService implements PacketEventSubscriber {
     if (user == null || !user.hasPlayer()) {
       return;
     }
-    singleSynchronize(player, target, firstCallback, options);
+    singleSynchronize(player, target, firstCallback, firstTracker, options);
     user.ignoreNextOutboundPacket();
     sendPacket(player, encapsulate);
-    singleSynchronize(player, target, secondCallback, options);
+    singleSynchronize(player, target, secondCallback, secondTracker, options);
   }
 
-  public <T> void singleSynchronize(
-    Player player, T target, Callback<T> callback
-  ) {
+  public <T> void singleSynchronize(Player player, T target, Callback<T> callback) {
     singleSynchronize(player, target, callback, 0);
   }
 
+  public <T> void singleSynchronize(Player player, T target, Callback<T> callback, FeedbackTracker tracker) {
+    singleSynchronize(player, target, callback, tracker, 0);
+  }
+
+  public <T> void singleSynchronize(Player player, T target, Callback<T> callback, int options) {
+    singleSynchronize(player, target, callback, null, options);
+  }
+
   public <T> void singleSynchronize(
-    Player player, T target, Callback<T> callback, int options
+    Player player, T target, Callback<T> callback, FeedbackTracker tracker, int options
   ) {
     if (!Bukkit.isPrimaryThread()) {
       if (TransactionOptions.matches(SELF_SYNCHRONIZATION, options)) {
-        Synchronizer.synchronize(() -> singleSynchronize(player, target, callback, options));
+        Synchronizer.synchronize(() -> singleSynchronize(player, target, callback, tracker, options));
       } else {
         IntaveLogger.logger().error("Can't perform tick-validation off main thread");
         IntaveLogger.logger().error("Please check if you sent a packet / performed a bukkit player action asynchronously in the following trace:");
@@ -132,7 +148,8 @@ public final class FeedbackService implements PacketEventSubscriber {
       return;
     }
     countTransactionPacket(player);
-    sendTransactionPacket(player, acquireNewId(player, target, callback));
+    Request<T> request = createRequest(player, target, callback, tracker);
+    performRequest(player, request);
   }
 
   private final static Object FALLBACK_OBJECT = new Object();
@@ -152,11 +169,11 @@ public final class FeedbackService implements PacketEventSubscriber {
       //noinspection unchecked
       obj = (T) FALLBACK_OBJECT;
     }
-    queue.add(new Request<>(callback, obj, (short) -1, -1));
+    queue.add(new Request<>(callback, null, obj, (short) -1, -1));
   }
 
-  private /* synchronized (is already always sync) */ <T> short acquireNewId(
-    Player player, T obj, Callback<T> callback
+  private /* synchronized (is already always sync) */ <T> Request<T> createRequest(
+    Player player, T obj, Callback<T> callback, FeedbackTracker tracker
   ) {
     User user = UserRepository.userOf(player);
     ConnectionMetadata synchronizeData = user.meta().connection();
@@ -169,10 +186,11 @@ public final class FeedbackService implements PacketEventSubscriber {
       //noinspection unchecked
       obj = (T) FALLBACK_OBJECT;
     }
-    Request<T> feedbackEntry = new Request<>(callback, obj, transactionKey, transactionNumCounter);
+    Request<T> feedbackEntry = new Request<>(callback, tracker, obj, transactionKey, transactionNumCounter);
     synchronizeData.transactionShortKeyMap().put(transactionKey, feedbackEntry);
     synchronizeData.transactionGlobalKeyMap().put(transactionNumCounter, feedbackEntry);
-    return transactionKey;
+//    return transactionKey;
+    return feedbackEntry;
   }
 
   private synchronized short findAvailableTransactionIdFor(Player player) {
@@ -195,7 +213,8 @@ public final class FeedbackService implements PacketEventSubscriber {
     }
   }
 
-  private void sendTransactionPacket(Player receiver, short id) {
+  private void performRequest(Player receiver, Request<?> request) {
+    short id = request.key();
     PacketContainer packet;
     if (USE_PING_PONG_PACKETS) {
       packet = protocolManager.createPacket(PacketType.Play.Server.PING);
@@ -207,6 +226,7 @@ public final class FeedbackService implements PacketEventSubscriber {
       packet.getBooleans().write(0, false);
     }
     sendPacket(receiver, packet);
+    request.sent();
   }
 
   private void sendPacket(Player receiver, PacketContainer packet) {

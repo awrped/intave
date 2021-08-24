@@ -35,7 +35,7 @@ public final class ClassLocation extends Location {
     return location.replace("{version}", Lookup.version());
   }
 
-  public static ClassLocation nmsDefaultFor(String name) {
+  public static ClassLocation defaultFor(String name) {
     return new ClassLocation(name, IntegerMatcher.between(8, 16), "net.minecraft.server.{version}." + name);
   }
 }

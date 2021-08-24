@@ -41,7 +41,7 @@ public final class UserRepository {
   }
 
   public static User userOf(Player player) {
-    // in Germany, we call this YOLO
+    // in Germany, we call this YOLOOOOOOOOOOOOOOO
 
 //    if (player == null) {
 //      return fallbackUser;
@@ -62,7 +62,8 @@ public final class UserRepository {
 //      }
 //    }
 
-    return repository.getOrDefault(player.getUniqueId(), fallbackUser);
+    User user = repository.get(player.getUniqueId());
+    return user != null ? user : fallbackUser;
   }
 
   public static void die() {

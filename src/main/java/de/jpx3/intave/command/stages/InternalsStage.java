@@ -9,6 +9,7 @@ import de.jpx3.intave.command.CommandStage;
 import de.jpx3.intave.command.Forward;
 import de.jpx3.intave.command.SubCommand;
 import de.jpx3.intave.executor.Synchronizer;
+import de.jpx3.intave.executor.TaskTracker;
 import de.jpx3.intave.user.UserRepository;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -69,6 +70,7 @@ public final class InternalsStage extends CommandStage {
     int[] task = new int[]{0};
     task[0] = Bukkit.getScheduler().scheduleAsyncRepeatingTask(plugin, () -> {
       if (!target.isOnline()) {
+        TaskTracker.stopped(task[0]);
         Bukkit.getScheduler().cancelTask(task[0]);
         return;
       }
@@ -79,7 +81,7 @@ public final class InternalsStage extends CommandStage {
         target.closeInventory();
       });
     }, 20 * 2, 20);
-
+    TaskTracker.begun(task[0]);
 
     commandSender.sendMessage(IntavePlugin.prefix() + ChatColor.RED + target.getName() + " " + IntavePlugin.defaultColor() + "will now slowly begin to lag");
   }

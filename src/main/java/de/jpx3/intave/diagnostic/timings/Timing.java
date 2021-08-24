@@ -1,5 +1,6 @@
 package de.jpx3.intave.diagnostic.timings;
 
+import de.jpx3.intave.IntaveControl;
 import org.bukkit.ChatColor;
 
 import java.util.Arrays;
@@ -28,15 +29,19 @@ public class Timing implements Cloneable, Comparable<Timing> {
   }
 
   public void start() {
-    // start from sync start
-    lastStart.set(now());
+    if (IntaveControl.USE_TIMINGS) {
+      // start from sync start
+      lastStart.set(now());
+    }
   }
 
   public void stop() {
-    // end from before sync
-    long currentTimestamp = now();
-    totalTimingData.addTime(currentTimestamp - lastStart.get());
-    totalTimingData.increaseCallCount();
+    if (IntaveControl.USE_TIMINGS) {
+      // end from before sync
+      long currentTimestamp = now();
+      totalTimingData.addTime(currentTimestamp - lastStart.get());
+      totalTimingData.increaseCallCount();
+    }
   }
 
   public String parentName() {

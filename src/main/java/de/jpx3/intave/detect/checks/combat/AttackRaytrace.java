@@ -123,18 +123,29 @@ public final class AttackRaytrace extends MetaCheck<AttackRaytrace.AttackRaytrac
       attackRaytraceMeta.pendingAttacks.clear();
       return;
     }
+
+    // make player trustfactor dependent
+    int maximumPendingFeedbackPackets = trustFactorSetting("pending-allowance", player);
+
     List<Attack> remainingAttacks = attackRaytraceMeta.pendingAttacks;
     for (Attack remainingAttack : remainingAttacks) {
       statisticApply(user, CheckStatistics::increaseTotal);
       WrappedEntity entity = entityByIdentifier(user, remainingAttack.entityId());
+
       Boolean cancelHit = null;
       AbilityMetadata abilityData = user.meta().abilities();
       float unsynchronizedHealth = abilityData.unsynchronizedHealth;
 
       // bypass when the entity is null or on entities which are riding and players which are mounted on entities
       if (entity != null) {
+        long pendingFeedbackPackets = entity.pendingFeedbackPackets();
+//        player.sendMessage(String.valueOf(pendingFeedbackPackets));
+
         // stops raytrace if the entity is null or the player is in the death screen
-        if (unsynchronizedHealth > 0 && !(entity instanceof DestroyedWrappedEntity)) {
+        boolean entityIsAlive = unsynchronizedHealth > 0 && !(entity instanceof DestroyedWrappedEntity);
+        boolean entityHasNotTimedOut = pendingFeedbackPackets < maximumPendingFeedbackPackets;
+
+        if (entityIsAlive && entityHasNotTimedOut) {
           if (entity.mountedEntity() == null && !player.isInsideVehicle() && entity.entityTypeData.isLivingEntity() && !abilityData.ignoringMovementPackets()) {
             if (clientData.protocolVersion() >= VER_1_9) {
               // >= 1.9.x

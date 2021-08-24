@@ -18,7 +18,7 @@ public final class UserLifetimeService implements BukkitEventSubscriber {
 
   private void synchronizePlayers() {
     for (Player player : Bukkit.getOnlinePlayers()) {
-      if (UserRepository.userOf(player) == null) {
+      if (UserRepository.userOf(player) instanceof FallbackUser) {
         UserRepository.registerUser(player);
       }
       User user = UserRepository.userOf(player);

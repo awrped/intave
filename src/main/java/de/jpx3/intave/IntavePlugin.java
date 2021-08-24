@@ -23,6 +23,7 @@ import de.jpx3.intave.event.CustomEventService;
 import de.jpx3.intave.event.EventService;
 import de.jpx3.intave.executor.BackgroundExecutor;
 import de.jpx3.intave.executor.Synchronizer;
+import de.jpx3.intave.executor.TaskTracker;
 import de.jpx3.intave.fakeplayer.event.FakePlayerEventService;
 import de.jpx3.intave.filter.Filters;
 import de.jpx3.intave.lib.asm.Frame;
@@ -60,6 +61,7 @@ import de.jpx3.intave.world.items.ItemProperties;
 import de.jpx3.intave.world.permission.WorldPermission;
 import de.jpx3.intave.world.raytrace.Raytracing;
 import de.jpx3.intave.world.wrapper.link.WrapperLinkage;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -172,6 +174,7 @@ public final class IntavePlugin extends JavaPlugin {
       // stage 5
       Modules.proceedBoot(BootSegment.STAGE_5);
 
+      TaskTracker.setup();
       Locator.setup();
       SinusCache.setup();
       ReflectiveTPSAccess.setup();
@@ -578,6 +581,10 @@ public final class IntavePlugin extends JavaPlugin {
       logger.info(noticePrefix + ChatColor.RED + "Support for older versions of Java might eventually be dropped");
     }
 
+    if (IntaveControl.NETTY_DUMP_ON_TIMEOUT) {
+      logger.info("This version will dump netty threads when a player times out");
+    }
+
     Modules.linker().packetEvents().refreshLinkages();
     displayVersionInformation();
     logger.info( "Intave booted successfully");
@@ -772,6 +779,7 @@ public final class IntavePlugin extends JavaPlugin {
   public void performShutdown() {
     logger.info("Stopping Intave");
     BackgroundExecutor.stopBlocking();
+    Bukkit.getScheduler().cancelTasks(this);
     Shutdown.executeShutdownTasks();
     deleteIntegrityCache();
     logger.info("Intave offline");

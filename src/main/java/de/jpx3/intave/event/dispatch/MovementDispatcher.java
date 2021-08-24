@@ -185,6 +185,7 @@ public final class MovementDispatcher implements EventProcessor {
         movement.setSprinting(false);
         if (protocol.protocolVersion() >= VER_1_16) {
           movement.sprintReset();
+          user.refreshSprintState();
         }
         movement.physicsMotionX = 0;
         movement.physicsMotionY = 0;

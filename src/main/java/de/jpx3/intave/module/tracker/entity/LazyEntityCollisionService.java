@@ -27,6 +27,9 @@ public final class LazyEntityCollisionService implements BukkitEventSubscriber {
     User user = UserRepository.userOf(player);
     List<Entity> entities = player.getNearbyEntities(5, 5, 5);
     searchCollisions(user, entities);
+    if (!user.hasPlayer()) {
+      user.synchronizedDisconnect("Please reconnect");
+    }
   }
 
   private void searchCollisions(User user, List<Entity> entities) {

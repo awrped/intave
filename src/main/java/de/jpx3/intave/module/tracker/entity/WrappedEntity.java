@@ -5,6 +5,8 @@ import com.comphenix.protocol.reflect.StructureModifier;
 import de.jpx3.intave.access.IntaveInternalException;
 import de.jpx3.intave.adapter.MinecraftVersions;
 import de.jpx3.intave.adapter.ProtocolLibraryAdapter;
+import de.jpx3.intave.event.feedback.FeedbackTracker;
+import de.jpx3.intave.event.feedback.PendingCountingFeedbackTracker;
 import de.jpx3.intave.reflect.hitbox.typeaccess.EntityTypeData;
 import de.jpx3.intave.tool.AccessHelper;
 import de.jpx3.intave.world.wrapper.WrappedAxisAlignedBB;
@@ -62,6 +64,8 @@ public class WrappedEntity implements Cloneable {
   public double distanceToPlayerCache;
   private boolean isClone;
 
+  private PendingCountingFeedbackTracker feedbackTracker;
+
   public WrappedEntity(
     int entityId,
     EntityTypeData entityTypeData,
@@ -74,6 +78,7 @@ public class WrappedEntity implements Cloneable {
     this.position = new EntityPositionContext();
     this.lastPosition = new EntityPositionContext();
     this.alternativePosition = new EntityPositionContext();
+    this.feedbackTracker = new PendingCountingFeedbackTracker();
   }
 
   public static class EntityPositionContext implements Cloneable {
@@ -334,6 +339,14 @@ public class WrappedEntity implements Cloneable {
 
   public void setResponseTracingEnabled(boolean enabledResponseTracing) {
     this.enabledResponseTracing = enabledResponseTracing;
+  }
+
+  public FeedbackTracker feedbackTracker() {
+    return feedbackTracker;
+  }
+
+  public long pendingFeedbackPackets() {
+    return feedbackTracker.pending();
   }
 
   /**

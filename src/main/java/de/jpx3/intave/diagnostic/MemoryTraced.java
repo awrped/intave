@@ -19,7 +19,7 @@ public abstract class MemoryTraced {
   }
 
   public MemoryTraced() {
-    if (IntaveControl.PERFORMANCE_RECORD) {
+    if (IntaveControl.ENABLE_MEMTRACE) {
       objectsLoaded.computeIfAbsent(getClass(), aClass -> new AtomicLong()).incrementAndGet();
     }
   }
@@ -39,7 +39,7 @@ public abstract class MemoryTraced {
 
   @Override
   protected void finalize() throws Throwable {
-    if (IntaveControl.PERFORMANCE_RECORD) {
+    if (IntaveControl.ENABLE_MEMTRACE) {
       objectsLoaded.computeIfAbsent(getClass(), aClass -> new AtomicLong()).decrementAndGet();
     }
   }

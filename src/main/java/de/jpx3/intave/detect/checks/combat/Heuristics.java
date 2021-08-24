@@ -18,6 +18,7 @@ import de.jpx3.intave.detect.checks.combat.heuristics.detection.*;
 import de.jpx3.intave.detect.checks.combat.heuristics.mining.MiningStrategyContainer;
 import de.jpx3.intave.detect.checks.combat.heuristics.mining.MiningStrategyExecutor;
 import de.jpx3.intave.executor.Synchronizer;
+import de.jpx3.intave.executor.TaskTracker;
 import de.jpx3.intave.module.linker.bukkit.BukkitEventSubscription;
 import de.jpx3.intave.module.linker.packet.PacketSubscription;
 import de.jpx3.intave.tool.AccessHelper;
@@ -57,7 +58,8 @@ public final class Heuristics extends MetaCheck<Heuristics.HeuristicMeta> {
 
   private void setupEvaluationScheduler(IntavePlugin plugin) {
     //noinspection deprecation
-    Bukkit.getScheduler().scheduleAsyncRepeatingTask(plugin, this::evaluateAll, 0, 400);
+    int taskId = Bukkit.getScheduler().scheduleAsyncRepeatingTask(plugin, this::evaluateAll, 0, 400);
+    TaskTracker.begun(taskId);
   }
 
   @Native

@@ -13,6 +13,8 @@ import de.jpx3.intave.adapter.MinecraftVersions;
 import de.jpx3.intave.adapter.ProtocolLibraryAdapter;
 import de.jpx3.intave.cleanup.GarbageCollector;
 import de.jpx3.intave.event.feedback.Callback;
+import de.jpx3.intave.event.feedback.FeedbackTracker;
+import de.jpx3.intave.executor.TaskTracker;
 import de.jpx3.intave.fakeplayer.FakePlayer;
 import de.jpx3.intave.module.Module;
 import de.jpx3.intave.module.linker.packet.ListenerPriority;
@@ -67,7 +69,8 @@ public final class EntityTracker extends Module {
   @Override
   public void enable() {
     //noinspection deprecation
-    Bukkit.getScheduler().scheduleAsyncRepeatingTask(plugin, this::reevaluateTracingEntities, 0, 20);
+    int taskId = Bukkit.getScheduler().scheduleAsyncRepeatingTask(plugin, this::reevaluateTracingEntities, 0, 20);
+    TaskTracker.begun(taskId);
   }
 
   private void reevaluateTracingEntities() {
@@ -82,6 +85,9 @@ public final class EntityTracker extends Module {
 
   private void reevaluteTracingEntitiesFor(Player player) {
     User user = UserRepository.userOf(player);
+    if (!user.hasPlayer()) {
+      return;
+    }
     ConnectionMetadata synchronizeData = user.meta().connection();
     Vector location = new Vector(0, 0, 0);
     Vector playerLocation = player.getLocation().toVector();
@@ -281,7 +287,7 @@ public final class EntityTracker extends Module {
     ConnectionMetadata synchronizeData = user.meta().connection();
     WrappedEntity wrappedEntity = synchronizeData.synchronizedEntityMap().get(entityID);
     if (wrappedEntity instanceof WrappedEntityFirework) {
-      plugin.eventService().feedback().singleSynchronize(player, entityID, this::processEntityDestroy, APPEND_ON_OVERFLOW);
+      plugin.eventService().feedback().singleSynchronize(player, entityID, this::processEntityDestroy, wrappedEntity.feedbackTracker(), APPEND_ON_OVERFLOW);
     } else {
       processEntityDestroy(player, entityID);
     }
@@ -356,11 +362,13 @@ public final class EntityTracker extends Module {
         entity.clientSynchronized = true;
       };
 
+      FeedbackTracker feedbackTracker = entity.feedbackTracker();
+
       if (entity.doubleVerification) {
         Callback<PacketEvent> verificationTask = (x, theEvent) -> entity.verifiedPosition = true;
-        plugin.eventService().feedback().doubleSynchronize(player, event, event, task, verificationTask);
+        plugin.eventService().feedback().doubleSynchronize(player, event, event, task, verificationTask, feedbackTracker, feedbackTracker);
       } else {
-        plugin.eventService().feedback().singleSynchronize(player, event, task);
+        plugin.eventService().feedback().singleSynchronize(player, event, task, feedbackTracker);
       }
     } else {
       entity.handleEntityTeleport(packet);
@@ -410,11 +418,12 @@ public final class EntityTracker extends Module {
         entity.verifiedPosition = false;
         entity.handleEntityMovement(packet);
       };
+      FeedbackTracker tracker = entity.feedbackTracker();
       if (entity.doubleVerification) {
         Callback<PacketEvent> verificationTask = (x, theEvent) -> entity.verifiedPosition = true;
-        plugin.eventService().feedback().doubleSynchronize(player, event, event, task, verificationTask);
+        plugin.eventService().feedback().doubleSynchronize(player, event, event, task, verificationTask, tracker, tracker);
       } else {
-        plugin.eventService().feedback().singleSynchronize(player, event, task);
+        plugin.eventService().feedback().singleSynchronize(player, event, task, tracker);
       }
     } else {
       entity.handleEntityMovement(packet);
@@ -575,7 +584,7 @@ public final class EntityTracker extends Module {
     boolean synchronize = entity.clientSynchronized && entity.tracingEnabled();
     if (synchronize) {
       Callback<WrappedEntity> task = (p, e) -> updateDeadState(e);
-      plugin.eventService().feedback().singleSynchronize(player, entity, task);
+      plugin.eventService().feedback().singleSynchronize(player, entity, task, entity.feedbackTracker());
     } else {
       updateDeadState(entity);
     }
@@ -624,7 +633,8 @@ public final class EntityTracker extends Module {
       if (health != null) {
         boolean synchronize = entity.clientSynchronized && entity.tracingEnabled();
         if (synchronize) {
-          plugin.eventService().feedback().singleSynchronize(player, entity, (p, e) -> updateHealthState(e, health));
+          FeedbackTracker tracker = entity.feedbackTracker();
+          plugin.eventService().feedback().singleSynchronize(player, entity, (p, e) -> updateHealthState(e, health), tracker);
         } else {
           updateHealthState(entity, health);
         }

@@ -11,8 +11,8 @@ public final class Locator {
   private final static ClassAndFieldLocations CLASS_AND_FIELD_LOCATIONS = fileCompiler.fromWithinJar("/mappings/locate").reduced();
   private final static ClassLocations classLocation = CLASS_AND_FIELD_LOCATIONS.classLocations();
   private final static FieldLocations fieldLocations = CLASS_AND_FIELD_LOCATIONS.fieldLocations();
-  private final static Map<String, ClassLocation> keyClassAccessCache = new ConcurrentHashMap<>();
-  private final static Map<String, FieldLocation> fieldAccessCache = new ConcurrentHashMap<>();
+  private final static Map<String, ClassLocation> classLocationCache = new ConcurrentHashMap<>();
+  private final static Map<String, FieldLocation> fieldLocationCache = new ConcurrentHashMap<>();
 
   public static String patchyConvert(String input) {
     input = input.replace("/", ".");
@@ -23,17 +23,6 @@ public final class Locator {
       output = input;
     }
     return output.replace(".", "/");
-  }
-
-  public static String patchyFieldCovert(String classInput, String fieldKey) {
-    classInput = classInput.replace("/", ".");
-    String output;
-    if (classInput.startsWith("net.minecraft.server.v")) {
-      output = fieldNameByKey(classInput.split("\\.")[4], fieldKey);
-    } else {
-      output = fieldKey;
-    }
-    return output;
   }
 
   public static Class<?> tryConvertByClassNameLookup(String name) {
@@ -48,20 +37,48 @@ public final class Locator {
     }
   }
 
+  public static String classPathByKey(String name) {
+    return classLocationByKey(name).compiledLocation();
+  }
+
+  public static Class<?> classByKey(String name) {
+    return classLocationByKey(name).access();
+  }
+
+  private static ClassLocation classLocationByKey(String key) {
+    return classLocationCache.computeIfAbsent(key, Locator::classLocationLookupByKey);
+  }
+
+  private static ClassLocation classLocationLookupByKey(String key) {
+    return classLocation.filterByKey(key).stream().findAny()
+      .orElseGet(() -> ClassLocation.defaultFor(key));
+  }
+
+  public static String patchyFieldCovert(String classInput, String fieldKey) {
+    classInput = classInput.replace("/", ".");
+    String output;
+    if (classInput.startsWith("net.minecraft.server.v")) {
+      output = fieldNameByKey(classInput.split("\\.")[4], fieldKey);
+    } else {
+      output = fieldKey;
+    }
+    return output;
+  }
+
   public static Field fieldByKey(String classKey, String fieldKey) {
     String key = classKey + "." + fieldKey;
-    FieldLocation fieldLocation = fieldAccessCache.computeIfAbsent(key, s -> fieldLookupByKey(classKey, fieldKey));
+    FieldLocation fieldLocation = fieldLocationCache.computeIfAbsent(key, s -> fieldLookupByKey(classKey, fieldKey));
     Class<?> owner = classByKey(classKey);
     return fieldLocation.access(owner);
   }
 
   public static String fieldNameByKey(String classKey, String fieldKey) {
     String key = classKey + "." + fieldKey;
-    FieldLocation fieldLocation = fieldAccessCache.computeIfAbsent(key, s -> fieldLookupByKey(classKey, fieldKey));
+    FieldLocation fieldLocation = fieldLocationCache.computeIfAbsent(key, s -> fieldLookupByKey(classKey, fieldKey));
     return fieldLocation.targetName();
   }
 
-  public static FieldLocation fieldLookupByKey(String classKey, String fieldKey) {
+  private static FieldLocation fieldLookupByKey(String classKey, String fieldKey) {
     return fieldLocations
       .filterByClassKey(classKey)
       .filterByFieldKey(fieldKey)
@@ -71,29 +88,11 @@ public final class Locator {
       );
   }
 
-  public static String classPathByKey(String name) {
-    return classLocationByKey(name).compiledLocation();
-  }
-
-  public static Class<?> classByKey(String name) {
-    return classLocationByKey(name).access();
-  }
-
-  public static ClassLocation classLocationByKey(String key) {
-    return keyClassAccessCache.computeIfAbsent(key, Locator::classLocationLookupByKey);
-  }
-
-  private static ClassLocation classLocationLookupByKey(String key) {
-    return classLocation.filterByKey(key).stream().findAny()
-      .orElseGet(() -> ClassLocation.nmsDefaultFor(key));
-  }
-
   public static void setup() {
-    // nothing!
     Shutdown.addTask(Locator::close);
   }
 
   public static void close() {
-    keyClassAccessCache.clear();
+    classLocationCache.clear();
   }
 }

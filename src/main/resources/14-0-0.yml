@@ -10,6 +10,8 @@ physics:
 
 attackraytrace:
 
+  pending-allowance: [100, 40, 30, 15, 10, 5]
+
   prevention-activation: [100, 50, 15, 10, 5, 5]
 
 heuristics:

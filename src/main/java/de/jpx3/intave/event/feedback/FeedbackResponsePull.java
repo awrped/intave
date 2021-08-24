@@ -2,6 +2,7 @@ package de.jpx3.intave.event.feedback;
 
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
+import de.jpx3.intave.IntaveControl;
 import de.jpx3.intave.IntaveLogger;
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.module.linker.packet.ListenerPriority;
@@ -40,6 +41,16 @@ public final class FeedbackResponsePull implements PacketEventSubscriber {
     if (oldestPendingTransaction(user) > TRANSACTION_TIMEOUT_KICK) {
       IntaveLogger.logger().error(player.getName() + " is not responding to any feedback packets");
       user.synchronizedDisconnect("Timed out");
+      if (IntaveControl.NETTY_DUMP_ON_TIMEOUT) {
+        Thread.getAllStackTraces().forEach((thread, stackTraceElements) -> {
+          if (thread.getName().contains("Netty")) {
+            System.out.println("Thread:" + thread.getName());
+            Exception exception = new Exception();
+            exception.setStackTrace(stackTraceElements);
+            exception.printStackTrace();
+          }
+        });
+      }
     }
   }
 

@@ -390,7 +390,7 @@ public final class RootStage extends CommandStage {
   @Native
   public void memtrace(User user) {
     Player player = user.player();
-    if (!IntaveControl.PERFORMANCE_RECORD) {
+    if (!IntaveControl.ENABLE_MEMTRACE) {
       player.sendMessage(ChatColor.RED + "Please enable PERFORMANCE_RECORD to perform a type 1 memory trace");
       return;
     }
