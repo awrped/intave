@@ -17,7 +17,7 @@ public interface BlockAccessor {
 
   int variantOf(Block block);
 
-  Object blockHandle(Block block);
+  Object nativeVariantOf(Block block);
 
   float blockDamage(Player player, ItemStack itemInHand, BlockPosition blockPosition);
 

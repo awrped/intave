@@ -31,7 +31,7 @@ public final class v13BlockAccessor implements BlockAccessor {
 
   @Override
   @PatchyAutoTranslation
-  public Object blockHandle(Block block) {
+  public Object nativeVariantOf(Block block) {
     return ((CraftBlock) block).getNMS();
   }
 

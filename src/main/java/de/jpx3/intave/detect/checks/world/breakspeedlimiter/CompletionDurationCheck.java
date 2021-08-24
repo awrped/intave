@@ -166,7 +166,7 @@ public final class CompletionDurationCheck extends MetaCheckPart<BreakSpeedLimit
       return;
     }
     Block block = BukkitBlockAccess.blockAccess(location);
-    Object handle = BlockVariantAccess.nativeBlockDataOf(block);
+    Object handle = BlockVariantAccess.nativeVariantAccess(block);
     WrappedBlockData blockData = WrappedBlockData.fromHandle(handle);
     BlockPosition position = new BlockPosition(location.getBlockX(), location.getBlockY(), location.getBlockZ());
     packet.getBlockData().write(0, blockData);

@@ -27,7 +27,7 @@ public final class v8BlockAccessor implements BlockAccessor {
 
   @Override
   @PatchyAutoTranslation
-  public Object blockHandle(Block block) {
+  public Object nativeVariantOf(Block block) {
     return CraftMagicNumbers.getBlock(block).getBlockData();
   }
 

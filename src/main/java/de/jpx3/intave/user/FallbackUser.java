@@ -61,17 +61,17 @@ final class FallbackUser implements User {
 
   @Override
   public Object playerHandle() {
-    throw new UnsupportedFallbackOperationException("Can't locate a player here");
+    throw UnsupportedFallbackOperationException.INSTANCE;//new UnsupportedFallbackOperationException("Can't locate a player here");
   }
 
   @Override
   public Object playerConnection() {
-    throw new UnsupportedFallbackOperationException("Can't locate a player here");
+    throw UnsupportedFallbackOperationException.INSTANCE;//new UnsupportedFallbackOperationException("Can't locate a player here");
   }
 
   @Override
   public Player player() {
-    throw new UnsupportedFallbackOperationException("Can't locate a player here");
+    throw UnsupportedFallbackOperationException.INSTANCE;//new UnsupportedFallbackOperationException("Can't locate a player here");
   }
 
   @Override

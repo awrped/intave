@@ -11,7 +11,6 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.craftbukkit.v1_14_R1.CraftWorld;
-import org.bukkit.craftbukkit.v1_14_R1.block.CraftBlock;
 import org.bukkit.craftbukkit.v1_14_R1.entity.CraftPlayer;
 import org.bukkit.craftbukkit.v1_14_R1.util.CraftMagicNumbers;
 import org.bukkit.entity.Player;
@@ -49,14 +48,14 @@ public final class v14BlockAccessor implements BlockAccessor {
   @PatchyAutoTranslation
   public int variantOf(Block block) {
     Material type = typeOf(block);
-    IBlockData blockData = ((CraftBlock) block).getNMS();
+    IBlockData blockData = (IBlockData) nativeVariantOf(block);
     int variantIndex = BlockVariantRegister.variantIndexOf(type, blockData);
     return Math.max(variantIndex, 0);
   }
 
   @Override
   @PatchyAutoTranslation
-  public Object blockHandle(Block block) {
+  public Object nativeVariantOf(Block block) {
     WorldServer worldServer = ((CraftWorld) block.getWorld()).getHandle();
     IBlockAccess blockAccess = worldServer.getChunkProvider().c(block.getX() >> 4, block.getZ() >> 4);
     if (blockAccess == null) {

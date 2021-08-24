@@ -1,19 +1,18 @@
 package de.jpx3.intave.user;
 
-import com.google.common.collect.Maps;
 import de.jpx3.intave.IntaveControl;
 import de.jpx3.intave.cleanup.Shutdown;
 import de.jpx3.intave.diagnostic.MemoryWatchdog;
 import de.jpx3.intave.event.mitigate.EntityNoDamageTickChanger;
-import de.jpx3.intave.tool.AccessHelper;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class UserRepository {
-  private final static Map<UUID, User> repository = MemoryWatchdog.watch("users", Maps.newConcurrentMap());
+  private final static Map<UUID, User> repository = MemoryWatchdog.watch("users", new ConcurrentHashMap<>());
   private final static User fallbackUser = UserFactory.newFallback();
   private static boolean closed;
 
@@ -42,26 +41,28 @@ public final class UserRepository {
   }
 
   public static User userOf(Player player) {
-    if (player == null) {
-      return fallbackUser;
-    }
-    User user = repository.get(player.getUniqueId());
-    if (user == null) {
-      if (closed) {
-        return fallbackUser;
-      }
-      // check if player is offline
-      boolean isOnline = AccessHelper.isOnline(player);
-      // online -> recreate user object
-      if (isOnline) {
-        registerUser(player);
-        return repository.get(player.getUniqueId());
-      } else {
-        // offline -> return dead user
-        return fallbackUser;
-      }
-    }
-    return user;
+    // in Germany, we call this YOLO
+
+//    if (player == null) {
+//      return fallbackUser;
+//    }
+//    if (user == null) {
+//      if (closed) {
+//        return fallbackUser;
+//      }
+//      // check if player is offline
+//      boolean isOnline = AccessHelper.isOnline(player);
+//      // online -> recreate user object
+//      if (isOnline) {
+//        registerUser(player);
+//        return repository.get(player.getUniqueId());
+//      } else {
+//        // offline -> return dead user
+//        return fallbackUser;
+//      }
+//    }
+
+    return repository.getOrDefault(player.getUniqueId(), fallbackUser);
   }
 
   public static void die() {

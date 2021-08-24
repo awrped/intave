@@ -1,44 +1,16 @@
 package de.jpx3.intave.world.blockaccess;
 
 import com.comphenix.protocol.wrappers.WrappedBlockData;
-import de.jpx3.intave.access.IntaveInternalException;
 import de.jpx3.intave.adapter.MinecraftVersions;
-import de.jpx3.intave.reflect.Lookup;
 import de.jpx3.intave.user.User;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
-import java.lang.reflect.Method;
-
 public final class BlockVariantAccess {
-  private static MethodHandle nativeBlockDataAccess;
-  private static MethodHandle nativeBlockDataExtractionAccess;
-
-  private final static boolean NEW_BLOCK_ACCESS = MinecraftVersions.VER1_13_0.atOrAbove();
   private final static boolean MODERN_MATERIAL_PROCESSING = MinecraftVersions.VER1_14_0.atOrAbove();
 
   public static void setup() {
-    try {
-      if (NEW_BLOCK_ACCESS) {
-        Class<?> blockDataClass = Lookup.serverClass("IBlockData");
-        Class<?> craftBukkitClass = Lookup.craftBukkitClass("block.CraftBlock");
-        nativeBlockDataAccess = MethodHandles.lookup().findVirtual(craftBukkitClass, "getNMS", MethodType.methodType(blockDataClass));
-      } else {
-        Class<?> blockClass = Lookup.serverClass("Block");
-        Class<?> blockDataClass = Lookup.serverClass("IBlockData");
-        Class<?> craftBukkitClass = Lookup.craftBukkitClass("block.CraftBlock");
-        Method getNMSBlockMethod = craftBukkitClass.getDeclaredMethod("getNMSBlock");
-        getNMSBlockMethod.setAccessible(true);
-        nativeBlockDataAccess = MethodHandles.lookup().unreflect(getNMSBlockMethod);
-        nativeBlockDataExtractionAccess = MethodHandles.lookup().findVirtual(blockClass, "fromLegacyData", MethodType.methodType(blockDataClass, Integer.TYPE));
-      }
-    } catch (NoSuchMethodException | IllegalAccessException exception) {
-      throw new IntaveInternalException("Failed to load data accessor", exception);
-    }
   }
 
   /**
@@ -64,7 +36,7 @@ public final class BlockVariantAccess {
     return index;
   }
 
-  public static Object nativeBlockDataOf(Block bukkitBlock) {
-    return BlockAccessProvider.accessor().blockHandle(bukkitBlock);
+  public static Object nativeVariantAccess(Block bukkitBlock) {
+    return BlockAccessProvider.accessor().nativeVariantOf(bukkitBlock);
   }
 }
