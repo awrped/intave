@@ -12,12 +12,12 @@ import de.jpx3.intave.world.blockphysic.MaterialMagic;
 import de.jpx3.intave.world.blockshape.OCBlockShapeAccess;
 import de.jpx3.intave.world.blockshape.boxresolver.BoundingBoxResolver;
 import de.jpx3.intave.world.blockshape.boxresolver.ResolverPipeline;
+import de.jpx3.intave.world.border.WorldBorders;
 import de.jpx3.intave.world.wrapper.WrappedAxisAlignedBB;
 import de.jpx3.intave.world.wrapper.WrappedMathHelper;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
-import org.bukkit.WorldBorder;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 
@@ -134,8 +134,8 @@ public final class Collision {
               for (int y = ystart; y < maxY; ++y) {
                 Block block = BukkitBlockAccess.blockAccess(world, x, y, z);
                 Material type = BlockTypeAccess.typeAccess(block);
-                int data = BlockVariantAccess.variantAccess(block);
-                List<WrappedAxisAlignedBB> resolve = boundingBoxResolver.resolve(world, null, type, data, x, y, z);
+                int variant = BlockVariantAccess.variantAccess(block);
+                List<WrappedAxisAlignedBB> resolve = boundingBoxResolver.resolve(world, null, type, variant, x, y, z);
                 boolean blockIsOutsideBorder = !blockInsideBorder(world, x, z);
                 if (blockIsOutsideBorder) {
                   if (resolvedBoundingBoxes == null) {
@@ -169,13 +169,12 @@ public final class Collision {
   }
 
   public static boolean blockInsideBorder(World world, double positionX, double positionZ) {
-    WorldBorder worldBorder = world.getWorldBorder();
-    Location center = worldBorder.getCenter();
-    double radians = worldBorder.getSize() / 2.0;
-    double minX = center.getX() - radians - 1;
-    double minZ = center.getZ() - radians - 1;
-    double maxX = center.getX() + radians;
-    double maxZ = center.getZ() + radians;
+    Location center = WorldBorders.centerOfWorldBorderIn(world);
+    double radius = WorldBorders.sizeOfWorldBorderIn(world)/ 2.0;
+    double minX = center.getX() - radius - 1;
+    double minZ = center.getZ() - radius - 1;
+    double maxX = center.getX() + radius;
+    double maxZ = center.getZ() + radius;
     return positionX > minX && positionX < maxX && positionZ > minZ && positionZ < maxZ;
   }
 
@@ -184,13 +183,12 @@ public final class Collision {
     MovementMetadata movementData = user.meta().movement();
     double positionX = movementData.verifiedPositionX;
     double positionZ = movementData.verifiedPositionZ;
-    WorldBorder worldBorder = world.getWorldBorder();
-    Location center = worldBorder.getCenter();
-    double radians = worldBorder.getSize() / 2.0;
-    double minX = center.getX() - radians;
-    double minZ = center.getZ() - radians;
-    double maxX = center.getX() + radians;
-    double maxZ = center.getZ() + radians;
+    Location center = WorldBorders.centerOfWorldBorderIn(world);
+    double radius = WorldBorders.sizeOfWorldBorderIn(world)/ 2.0;
+    double minX = center.getX() - radius;
+    double minZ = center.getZ() - radius;
+    double maxX = center.getX() + radius;
+    double maxZ = center.getZ() + radius;
     if (movementData.outsideBorder) {
       minX++;
       minZ++;

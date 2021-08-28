@@ -60,16 +60,8 @@ public final class EventService implements BukkitEventSubscriber {
     this.combatMitigator = new CombatMitigator(plugin);
     this.reconDelayLimiter = new ReconDelayLimiter(plugin);
     new UserLifetimeService(plugin);
-//    new AttackDispatcher(plugin);
-//    new AttributeTracker(plugin);
-//    new BlockUpdateTracker(plugin);
-//    new MovementDispatcher(plugin);
-//    new EffectTracker(plugin);
-//    new AbilityTracker();
-//    new InventoryTracker(plugin);
     new LazyEntityCollisionService(plugin);
     new ConnectionHealthTelemetry(plugin);
-    new PacketResynchronizer(plugin);
     if (DISABLE_ENTITY_COLLISIONS) {
       new EntityCollisionDisabler(plugin);
     }
@@ -120,6 +112,7 @@ public final class EventService implements BukkitEventSubscriber {
   public void on(WorldUnloadEvent unloadEvent) {
     World world = unloadEvent.getWorld();
     GarbageCollector.clear(world);
+    GarbageCollector.clear(world.getUID());
     GarbageCollector.clearIf(o -> o instanceof Location && ((Location) o).getWorld().equals(world));
   }
 

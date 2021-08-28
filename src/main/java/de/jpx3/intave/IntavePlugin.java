@@ -55,6 +55,7 @@ import de.jpx3.intave.world.blockphysic.BlockPhysics;
 import de.jpx3.intave.world.blockphysic.BlockProperties;
 import de.jpx3.intave.world.blockshape.boxresolver.BoundingBoxResolver;
 import de.jpx3.intave.world.blockshape.boxresolver.patcher.BoundingBoxPatcher;
+import de.jpx3.intave.world.border.WorldBorders;
 import de.jpx3.intave.world.collision.CollisionModifiers;
 import de.jpx3.intave.world.fluid.Fluids;
 import de.jpx3.intave.world.items.ItemProperties;
@@ -480,6 +481,7 @@ public final class IntavePlugin extends JavaPlugin {
       SSLConnectionVerifier.setup();
       BlockVariantRegister.prepareIndex();
 
+      WorldBorders.setup();
       BoundingBoxResolver.setup();
       WrappedEntity.setup();
       ReflectiveAccess.setup();

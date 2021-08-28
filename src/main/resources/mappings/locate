@@ -32,6 +32,10 @@ BlockPosition -> {
   17 -> "net/minecraft/core/BlockPosition"
 }
 
+BlockPosition$MutableBlockPosition -> {
+  17 -> "net/minecraft/core/BlockPosition$MutableBlockPosition"
+}
+
 Chunk -> {
   17 -> "net/minecraft/world/level/chunk/Chunk"
 }

@@ -46,7 +46,6 @@ public final class ConnectionHealthTelemetry implements PacketEventSubscriber {
   private void dumpNettyThreads() {
     Thread.getAllStackTraces().forEach((thread, stackTraceElements) -> {
       if (thread.getName().contains("Netty")) {
-        System.out.println("Thread:" + thread.getName());
         boolean containsIntave = false;
         for (StackTraceElement stackTraceElement : stackTraceElements) {
           if (stackTraceElement.getClassName().contains("Intave")) {
@@ -55,6 +54,7 @@ public final class ConnectionHealthTelemetry implements PacketEventSubscriber {
           }
         }
         if (containsIntave) {
+          System.out.println("Thread:" + thread.getName());
           Exception exception = new Exception();
           exception.setStackTrace(stackTraceElements);
           exception.printStackTrace();

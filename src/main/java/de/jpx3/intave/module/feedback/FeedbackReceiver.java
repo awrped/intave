@@ -26,7 +26,7 @@ import static de.jpx3.intave.module.feedback.FeedbackSender.TRANSACTION_MAX_CODE
 import static de.jpx3.intave.module.linker.packet.PacketId.Client.*;
 
 public final class FeedbackReceiver extends Module {
-  private final boolean USE_PING_PONG_PACKETS = MinecraftVersions.VER1_17_0.atOrAbove();
+  private final static boolean USE_PING_PONG_PACKETS = MinecraftVersions.VER1_17_0.atOrAbove();
   private final static long TIMEOUT = 2000;
   private final static long TIMEOUT_KICK = TimeUnit.SECONDS.toMillis(40);
   private final static long CHECK_TIMEOUT_KICK = TIMEOUT_KICK / 4;
@@ -46,7 +46,10 @@ public final class FeedbackReceiver extends Module {
 
   private void checkTransactionTimeoutFor(Player player) {
     User user = userOf(player);
-    if (oldestPendingTransaction(user) > TIMEOUT_KICK) {
+    ConnectionMetadata connection = user.meta().connection();
+    if (oldestPendingTransaction(user) > TIMEOUT_KICK &&
+      connection.eligibleForTransactionTimeout
+    ) {
       IntaveLogger.logger().error(player.getName() + " is not responding to any feedback packets");
       user.synchronizedDisconnect("Timed out");
       if (IntaveControl.NETTY_DUMP_ON_TIMEOUT) {
@@ -58,7 +61,6 @@ public final class FeedbackReceiver extends Module {
   private void dumpNettyThreads() {
     Thread.getAllStackTraces().forEach((thread, stackTraceElements) -> {
       if (thread.getName().contains("Netty")) {
-        System.out.println("Thread:" + thread.getName());
         boolean containsIntave = false;
         for (StackTraceElement stackTraceElement : stackTraceElements) {
           if (stackTraceElement.getClassName().contains("Intave")) {
@@ -67,6 +69,7 @@ public final class FeedbackReceiver extends Module {
           }
         }
         if (containsIntave) {
+          System.out.println("Thread:" + thread.getName());
           Exception exception = new Exception();
           exception.setStackTrace(stackTraceElements);
           exception.printStackTrace();
@@ -126,20 +129,20 @@ public final class FeedbackReceiver extends Module {
     }
   }
 
-  private void receiveRequest(User user, FeedbackRequest<?> transactionResponse) {
+  private void receiveRequest(User user, FeedbackRequest<?> feedbackRequest) {
     Player player = user.player();
     ConnectionMetadata synchronizeData = user.meta().connection();
-    synchronizeData.lastSynchronization = transactionResponse.requested();
-    synchronizeData.lastReceivedTransactionNum = transactionResponse.num();
+    synchronizeData.lastSynchronization = feedbackRequest.requested();
+    synchronizeData.lastReceivedTransactionNum = feedbackRequest.num();
     Map<Long, Queue<FeedbackRequest<?>>> appendMap = synchronizeData.transactionAppendMap();
-    Queue<FeedbackRequest<?>> appendedRequests = appendMap.get(transactionResponse.num());
+    Queue<FeedbackRequest<?>> appendedRequests = appendMap.get(feedbackRequest.num());
     if (appendedRequests != null && !appendedRequests.isEmpty()) {
       for (FeedbackRequest<?> appendedRequest : appendedRequests) {
         appendedRequest.acknowledge(player);
       }
-      appendMap.remove(transactionResponse.num());
+      appendMap.remove(feedbackRequest.num());
     }
-    transactionResponse.acknowledge(player);
+    feedbackRequest.acknowledge(player);
   }
 
   @PacketSubscription(
@@ -151,6 +154,7 @@ public final class FeedbackReceiver extends Module {
   public void cancelAttacksIfTransactionMissing(PacketEvent event) {
     Player player = event.getPlayer();
     User user = UserRepository.userOf(player);
+    user.meta().connection().eligibleForTransactionTimeout = true;
     if (oldestPendingTransaction(user) > TIMEOUT) {
       event.setCancelled(true);
     }
@@ -165,6 +169,7 @@ public final class FeedbackReceiver extends Module {
   public void on(PacketEvent event) {
     Player player = event.getPlayer();
     User user = UserRepository.userOf(player);
+    user.meta().connection().eligibleForTransactionTimeout = true;
     if (oldestPendingTransaction(user) > TIMEOUT * 2) {
       event.setCancelled(true);
     }

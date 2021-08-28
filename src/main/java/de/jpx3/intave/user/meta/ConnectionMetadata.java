@@ -25,6 +25,7 @@ public final class ConnectionMetadata {
   private final List<Long> latencyDifferenceBalance = Lists.newCopyOnWriteArrayList();
   public long lastCCCInfoMessageSent = 0;
   public boolean sendAsyncMessage = false;
+  public boolean eligibleForTransactionTimeout = false;
 
   // Client Synchronization
   public int latency;

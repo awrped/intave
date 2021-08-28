@@ -10,7 +10,7 @@ public final class EntityTypeDataAccessor {
 
   public static void setup() {
     if (DIRECT_RESOLVE) {
-      PatchyLoadingInjector.loadUnloadedClassPatched(IntavePlugin.class.getClassLoader(), "de.jpx3.intave.reflect.hitbox.typeaccess.ServerEntityTypeDataLookup");
+      PatchyLoadingInjector.loadUnloadedClassPatched(IntavePlugin.class.getClassLoader(), "de.jpx3.intave.reflect.entity.type.ServerEntityTypeDataLookup");
       resolver = new ServerEntityTypeDataLookup();
     } else {
       resolver = new EntityTypeDataRegistry();
