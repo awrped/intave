@@ -21,15 +21,15 @@ public final class EntityTypeData {
     return isLivingEntity;
   }
 
-  public String entityName() {
+  public String name() {
     return entityName;
   }
 
-  public int entityTypeId() {
+  public int identifier() {
     return entityTypeId;
   }
 
-  public HitboxSize hitBoxBoundaries() {
+  public HitboxSize size() {
     return hitBoxSize;
   }
 }
