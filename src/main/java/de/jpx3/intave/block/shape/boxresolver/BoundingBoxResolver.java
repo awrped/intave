@@ -51,20 +51,20 @@ public final class BoundingBoxResolver {
     String drillClassName, acClassName = "";
 
     if (MinecraftVersions.VER1_17_1.atOrAbove()) {
-      drillClassName = "de.jpx3.intave.block.blockshape.boxresolver.drill.v17b1BoundingBoxDrill";
+      drillClassName = "de.jpx3.intave.block.shape.boxresolver.drill.v17b1BoundingBoxDrill";
     } else if (MinecraftVersions.VER1_14_0.atOrAbove()) {
-      drillClassName = "de.jpx3.intave.block.blockshape.boxresolver.drill.v14BoundingBoxDrill";
+      drillClassName = "de.jpx3.intave.block.shape.boxresolver.drill.v14BoundingBoxDrill";
     } else if (MinecraftVersions.VER1_13_0.atOrAbove()) {
-      drillClassName = "de.jpx3.intave.block.blockshape.boxresolver.drill.v13BoundingBoxDrill";
+      drillClassName = "de.jpx3.intave.block.shape.boxresolver.drill.v13BoundingBoxDrill";
     } else if (MinecraftVersions.VER1_12_0.atOrAbove()) {
-      drillClassName = "de.jpx3.intave.block.blockshape.boxresolver.drill.v12BoundingBoxDrill";
-      acClassName = "de.jpx3.intave.block.blockshape.boxresolver.drill.acbbs.v12AlwaysCollidingBoundingBox";
+      drillClassName = "de.jpx3.intave.block.shape.boxresolver.drill.v12BoundingBoxDrill";
+      acClassName = "de.jpx3.intave.block.shape.boxresolver.drill.acbbs.v12AlwaysCollidingBoundingBox";
     } else if (MinecraftVersions.VER1_9_0.atOrAbove()) {
-      drillClassName = "de.jpx3.intave.block.blockshape.boxresolver.drill.v9BoundingBoxDrill";
-      acClassName = "de.jpx3.intave.block.blockshape.boxresolver.drill.acbbs.v9AlwaysCollidingBoundingBox";
+      drillClassName = "de.jpx3.intave.block.shape.boxresolver.drill.v9BoundingBoxDrill";
+      acClassName = "de.jpx3.intave.block.shape.boxresolver.drill.acbbs.v9AlwaysCollidingBoundingBox";
     } else {
-      drillClassName = "de.jpx3.intave.block.blockshape.boxresolver.drill.v8BoundingBoxDrill";
-      acClassName = "de.jpx3.intave.block.blockshape.boxresolver.drill.acbbs.v8AlwaysCollidingBoundingBox";
+      drillClassName = "de.jpx3.intave.block.shape.boxresolver.drill.v8BoundingBoxDrill";
+      acClassName = "de.jpx3.intave.block.shape.boxresolver.drill.acbbs.v8AlwaysCollidingBoundingBox";
     }
 
     ClassLoader classLoader = IntavePlugin.class.getClassLoader();

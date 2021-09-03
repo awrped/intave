@@ -131,8 +131,8 @@ public final class ReferenceMap<K, V> implements Map<K, V> {
   }
 
   private void cleanup() {
-    map.entrySet()
-    .removeIf(entry -> entry != null && entry.getValue() != null && entry.getValue().get() == null
+    map.entrySet().removeIf(
+      entry -> entry != null && entry.getValue() != null && entry.getValue().get() == null
     );
   }
 

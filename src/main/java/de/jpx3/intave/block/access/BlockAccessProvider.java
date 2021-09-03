@@ -8,15 +8,15 @@ import de.jpx3.intave.clazz.rewrite.PatchyLoadingInjector;
 public final class BlockAccessProvider {
   private static BlockAccessor blockAccessor;
   public static void setup() {
-    String resolverName = "de.jpx3.intave.block.blockaccess.v8BlockAccessor";
+    String resolverName = "de.jpx3.intave.block.access.v8BlockAccessor";
     if (MinecraftVersions.VER1_9_0.atOrAbove()) {
-      resolverName = "de.jpx3.intave.block.blockaccess.v9BlockAccessor";
+      resolverName = "de.jpx3.intave.block.access.v9BlockAccessor";
     }
     if (MinecraftVersions.VER1_13_0.atOrAbove()) {
-      resolverName = "de.jpx3.intave.block.blockaccess.v13BlockAccessor";
+      resolverName = "de.jpx3.intave.block.access.v13BlockAccessor";
     }
     if (MinecraftVersions.VER1_14_0.atOrAbove()) {
-      resolverName = "de.jpx3.intave.block.blockaccess.v14BlockAccessor";
+      resolverName = "de.jpx3.intave.block.access.v14BlockAccessor";
     }
     ClassLoader classLoader = IntavePlugin.class.getClassLoader();
     PatchyLoadingInjector.loadUnloadedClassPatched(classLoader, resolverName);

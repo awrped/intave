@@ -141,15 +141,13 @@ public final class MultiChunkKeyOCBlockShapeAccess implements OCBlockShapeAccess
     return blockShape.variant();
   }
 
-  private final static BlockShape EMPTY_CACHE_ENTRY = new BlockShape(Collections.emptyList(), Material.AIR, 0);
-
   private BlockShape lookup(World world, Block block, int posX, int posY, int posZ) {
     if (block.getY() < 0) {
-      return EMPTY_CACHE_ENTRY;
+      return BlockShape.empty();
     }
     Material type = BlockTypeAccess.typeAccess(block, player);
     if (type == Material.AIR) {
-      return EMPTY_CACHE_ENTRY;
+      return BlockShape.empty();
     } else {
       BoundingBoxAccessFlowStudy.incremLookups();
       int variant = BlockVariantAccess.variantAccess(block);
@@ -180,12 +178,10 @@ public final class MultiChunkKeyOCBlockShapeAccess implements OCBlockShapeAccess
     invalidateOverride(posX, posY, posZ);
     BlockShape blockShape;
     if (type == Material.AIR) {
-      blockShape = EMPTY_CACHE_ENTRY;
+      blockShape = BlockShape.empty();
     } else {
-      blockShape = new BlockShape(
-        boundingBoxResolver.resolve(world, player, type, variant, posX, posY, posZ),
-        type, variant
-      );
+      List<BoundingBox> boundingBoxes = boundingBoxResolver.resolve(world, player, type, variant, posX, posY, posZ);
+      blockShape = new BlockShape(boundingBoxes, type, variant);
     }
     long key = bigKey(posX, posY, posZ);
     indexedReplacements.put(key, blockShape);

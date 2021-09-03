@@ -18,11 +18,11 @@ import org.jetbrains.annotations.NotNull;
 public final class BlockWrapper {
   public static void setup() {
     ClassLoader classLoader = BlockWrapper.class.getClassLoader();
-    PatchyLoadingInjector.loadUnloadedClassPatched(classLoader, "de.jpx3.intave.block.blockaccess.BlockWrapper$InternalWrapper");
+    PatchyLoadingInjector.loadUnloadedClassPatched(classLoader, "de.jpx3.intave.block.access.BlockWrapper$InternalWrapper");
     if (MinecraftVersions.VER1_13_0.atOrAbove()) {
-      PatchyLoadingInjector.loadUnloadedClassPatched(classLoader, "de.jpx3.intave.block.blockaccess.BlockWrapper$v13WrappedBlock");
+      PatchyLoadingInjector.loadUnloadedClassPatched(classLoader, "de.jpx3.intave.block.access.BlockWrapper$v13WrappedBlock");
     } else {
-      PatchyLoadingInjector.loadUnloadedClassPatched(classLoader, "de.jpx3.intave.block.blockaccess.BlockWrapper$v8WrappedBlock");
+      PatchyLoadingInjector.loadUnloadedClassPatched(classLoader, "de.jpx3.intave.block.access.BlockWrapper$v8WrappedBlock");
     }
 
   }

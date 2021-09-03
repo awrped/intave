@@ -6,6 +6,7 @@ import de.jpx3.intave.diagnostic.MemoryTraced;
 import de.jpx3.intave.shade.BoundingBox;
 import org.bukkit.Material;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -20,6 +21,7 @@ import java.util.Objects;
  * @see BlockVariantRegister
  */
 public final class BlockShape extends MemoryTraced {
+  private final static BlockShape EMPTY = new BlockShape(Collections.emptyList(), Material.AIR, 0);
   private final List<BoundingBox> boxes;
   private final Material type;
   private final int variant;
@@ -82,5 +84,9 @@ public final class BlockShape extends MemoryTraced {
     result = 31 * result + variant;
     result = 31 * result + (int) (creation ^ (creation >>> 32));
     return result;
+  }
+
+  public static BlockShape empty() {
+    return EMPTY;
   }
 }
