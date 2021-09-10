@@ -23,6 +23,18 @@ public enum PlayerAction {
     this.action = action;
   }
 
+  public boolean isSneaking() {
+    switch (this) {
+      case STOP_SNEAKING:
+      case START_SNEAKING:
+      case PRESS_SHIFT_KEY:
+      case RELEASE_SHIFT_KEY:
+        return true;
+      default:
+        return false;
+    }
+  }
+
   public String action() {
     return action;
   }

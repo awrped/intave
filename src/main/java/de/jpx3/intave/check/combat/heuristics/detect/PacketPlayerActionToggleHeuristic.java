@@ -60,7 +60,7 @@ public final class PacketPlayerActionToggleHeuristic extends MetaCheckPart<Heuri
     PlayerAction action = PlayerActionResolver.resolveActionFromPacket(packet);
 
     boolean sprint = action == PlayerAction.START_SPRINTING || action == PlayerAction.STOP_SPRINTING;
-    boolean sneak = action == PlayerAction.START_SNEAKING || action == PlayerAction.STOP_SNEAKING;
+    boolean sneak = action.isSneaking();
     if (!sprint && !sneak) {
       return;
     }
@@ -92,7 +92,7 @@ public final class PacketPlayerActionToggleHeuristic extends MetaCheckPart<Heuri
           parentCheck().saveAnomaly(player, anomaly);
         }
 
-        boolean cancel = flyingPacketStream || heuristicMeta.threshold++ > 2 && Hypot.fast(movementData.motionX(), movementData.motionZ()) > 0.2;
+        boolean cancel = flyingPacketStream || Hypot.fast(movementData.motionX(), movementData.motionZ()) > 0.1 && heuristicMeta.threshold++ > 2;
         if (cancel) {
           if (sprint) {
             //dmc12
@@ -104,7 +104,7 @@ public final class PacketPlayerActionToggleHeuristic extends MetaCheckPart<Heuri
         }
       }
     } else if (heuristicMeta.threshold > 0) {
-      heuristicMeta.threshold -= 0.025;
+      heuristicMeta.threshold -= 0.01;
     }
   }
 
