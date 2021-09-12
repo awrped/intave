@@ -8,18 +8,18 @@ import de.jpx3.intave.annotate.DispatchTarget;
 import de.jpx3.intave.annotate.Nullable;
 import de.jpx3.intave.annotate.Relocate;
 import de.jpx3.intave.annotate.refactoring.IdoNotBelongHere;
-import de.jpx3.intave.block.access.BukkitBlockAccess;
+import de.jpx3.intave.block.access.VolatileBlockAccess;
 import de.jpx3.intave.block.collision.Collision;
 import de.jpx3.intave.block.fluid.FluidTag;
 import de.jpx3.intave.block.fluid.Fluids;
 import de.jpx3.intave.block.fluid.WrappedFluid;
 import de.jpx3.intave.block.physics.BlockProperties;
 import de.jpx3.intave.check.movement.physics.*;
+import de.jpx3.intave.entity.datawatcher.DataWatcherAccess;
 import de.jpx3.intave.executor.Synchronizer;
 import de.jpx3.intave.math.SinusCache;
 import de.jpx3.intave.module.tracker.entity.WrappedEntity;
-import de.jpx3.intave.player.effect.Effects;
-import de.jpx3.intave.reflect.access.ReflectiveDataWatcherAccess;
+import de.jpx3.intave.player.Effects;
 import de.jpx3.intave.reflect.access.ReflectiveHandleAccess;
 import de.jpx3.intave.shade.BoundingBox;
 import de.jpx3.intave.shade.WrappedMathHelper;
@@ -237,7 +237,7 @@ public final class MovementMetadata {
     lastPositionY = positionY;
     lastPositionZ = positionZ;
     if (sprintResetNextTick) {
-      ReflectiveDataWatcherAccess.setDataWatcherFlag(player, ReflectiveDataWatcherAccess.WATCHER_SPRINT_ID, true);
+      DataWatcherAccess.setDataWatcherFlag(player, DataWatcherAccess.WATCHER_SPRINT_ID, true);
       sprintResetNextTick = false;
     }
     if (hasMovement) {
@@ -245,7 +245,7 @@ public final class MovementMetadata {
       positionX = modifier.read(0);
       positionY = modifier.read(1);
       positionZ = modifier.read(2);
-      blockOnPosition = BukkitBlockAccess.cacheAppliedTypeAccess(user, player.getWorld(), positionX, positionY - frictionPosSubtraction, positionZ);
+      blockOnPosition = VolatileBlockAccess.safeTypeAccess(user, player.getWorld(), positionX, positionY - frictionPosSubtraction, positionZ);
       motionX = positionX - verifiedPositionX;
       motionY = positionY - verifiedPositionY;
       motionZ = positionZ - verifiedPositionZ;
@@ -444,8 +444,8 @@ public final class MovementMetadata {
     heightRounded = Math.round(height * 100d) / 100d;
   }
 
-  protected boolean isPoseClear(Pose pose) {
-    return Collision.hasNoCollisions(user, pose.boundingBoxOf(user).shrink(1.0E-7D));
+  private boolean isPoseClear(Pose pose) {
+    return Collision.nonePresent(user.player(), pose.boundingBoxOf(user).shrink(0.0000001));
   }
 
   @IdoNotBelongHere
@@ -456,7 +456,7 @@ public final class MovementMetadata {
   @IdoNotBelongHere
   private float jumpFactor() {
     World world = player.getWorld();
-    float f = jumpFactorOf(BukkitBlockAccess.cacheAppliedTypeAccess(user, world, positionX, positionY, positionZ));
+    float f = jumpFactorOf(VolatileBlockAccess.safeTypeAccess(user, world, positionX, positionY, positionZ));
     float f1 = jumpFactorOf(blockOnPosition());
     return (double) f == 1.0D ? f1 : f;
   }
@@ -604,7 +604,7 @@ public final class MovementMetadata {
     InventoryMetadata inventoryData = user.meta().inventory();
     // really required
     if (player.getFoodLevel() >= 6 && !inventoryData.inventoryOpen()) {
-      ReflectiveDataWatcherAccess.setDataWatcherFlag(player, ReflectiveDataWatcherAccess.WATCHER_SPRINT_ID, false);
+      DataWatcherAccess.setDataWatcherFlag(player, DataWatcherAccess.WATCHER_SPRINT_ID, false);
       sprintResetNextTick = true;
     }
   }

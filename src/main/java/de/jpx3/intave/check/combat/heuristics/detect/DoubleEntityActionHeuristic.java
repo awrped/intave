@@ -11,6 +11,7 @@ import de.jpx3.intave.packet.converter.PlayerAction;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.meta.CheckCustomMetadata;
 import de.jpx3.intave.user.meta.MovementMetadata;
+import de.jpx3.intave.user.meta.ProtocolMetadata;
 import org.bukkit.entity.Player;
 
 import static de.jpx3.intave.module.linker.packet.PacketId.Client.*;
@@ -33,6 +34,7 @@ public final class DoubleEntityActionHeuristic extends MetaCheckPart<Heuristics,
     User user = userOf(player);
     MovementMetadata movementData = user.meta().movement();
     PlayerAction action = resolveActionFromPacket(event.getPacket());
+    ProtocolMetadata protocolMetadata = user.meta().protocol();
 
     String message = null;
     if(action == PlayerAction.START_SNEAKING) {
@@ -58,6 +60,7 @@ public final class DoubleEntityActionHeuristic extends MetaCheckPart<Heuristics,
 
     DoubleEntityActionHeuristicMeta meta = metaOf(user);
     if(message != null && meta.ticksSinceJoin > 10) {
+      message += " " + protocolMetadata.protocolVersion();
       // Be careful before setting a confidence because it false flags when reloading the server
       Anomaly anomaly = Anomaly.anomalyOf("190",
         Confidence.NONE,
