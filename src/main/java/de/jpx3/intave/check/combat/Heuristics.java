@@ -124,7 +124,9 @@ public final class Heuristics extends MetaCheck<Heuristics.HeuristicMeta> {
 
     String pattern = anomaly.key();
     String description = anomaly.description();
-    String message = ChatColor.RED + "[IH] " + player.getName() + " on p[" + pattern + "]" + overallConfidence.output() + " " + description;
+
+    String confidenceDetails = overallConfidence.output() + " (" + Confidence.levelFrom(allConfidences.toArray(new Confidence[0])) + "+" + anomaly.confidence().level() + ")";
+    String message = ChatColor.RED + "[IH] " + player.getName() + " on p[" + pattern + "]" + confidenceDetails + " " + description;
 
     if (IntaveControl.DEBUG_HEURISTICS && !plugin.sibylIntegrationService().isAuthenticated(player)) {
       player.sendMessage(message);
