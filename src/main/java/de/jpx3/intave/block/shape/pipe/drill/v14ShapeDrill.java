@@ -30,6 +30,7 @@ public final class v14ShapeDrill extends AbstractShapeDrill {
     }
     VoxelShape collisionShape = blockData.getCollisionShape(blockAccess, blockPosition);
     List<AxisAlignedBB> nativeBoxes = collisionShape.d();
-    return translateWithOffset(nativeBoxes, posX, posY, posZ);
+    BlockShape blockShape = translateWithOffset(nativeBoxes, posX, posY, posZ);
+    return blockShape;
   }
 }

@@ -32,7 +32,7 @@ public final class MergeBlockShape implements BlockShape {
   public BlockShape contextualized(int posX, int posY, int posZ) {
     return new MergeBlockShape(
       shapeA.contextualized(posX, posY, posZ),
-      shapeA.contextualized(posX, posY, posZ)
+      shapeB.contextualized(posX, posY, posZ)
     );
   }
 
@@ -40,7 +40,7 @@ public final class MergeBlockShape implements BlockShape {
   public BlockShape normalized(int posX, int posY, int posZ) {
     return new MergeBlockShape(
       shapeA.normalized(posX, posY, posZ),
-      shapeA.normalized(posX, posY, posZ)
+      shapeB.normalized(posX, posY, posZ)
     );
   }
 

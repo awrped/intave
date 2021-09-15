@@ -54,12 +54,12 @@ public final class DamageController {
     return Arrays.stream(DamageModifier.values()).map(value -> String.valueOf(damageEvent.getDamage(value))).map(s -> s + " ").collect(Collectors.joining("", "(", ")"));
   }
 
-  private final static Field DAMAGE_MODIFIER_FUNCTIONS_FIELD;
+  private final static Field DAMAGE_MODIFIER_FUNCTION_FIELD;
 
   static {
     try {
-      DAMAGE_MODIFIER_FUNCTIONS_FIELD = EntityDamageEvent.class.getDeclaredField("modifierFunctions");
-      DAMAGE_MODIFIER_FUNCTIONS_FIELD.setAccessible(true);
+      DAMAGE_MODIFIER_FUNCTION_FIELD = EntityDamageEvent.class.getDeclaredField("modifierFunctions");
+      DAMAGE_MODIFIER_FUNCTION_FIELD.setAccessible(true);
     } catch (NoSuchFieldException exception) {
       throw new IllegalStateException(exception);
     }
@@ -68,7 +68,7 @@ public final class DamageController {
   private static Map<DamageModifier, Function<? super Double, Double>> modifierFunctionsOf(EntityDamageEvent damageEvent) {
     try {
       //noinspection unchecked
-      return (Map<DamageModifier, Function<? super Double, Double>>) DAMAGE_MODIFIER_FUNCTIONS_FIELD.get(damageEvent);
+      return (Map<DamageModifier, Function<? super Double, Double>>) DAMAGE_MODIFIER_FUNCTION_FIELD.get(damageEvent);
     } catch (IllegalAccessException exception) {
       throw new IllegalStateException(exception);
     }

@@ -212,8 +212,9 @@ public final class BoundingBox extends MemoryTraced implements BlockShape {
 
   @Override
   public BlockShape normalized(int posX, int posY, int posZ) {
-    makeOriginBox();
-    return offset(-posX, -posY, -posZ);
+    BoundingBox normalized = offset(-posX, -posY, -posZ);
+    normalized.makeOriginBox();
+    return normalized;
   }
 
   @Override

@@ -1,5 +1,6 @@
 package de.jpx3.intave.block.shape;
 
+import de.jpx3.intave.diagnostic.MemoryTraced;
 import de.jpx3.intave.shade.BoundingBox;
 
 import java.lang.ref.Reference;
@@ -7,7 +8,7 @@ import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.List;
 
-public final class CubeShape implements BlockShape {
+public final class CubeShape extends MemoryTraced implements BlockShape {
   private final int x, y, z;
 
   public CubeShape(int x, int y, int z) {

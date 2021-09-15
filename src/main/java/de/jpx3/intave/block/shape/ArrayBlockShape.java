@@ -1,12 +1,13 @@
 package de.jpx3.intave.block.shape;
 
+import de.jpx3.intave.diagnostic.MemoryTraced;
 import de.jpx3.intave.shade.BoundingBox;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-final class ArrayBlockShape implements BlockShape {
+public final class ArrayBlockShape extends MemoryTraced implements BlockShape {
   private final List<BlockShape> contents;
 
   public ArrayBlockShape(List<BlockShape> contents) {

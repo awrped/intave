@@ -8,9 +8,13 @@ import java.util.List;
 public final class BlockShapes {
   private final static BlockShape EMPTY = new EmptyBlockShape();
 
+  public static BlockShape empty() {
+    return EMPTY;
+  }
+
   public static BlockShape ofBoxes(List<BoundingBox> boundingBoxes) {
     if (boundingBoxes.isEmpty()) {
-      return EMPTY;
+      return empty();
     } else if (boundingBoxes.size() == 1) {
       return boundingBoxes.get(0);
     } else if (boundingBoxes.size() == 2) {
@@ -18,10 +22,6 @@ public final class BlockShapes {
     } else {
       return new ArrayBlockShape(new ArrayList<>(boundingBoxes));
     }
-  }
-
-  public static BlockShape empty() {
-    return EMPTY;
   }
 
   public static BlockShape merge(BlockShape shapeA, BlockShape shapeB) {

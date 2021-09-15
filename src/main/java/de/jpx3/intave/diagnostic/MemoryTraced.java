@@ -1,6 +1,8 @@
 package de.jpx3.intave.diagnostic;
 
 import de.jpx3.intave.IntaveControl;
+import de.jpx3.intave.block.shape.ArrayBlockShape;
+import de.jpx3.intave.block.shape.CubeShape;
 import de.jpx3.intave.block.state.BlockState;
 import de.jpx3.intave.shade.BoundingBox;
 
@@ -15,7 +17,9 @@ public abstract class MemoryTraced {
 
   static {
     BYTES.put(BoundingBox.class, Double.BYTES * 6);
-    BYTES.put(BlockState.class, Double.BYTES * 6 + Integer.BYTES * 3 + Long.BYTES);
+    BYTES.put(BlockState.class, Integer.BYTES * 3 + Integer.BYTES * 3 + Long.BYTES);
+    BYTES.put(CubeShape.class, Integer.BYTES * 3);
+    BYTES.put(ArrayBlockShape.class, Double.BYTES * 6 * 3);
   }
 
   public MemoryTraced() {

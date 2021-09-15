@@ -4,6 +4,8 @@ import de.jpx3.intave.IntaveControl;
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.access.player.trust.TrustFactor;
 import de.jpx3.intave.annotate.Native;
+import de.jpx3.intave.block.shape.ArrayBlockShape;
+import de.jpx3.intave.block.shape.CubeShape;
 import de.jpx3.intave.block.state.BlockState;
 import de.jpx3.intave.block.state.BlockStateAccess;
 import de.jpx3.intave.check.Check;
@@ -400,7 +402,9 @@ public final class RootStage extends CommandStage {
 
   static {
     CLASS_NAME.put(BoundingBox.class, "BoundingBoxes");
-    CLASS_NAME.put(BlockState.class, "BlockShapes");
+    CLASS_NAME.put(BlockState.class, "BlockStates");
+    CLASS_NAME.put(CubeShape.class, "CubeShape");
+    CLASS_NAME.put(ArrayBlockShape.class, "ArrayBlockShape");
   }
 
   @SubCommand(
