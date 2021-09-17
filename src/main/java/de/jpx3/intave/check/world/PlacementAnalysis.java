@@ -20,12 +20,16 @@ public final class PlacementAnalysis extends Check {
 
   @Native
   public void setupSubChecks() {
+    boolean useTimings = configuration().settings().boolBy("use_timings", true);
+
     boolean enterprise = (ProtocolMetadata.VERSION_DETAILS & 0x200) != 0;
     boolean partner = (ProtocolMetadata.VERSION_DETAILS & 0x100) != 0;
     if (enterprise || partner) {
-      appendCheckPart(new SpeedAnalyzer(this));
+      if (useTimings) {
+        appendCheckPart(new SpeedAnalyzer(this));
+        appendCheckPart(new SneakAnalyzer(this));
+      }
       appendCheckPart(new SharpRotationAnalyzer(this));
-      appendCheckPart(new SneakAnalyzer(this));
       appendCheckPart(new BlockRotationAnalyzer(this));
     }
     appendCheckPart(new RotationSpeedAnalyzer(this));
