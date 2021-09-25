@@ -115,10 +115,9 @@ public final class AttackRequiredHeuristic extends MetaCheckPart<Heuristics, Att
         long timeToLastFlag = System.currentTimeMillis() - meta.lastFlag;
         if (timeToLastFlag < 20_000 && timeToLastFlag > 1500) {
           int vl = (meta.vl += 200) / 200;
-          int options = Anomaly.AnomalyOption.DELAY_128s;
           boolean flag = vl >= 2;
           if (flag) {
-            Anomaly anomaly = Anomaly.anomalyOf("151", Confidence.LIKELY, Anomaly.Type.KILLAURA, "missed attack packet vl:" + vl, options);
+            Anomaly anomaly = Anomaly.anomalyOf("151", Confidence.LIKELY, Anomaly.Type.KILLAURA, "missed attack packet vl:" + vl);
             parentCheck().saveAnomaly(player, anomaly);
             //dmc5
             user.applyAttackNerfer(AttackNerfStrategy.HT_LIGHT, "5");
