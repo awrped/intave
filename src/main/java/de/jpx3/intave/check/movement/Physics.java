@@ -302,7 +302,10 @@ public final class Physics extends Check {
     }
 
     boolean velocityDetected = false;
-    boolean checkVelocity = !skipVLCalculation && movementData.pastInWeb > 5 && !movementData.inWater;
+    boolean checkVelocity = !skipVLCalculation
+      && movementData.pastInWeb > 5
+      && !movementData.inWater
+      && !movementData.collidedWithBoat();
 
     if (checkVelocity && movementData.pastExternalVelocity < 10 && !movementData.recentlyEncounteredFlyingPacket(2)) {
       if (distance > 0.008 && !onLadder) {
