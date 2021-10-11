@@ -653,7 +653,11 @@ public final class EntityTracker extends Module {
   }
 
   private void synchronizePlayerHealth(Player player, PacketContainer packet) {
-    Float health = readHealthOf(packet.getWatchableCollectionModifier().read(0));
+    List<WrappedWatchableObject> watchableObjects = packet.getWatchableCollectionModifier().read(0);
+    if (watchableObjects == null) {
+      return;
+    }
+    Float health = readHealthOf(watchableObjects);
     if (health != null) {
       AbilityMetadata abilityData = UserRepository.userOf(player).meta().abilities();
       abilityData.unsynchronizedHealth = health;
