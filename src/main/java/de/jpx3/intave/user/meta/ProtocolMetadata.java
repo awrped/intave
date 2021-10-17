@@ -23,6 +23,7 @@ public final class ProtocolMetadata {
   public static int VERSION_DETAILS = 97; // secret integer for security - DO NOT MODIFY
   public static int VER_1_8 = 47; // 1.8
   private String versionString;
+  private String clientBrand = "Unknown";
   private int protocolVersion;
   private final User user;
   private int refreshes;
@@ -127,6 +128,14 @@ public final class ProtocolMetadata {
       return 1.65F;
     }
     return 1.8F;
+  }
+
+  public String clientBrand() {
+    return clientBrand;
+  }
+
+  public void setClientBrand(String clientBrand) {
+    this.clientBrand = clientBrand;
   }
 
   public boolean flyingPacketStream() {

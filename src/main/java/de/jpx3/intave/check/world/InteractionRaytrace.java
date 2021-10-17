@@ -83,44 +83,43 @@ public final class InteractionRaytrace extends MetaCheck<InteractionRaytrace.Int
     InteractionMeta interactionMeta = metaOf(user);
     MovementMetadata movementData = user.meta().movement();
     AbilityMetadata abilityMetadata = user.meta().abilities();
-    PacketContainer packet = event.getPacket();
 
+    PacketContainer packet = event.getPacket();
     BlockInteractionReader reader = PacketReaders.readerOf(packet);
     com.comphenix.protocol.wrappers.BlockPosition blockPosition = reader.blockPosition();
 
-    if (blockPosition == null || event.isCancelled() || movementData.hasRidingEntity()) {
+    try {
+      if (blockPosition == null || event.isCancelled() || movementData.hasRidingEntity()) {
+        return;
+      }
+      int enumDirection = reader.enumDirection();//readEnumDirectionFromInteraction(packet);
+      if (enumDirection == 255) {
+        return;
+      }
+      Material clickedType = VolatileBlockAccess.typeAccess(user, blockPosition.toLocation(player.getWorld()));
+      boolean clickableInteraction = BlockInteractionAccess.isClickable(clickedType);
+      Material heldItemType = user.meta().inventory().heldItemType();
+      boolean interactionIsPlacement = heldItemType != Material.AIR && heldItemType.isBlock() && !clickableInteraction && !abilityMetadata.inGameMode(GameMode.ADVENTURE);
+
+      EnumWrappers.Hand handSlot = packet.getHands().readSafely(0);
+      handSlot = handSlot == null ? EnumWrappers.Hand.MAIN_HAND : handSlot;
+
+      Interaction interaction = new Interaction(
+        packet.deepClone(), player.getWorld(), player, blockPosition, enumDirection,
+        interactionIsPlacement ? InteractionType.PLACE : InteractionType.INTERACT,
+        heldItemType, handSlot, null
+      );
+
+      boolean mustPostValidate = interactionMeta.remainingBlockStart > 0;
+      if (!mustPostValidate && preprocessInteraction(interaction)) {
+        interactionEmulator.emulate(interaction);
+      } else {
+        interactionMeta.interactionList.add(interaction);
+        event.setCancelled(true);
+      }
+    } finally {
       reader.close();
-      return;
     }
-    int enumDirection = reader.enumDirection();//readEnumDirectionFromInteraction(packet);
-    if (enumDirection == 255) {
-      reader.close();
-      return;
-    }
-
-    Material clickedType = VolatileBlockAccess.typeAccess(user, blockPosition.toLocation(player.getWorld()));
-    boolean clickableInteraction = BlockInteractionAccess.isClickable(clickedType);
-    Material heldItemType = user.meta().inventory().heldItemType();
-    boolean interactionIsPlacement = heldItemType != Material.AIR && heldItemType.isBlock() && !clickableInteraction && !abilityMetadata.inGameMode(GameMode.ADVENTURE);
-
-    EnumWrappers.Hand handSlot = packet.getHands().readSafely(0);
-    handSlot = handSlot == null ? EnumWrappers.Hand.MAIN_HAND : handSlot;
-
-    Interaction interaction = new Interaction(
-      packet.deepClone(), player.getWorld(), player, blockPosition, enumDirection,
-      interactionIsPlacement ? InteractionType.PLACE : InteractionType.INTERACT,
-      heldItemType, handSlot, null
-    );
-
-    boolean mustPostValidate = interactionMeta.remainingBlockStart > 0;
-    if (!mustPostValidate && preprocessInteraction(interaction)) {
-      interactionEmulator.emulate(interaction);
-    } else {
-      interactionMeta.interactionList.add(interaction);
-      event.setCancelled(true);
-    }
-
-    reader.close();
   }
 
   @PacketSubscription(

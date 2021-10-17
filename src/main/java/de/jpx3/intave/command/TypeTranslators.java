@@ -72,11 +72,7 @@ public final class TypeTranslators {
   }
 
   private static String niceifyEnumName(String input) {
-    return firstToUppercase(
-      input
-        .toLowerCase(Locale.ROOT)
-        .replace("_", "")
-    );
+    return firstToUppercase(input.toLowerCase(Locale.ROOT).replace("_", ""));
   }
 
   private static String firstToUppercase(String string) {

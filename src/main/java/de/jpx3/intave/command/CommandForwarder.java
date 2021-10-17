@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @HighOrderService
-public final class CommandProcessor implements CommandExecutor, TabCompleter {
+public final class CommandForwarder implements CommandExecutor, TabCompleter {
   private final CommandStage rootCommandStage = BaseStage.singletonInstance();
 
   static {

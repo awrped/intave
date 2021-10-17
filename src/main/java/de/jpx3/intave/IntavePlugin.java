@@ -21,7 +21,7 @@ import de.jpx3.intave.block.variant.BlockVariantRegister;
 import de.jpx3.intave.check.CheckService;
 import de.jpx3.intave.cleanup.GarbageCollector;
 import de.jpx3.intave.cleanup.ShutdownTasks;
-import de.jpx3.intave.command.CommandProcessor;
+import de.jpx3.intave.command.CommandForwarder;
 import de.jpx3.intave.config.ConfigurationService;
 import de.jpx3.intave.connect.customclient.CustomClientSupportService;
 import de.jpx3.intave.connect.proxy.ProxyMessenger;
@@ -531,7 +531,7 @@ public final class IntavePlugin extends JavaPlugin {
       blackListService = new BlackListService(this);
       letis = new Letis(this);
 
-      getCommand("intave").setExecutor(new CommandProcessor());
+      getCommand("intave").setExecutor(new CommandForwarder());
 
       if (IntaveControl.DISABLE_BLOCK_CACHING_ENTIRELY) {
         logger().info("This version does not cache block-accesses");

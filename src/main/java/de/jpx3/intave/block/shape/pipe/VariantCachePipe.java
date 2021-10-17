@@ -31,7 +31,7 @@ public final class VariantCachePipe implements ShapeResolverPipeline {
   public BlockShape resolve(World world, Player player, Material type, int variantIndex, int posX, int posY, int posZ) {
     Map<Integer, BlockShape> variantCache = cache.computeIfAbsent(type, material -> ReferenceMap.soft(new ConcurrentHashMap<>()));
     return variantCache.computeIfAbsent(variantIndex, integer ->
-     forward.resolve(world, player, type, variantIndex, posX, posY, posZ).normalized(posX, posY, posZ)
+      forward.resolve(world, player, type, variantIndex, posX, posY, posZ).normalized(posX, posY, posZ)
     ).contextualized(posX, posY, posZ);
   }
 

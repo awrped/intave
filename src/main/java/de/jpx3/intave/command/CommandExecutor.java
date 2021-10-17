@@ -63,7 +63,7 @@ public final class CommandExecutor {
     List<Class<?>> allTypes = new ArrayList<>();
 
     int i = 0;
-    boolean optional = false;
+    boolean optionalBefore = false;
 
     for (Class<?> parameterType : targetMethod.getParameterTypes()) {
       if (i == 0) {
@@ -77,12 +77,12 @@ public final class CommandExecutor {
       }
 
       Annotation[] parameterAnnotation = parameterAnnotations[i];
-      boolean newOptional = Arrays.stream(parameterAnnotation).anyMatch(annotation -> annotation.annotationType() == Optional.class);
-      if (!newOptional && optional) {
+      boolean isOptional = Arrays.stream(parameterAnnotation).anyMatch(annotation -> annotation.annotationType() == Optional.class);
+      if (!isOptional && optionalBefore) {
         throw new IntaveInternalException();
       }
-      optional = newOptional;
-      if (!optional) {
+      optionalBefore = isOptional;
+      if (!optionalBefore) {
         requiredTypes.add(parameterType);
       }
       allTypes.add(parameterType);
@@ -151,12 +151,8 @@ public final class CommandExecutor {
       }
       Class<?> expectedType = allTypes[i];
       StringBuilder followingCommand = new StringBuilder();
-      String[] executedCommandTypes = executedCommand.split(" ");
-      for (int j = 0; j < executedCommandTypes.length; j++) {
-        String executedCommandType = executedCommandTypes[j];
-        if (j >= i) {
-          followingCommand.append(executedCommandType).append(" ");
-        }
+      for (int j = i; j < args.length; j++) {
+        followingCommand.append(args[j]).append(" ");
       }
       Object output = TypeTranslators.tryTranslate(sender, expectedType, arg, followingCommand.toString());
       if (output == null) {

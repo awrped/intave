@@ -36,7 +36,7 @@ public final class ShapeResolver {
 
   public static void setup() {
 //    PatchyClassSwitchLoader<?> acbbResolver = PatchyClassSwitchLoader
-//      .builderFor("de.jpx3.intave.block.blockshape.shape.drill.acbbs.v{ver}AlwaysCollidingBoundingBox")
+//      .builderFor("de.jpx3.intave.block.shape.drill.acbbs.v{ver}AlwaysCollidingBoundingBox")
 //      .withVersions(VER1_8_0, VER1_9_0, VER1_12_0)
 //      .ignoreFrom(VER1_13_0)
 //      .complete();
@@ -44,7 +44,7 @@ public final class ShapeResolver {
 //    acbbResolver.loadIfAvailable();
 //
 //    PatchyClassSwitchLoader<ResolverPipeline> drillResolver = PatchyClassSwitchLoader
-//      .<ResolverPipeline>builderFor("de.jpx3.intave.block.blockshape.shape.drill.v{ver}ShapeDrill")
+//      .<ResolverPipeline>builderFor("de.jpx3.intave.block.shape.shape.drill.v{ver}ShapeDrill")
 //      .withVersions(VER1_8_0, VER1_9_0, VER1_12_0, VER1_13_0, VER1_14_0, VER1_17_1)
 //      .complete();
 

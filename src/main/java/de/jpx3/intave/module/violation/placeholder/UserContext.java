@@ -28,6 +28,7 @@ public final class UserContext implements PlaceholderContext {
     builder.put("latency", String.valueOf(user.latency()));
     builder.put("jitter", String.valueOf(user.latencyJitter()));
     builder.put("version", user.meta().protocol().versionString());
+    builder.put("client", user.meta().protocol().clientBrand());
     builder.put("world", player.getWorld().getName());
 
     return builder.build();
