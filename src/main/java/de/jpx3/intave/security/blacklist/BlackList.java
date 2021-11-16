@@ -2,7 +2,6 @@ package de.jpx3.intave.security.blacklist;
 
 import com.google.common.collect.ImmutableList;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -58,17 +57,17 @@ public final class BlackList {
   }
 
   public static BlackList fromInputStream(InputStream inputStream) {
-    Scanner scanner = new Scanner(inputStream);
     List<String> blacklistedHash = new ArrayList<>();
-    while (scanner.hasNextLine()) {
-      String line = scanner.nextLine();
-      if(line.length() == 64) {
-        blacklistedHash.add(line);
-      }
-    }
     try {
+      Scanner scanner = new Scanner(inputStream);
+      while (scanner.hasNextLine()) {
+        String line = scanner.nextLine();
+        if(line.length() == 64) {
+          blacklistedHash.add(line);
+        }
+      }
       inputStream.close();
-    } catch (IOException ignored) {}
+    } catch (Exception ignored) {}
     return new BlackList(ImmutableList.copyOf(blacklistedHash));
   }
 }

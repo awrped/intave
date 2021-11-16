@@ -2,7 +2,7 @@ package de.jpx3.intave.diagnostic.report;
 
 import de.jpx3.intave.IntaveLogger;
 import de.jpx3.intave.cleanup.ShutdownTasks;
-import de.jpx3.intave.resource.EncryptedResource;
+import de.jpx3.intave.resource.legacy.EncryptedLegacyResource;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class RuntimeDiagnostics {
   private static boolean pluginEnabled;
   private static final Map<Class<? extends Report>, Report> reports = new ConcurrentHashMap<>();
-  private static final Map<Report, EncryptedResource> encryptedResources = new ConcurrentHashMap<>();
+  private static final Map<Report, EncryptedLegacyResource> encryptedResources = new ConcurrentHashMap<>();
 
   public static void applicationBoot() {
     if (pluginEnabled) {
@@ -35,7 +35,7 @@ public final class RuntimeDiagnostics {
 
   private static void loadReports() {
     for (Report report : reports.values()) {
-      EncryptedResource resource = encryptedResources.get(report);
+      EncryptedLegacyResource resource = encryptedResources.get(report);
       if (resource.exists()) {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         InputStream inputStream = resource.read();
@@ -57,7 +57,7 @@ public final class RuntimeDiagnostics {
     try {
       Report report = reportClass.newInstance();
       reports.put(reportClass, report);
-      encryptedResources.put(report, new EncryptedResource("report-" + report.name(), false));
+      encryptedResources.put(report, new EncryptedLegacyResource("report-" + report.name(), false));
     } catch (InstantiationException | IllegalAccessException exception) {
       IntaveLogger.logger().printLine("[Intave] Failed to load report " + reportClass.getSimpleName());
       exception.printStackTrace();
@@ -79,7 +79,7 @@ public final class RuntimeDiagnostics {
 
   public static void saveReports() {
     for (Report report : reports.values()) {
-      EncryptedResource resource = encryptedResources.get(report);
+      EncryptedLegacyResource resource = encryptedResources.get(report);
       if (resource.exists()) {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         InputStream inputStream = resource.read();

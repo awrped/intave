@@ -2,14 +2,15 @@ package de.jpx3.intave.cleanup;
 
 import com.google.common.collect.Lists;
 
+import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
 public final class GarbageCollector {
-  private final static List<WeakReference<Map<?, ?>>> boundMaps = Lists.newCopyOnWriteArrayList();
-  private final static List<WeakReference<List<?>>> boundLists = Lists.newCopyOnWriteArrayList();
+  private final static List<Reference<Map<?, ?>>> boundMaps = Lists.newCopyOnWriteArrayList();
+  private final static List<Reference<List<?>>> boundLists = Lists.newCopyOnWriteArrayList();
 
   private GarbageCollector() {
     throw new UnsupportedOperationException();
@@ -47,14 +48,14 @@ public final class GarbageCollector {
 
   public static void clearIf(Predicate<Object> check) {
     boundMaps.forEach(reference -> {
-      Map<?, ?> map;
-      if ((map = reference.get()) != null) {
+      Map<?, ?> map = reference.get();
+      if (map != null) {
         map.entrySet().removeIf(entry -> check.test(entry.getKey()));
       }
     });
     boundLists.forEach(reference -> {
-      List<?> list;
-      if ((list = reference.get()) != null) {
+      List<?> list = reference.get();
+      if (list != null) {
         list.removeIf(check);
       }
     });

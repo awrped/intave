@@ -1,4 +1,4 @@
-package de.jpx3.intave.resource;
+package de.jpx3.intave.resource.legacy;
 
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.annotate.Native;
@@ -28,7 +28,8 @@ import java.util.concurrent.ThreadLocalRandom;
 import static de.jpx3.intave.IntaveControl.GOMME_MODE;
 
 @SuppressWarnings({"UnusedReturnValue", "ResultOfMethodCallIgnored"})
-public final class CachedResource implements Resource {
+@Deprecated
+public final class CachedLegacyResource implements LegacyResource {
   private final static String KEY = "AES/GCM/NoPadding";
 
   private final String name;
@@ -38,7 +39,7 @@ public final class CachedResource implements Resource {
   private FileLock lock;
   private FileChannel lockChannel;
 
-  public CachedResource(
+  public CachedLegacyResource(
     String name, String uri,
     long expireDuration
   ) {

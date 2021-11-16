@@ -1,4 +1,4 @@
-package de.jpx3.intave.resource;
+package de.jpx3.intave.resource.legacy;
 
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.access.IntaveInternalException;
@@ -28,7 +28,8 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import static de.jpx3.intave.IntaveControl.GOMME_MODE;
 
-public final class EncryptedResource implements Resource {
+@Deprecated
+public final class EncryptedLegacyResource implements LegacyResource {
   private final static int CLASS_VERSION = 4;
   private final String name;
   private final boolean versionDependent;
@@ -36,7 +37,7 @@ public final class EncryptedResource implements Resource {
   private FileLock lock;
   private FileChannel lockChannel;
 
-  public EncryptedResource(String name, boolean versionDependent) {
+  public EncryptedLegacyResource(String name, boolean versionDependent) {
     this.name = name;
     this.versionDependent = versionDependent;
   }

@@ -1,7 +1,7 @@
 package de.jpx3.intave.security;
 
 import de.jpx3.intave.annotate.Native;
-import de.jpx3.intave.resource.EncryptedResource;
+import de.jpx3.intave.resource.legacy.EncryptedLegacyResource;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
@@ -10,13 +10,13 @@ import java.util.Scanner;
 import java.util.concurrent.ThreadLocalRandom;
 
 public final class HWIDVerification {
-  private static EncryptedResource encryptedResource;
+  private static EncryptedLegacyResource encryptedResource;
   private static String identifier;
 
   @Native
   public static String publicHardwareIdentifier() {
     if (encryptedResource == null) {
-      encryptedResource = new EncryptedResource("hardware-id", false);
+      encryptedResource = new EncryptedLegacyResource("hardware-id", false);
     }
     if (!encryptedResource.exists()) {
       identifier = randomString();

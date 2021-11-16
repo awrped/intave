@@ -4,17 +4,17 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
-import de.jpx3.intave.resource.CachedResource;
+import de.jpx3.intave.resource.Resource;
+import de.jpx3.intave.resource.Resources;
 
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
 public final class ClientDataList {
-  private final static CachedResource CACHED_RESOURCE = new CachedResource("clientdata", "https://service.intave.de/clientdata", TimeUnit.DAYS.toMillis(14));
+  private final static Resource CACHED_RESOURCE = Resources.cacheResourceChain("https://service.intave.de/clientdata", "clientdata", TimeUnit.DAYS.toMillis(14));
   private final List<ClientData> content;
 
   public ClientDataList(List<ClientData> content) {
@@ -29,12 +29,7 @@ public final class ClientDataList {
     if (!CACHED_RESOURCE.available()) {
       return new ClientDataList(new ArrayList<>());
     }
-    Scanner scanner = new Scanner(CACHED_RESOURCE.read());
-    StringBuilder stringBuilder = new StringBuilder();
-    while (scanner.hasNextLine()) {
-      stringBuilder.append(scanner.nextLine());
-    }
-    return new ClientDataList(parseClientData(stringBuilder.toString()));
+    return new ClientDataList(parseClientData(CACHED_RESOURCE.asString()));
   }
 
   private static List<ClientData> parseClientData(String rawJson) {

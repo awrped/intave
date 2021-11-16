@@ -3,6 +3,7 @@ package de.jpx3.intave.shade;
 import java.util.ArrayList;
 import java.util.List;
 
+@Deprecated
 public final class MovementKeyInput {
   private static final MovementKeyInput[][] UNIVERSE = new MovementKeyInput[3][3];
   private static final List<MovementKeyInput> VALUES_USAGE_SORTED = new ArrayList<>();
@@ -14,7 +15,7 @@ public final class MovementKeyInput {
   public static final MovementKeyInput S_PRESS = fromKeys(-1, 0);
   public static final MovementKeyInput SA_PRESS = fromKeys(-1, 1);
   public static final MovementKeyInput SD_PRESS = fromKeys(-1, -1);
-  public static final MovementKeyInput A_PRESS = fromKeys(0, -1);
+  public static final MovementKeyInput A_PRESS = fromKeys(0, 1);
   public static final MovementKeyInput D_PRESS = fromKeys(0, -1);
   public static final MovementKeyInput N_PRESS = fromKeys(0, 0);
 

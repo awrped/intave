@@ -17,8 +17,8 @@ import org.bukkit.entity.Player;
  * A quick example on how this would look:
  * <pre>{@code
  * public class ExamplePart extends MetaCheckPart<Example, ExamplePartMeta> {
- *   public ExamplePart() {
- *     super(Example.class, ExamplePartMeta.class);
+ *   public ExamplePart(Example example) {
+ *     super(example, ExamplePartMeta.class);
  *   }
  *
  *   public void execution(Player player) {

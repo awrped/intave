@@ -2,6 +2,7 @@ package de.jpx3.intave.module.linker.packet;
 
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.events.ListenerPriority;
+import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketEvent;
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.user.User;
@@ -49,7 +50,7 @@ public final class ForwardingPacketAdapter extends WeakReferencePacketAdapter {
       user.receiveNextOutboundPacketAgain();
       return;
     }
-    for (FilteringPacketAdapter filteringPacketAdapter : targetList) {
+    for (PacketAdapter filteringPacketAdapter : targetList) {
       filteringPacketAdapter.onPacketSending(event);
     }
   }
@@ -71,7 +72,7 @@ public final class ForwardingPacketAdapter extends WeakReferencePacketAdapter {
       user.receiveNextInboundPacketAgain();
       return;
     }
-    for (FilteringPacketAdapter filteringPacketAdapter : targetList) {
+    for (PacketAdapter filteringPacketAdapter : targetList) {
       filteringPacketAdapter.onPacketReceiving(event);
     }
   }

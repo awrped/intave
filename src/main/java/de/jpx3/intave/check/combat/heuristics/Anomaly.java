@@ -128,6 +128,7 @@ public final class Anomaly {
     public final static int DELAY_64s = 1 << 8;
     public final static int DELAY_128s = 1 << 9;
     public final static int FORCE_APPLY = 1 << 10;
+    public final static int IDK = 1 << 11;
 
     public static boolean matches(int optionInt, int option) {
       return (optionInt & option) > 0;

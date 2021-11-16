@@ -217,14 +217,14 @@ public final class MovementDispatcher extends Module {
   }
 
   @PacketSubscription(
-    priority = ListenerPriority.LOWEST,
+    priority = ListenerPriority.LOW,
     packetsIn = {
       FLYING, LOOK, POSITION, POSITION_LOOK, VEHICLE_MOVE
     }
   )
   public void receiveMovement(PacketEvent event) {
     Player player = event.getPlayer();
-    if (player.isDead()) {
+    if (player.isDead() || event.isCancelled()) {
       return;
     }
     PacketContainer packet = event.getPacket();

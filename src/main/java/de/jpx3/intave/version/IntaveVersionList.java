@@ -5,7 +5,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
-import de.jpx3.intave.resource.CachedResource;
+import de.jpx3.intave.resource.Resource;
+import de.jpx3.intave.resource.Resources;
 
 import java.io.StringReader;
 import java.util.*;
@@ -19,13 +20,12 @@ public final class IntaveVersionList {
   }
 
   public void setup() {
-    CachedResource cachedResource = new CachedResource(
-      "versions",
+    Resource cachedResource = Resources.cacheResourceChain(
       "https://service.intave.de/versions",
+      "versions",
       TimeUnit.DAYS.toMillis(2)
     );
-    String raw = String.join("", cachedResource.readLines());
-    JsonReader json = new JsonReader(new StringReader(raw));
+    JsonReader json = new JsonReader(new StringReader(cachedResource.asString()));
     json.setLenient(true);
     JsonArray jsonArray = new JsonParser().parse(json).getAsJsonArray();
     for (JsonElement jsonElement : jsonArray) {

@@ -5,7 +5,8 @@ import de.jpx3.intave.annotate.HighOrderService;
 import de.jpx3.intave.executor.Synchronizer;
 import de.jpx3.intave.module.linker.bukkit.BukkitEventSubscriber;
 import de.jpx3.intave.module.linker.bukkit.BukkitEventSubscription;
-import de.jpx3.intave.resource.CachedResource;
+import de.jpx3.intave.resource.Resource;
+import de.jpx3.intave.resource.Resources;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
@@ -17,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 @HighOrderService
 public final class BlackListService implements BukkitEventSubscriber {
   private final IntavePlugin plugin;
-  private final CachedResource resource = new CachedResource("blacklist", "https://service.intave.de/blacklist", TimeUnit.DAYS.toMillis(7));
+  private final Resource resource = Resources.cacheResourceChain("https://service.intave.de/blacklist", "blacklist", TimeUnit.DAYS.toMillis(7));
   private BlackList blackList;
 
   public BlackListService(IntavePlugin plugin) {
@@ -38,7 +39,6 @@ public final class BlackListService implements BukkitEventSubscriber {
   }
 
   private void loadFilterList() {
-    resource.prepareFile();
     blackList = BlackList.fromInputStream(resource.read());
   }
 

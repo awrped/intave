@@ -73,10 +73,6 @@ public class TinyProtocol {
     // Compute handler name
     this.handlerName = handlerName();
 
-//    if (MinecraftVersions.VER1_12_0.atOrAbove()) {
-//      return;
-//    }
-
     // Prepare existing players
     registerBukkitEvents();
 
@@ -123,7 +119,12 @@ public class TinyProtocol {
       public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         Channel channel = (Channel) msg;
         // Prepare to initialize ths channel
-        channel.pipeline().addFirst(beginInitProtocol);
+        try {
+          channel.pipeline().addFirst(beginInitProtocol);
+        } catch (Exception exception) {
+          System.out.println(channel.pipeline().names());
+          exception.printStackTrace();
+        }
         ctx.fireChannelRead(msg);
       }
     };
@@ -135,7 +136,7 @@ public class TinyProtocol {
   private void registerBukkitEvents() {
     listener = new Listener() {
       @EventHandler(priority = EventPriority.LOWEST)
-      public final void onPlayerLogin(PlayerJoinEvent join) {
+      public void onPlayerLogin(PlayerJoinEvent join) {
         if (closed) {
           return;
         }
@@ -149,7 +150,7 @@ public class TinyProtocol {
       }
 
       @EventHandler
-      public final void onPluginDisable(PluginDisableEvent event) {
+      public void onPluginDisable(PluginDisableEvent event) {
         if (event.getPlugin().equals(plugin)) {
           close();
         }
@@ -174,14 +175,19 @@ public class TinyProtocol {
       List<Object> list = getField(serverConnection.getClass(), List.class, i).get(serverConnection);
 
       for (Object item : list) {
-        if (!(item instanceof ChannelFuture))
+        if (!(item instanceof ChannelFuture)) {
           break;
+        }
 
         // Channel future that contains the server connection
         Channel serverChannel = ((ChannelFuture) item).channel();
-
         serverChannels.add(serverChannel);
-        serverChannel.pipeline().addFirst(serverChannelHandler);
+        try {
+          serverChannel.pipeline().addFirst(serverChannelHandler);
+        } catch (Exception exception) {
+          System.out.println(serverChannel.pipeline().names());
+          exception.printStackTrace();
+        }
         looking = false;
       }
     }
@@ -190,10 +196,8 @@ public class TinyProtocol {
   private void unregisterChannelHandler() {
     if (serverChannelHandler == null)
       return;
-
     for (Channel serverChannel : serverChannels) {
-      final ChannelPipeline pipeline = serverChannel.pipeline();
-
+      ChannelPipeline pipeline = serverChannel.pipeline();
       // Remove channel handler
       serverChannel.eventLoop().execute(() -> {
         try {

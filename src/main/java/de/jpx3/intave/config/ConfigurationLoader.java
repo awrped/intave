@@ -4,7 +4,7 @@ import de.jpx3.intave.IntaveControl;
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.access.IntaveBootFailureException;
 import de.jpx3.intave.annotate.Native;
-import de.jpx3.intave.resource.EncryptedResource;
+import de.jpx3.intave.resource.legacy.EncryptedLegacyResource;
 import de.jpx3.intave.security.ContextSecrets;
 import de.jpx3.intave.security.LicenseAccess;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -33,7 +33,7 @@ public final class ConfigurationLoader {
   private final String configurationKey;
   private YamlConfiguration configuration;
 
-  private final EncryptedResource configurationStates = new EncryptedResource("configuration-states", true);
+  private final EncryptedLegacyResource configurationStates = new EncryptedLegacyResource("configuration-states", true);
 
   public ConfigurationLoader(String configurationKey) {
     this.configurationKey = configurationKey;

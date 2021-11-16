@@ -47,7 +47,7 @@ import de.jpx3.intave.packet.reader.PacketReaders;
 import de.jpx3.intave.player.ItemProperties;
 import de.jpx3.intave.player.fake.event.FakePlayerEventService;
 import de.jpx3.intave.reflect.access.ReflectiveAccess;
-import de.jpx3.intave.resource.EncryptedResource;
+import de.jpx3.intave.resource.legacy.EncryptedLegacyResource;
 import de.jpx3.intave.security.*;
 import de.jpx3.intave.security.blacklist.BlackListService;
 import de.jpx3.intave.security.letis.Letis;
@@ -204,7 +204,7 @@ public final class IntavePlugin extends JavaPlugin {
 
       InterceptorDetection.revert();
 
-      EncryptedResource contextStatusResource = new EncryptedResource("context-status", false);
+      EncryptedLegacyResource contextStatusResource = new EncryptedLegacyResource("context-status", false);
 
       String requiredState = null; // leave this be
       boolean offlineMode = false;

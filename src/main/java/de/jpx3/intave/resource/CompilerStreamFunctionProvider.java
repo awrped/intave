@@ -1,6 +1,7 @@
 package de.jpx3.intave.resource;
 
 import de.jpx3.intave.IntavePlugin;
+import de.jpx3.intave.resource.legacy.LegacyResource;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -16,8 +17,12 @@ public interface CompilerStreamFunctionProvider<O> extends Function<List<String>
     return fromStream(new FileInputStream(file));
   }
 
+  default O fromLegacyResource(LegacyResource legacyResource) {
+    return fromStream(legacyResource.read());
+  }
+
   default O fromResource(Resource resource) {
-    return fromStream(resource.read());
+    return apply(resource.lines());
   }
 
   default O fromResourceInJar(String path) {
