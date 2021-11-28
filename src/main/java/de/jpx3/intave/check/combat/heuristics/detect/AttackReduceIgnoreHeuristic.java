@@ -10,7 +10,9 @@ import de.jpx3.intave.module.dispatch.AttackDispatcher;
 import de.jpx3.intave.module.linker.packet.ListenerPriority;
 import de.jpx3.intave.module.linker.packet.PacketSubscription;
 import de.jpx3.intave.module.mitigate.AttackNerfStrategy;
+import de.jpx3.intave.module.tracker.player.AbilityTracker;
 import de.jpx3.intave.user.User;
+import de.jpx3.intave.user.meta.AbilityMetadata;
 import de.jpx3.intave.user.meta.CheckCustomMetadata;
 import de.jpx3.intave.user.meta.InventoryMetadata;
 import de.jpx3.intave.user.meta.MovementMetadata;
@@ -44,6 +46,7 @@ public final class AttackReduceIgnoreHeuristic extends MetaCheckPart<Heuristics,
     MovementMetadata movementData = user.meta().movement();
     InventoryMetadata inventoryData = user.meta().inventory();
     AttackReduceMeta heuristicMeta = metaOf(user);
+    AbilityMetadata abilities = user.meta().abilities();
     ProtocolMetadata clientData = user.meta().protocol();
 
     if (clientData.protocolVersion() >= VER_1_17 || AttackDispatcher.REDUCING_DISABLED) {
@@ -56,7 +59,7 @@ public final class AttackReduceIgnoreHeuristic extends MetaCheckPart<Heuristics,
 
     ItemStack itemStack = inventoryData.heldItem();
     boolean knockbackEnchantment = itemStack != null && itemStack.containsEnchantment(Enchantment.KNOCKBACK);
-    if (knockbackEnchantment) {
+    if (knockbackEnchantment || abilities.inGameModeIncludePending(AbilityTracker.GameMode.SPECTATOR)) {
       return;
     }
 
