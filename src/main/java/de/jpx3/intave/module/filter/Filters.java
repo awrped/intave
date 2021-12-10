@@ -18,6 +18,7 @@ public final class Filters extends Module {
     setup(HealthFilter.class);
     setup(VanishFilter.class);
     setup(CommandFilter.class);
+    setup(Log4JExploitFilter.class);
     linkEnabled();
   }
 

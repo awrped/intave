@@ -12,7 +12,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -71,7 +71,7 @@ public final class ChatWordFilter extends Filter {
     }
 
     String messageToLower = message.toLowerCase(Locale.ROOT);
-    List<String> badwords = Arrays.asList("prestige", "koks", "liquidbounce", "eject");
+    List<String> badwords = new ArrayList<>();//Arrays.asList("prestige", "koks", "liquidbounce", "eject");
 
     for (String badword : badwords) {
       if (messageToLower.contains(badword)) {

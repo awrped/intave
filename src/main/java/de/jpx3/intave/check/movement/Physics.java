@@ -481,8 +481,8 @@ public final class Physics extends Check {
           manualOverrideDistance = 0.75;
           break;
         case LENIENT:
-          boolean flagAnyways = (verticalViolationIncrease >= 100 && predictedY < 0)/* || (verticalViolationIncrease >= 100)*/;
-          setback = (distanceMoved > (violationLevelAfter > 30 ? 0.4 : 0.6) || violationLevelAfter > 200 || user.justJoined() || flagAnyways) && deepPitchViolationOverflow && highPitchAggressiveViolationOverflow;
+          boolean flagAnyways = (verticalViolationIncrease >= 100 && predictedY < 0 && violationLevelAfter > 30)/* || (verticalViolationIncrease >= 100)*/;
+          setback = (distanceMoved > (violationLevelAfter > 30 ? 0.4 : 0.6) || violationLevelAfter > 200 || user.justJoined() || flagAnyways) && deepPitchViolationOverflow && (highPitchAggressiveViolationOverflow || violationLevelAfter > 100);
           manualOverrideDistance = 0.75;
           break;
         case SILENT:
