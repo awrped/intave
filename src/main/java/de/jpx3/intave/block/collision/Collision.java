@@ -7,6 +7,7 @@ import de.jpx3.intave.block.physics.MaterialMagic;
 import de.jpx3.intave.block.shape.*;
 import de.jpx3.intave.block.state.BlockStateAccess;
 import de.jpx3.intave.block.type.BlockTypeAccess;
+import de.jpx3.intave.block.variant.BlockVariantAccess;
 import de.jpx3.intave.shade.BoundingBox;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserRepository;
@@ -77,6 +78,10 @@ public final class Collision {
     return !nonePresent(player, playerBox);
   }
 
+  public static boolean unsafePresent(World world, Player player, BoundingBox playerBox) {
+    return !unsafeNonePresent(world, player, playerBox);
+  }
+
   public static boolean nonePresent(Player player, BoundingBox playerBox) {
     int minX = floor(playerBox.minX);
     int maxX = floor(playerBox.maxX);
@@ -119,11 +124,35 @@ public final class Collision {
     return true;
   }
 
+  public static boolean unsafeNonePresent(World world, Player player, BoundingBox playerBox) {
+    int minX = floor(playerBox.minX);
+    int maxX = floor(playerBox.maxX);
+    int minY = floor(playerBox.minY);
+    int maxY = floor(playerBox.maxY);
+    int minZ = floor(playerBox.minZ);
+    int maxZ = floor(playerBox.maxZ);
+    int ystart = Math.max(minY - 1, 0);
+    for (int x = minX; x <= maxX; ++x) {
+      for (int z = minZ; z <= maxZ; ++z) {
+        for (int y = ystart; y <= maxY; ++y) {
+          Block block = VolatileBlockAccess.blockAccess(world, x, y, z);
+          Material type = BlockTypeAccess.typeAccess(block, player);
+          int variant = BlockVariantAccess.variantAccess(block);
+          BlockShape shape = shapeResolver.resolve(world, player, type, variant, x, y, z);
+          if (shape.intersectsWith(playerBox)) {
+            return false;
+          }
+        }
+      }
+    }
+    return true;
+  }
+
   private static boolean intersects(BoundingBox boundingBox, int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
     return boundingBox.maxX > minX && boundingBox.minX < maxX && (boundingBox.maxY > minY && boundingBox.minY < maxY && boundingBox.maxZ > minZ && boundingBox.minZ < maxZ);
   }
 
-  private final static ShapeResolverPipeline boundingBoxResolver = ShapeResolver.pipelineHead();
+  private final static ShapeResolverPipeline shapeResolver = ShapeResolver.pipelineHead();
 
   @Deprecated
   // I suck, please remove
@@ -232,7 +261,7 @@ public final class Collision {
   }
 
   public static boolean playerInImaginaryBlock(User user, World world, int posX, int posY, int posZ, Material type, int data) {
-    BlockShape boundingBoxes = boundingBoxResolver.resolve(world, user.player(), type, data, posX, posY, posZ);
+    BlockShape boundingBoxes = shapeResolver.resolve(world, user.player(), type, data, posX, posY, posZ);
     if (boundingBoxes == null || boundingBoxes.isEmpty()) {
       return false;
     }

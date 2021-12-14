@@ -26,7 +26,7 @@ import org.bukkit.entity.Player;
  *      meta.imUniqueForEveryPlayer++;
  *   }
  *
- *   // every user will hold his own instance of this ExampleClass
+ *   // every user will hold his own instance of this ExampleMeta
  *   public static class ExampleMeta extends CheckCustomMetadata {
  *     public int imUniqueForEveryPlayer = 0;
  *   }

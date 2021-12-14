@@ -37,7 +37,7 @@ public final class TeleportApplyEnforcer implements PacketEventSubscriber {
   }
 
   @PacketSubscription(
-    priority = ListenerPriority.LOWEST,
+    priority = ListenerPriority.LOW,
     packetsOut = {
       POSITION
     }
@@ -76,6 +76,12 @@ public final class TeleportApplyEnforcer implements PacketEventSubscriber {
     if (TELEPORTATION_DEBUG) {
       IntaveLogger.logger().printLine("[Intave] Sent teleportation request to " + player.getName() + ": " + MathHelper.formatPosition(movementData.teleportLocation));
     }
+
+    Modules.feedback().doubleSynchronize(player, event, null,
+      (player1, target) -> movementData.transactionTeleportAllow = true,
+      (player1, target) -> movementData.transactionTeleportAllow = false
+    );
+
     movementData.awaitTeleport = true;
     movementData.awaitOutgoingTeleport = false;
     movementData.teleportResendCountdown = 20;
@@ -147,7 +153,7 @@ public final class TeleportApplyEnforcer implements PacketEventSubscriber {
     Location teleportLocation = movementData.teleportLocation;
 
     boolean isTeleport;
-    if (NEW_TELEPORTATION && movementData.expectTeleport) {
+    if (NEW_TELEPORTATION && movementData.expectTeleport && movementData.transactionTeleportAllow) {
       positionX = teleportLocation.getX();
       positionY = teleportLocation.getY();
       positionZ = teleportLocation.getZ();
@@ -159,20 +165,16 @@ public final class TeleportApplyEnforcer implements PacketEventSubscriber {
       );
       if (TELEPORTATION_DEBUG) {
         String position = MathHelper.formatPosition(positionX, positionY, positionZ);
-        Synchronizer.synchronize(() -> {
-          Bukkit.broadcastMessage("[Intave] Checking potential teleport accept of " + player.getName() + " on " + position);
-        });
+        Synchronizer.synchronize(() -> Bukkit.broadcastMessage("[Intave] Checking potential teleport accept of " + player.getName() + " on " + position));
       }
-      boolean validPosition = positionDeviation < 0.00001;
+      boolean validPosition = positionDeviation < 0.00001 && movementData.transactionTeleportAllow;
       if (validPosition) {
         if (TELEPORTATION_DEBUG) {
           Synchronizer.synchronize(() -> Bukkit.broadcastMessage("[Intave] " + player.getName() + " accepted teleport request (release lock)"));
         }
       } else {
         if (TELEPORTATION_DEBUG) {
-          Synchronizer.synchronize(() -> {
-            Bukkit.broadcastMessage("[Intave] " + player.getName() + " did not accept the teleport request");
-          });
+          Synchronizer.synchronize(() -> Bukkit.broadcastMessage("[Intave] " + player.getName() + " did not accept the teleport request"));
         }
       }
       isTeleport = validPosition;
@@ -194,6 +196,7 @@ public final class TeleportApplyEnforcer implements PacketEventSubscriber {
     User user = UserRepository.userOf(player);
     MovementMetadata movementData = user.meta().movement();
     movementData.awaitTeleport = false;
+    movementData.transactionTeleportAllow = false;
     movementData.isTeleportConfirmationPacket = true;
   }
 

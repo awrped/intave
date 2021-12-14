@@ -39,6 +39,7 @@ import de.jpx3.intave.user.UserRepository;
 import de.jpx3.intave.user.meta.*;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.entity.EntityDamageEvent;
@@ -84,6 +85,22 @@ public final class MovementDispatcher extends Module {
     if (cause == PlayerTeleportEvent.TeleportCause.NETHER_PORTAL || cause == PlayerTeleportEvent.TeleportCause.UNKNOWN) {
       return;
     }
+
+    Location fromLocation = event.getFrom();
+    Location toLocation = event.getTo();
+    World world = toLocation.getWorld();
+
+    if (toLocation.getWorld() != player.getWorld() || toLocation.distance(fromLocation) > 8) {
+      BoundingBox bb = BoundingBox.fromPosition(user, toLocation);
+      int shiftAllowed = 6;
+      while (toLocation.getY() < 256 && shiftAllowed-- > 0 && Collision.unsafePresent(world, player, bb)) {
+        toLocation.add(0, 0.5, 0);
+        bb = BoundingBox.fromPosition(user, toLocation);
+      }
+      event.setTo(toLocation);
+    }
+//    respawn.setRespawnLocation(toLocation);
+
     MovementMetadata movementData = user.meta().movement();
     movementData.artificialFallDistance = 0;
   }
@@ -117,13 +134,13 @@ public final class MovementDispatcher extends Module {
     User user = UserRepository.userOf(player);
 
     Location respawnLocation = respawn.getRespawnLocation().clone();
-    if (respawnLocation.getWorld() != player.getWorld()) {
-      return;
-    }
+    World world = respawnLocation.getWorld();
+
+    int shiftAllowed = 6;
 
     BoundingBox bb = BoundingBox.fromPosition(user, respawnLocation);
-    while (respawnLocation.getY() < 256 && Collision.present(player, bb)) {
-      respawnLocation.add(0, 1, 0);
+    while (respawnLocation.getY() < 256 && shiftAllowed-- > 0 && Collision.unsafePresent(world, player, bb)) {
+      respawnLocation.add(0, 0.5, 0);
       bb = BoundingBox.fromPosition(user, respawnLocation);
     }
     respawn.setRespawnLocation(respawnLocation);

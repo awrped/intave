@@ -40,8 +40,8 @@ public final class FeedbackSender extends Module {
   }
 
   public <T> void doubleSynchronize(
-    Player player, PacketContainer encapsulate,
-    T target, FeedbackCallback<T> firstCallback, FeedbackCallback<T> secondCallback
+    Player player, PacketContainer encapsulate, T target,
+    FeedbackCallback<T> firstCallback, FeedbackCallback<T> secondCallback
   ) {
     tracedDoubleSynchronize(player, encapsulate, target, firstCallback, secondCallback, null, null, 0);
   }

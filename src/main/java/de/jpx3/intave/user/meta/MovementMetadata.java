@@ -159,6 +159,7 @@ public final class MovementMetadata implements SimulationEnvironment {
   public int lastTeleport;
   public int teleportId;
   public volatile boolean awaitTeleport = false, expectTeleport = false, awaitOutgoingTeleport = false;
+  public volatile boolean transactionTeleportAllow = false;
   public Location teleportLocation = null;
   public Vector teleportOffset = null;
   private volatile Location verifiedLocation;

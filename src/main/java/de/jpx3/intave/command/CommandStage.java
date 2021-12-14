@@ -240,7 +240,6 @@ public abstract class CommandStage {
       } else if (sender instanceof Player && !permission.equals("none") && !permission.equals("sibyl") && !BukkitPermissionCheck.permissionCheck(sender, permission)) {
         continue;
       }
-
       for (String selector : subCommand.selectors()) {
         if(selector.equals(search)) {
           return subCommand;
