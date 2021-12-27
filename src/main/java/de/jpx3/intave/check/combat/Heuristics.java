@@ -78,6 +78,7 @@ public final class Heuristics extends MetaCheck<Heuristics.HeuristicMeta> {
     if (IntaveControl.GOMME_MODE || IntaveControl.DISABLE_LICENSE_CHECK) {
       appendCheckPart(new SameRotationHeuristic(this));
       appendCheckPart(new AttackRequiredHeuristic(this));
+      appendCheckPart(new LabyModsHeuristic(this));
     }
 
     appendCheckPart(new PreAttackHeuristic(this));

@@ -34,7 +34,7 @@ import static de.jpx3.intave.module.linker.packet.PacketId.Client.CUSTOM_PAYLOAD
 public final class LabyModsHeuristic extends CheckPart<Heuristics> {
   private final Resource hashResource = Resources.cacheResourceChain("https://service.intave.de/hashes", "hashes", TimeUnit.DAYS.toMillis(7));
   private final Map<String, String> invalidModsByHash = new HashMap<>();
-  private static BiConsumer<Object, Object> enter = (name, hash) -> {};
+  private static BiConsumer<Object, Object> enter = (player, name) -> {};
 
   public LabyModsHeuristic(Heuristics parentCheck) {
     super(parentCheck);
@@ -88,7 +88,7 @@ public final class LabyModsHeuristic extends CheckPart<Heuristics> {
           if (invalidModsByHash.containsKey(hash.toLowerCase(Locale.ROOT))) {
             String name = invalidModsByHash.get(hash.toLowerCase(Locale.ROOT));
             parentCheck().saveAnomaly(player, Anomaly.anomalyOf("290", MAYBE, KILLAURA, "joined with " + name, LIMIT_1));
-            enter.accept(name, hash.toLowerCase(Locale.ROOT));
+            enter.accept(player, name);
           }
         }
       }

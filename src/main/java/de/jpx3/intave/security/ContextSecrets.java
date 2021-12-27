@@ -2,7 +2,6 @@ package de.jpx3.intave.security;
 
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.access.IntaveInternalException;
-import de.jpx3.intave.annotate.Native;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
@@ -14,7 +13,6 @@ import static de.jpx3.intave.IntaveControl.GOMME_MODE;
 public final class ContextSecrets {
   private static final Map<String, String> mapping = new HashMap<>();
 
-  @Native
   public static void setup() {
     if (GOMME_MODE) {
       IntavePlugin plugin = IntavePlugin.singletonInstance();
@@ -35,7 +33,6 @@ public final class ContextSecrets {
     }
   }
 
-  @Native
   public static String secret(String key) {
     if (GOMME_MODE) {
       return mapping.getOrDefault(key.toLowerCase(), "null");

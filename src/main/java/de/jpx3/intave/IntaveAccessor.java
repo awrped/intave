@@ -2,14 +2,12 @@ package de.jpx3.intave;
 
 import de.jpx3.intave.access.IntaveAccess;
 import de.jpx3.intave.access.IntaveColdException;
-import de.jpx3.intave.annotate.Native;
 
 import java.lang.ref.WeakReference;
 
 public final class IntaveAccessor {
   private static transient WeakReference<IntaveAccess> weakAccess;
 
-  @Native
   public static synchronized boolean loaded() {
     IntavePlugin plugin = IntavePlugin.singletonInstance();
     return plugin != null && plugin.isEnabled() && uncheckedUnsafeAccess() != null;
@@ -32,7 +30,6 @@ public final class IntaveAccessor {
     return uncheckedUnsafeAccess();
   }
 
-  @Native
   private static IntaveAccess uncheckedUnsafeAccess() {
     return IntavePlugin.singletonInstance().access();
   }
