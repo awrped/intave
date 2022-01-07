@@ -140,10 +140,6 @@ check:
         - "intave internals collectivekick {player} &cYou have been kicked, as an account with your ip address was removed from the game"
         - "kick {player} &cYou have been removed from the game based on data that was collected by the anti-cheat"
 
-  abilityspeedlimiter:
-
-    # pure emptiness
-
 blacklist:
 
   apply: true
