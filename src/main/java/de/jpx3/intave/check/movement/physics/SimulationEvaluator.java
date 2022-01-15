@@ -117,15 +117,15 @@ public final class SimulationEvaluator {
       && movementData.pastExternalVelocity != 0;
 
     if (movementData.inWeb) {
-      legitimateDeviation = criticalWeb ? 0.000001 : 0.13;
+      legitimateDeviation = Math.max(legitimateDeviation, criticalWeb ? 0.000001 : 0.13);
     }
 
     if (movementData.pastInWeb < 10 && !movementData.inWeb && differenceY < 0.1) {
-      legitimateDeviation = 0.1;
+      legitimateDeviation = Math.max(legitimateDeviation, 0.1);
     }
 
     if (movementData.recentlyEncounteredFlyingPacket(1) && movementData.pastExternalVelocity <= 4) {
-      legitimateDeviation = 0.03;
+      legitimateDeviation = Math.max(legitimateDeviation, 0.03);
     }
 
     // Jump out of water
@@ -231,15 +231,15 @@ public final class SimulationEvaluator {
     }
 
     if (movementData.collidedHorizontally && movementData.pastVelocity < 20) {
-      legitimateDeviation = 0.027;
+      legitimateDeviation = Math.max(legitimateDeviation, 0.027);
     }
 
     if (pushedByWaterFlow) {
-      legitimateDeviation = 0.018;
+      legitimateDeviation = Math.max(legitimateDeviation, 0.018);
     }
 
     if (movementData.currentlyInBlock && predictedDistanceMoved < distanceMoved * 1.3) {
-      legitimateDeviation = predictedDistanceMoved;
+      legitimateDeviation = Math.max(legitimateDeviation, predictedDistanceMoved);
     }
 
     // Firework
@@ -252,9 +252,9 @@ public final class SimulationEvaluator {
     if (movementData.recentlyEncounteredFlyingPacket(2)) {
       if (movementData.onGround) {
         boolean lessThanExpected = distanceMoved <= predictedDistanceMoved;
-        legitimateDeviation = lessThanExpected ? 0.115 : 0.005;
+        legitimateDeviation = Math.max(legitimateDeviation, lessThanExpected ? 0.115 : 0.005);
       } else {
-        legitimateDeviation = 0.05;
+        legitimateDeviation = Math.max(legitimateDeviation, 0.05);
       }
       if (movementData.pastNearbyCollisionInaccuracy == 0) {
         legitimateDeviation = Math.max(legitimateDeviation, 0.05);
