@@ -421,9 +421,9 @@ public final class AttackRaytrace extends MetaCheck<AttackRaytrace.AttackRaytrac
     } else if (entity.verifiedPosition) {
       vl *= 1.25;
     }
-    if (movementData.hasRidingEntity()) {
+    if (movementData.isInVehicle()) {
       vl = 0;
-    } else if (raytrace.targetPosition() != null && attackRaytraceMeta.lastHitPosition != null && raytrace.targetPosition().distanceTo(attackRaytraceMeta.lastHitPosition) == 0) {
+    } else if (raytrace.targetPosition() != null && attackRaytraceMeta.lastHitPosition != null && raytrace.targetPosition().distance(attackRaytraceMeta.lastHitPosition) == 0) {
       vl = 0;
     }
     return vl;
@@ -454,7 +454,7 @@ public final class AttackRaytrace extends MetaCheck<AttackRaytrace.AttackRaytrac
         details = minReachDisplay + " at best, estimated";
         thresholdKey = "applicable-thresholds.reach";
       }
-      if (movementData.hasRidingEntity()) {
+      if (movementData.isInVehicle()) {
         message += " (vehicle)";
       }
 
