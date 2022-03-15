@@ -97,7 +97,7 @@ public final class AttackDispatcher extends Module {
       attackData.setLastAttackedEntityID(entityId);
       if (entity.player) {
         movementData.pastPlayerAttackPhysics = 0;
-        if (knockbackEnchantment) {
+        if (!REDUCING_DISABLED && knockbackEnchantment) {
           movementData.physicsMotionX *= 0.6;
           movementData.physicsMotionZ *= 0.6;
         }
