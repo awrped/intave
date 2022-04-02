@@ -30,9 +30,7 @@ public final class EntityLookup {
 
   public static @Nullable Entity findEntity(World world, int identifier) {
     Entity entity = entityAccessCache.getIfPresent(identifier);
-    if (entity != null) {
-      return entity;
-    }
+    if (entity != null) return entity;
     entity = entityById(world, identifier);
     if (entity != null) {
       entityAccessCache.put(identifier, entity);

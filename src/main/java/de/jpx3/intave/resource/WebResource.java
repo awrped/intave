@@ -49,6 +49,7 @@ public final class WebResource implements Resource {
       InputStream inputStream = connection.getInputStream();
       // forcing stream read
       if (inputStream.available() == 0) {
+        System.out.println("InputStream is empty, trying to manually read");
         byte[] buff = new byte[4096];
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         int i;
@@ -60,6 +61,7 @@ public final class WebResource implements Resource {
       }
       return inputStream;
     } catch (Exception exception) {
+      exception.printStackTrace();
       return new ByteArrayInputStream(new byte[0]);
     }
   }

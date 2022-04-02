@@ -16,7 +16,7 @@ public final class PatchyLoadingInjector {
       return null;
     }
     className = className.replace("/", ".");
-    byte[] classBytes;
+    byte[] classBytes = new byte[0];
     try {
       if (!classIsLoaded(classLoader, className)) {
         classBytes = classBytesOf(classLoader, className);
@@ -26,6 +26,18 @@ public final class PatchyLoadingInjector {
       }
       return classByName(className);
     } catch (Error | Exception e) {
+      if (classBytes.length > 0) {
+        File dumpFile = null;
+        try {
+          dumpFile = File.createTempFile("intave-patchy-"+className, ".class");
+          FileOutputStream fileOutputStream = new FileOutputStream(dumpFile);
+          fileOutputStream.write(classBytes);
+          fileOutputStream.close();
+          System.out.println("Dumped class bytes to " + dumpFile.getAbsolutePath());
+        } catch (IOException ex) {
+          ex.printStackTrace();
+        }
+      }
       throw new IllegalStateException("Failed to load class " + className, e);
     }
   }

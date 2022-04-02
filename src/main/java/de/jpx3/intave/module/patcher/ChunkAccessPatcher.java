@@ -23,7 +23,7 @@ public final class ChunkAccessPatcher extends Module {
   {
     if (ENABLED) {
       ClassLoader classLoader = IntavePlugin.class.getClassLoader();
-      PatchyLoadingInjector.loadUnloadedClassPatched(classLoader, "de.jpx3.intave.module.patcher.SynchronizedLongHashSet");
+      PatchyLoadingInjector.loadUnloadedClassPatched(classLoader, "de.jpx3.intave.module.patcher.SynchronizedBukkitLongHashSet");
     }
   }
 
@@ -41,6 +41,7 @@ public final class ChunkAccessPatcher extends Module {
     if (!ENABLED) {
       return;
     }
+    String patchName = "Unknown";
     try {
       Field unloadQueueField = unloadQueueField();
       if (unloadQueueField == null) {
@@ -52,7 +53,6 @@ public final class ChunkAccessPatcher extends Module {
       String unloadQueueFieldClassName = unloadQueueField.getType().getName();
       Object chunkProviderServer = ChunkProviderServerAccess.chunkProviderServerOf(world);
       Object unloadQueue = unloadQueueField.get(chunkProviderServer);
-      String patchName;
       Iterator<Long> iterator;
       try {
         //noinspection unchecked
@@ -61,31 +61,31 @@ public final class ChunkAccessPatcher extends Module {
         iterator = Collections.emptyIterator();
       }
       if (unloadQueueFieldClassName.contains("dsi.fastutil.longs")) {
-        if (unloadQueueFieldClassName.endsWith("LongArraySet")) {
+        if (unloadQueueFieldClassName.endsWith("LongArraySet")) { // TacoSpigot - SynchronizedLongHashSet
+          patchName = "s(dsi/ls)";
           SynchronizedLongArraySet newQueue = new SynchronizedLongArraySet();
           unloadQueueField.set(chunkProviderServer, newQueue);
-          patchName = "s(dsi/ls)";
           iterator.forEachRemaining(newQueue::add);
-        } else {
-          SynchronizedLongHashSet newQueue = new SynchronizedLongHashSet();
-          unloadQueueField.set(chunkProviderServer, newQueue);
+        } else { // NachoSpigot - SynchronizedDSILongHashSet
           patchName = "s(dsi/lhs)";
+          SynchronizedDSILongHashSet newQueue = new SynchronizedDSILongHashSet();
+          unloadQueueField.set(chunkProviderServer, newQueue);
           iterator.forEachRemaining(newQueue::add);
         }
-      } else if (unloadQueueFieldClassName.endsWith("util.LongHashSet")) {
-        SynchronizedLongDSIHashSet newQueue = new SynchronizedLongDSIHashSet();
-        unloadQueueField.set(chunkProviderServer, newQueue);
+      } else if (unloadQueueFieldClassName.endsWith("util.LongHashSet")) { // newer minecraft versions
         patchName = "s(ut/lhs)";
+        SynchronizedBukkitLongHashSet newQueue = new SynchronizedBukkitLongHashSet();
+        unloadQueueField.set(chunkProviderServer, newQueue);
         iterator.forEachRemaining(newQueue::add);
-      } else {
+      } else { // older minecraft versions
+        patchName = "s(java/hs)";
         SynchronizedSet<Long> newQueue = new SynchronizedSet<>(Sets.newHashSet());
         unloadQueueField.set(chunkProviderServer, newQueue);
-        patchName = "s(java/hs)";
         iterator.forEachRemaining(newQueue::add);
       }
       IntaveLogger.logger().info("Patched chunk unload queue of \"" + world.getName() + "\" with " + patchName);
-    } catch (Exception exception) {
-      IntaveLogger.logger().info("Failed to patch chunk unload queue of \"" + world.getName() + "\": " + exception.getMessage());
+    } catch (Exception | Error exception) {
+      IntaveLogger.logger().info("Failed to patch chunk unload queue of \"" + world.getName() + " with \""+patchName+"\": " + exception.getMessage());
       exception.printStackTrace();
     }
   }

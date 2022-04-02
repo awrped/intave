@@ -23,9 +23,12 @@ public final class HWIDVerification {
       ByteArrayInputStream inputStream = new ByteArrayInputStream(identifier.getBytes(StandardCharsets.UTF_8));
       encryptedResource.write(inputStream);
     }
-
     if (identifier == null) {
-      identifier = new Scanner(new InputStreamReader(encryptedResource.read())).next();
+      Scanner scanner = new Scanner(new InputStreamReader(encryptedResource.read()));
+      while (scanner.hasNext()) {
+        identifier = scanner.next();
+      }
+      identifier = identifier.trim();
     }
     return identifier;
   }

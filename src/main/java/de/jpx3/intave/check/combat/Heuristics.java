@@ -69,6 +69,10 @@ public final class Heuristics extends MetaCheck<Heuristics.HeuristicMeta> {
 
   @Native
   public void setupSubChecks() {
+    if (IntavePlugin.isInOfflineMode()) {
+      return;
+    }
+
     boolean enterprise = (ProtocolMetadata.VERSION_DETAILS & 0x200) != 0;
     boolean partner = (ProtocolMetadata.VERSION_DETAILS & 0x100) != 0;
 

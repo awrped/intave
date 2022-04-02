@@ -410,7 +410,7 @@ public final class RootStage extends CommandStage {
   }
 
   @SubCommand(
-    selectors = "transping",
+    selectors = "traping",
     usage = "[<target>]",
     description = "",
     permission = "sibyl"

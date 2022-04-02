@@ -18,6 +18,7 @@ public enum FluidTag {
 
   private Object nativeTag;
 
+  @Deprecated
   public Object nativeTag() {
     if (!this.real) {
       throw new IntaveInternalException("Cannot resolve actual fluid tag");
@@ -28,6 +29,7 @@ public enum FluidTag {
     return this.nativeTag;
   }
 
+  @Deprecated
   private Object resolveNativeTag() {
     try {
       return Lookup.serverField("TagsFluid", name()).get(null);

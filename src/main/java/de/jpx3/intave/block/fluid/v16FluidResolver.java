@@ -6,7 +6,10 @@ import de.jpx3.intave.shade.NativeVector;
 import de.jpx3.intave.shade.link.WrapperLinkage;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.meta.MovementMetadata;
-import net.minecraft.server.v1_16_R3.*;
+import net.minecraft.server.v1_16_R3.BlockPosition;
+import net.minecraft.server.v1_16_R3.IBlockAccess;
+import net.minecraft.server.v1_16_R3.TagsFluid;
+import net.minecraft.server.v1_16_R3.World;
 
 @PatchyAutoTranslation
 public final class v16FluidResolver extends FluidResolver {
@@ -34,12 +37,10 @@ public final class v16FluidResolver extends FluidResolver {
     if (fluid.isEmpty()) {
       return FluidTag.EMPTY;
     }
-    //noinspection unchecked
-    if (fluid.a((Tag<FluidType>) FluidTag.WATER.nativeTag())) {
+    if (fluid.a(TagsFluid.WATER)) {
       return FluidTag.WATER;
     }
-    //noinspection unchecked
-    if (fluid.a((Tag<FluidType>) FluidTag.LAVA.nativeTag())) {
+    if (fluid.a(TagsFluid.LAVA)) {
       return FluidTag.LAVA;
     }
     return FluidTag.EMPTY;

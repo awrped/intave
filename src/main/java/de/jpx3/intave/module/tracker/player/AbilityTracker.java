@@ -32,14 +32,13 @@ public final class AbilityTracker extends Module {
   public void receiveCamera(PacketEvent event) {
     Player player = event.getPlayer();
     PacketContainer packet = event.getPacket();
-    Integer entityID = packet.getIntegers().read(0);
-    Modules.feedback().synchronize(player, entityID, this::synchronizeCameraUpdate);
+    Integer entityId = packet.getIntegers().read(0);
+    Modules.feedback().synchronize(player, EntityTracker.serverEntityByIdentifier(player, entityId), this::synchronizeCameraUpdate);
   }
 
-  private void synchronizeCameraUpdate(Player player, int entityID) {
+  private void synchronizeCameraUpdate(Player player, Entity entity) {
     User user = UserRepository.userOf(player);
     AbilityMetadata abilityData = user.meta().abilities();
-    Entity entity = EntityTracker.serverEntityByIdentifier(player, entityID);
     abilityData.hasViewEntity = entity != player;
   }
 

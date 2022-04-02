@@ -78,16 +78,19 @@ import java.io.*;
 import java.lang.reflect.Field;
 import java.net.URL;
 import java.net.URLConnection;
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
 import static de.jpx3.intave.IntaveControl.GOMME_MODE;
+import static de.jpx3.intave.lib.asm.ClassVisitor.LICENSE_NAME;
 import static de.jpx3.intave.security.InterceptorFilterPrintStream.foundInterceptor;
 import static de.jpx3.intave.user.meta.ProtocolMetadata.VERSION_DETAILS;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 @NameIntrinsicallyImportant
 public final class IntavePlugin extends JavaPlugin {
@@ -224,7 +227,8 @@ public final class IntavePlugin extends JavaPlugin {
       // ja das muss so krebsig hier hin
       if (IntaveControl.DISABLE_LICENSE_CHECK) {
         logger().info(ChatColor.DARK_RED + "This self-signed version bypasses certification requirements");
-        System.setProperty("java.net.serviceprovider.key", "~bypass");
+//        System.setProperty("java.net.serviceprovider.key", "~bypass");
+        LICENSE_NAME = "~bypass";
         VERSION_DETAILS |= 0x100;
         VERSION_DETAILS |= 0x200;
       } else {
@@ -240,10 +244,67 @@ public final class IntavePlugin extends JavaPlugin {
           byte value = (byte) ((identificationKey >> (i * 8) & 0xFF));
           bytes[7 - i] = value;
         }
+
+        String response = "";
+
+        /*
+         * this is our new protection against proxy-based attacks
+         */
+
+        long nanoTime = System.nanoTime();
+        String hashOfJarFile = HashAccess.hashOf(currentJavaJarFile);
         long longOne = ThreadLocalRandom.current().nextLong(0x4000000000000000L, Long.MAX_VALUE);
         long longTwo = ThreadLocalRandom.current().nextLong(0x4000000000000000L, Long.MAX_VALUE);
-        String requestedId = String.valueOf(new UUID(longOne, longTwo));
-        String idKey = identificationKey > 0 ? new String(bytes) : "aaaaaaaa", response = "";
+        String requestedId = String.valueOf(new UUID(longOne, longTwo)).replace("-", "").toUpperCase(Locale.ROOT);
+        String idKey = identificationKey > 0 ? new String(bytes) : "aaaaaaaa";
+        String processString = idKey + configurationKey + requestedId;
+        // randomize the process string with a given seed
+        long seed = (longOne + (hashOfJarFile.hashCode() * 1337L)) ^ nanoTime;
+        Random random = new Random(seed);
+        // add 64 random characters to the process string with a given seed
+        for (int i = 0; i < 64; i++) {
+          //noinspection StringConcatenationInLoop
+          processString += String.valueOf((char)random.nextInt(0xFF));
+        }
+        // replace 16 characters at random index with random characters with a given seed
+        for (int i = 0; i < 16; i++) {
+          int index = random.nextInt(processString.length());
+          processString = processString.substring(0, index) + (char) random.nextInt(0xFF) + processString.substring(index + 1);
+        }
+        for (int i = 0; i < processString.length(); i++) {
+          char c = (char) (processString.charAt(i) + random.nextInt(0xFFFF));
+          processString = processString.substring(0, i) + c + processString.substring(i + 1);
+        }
+
+        MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
+        Charset utf8 = UTF_8;
+
+        messageDigest.update(configurationKey.getBytes(utf8));
+        messageDigest.update(requestedId.getBytes(utf8));
+        messageDigest.update(String.valueOf(nanoTime).getBytes(utf8));
+        messageDigest.update(hashOfJarFile.getBytes(utf8));
+        messageDigest.update(processString.getBytes(utf8));
+        messageDigest.update(String.valueOf(longTwo).getBytes(utf8));
+
+        byte[] digest = messageDigest.digest();
+
+        // randomize the "digest" bytes with a given seed
+        for (int i = 0; i < digest.length; i++) {
+          byte value = digest[i];
+          value += random.nextInt(0xFF);
+          digest[i] = value;
+        }
+        byte[] nanoBytes = new byte[8];
+        for (int i = 0; i < 8; i++) {
+          nanoBytes[i] = (byte) (nanoTime >> (i * 8));
+        }
+
+        // put the nano bytes to a human-readable string
+        StringBuilder nanoBuilder = new StringBuilder();
+        for (byte nanoByte : nanoBytes) {
+          nanoBuilder.append(String.format("%02X", nanoByte));
+        }
+
         try {
           String path = "https://intave.de/auth.php";
           URL url = new URL(path);
@@ -253,12 +314,12 @@ public final class IntavePlugin extends JavaPlugin {
           connection.addRequestProperty("User-Agent", "Intave/" + version());
           connection.addRequestProperty("Cache-Control", "no-cache, no-store, must-revalidate");
           connection.addRequestProperty("Pragma", "no-cache");
-          connection.addRequestProperty("A", HashAccess.hashOf(currentJavaJarFile));
+          connection.addRequestProperty("A", hashOfJarFile);
           connection.addRequestProperty("B", idKey);
           connection.addRequestProperty("C", HWIDVerification.publicHardwareIdentifier());
           connection.addRequestProperty("D", configurationKey);
           connection.addRequestProperty("E", LicenseAccess.rawLicense());
-          connection.addRequestProperty("F", requestedId);
+          connection.addRequestProperty("F", "X9-"+requestedId+"-"+nanoBuilder.toString().toUpperCase(Locale.ROOT));
           connection.setConnectTimeout(2000);
           connection.setReadTimeout(2000);
           connection.connect();
@@ -316,20 +377,21 @@ public final class IntavePlugin extends JavaPlugin {
           }
         }
         if (bad) {
-          contextStatusResource.write(new ByteArrayInputStream(("failure-"+response).getBytes(StandardCharsets.UTF_8)));
+          contextStatusResource.write(new ByteArrayInputStream(("failure-"+response).getBytes(UTF_8)));
           bootFailure(message);
           performShutdown();
           return;
         }
         if (response.equals("timeout")) {
-          System.setProperty("java.net.serviceprovider.key", "~timeout");
+          LICENSE_NAME = "~timeout";
+//          System.setProperty("java.net.serviceprovider.key", "~timeout");
           offlineMode = true;
           requiredState = null;
         } else {
           // Intavede#key1=value1#key2=value2 ...
           String[] split = response.split("#");
-          String licenseName = split[0];
-          System.setProperty("java.net.serviceprovider.key", licenseName);
+          LICENSE_NAME = split[0];
+//          System.setProperty("java.net.serviceprovider.key", licenseName);
           Map<String, String> properties = new HashMap<>();
           boolean first = true;
           for (String propertyPair : split) {
@@ -342,7 +404,7 @@ public final class IntavePlugin extends JavaPlugin {
           }
           if (properties.isEmpty()) {
             logger.error("Invalid server response " + response);
-            contextStatusResource.write(new ByteArrayInputStream(("failure-"+response).getBytes(StandardCharsets.UTF_8)));
+            contextStatusResource.write(new ByteArrayInputStream(("failure-"+response).getBytes(UTF_8)));
             bootFailure("Internal failure");
             performShutdown();
             return;
@@ -362,21 +424,16 @@ public final class IntavePlugin extends JavaPlugin {
           // verify the server integrity
           boolean validResponse = false;
           // don't optimize please - otherwise we will have JVM Crashes
-          long receivedMSB = 0;
-          long receivedLSB = 0;
           if (keyResponse != null) {
-            UUID receivedResponse = UUID.fromString(keyResponse);
-            for (int i = 0; i < 64; i++) {
-              longOne |= (longTwo & (1L << i));
-              longTwo |= (longOne & (1L << i * 2));
+            byte[] responseBytes = new byte[keyResponse.length() / 2];
+            for (int i = 0; i < responseBytes.length; i++) {
+              responseBytes[i] = (byte) Integer.parseInt(keyResponse.substring(i * 2, i * 2 + 2), 16);
             }
-            receivedMSB = receivedResponse.getMostSignificantBits();
-            receivedLSB = receivedResponse.getLeastSignificantBits();
-            validResponse = receivedMSB == longOne && receivedLSB == longTwo;
+            validResponse = Arrays.equals(responseBytes, digest);
           }
           if (!validResponse /*|| foundInterceptor*/) {
             logger.error("Unable to boot: Authentication response not trustworthy");
-            contextStatusResource.write(new ByteArrayInputStream(("failure-"+response).getBytes(StandardCharsets.UTF_8)));
+            contextStatusResource.write(new ByteArrayInputStream(("failure-"+response).getBytes(UTF_8)));
             bootFailure("Internal failure");
             performShutdown();
             return;
@@ -477,7 +534,7 @@ public final class IntavePlugin extends JavaPlugin {
           }
         } catch (Exception ignored) {}
         if (writeSuccessLog) {
-          contextStatusResource.write(new ByteArrayInputStream(("success/" + System.currentTimeMillis()).getBytes(StandardCharsets.UTF_8)));
+          contextStatusResource.write(new ByteArrayInputStream(("success/" + System.currentTimeMillis()).getBytes(UTF_8)));
         }
       }
 
@@ -593,6 +650,7 @@ public final class IntavePlugin extends JavaPlugin {
     Modules.linker().packetEvents().refreshLinkages();
     displayVersionInformation();
     successfullyBooted = true;
+    randomExitMessages = Resources.cacheResourceChain("https://service.intave.de/exitmessages", "exitmessages", TimeUnit.DAYS.toMillis(7)).lines();
     logger.info("Intave booted successfully");
 
     Synchronizer.synchronize(() -> {
@@ -603,6 +661,23 @@ public final class IntavePlugin extends JavaPlugin {
       BackgroundExecutor.execute(NativeCheck::run);
     });
   }
+
+  private static String bytesToHumanReadable(byte[] bytes) {
+    StringBuilder stringBuilder = new StringBuilder();
+    for (byte b : bytes) {
+      stringBuilder.append(String.format("%02X", b));
+    }
+    return stringBuilder.toString();
+  }
+
+  private static byte[] humanReadableFromString(String string) {
+    byte[] bytes = new byte[string.length() / 2];
+    for (int i = 0; i < bytes.length; i++) {
+      bytes[i] = (byte) Integer.parseInt(string.substring(i * 2, i * 2 + 2), 16);
+    }
+    return bytes;
+  }
+
 
   private void registerNativeCheck() {
     NativeCheck.registerNative(this::invalidateCaches);
@@ -810,8 +885,7 @@ public final class IntavePlugin extends JavaPlugin {
     logger.shutdown();
   }
 
-  private final List<String> randomExitMessages = Resources.cacheResourceChain("https://service.intave.de/exitmessages.txt", "exitmessages", TimeUnit.DAYS.toMillis(7)).lines();
-
+  private List<String> randomExitMessages = new ArrayList<>();
   private String randomExitMessage() {
     return randomExitMessages.get(ThreadLocalRandom.current().nextInt(randomExitMessages.size()));
   }

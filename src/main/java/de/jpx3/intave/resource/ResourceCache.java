@@ -45,8 +45,12 @@ public final class ResourceCache implements Resource {
     ByteArrayOutputStream inputBytes;
     try {
       if (read == null || read.available() == 0) {
+        // try again
         read = source.read();
         if (read == null || read.available() == 0) {
+//          System.out.println("Source resource is empty");
+//          Thread.dumpStack();
+          // cache fallback
           return cache.read();
         }
       }
@@ -60,6 +64,9 @@ public final class ResourceCache implements Resource {
       return cache.read();
     }
     byte[] bytes = inputBytes.toByteArray();
+    if (bytes.length == 0) {
+      return cache.read();
+    }
     cache.write(new ByteArrayInputStream(bytes));
     return new ByteArrayInputStream(bytes);
   }

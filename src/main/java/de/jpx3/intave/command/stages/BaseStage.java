@@ -141,6 +141,8 @@ public final class BaseStage extends CommandStage {
       } else {
         List<UUID> uniqueIds = Arrays.stream(selectedPlayers).map(Entity::getUniqueId).distinct().collect(Collectors.toList());
         user.setChannelConstraint(MessageChannel.NOTIFY, player1 -> uniqueIds.contains(player1.getUniqueId()));
+        String names = ChatColor.RED + describePlayerList(Arrays.stream(selectedPlayers).map(Entity::getName).map(s -> ChatColor.RED + s).collect(Collectors.toList()));
+        player.sendMessage(IntavePlugin.prefix() + "You are " + ChatColor.GREEN + "now" + IntavePlugin.defaultColor() + " receiving notifications for " + names);
       }
     }
   }

@@ -1,0 +1,20 @@
+package de.jpx3.intave.version;
+
+import de.jpx3.intave.resource.Resource;
+import de.jpx3.intave.resource.Resources;
+
+import java.util.concurrent.TimeUnit;
+
+public final class ProtocolVersionConverter {
+  private final static Resource PROTOCOL_VERSION_RESOURCE = Resources.cacheResourceChain("https://service.intave.de/protocolversions", "protocolversions", TimeUnit.DAYS.toMillis(14));
+  private final static ProtocolVersionRangesCompiler RANGES_COMPILER = new ProtocolVersionRangesCompiler();
+  private final static ProtocolVersionRanges RANGES = RANGES_COMPILER.fromResource(PROTOCOL_VERSION_RESOURCE);
+
+  public static String versionByProtocolVersion(int version) {
+    return RANGES.byProtocolVersion(version);
+  }
+
+  public static int protocolVersionByVersion(String version) {
+    throw new UnsupportedOperationException("Not implemented yet");
+  }
+}

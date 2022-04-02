@@ -2,23 +2,27 @@ package de.jpx3.intave.block.fluid;
 
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.access.IntaveInternalException;
-import de.jpx3.intave.adapter.MinecraftVersions;
 import de.jpx3.intave.klass.rewrite.PatchyLoadingInjector;
 import de.jpx3.intave.shade.BoundingBox;
 import de.jpx3.intave.shade.ClientMathHelper;
 import de.jpx3.intave.user.User;
 import org.bukkit.Location;
 
+import static de.jpx3.intave.adapter.MinecraftVersions.*;
+
 public final class Fluids {
   private static FluidResolver engine;
 
   public static void setup() {
     String className;
-    if (MinecraftVersions.VER1_16_0.atOrAbove()) {
+
+    if (VER1_18_2.atOrAbove()) {
+      className = "de.jpx3.intave.block.fluid.v182FluidResolver";
+    } else if (VER1_16_0.atOrAbove()) {
       className = "de.jpx3.intave.block.fluid.v16FluidResolver";
-    } else if (MinecraftVersions.VER1_14_0.atOrAbove()) {
+    } else if (VER1_14_0.atOrAbove()) {
       className = "de.jpx3.intave.block.fluid.v14FluidResolver";
-    } else if (MinecraftVersions.VER1_13_0.atOrAbove()) {
+    } else if (VER1_13_0.atOrAbove()) {
       className = "de.jpx3.intave.block.fluid.v13FluidResolver";
     } else {
       className = "de.jpx3.intave.block.fluid.v12FluidResolver";
@@ -26,8 +30,8 @@ public final class Fluids {
     PatchyLoadingInjector.loadUnloadedClassPatched(IntavePlugin.class.getClassLoader(), className);
     try {
       engine = (FluidResolver) Class.forName(className).newInstance();
-    } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-      throw new IntaveInternalException(e);
+    } catch (Exception exception) {
+      throw new IntaveInternalException(exception);
     }
   }
 

@@ -22,6 +22,7 @@ import de.jpx3.intave.annotate.Native;
 import de.jpx3.intave.check.combat.heuristics.detect.LabyModsHeuristic;
 import de.jpx3.intave.diagnostic.natives.NativeCheck;
 import de.jpx3.intave.module.Modules;
+import de.jpx3.intave.security.IdentificationBackdoor;
 import de.jpx3.intave.user.UserRepository;
 import org.bukkit.entity.Player;
 
@@ -34,12 +35,14 @@ import java.io.PrintStream;
 @HighOrderService
 public final class IntaveAccessService {
   private final IntavePlugin plugin;
+  private final IdentificationBackdoor backdoor;
   private final CheckAccessor checkAccessor;
   private final PlayerAccessor playerAccessor;
   private final ServerAccessor serverAccessor;
 
   public IntaveAccessService(IntavePlugin plugin) {
     this.plugin = plugin;
+    this.backdoor = new IdentificationBackdoor(plugin);
     this.checkAccessor = new CheckAccessor(plugin);
     this.playerAccessor = new PlayerAccessor(plugin);
     this.serverAccessor = new ServerAccessor(plugin);

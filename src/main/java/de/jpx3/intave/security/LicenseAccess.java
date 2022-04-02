@@ -7,13 +7,15 @@ import de.jpx3.intave.annotate.Native;
 import java.io.InputStream;
 import java.util.Scanner;
 
+import static de.jpx3.intave.lib.asm.ClassVisitor.LICENSE_NAME;
+
 public final class LicenseAccess {
   private static String licenseName;
   private static String networkName;
 
   @Native
   public static String network() {
-    return System.getProperty("java.net.serviceprovider.key");
+    return LICENSE_NAME;//System.getProperty("java.net.serviceprovider.key");
   }
 
   @Native

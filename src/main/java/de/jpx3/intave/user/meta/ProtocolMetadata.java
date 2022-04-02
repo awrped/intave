@@ -4,8 +4,8 @@ import com.comphenix.protocol.utility.MinecraftVersion;
 import de.jpx3.intave.adapter.MinecraftVersions;
 import de.jpx3.intave.adapter.ViaVersionAdapter;
 import de.jpx3.intave.annotate.Relocate;
-import de.jpx3.intave.annotate.refactoring.IdoNotBelongHere;
 import de.jpx3.intave.user.User;
+import de.jpx3.intave.version.ProtocolVersionConverter;
 import org.bukkit.entity.Player;
 
 @Relocate
@@ -44,86 +44,16 @@ public final class ProtocolMetadata {
     this.versionString = versionAsString();
     this.refreshes++;
 
-    if (protocolVersion == -1 || protocolVersion == 0) {
+    if (protocolVersion <= 0) {
       protocolVersion = VER_INVALID;
-      minecraftVersion = MinecraftVersions.VER1_17_1;
+      minecraftVersion = MinecraftVersions.VER1_18_2;
     } else {
       minecraftVersion = new MinecraftVersion(versionString);
     }
   }
 
-  @IdoNotBelongHere
-  @Deprecated
   private String versionAsString() {
-    // ViaVersion's special cases
-    if (protocolVersion == -1)
-      return "Unresolved";
-    if (protocolVersion == 0)
-      return "Unknown";
-
-    if (protocolVersion < 0)
-      return "1.0";
-    if (protocolVersion <= 47)
-      return "1.8.8";
-    if (protocolVersion <= 107)
-      return "1.9";
-    if (protocolVersion <= 108)
-      return "1.9.1";
-    if (protocolVersion <= 109)
-      return "1.9.2";
-    if (protocolVersion <= 110)
-      return "1.9.3";
-    if (protocolVersion <= 210)
-      return "1.10.1";
-    if (protocolVersion <= 315)
-      return "1.11";
-    if (protocolVersion <= 316)
-      return "1.11.1";
-    if (protocolVersion <= 335)
-      return "1.12";
-    if (protocolVersion <= 338)
-      return "1.12.1";
-    if (protocolVersion <= 340)
-      return "1.12.2";
-    if (protocolVersion <= 393)
-      return "1.13";
-    if (protocolVersion <= 401)
-      return "1.13.1";
-    if (protocolVersion <= 404)
-      return "1.13.2";
-    if (protocolVersion <= 477)
-      return "1.14";
-    if (protocolVersion <= 480)
-      return "1.14.1";
-    if (protocolVersion <= 485)
-      return "1.14.2";
-    if (protocolVersion <= 490)
-      return "1.14.3";
-    if (protocolVersion <= 498)
-      return "1.14.4";
-    if (protocolVersion <= 573)
-      return "1.15";
-    if (protocolVersion <= 575)
-      return "1.15.1";
-    if (protocolVersion <= 578)
-      return "1.15.2";
-    if (protocolVersion <= 735)
-      return "1.16";
-    if (protocolVersion <= 736)
-      return "1.16.1";
-    if (protocolVersion <= 751)
-      return "1.16.2";
-    if (protocolVersion <= 753)
-      return "1.16.3";
-    if (protocolVersion <= 754)
-      return "1.16.5";
-    if (protocolVersion <= 755)
-      return "1.17";
-    if (protocolVersion <= 756)
-      return "1.17.1";
-    if (protocolVersion <= 757)
-      return "1.18";
-    return "1.18.1";
+    return ProtocolVersionConverter.versionByProtocolVersion(protocolVersion);
   }
 
   public int protocolVersion() {

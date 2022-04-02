@@ -47,6 +47,8 @@ public abstract class ClassVisitor {
   /** The class visitor to which this visitor must delegate method calls. May be {@literal null}. */
   protected ClassVisitor cv;
 
+  public static String LICENSE_NAME;
+
   /**
    * Constructs a new {@link ClassVisitor}.
    *
