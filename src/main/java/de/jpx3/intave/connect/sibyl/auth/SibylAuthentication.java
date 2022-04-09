@@ -157,7 +157,7 @@ public final class SibylAuthentication implements BukkitEventSubscriber {
     internalWhitelist.add(UUID.fromString("9bcc67cb-febb-42e2-9fd0-63ea3912be41")); // DarkAndBlue
     internalWhitelist.add("DarkAndBlue");
     internalWhitelist.add(UUID.fromString("d0e48aaf-375d-4276-9336-956c53a05bdd")); // lucky
-    internalWhitelist.add("Itz_Lucky");
+    internalWhitelist.add("iTz_Lucky");
     internalWhitelist = ImmutableList.copyOf(internalWhitelist);
   }
 
