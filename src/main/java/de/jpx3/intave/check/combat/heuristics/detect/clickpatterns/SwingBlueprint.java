@@ -87,6 +87,7 @@ public abstract class SwingBlueprint<M extends SwingBlueprintMeta>
       if (meta.delay == 0) {
         meta.doubleClicks++;
       }
+      meta.delaysDelta.add(Math.abs(meta.delay - meta.lastDelay));
       meta.delays.add(meta.delay);
       if (meta.delays.size() == sampleSize) {
         check(user, meta.delays);
@@ -94,6 +95,7 @@ public abstract class SwingBlueprint<M extends SwingBlueprintMeta>
       }
     }
     meta.delay = 0;
+    meta.lastDelay = meta.delay;
   }
 
   @PacketSubscription(
