@@ -5,15 +5,12 @@ import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.wrappers.EnumWrappers;
 import de.jpx3.intave.check.MetaCheckPart;
 import de.jpx3.intave.check.combat.Heuristics;
-import de.jpx3.intave.check.combat.heuristics.detect.combatpatterns.RotationPrevisionHeuristic;
 import de.jpx3.intave.executor.IntaveThreadFactory;
-import de.jpx3.intave.math.MathHelper;
 import de.jpx3.intave.module.linker.packet.ListenerPriority;
 import de.jpx3.intave.module.linker.packet.PacketSubscription;
 import de.jpx3.intave.module.tracker.entity.EntityShade;
 import de.jpx3.intave.shade.ClientMathHelper;
 import de.jpx3.intave.user.User;
-import de.jpx3.intave.user.meta.AttackMetadata;
 import de.jpx3.intave.user.meta.CheckCustomMetadata;
 import de.jpx3.intave.user.meta.MovementMetadata;
 import org.bukkit.entity.Player;
@@ -21,8 +18,6 @@ import org.bukkit.entity.Player;
 import javax.swing.*;
 
 import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.util.List;
@@ -53,9 +48,8 @@ public class NeuralNetworkTesting extends MetaCheckPart<Heuristics, NeuralNetwor
     sigmoid,
     1
   );
-  private static final List<Point> redPoints = new CopyOnWriteArrayList<>();
-  private static final List<Point> greenPoints = new CopyOnWriteArrayList<>();
-  private static JFrame currentOpenWindow;
+  private static List<Point> redPoints = new CopyOnWriteArrayList<>();
+  private static List<Point> greenPoints = new CopyOnWriteArrayList<>();
   
   @PacketSubscription(
     priority = ListenerPriority.HIGH,
@@ -90,28 +84,6 @@ public class NeuralNetworkTesting extends MetaCheckPart<Heuristics, NeuralNetwor
     User user = userOf(player);
     NeuralNetworkTestingMeta meta = metaOf(player);
     
-    AttackMetadata attack = user.meta().attack();
-    MovementMetadata movement = user.meta().movement();
-    
-//    double a = ClientMathHelper.wrapAngleTo180_double(attack.perfectYaw() - movement.rotationYaw);
-//    double b = ClientMathHelper.wrapAngleTo180_double(attack.previousPerfectYaw() - movement.lastRotationYaw);
-    
-    double a = ClientMathHelper.wrapAngleTo180_double(attack.previousPerfectYaw() - movement.lastRotationYaw);
-    double b = ClientMathHelper.wrapAngleTo180_double(attack.perfectYaw() - movement.rotationYaw);
-
-//    player.sendMessage(
-//      "pefYaw " + MathHelper.formatDouble(attack.perfectYaw(), 4)
-//      + " yaw " + MathHelper.formatDouble(movement.rotationYaw, 4)
-//        + " yawDelta " + MathHelper.formatDouble(yawDelta, 4)
-//    );
-    
-    /*if (attack.perfectYaw() != 0 && a != 0 && attack.recentlyAttacked(500)) {
-      double x = mapData(a, -45, 45, -1, 1);
-      double y = mapData(b, -45, 45, -1, 1);
-      
-      Point point = new Point(x, y);
-      addPoint(player, point);
-    }*/
     EntityShade target = user.meta().attack().lastAttackedEntity();
     if (target == null) {
       return;
@@ -179,10 +151,10 @@ public class NeuralNetworkTesting extends MetaCheckPart<Heuristics, NeuralNetwor
     User user = userOf(player);
     MovementMetadata movement = user.meta().movement();
     
-    if (playerActions != null && player.isOp()) {
+    if (playerActions != null) {
       if (playerActions == EnumWrappers.PlayerAction.START_SNEAKING && player.getName().contains(testUsername)) {
         double motion = Math.hypot(movement.motionX(), movement.motionZ());
-        if (motion < 0.005) {
+        if (motion < 0.01) {
           openWindow();
         }
       }
@@ -190,40 +162,41 @@ public class NeuralNetworkTesting extends MetaCheckPart<Heuristics, NeuralNetwor
   }
   
   void openWindow() {
-    if (currentOpenWindow == null) {
-      executorService.execute(() -> {
-        JFrame frame = new JFrame();
-        currentOpenWindow = frame;
-        frame.setSize(800, 800);
-        frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        Scene scene = new Scene();
-        frame.add(scene);
-        frame.setVisible(true);
-        frame.setLocationRelativeTo(null);
-        frame.addWindowListener(new WindowAdapter() {
-          public void windowClosing(WindowEvent e) {
-            currentOpenWindow = null;
-          }
-        });
-        while (true) {
-          try {
-            Thread.sleep(32);
-          } catch (InterruptedException e) {
-            e.printStackTrace();
-          }
-          scene.repaint();
+    redPoints = new CopyOnWriteArrayList<>();
+    greenPoints = new CopyOnWriteArrayList<>();
+  
+    // openeing a new thread to let old JFrames open
+    ExecutorService executorService = Executors.newSingleThreadExecutor(IntaveThreadFactory.ofLowestPriority());
+    executorService.execute(() -> {
+      JFrame frame = new JFrame();
+      frame.setSize(800, 800);
+      frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+      Scene scene = new Scene(redPoints, greenPoints);
+      frame.add(scene);
+      frame.setVisible(true);
+      frame.setLocationRelativeTo(null);
+      
+      while (true) {
+        try {
+          Thread.sleep(32);
+        } catch (InterruptedException e) {
+          e.printStackTrace();
         }
-      });
-    } else {
-      currentOpenWindow.setIgnoreRepaint(true);
-      redPoints.clear();
-      greenPoints.clear();
-    }
+        scene.repaint();
+      }
+    });
   }
   
   class Scene extends JPanel {
     private final static int radius = 2;
     private final static int secondRadius = 3;
+    List<Point> redPoints;
+    List<Point> greenPoints;
+    
+    public Scene(List<Point> redPoints, List<Point> greenPoints) {
+      this.redPoints = redPoints;
+      this.greenPoints = greenPoints;
+    }
     
     public void paint(Graphics graphics) {
       BufferedImage image = new BufferedImage(100, 100, BufferedImage.TYPE_INT_RGB);

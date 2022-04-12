@@ -103,8 +103,6 @@ public final class Heuristics extends MetaCheck<Heuristics.HeuristicMeta> {
     appendCheckPart(new RotationPrevisionHeuristic(this));
 
 
-    appendCheckPart(new NeuralNetworkTesting(this));
-
     appendCheckPart(new PreAttackHeuristic(this));
 //    appendCheckPart(new RotationAngleHeuristic(this));
 
