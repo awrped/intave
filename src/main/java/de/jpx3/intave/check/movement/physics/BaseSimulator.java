@@ -389,9 +389,15 @@ class BaseSimulator extends Simulator {
     }
 
     if (!violationLevelData.isInActiveTeleportBundle) {
-      movementData.physicsMotionX = motionVector.motionX;
-      movementData.physicsMotionY = motionVector.motionY;
-      movementData.physicsMotionZ = motionVector.motionZ;
+      if (violationLevelData.ignorePostTickMotionReset) {
+        violationLevelData.ignorePostTickMotionReset = false;
+//        player.sendMessage("Ignore physics motion reset " + motionVector);
+      } else {
+        movementData.physicsMotionX = motionVector.motionX;
+        movementData.physicsMotionY = motionVector.motionY;
+        movementData.physicsMotionZ = motionVector.motionZ;
+//        player.sendMessage(ChatColor.DARK_GRAY + "Reset physics motion to " + motionVector);
+      }
     }
     movementData.increaseFlyingPacket();
     movementData.pastPlayerAttackPhysics++;
@@ -630,10 +636,9 @@ class BaseSimulator extends Simulator {
   public void setback(User user, double predictedX, double predictedY, double predictedZ) {
     MovementMetadata movement = user.meta().movement();
     ViolationMetadata violationMetadata = user.meta().violationLevel();
-
-    System.out.println("Past external velocity: " + movement.pastExternalVelocity);
+//    System.out.println("Past external velocity: " + movement.pastExternalVelocity);
     Vector emulationMotion = new Vector(predictedX, predictedY, predictedZ);
-    int setbackTicks = (movement.pastExternalVelocity <= 16) ? 10 : ((violationMetadata.physicsVL > 50) ? 3 : 2);
+    int setbackTicks = (movement.pastExternalVelocity <= 8) ? 8 : ((violationMetadata.physicsVL > 50) ? 3 : 2);
     Modules.mitigate().movement().emulationSetBack(user.player(), emulationMotion, setbackTicks, (movement.pastExternalVelocity > 16));
   }
 }

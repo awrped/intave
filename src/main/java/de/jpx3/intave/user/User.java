@@ -334,7 +334,7 @@ public interface User {
    * Disconnect a player
    * @param reason the reason
    */
-  void synchronizedDisconnect(String reason);
+  void kick(String reason);
 
   /**
    * Unregister a user

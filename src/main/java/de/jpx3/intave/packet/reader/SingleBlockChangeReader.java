@@ -11,7 +11,7 @@ import java.util.List;
 public final class SingleBlockChangeReader extends AbstractPacketReader implements BlockChanges {
   @Override
   public List<BlockPosition> blockPositions() {
-    BlockPosition blockPosition = packet.getModifier()
+    BlockPosition blockPosition = packet().getModifier()
       .withType(Lookup.serverClass("BlockPosition"), BlockPositionConverter.threadConverter())
       .read(0);
     return Lists.newArrayList(blockPosition);
@@ -20,6 +20,6 @@ public final class SingleBlockChangeReader extends AbstractPacketReader implemen
 
   @Override
   public List<WrappedBlockData> blockDataList() {
-    return Lists.newArrayList(packet.getBlockData().read(0));
+    return Lists.newArrayList(packet().getBlockData().read(0));
   }
 }

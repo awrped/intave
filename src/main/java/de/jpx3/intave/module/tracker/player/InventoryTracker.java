@@ -162,7 +162,7 @@ public final class InventoryTracker extends Module {
       for (WrappedChatComponent chatComponent : wrappedChatComponents) {
         if (chatComponent.getJson().length() > 500) {
           event.setCancelled(true);
-          user.synchronizedDisconnect("Too many characters in sign update packet");
+          user.kick("Too many characters in sign update packet");
           return;
         }
       }
@@ -190,12 +190,12 @@ public final class InventoryTracker extends Module {
       if (/*probableName.length() < 3 || */probableName.length() > 128 || !inventoryData.skullWhitelisted(probableName)) {
         // cancel all following
         inventoryData.windowClickCounter = 1000;
-        user.synchronizedDisconnect("Forbidden skull request");
+        user.kick("Forbidden skull request");
         event.setCancelled(true);
       }
     }
     if (inventoryData.windowClickCounter++ > 500) {
-      user.synchronizedDisconnect("Too many inventory interactions");
+      user.kick("Too many inventory interactions");
       event.setCancelled(true);
     }
   }

@@ -141,7 +141,7 @@ public final class ViolationProcessor extends Module {
       violationLevelData.detectionCounterReset = System.currentTimeMillis();
     }
     if (violationLevelData.detectionCounter++ > 300) {
-      user.synchronizedDisconnect("You are sending too many packets :[");
+      user.kick("You are sending too many packets :[");
     }
   }
 

@@ -79,7 +79,7 @@ public final class EntityTypeResolver {
 
     EntityReader entityReader = PacketReaders.readerOf(packet);
     Entity entity = entityReader.entityBy(event);
-    entityReader.close();
+    entityReader.release();
 
     if (entity != null) {
       return entityTypeDataOfBukkitEntity(entity);
@@ -369,6 +369,8 @@ public final class EntityTypeResolver {
         return HitboxSize.of(0.5F, 0.5F);
       case 78:
         return HitboxSize.of(0.5F, 1.975F);
+      case 60: // arrows
+        return HitboxSize.zero();
     }
     if (IntaveControl.DISABLE_LICENSE_CHECK) {
       IntaveLogger.logger().info("Failed to map bounding box of dead entity " + deadEntityType + "/" + nameByDeadEntityType(deadEntityType));

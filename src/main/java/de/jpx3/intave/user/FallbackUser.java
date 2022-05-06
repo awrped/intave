@@ -280,7 +280,7 @@ public final class FallbackUser implements User {
   }
 
   @Override
-  public void synchronizedDisconnect(String reason) {
+  public void kick(String reason) {
   }
 
   @Override

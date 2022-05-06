@@ -23,7 +23,7 @@ public final class LazyEntityCollisionService extends Module {
     List<Entity> entities = player.getNearbyEntities(5, 5, 5);
     searchCollisions(user, entities);
     if (!user.hasPlayer()) {
-      user.synchronizedDisconnect("Please reconnect");
+      user.kick("Please reconnect");
     }
   }
 

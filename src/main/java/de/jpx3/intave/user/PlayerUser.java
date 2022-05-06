@@ -394,14 +394,14 @@ final class PlayerUser implements User {
     if (connectionData.hardTransactionResponse++ > 100) {
       Player player = player();
       IntaveLogger.logger().error(player.getName() + " has been removed for repeated feedback faults");
-      synchronizedDisconnect("Timed out");
+      kick("Timed out");
     }
   }
 
   private boolean disconnectQueued = false;
 
   @Override
-  public synchronized void synchronizedDisconnect(String reason) {
+  public synchronized void kick(String reason) {
     if (disconnectQueued) {
       return;
     }

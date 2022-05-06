@@ -15,6 +15,7 @@ import de.jpx3.intave.klass.trace.Caller;
 import de.jpx3.intave.klass.trace.PluginInvocation;
 import de.jpx3.intave.math.MathHelper;
 import de.jpx3.intave.module.Module;
+import de.jpx3.intave.module.Modules;
 import de.jpx3.intave.module.linker.bukkit.BukkitEventSubscription;
 import de.jpx3.intave.player.Effects;
 import de.jpx3.intave.shade.BlockPosition;
@@ -76,7 +77,8 @@ public final class MovementEmulator extends Module {
       if (IntaveControl.DEBUG_EMULATION) {
         player.sendMessage(ChatColor.DARK_PURPLE + "[E-] Exit by " + teleport.getCause() + " teleport event");
       }
-      violationLevelData.isInActiveTeleportBundle = false;
+//      violationLevelData.isInActiveTeleportBundle = false;
+      violationLevelData.disableActiveTeleportBundleNextTick = true;
     }
   }
 
@@ -235,14 +237,23 @@ public final class MovementEmulator extends Module {
       futurePosition.add(0, Collision.nonePresent(player, boundingBox) ? 0.03 : 0.0201, 0);
       boundingBox = BoundingBox.fromPosition(user, futurePosition);
 
+      /*
+       * giving the client control over the atb variable is actually very bad,
+       * because it would allow the client to disable the entire movement system.
+       * however, we have a teleport packet after, requiring the client to respond
+       */
+      Modules.feedback().synchronize(player, (player1, nothing) -> {
+        violationLevelData.disableActiveTeleportBundleNextTick = true;
+      });
       teleport(player, futurePosition);
-      violationLevelData.isInActiveTeleportBundle = false;
+//      violationLevelData.isInActiveTeleportBundle = false;
 
       Vector futureMotion = motionProceed(motion, user, boundingBox, true);
 
       movementData.willReceiveSetbackVelocity = true;
       player.setVelocity(futureMotion);
 
+//      player.sendMessage("Setback velocity: " + MathHelper.formatMotion(futureMotion));
       movementData.physicsMotionX = futureMotion.getX();
       movementData.physicsMotionY = futureMotion.getY();
       movementData.physicsMotionZ = futureMotion.getZ();

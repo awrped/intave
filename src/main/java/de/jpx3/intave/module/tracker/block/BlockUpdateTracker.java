@@ -48,7 +48,7 @@ public final class BlockUpdateTracker extends Module {
     ChunkCoordinateReader coordinates = PacketReaders.readerOf(packet);
     int[] xCoordinates = coordinates.xCoordinates();
     int[] zCoordinates = coordinates.zCoordinates();
-    coordinates.close();
+    coordinates.release();
 
     if (xCoordinates.length != zCoordinates.length) {
       throw new IllegalStateException();
@@ -90,7 +90,7 @@ public final class BlockUpdateTracker extends Module {
     } else if (packetType == PacketType.Play.Client.BLOCK_PLACE) {
       BlockPosition blockPosition = reader.blockPosition();
       if (blockPosition == null) {
-        reader.close();
+        reader.release();
         return;
       }
       BlockInteractionReader placeInterpreter = (BlockInteractionReader) reader;
@@ -102,7 +102,7 @@ public final class BlockUpdateTracker extends Module {
     if (check) {
       BlockPosition blockPosition = reader.blockPosition();
       if (blockPosition == null) {
-        reader.close();
+        reader.release();
         return;
       }
       Vector targetBlock = blockPosition.toVector();
@@ -113,7 +113,7 @@ public final class BlockUpdateTracker extends Module {
         event.setCancelled(true);
       }
     }
-    reader.close();
+    reader.release();
   }
 
   @PacketSubscription(
@@ -128,7 +128,7 @@ public final class BlockUpdateTracker extends Module {
     BlockChanges changes = PacketReaders.readerOf(packet);
     List<BlockPosition> blockPositions = changes.blockPositions();
     List<WrappedBlockData> blockDataList = changes.blockDataList();
-    changes.close();
+    changes.release();
 
     World world = player.getWorld();
     FeedbackCallback<Object> process = (player1, target) -> {

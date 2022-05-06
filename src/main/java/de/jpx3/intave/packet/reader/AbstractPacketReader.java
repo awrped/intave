@@ -3,7 +3,7 @@ package de.jpx3.intave.packet.reader;
 import com.comphenix.protocol.events.PacketContainer;
 
 public abstract class AbstractPacketReader implements PacketReader {
-  protected PacketContainer packet;
+  private PacketContainer packet;
 
   @Override
   public void flush(PacketContainer packet) {
@@ -14,7 +14,11 @@ public abstract class AbstractPacketReader implements PacketReader {
   }
 
   @Override
-  public void close() {
+  public void release() {
     packet = null;
+  }
+
+  public PacketContainer packet() {
+    return packet;
   }
 }

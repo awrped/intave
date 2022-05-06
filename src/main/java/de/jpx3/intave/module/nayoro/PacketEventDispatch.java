@@ -53,6 +53,7 @@ public final class PacketEventDispatch implements PacketEventSubscriber {
       AttackEvent attackEvent = AttackEvent.create(attackerId, targetId);
       reverseSink.accept(user, attackEvent::accept);
     }
+    packetReader.release();
   }
 
   @PacketSubscription(

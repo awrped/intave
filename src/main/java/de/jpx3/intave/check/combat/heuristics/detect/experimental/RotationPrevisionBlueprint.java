@@ -3,7 +3,7 @@ package de.jpx3.intave.check.combat.heuristics.detect.experimental;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.wrappers.EnumWrappers;
-import de.jpx3.intave.check.BlueprintLayout;
+import de.jpx3.intave.check.Blueprint;
 import de.jpx3.intave.check.combat.Heuristics;
 import de.jpx3.intave.math.Hypot;
 import de.jpx3.intave.math.MathHelper;
@@ -21,7 +21,7 @@ import static de.jpx3.intave.check.combat.heuristics.detect.experimental.Rotatio
 import static de.jpx3.intave.module.linker.packet.PacketId.Client.*;
 
 public abstract class RotationPrevisionBlueprint<M extends RotationPrevisionBlueprintMeta>
-  extends BlueprintLayout<Heuristics, RotationPrevisionBlueprintMeta, M> {
+  extends Blueprint<Heuristics, RotationPrevisionBlueprintMeta, M> {
   private final int sampleSize;
 
   // Could use bit-shift operations for these options in constructor?

@@ -64,7 +64,7 @@ public final class IncomingMessageListener implements PluginMessageListener {
         } catch (Exception exception) {
           exception.printStackTrace();
           User user = UserRepository.userOf(player);
-          user.synchronizedDisconnect("Something went wrong processing an incoming packet");
+          user.kick("Something went wrong processing an incoming packet");
         }
       });
     } catch (Exception exception) {

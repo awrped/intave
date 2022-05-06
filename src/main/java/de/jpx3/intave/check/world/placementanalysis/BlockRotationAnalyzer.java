@@ -2,6 +2,7 @@ package de.jpx3.intave.check.world.placementanalysis;
 
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
+import com.comphenix.protocol.wrappers.BlockPosition;
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.block.access.BlockInteractionAccess;
 import de.jpx3.intave.block.access.VolatileBlockAccess;
@@ -53,16 +54,16 @@ public final class BlockRotationAnalyzer extends MetaCheckPart<PlacementAnalysis
 
     BlockRotationMeta meta = metaOf(user);
     BlockInteractionReader reader = PacketReaders.readerOf(packet);
-    com.comphenix.protocol.wrappers.BlockPosition blockPosition = reader.blockPosition();
+    BlockPosition blockPosition = reader.blockPosition();
 
     if (blockPosition == null || event.isCancelled() || movement.isInVehicle()) {
-      reader.close();
+      reader.release();
       return;
     }
 
     int enumDirection = reader.enumDirection();
     if (enumDirection == 255) {
-      reader.close();
+      reader.release();
       return;
     }
 
@@ -72,7 +73,7 @@ public final class BlockRotationAnalyzer extends MetaCheckPart<PlacementAnalysis
     boolean interactionIsPlacement = heldItemType != Material.AIR && heldItemType.isBlock() && !clickableInteraction && !abilities.inGameMode(GameMode.ADVENTURE);
 
     if (!interactionIsPlacement || enumDirection < 2) {
-      reader.close();
+      reader.release();
       return;
     }
 
@@ -99,7 +100,7 @@ public final class BlockRotationAnalyzer extends MetaCheckPart<PlacementAnalysis
       meta.vl *= 0.98;
       meta.vl -= 0.002;
     }
-    reader.close();
+    reader.release();
   }
 
   public static class BlockRotationMeta extends CheckCustomMetadata {

@@ -1,5 +1,6 @@
 package de.jpx3.intave.check.movement.physics;
 
+import de.jpx3.intave.IntaveControl;
 import de.jpx3.intave.annotate.Relocate;
 import de.jpx3.intave.diagnostic.IterativeStudy;
 import de.jpx3.intave.diagnostic.KeyPressStudy;
@@ -356,83 +357,92 @@ public final class PredictiveSimulationProcessor implements SimulationProcessor 
     int nearestForwardKey = -2, nearestStrafeKey = -2;
     double nearestKeyDistance = Double.MAX_VALUE;
 
-//    Superposition<Motion> velocitySuperposition = movementData.velocitySuperposition();
-
-//    int variations = velocitySuperposition.variationsCount();
-//    int correctVariation = -1;
-
-//    System.out.println("Iterative, variations: " + variations);
+    List<Superposition<?>> superpositions = movementData.superpositions();
+    int[] correctSuperpositions = new int[superpositions.size()];
 
     SIMULATION:
-//    for (int variationIndex = 0; variationIndex < Math.max(variations, 1); variationIndex++) {
-//      velocitySuperposition.applyVariation(variationIndex);
-      for (boolean sprinting : movementData.sprintingAllowed() || movementData.hasSprintSpeed ? /* surprisingly pessimistic */ PESSIMISTIC : NEVER) {
-        movementData.refreshFriction(sprinting);
-        for (boolean useItemState : inventoryData.handActive() ? OPTIMISTIC : PESSIMISTIC) {
-          if (skipUseItem && useItemState) {
-            continue;
-          }
-          IterativeStudy.USE_ITEM_ITERATOR.run();
-          for (boolean attackReduce : PESSIMISTIC) {
-            if (attackReduce && (movementData.pastPlayerAttackPhysics >= 1 || AttackDispatcher.REDUCING_DISABLED)) {
+    for (int j = 0; j < (IntaveControl.USE_SUPERPOSITIONS ? superpositions.size() : 1); j++) {
+      Superposition<?> superposition = IntaveControl.USE_SUPERPOSITIONS ? superpositions.get(j) : null;
+      int variations = IntaveControl.USE_SUPERPOSITIONS ? superposition.variationsCount() : 1;
+      for (int variationIndex = 0; variationIndex < Math.max(variations, 1); variationIndex++) {
+        if (IntaveControl.USE_SUPERPOSITIONS) {
+          superposition.applyVariation(variationIndex);
+        }
+        for (boolean sprinting : movementData.sprintingAllowed() || movementData.hasSprintSpeed ? /* surprisingly pessimistic */ PESSIMISTIC : NEVER) {
+          movementData.refreshFriction(sprinting);
+          for (boolean useItemState : inventoryData.handActive() ? OPTIMISTIC : PESSIMISTIC) {
+            if (skipUseItem && useItemState) {
               continue;
             }
-            IterativeStudy.ATTACK_REDUCE_ITERATOR.run();
-            for (boolean jumped : estimatedJump ? OPTIMISTIC : PESSIMISTIC) {
-              // Jumps are only allowed on the ground :(
-              if (jumped && !lastOnGround && !inLava && !inWater) {
+            IterativeStudy.USE_ITEM_ITERATOR.run();
+            for (boolean attackReduce : PESSIMISTIC) {
+              if (attackReduce && (movementData.pastPlayerAttackPhysics >= 1 || AttackDispatcher.REDUCING_DISABLED)) {
                 continue;
               }
-              if (jumped && movementData.denyJump()) {
-                continue;
-              }
-              IterativeStudy.JUMP_ITERATOR.run();
-              boolean hasKeyEstimate = nearestKeyDistance < 1;
-              for (int i = (hasKeyEstimate ? -1 : 0); i < 9; i++) {
-                int keyForward;
-                int keyStrafe;
-                if (i >= 0) {
-                  int[] keyPair = KEYS_USAGE_ORDERED[i];
-                  keyForward = keyPair[0];
-                  keyStrafe = keyPair[1];
-                  if (hasKeyEstimate && keyForward == nearestForwardKey && keyStrafe == nearestStrafeKey) {
-                    continue;
-                  }
-                } else {
-                  keyForward = nearestForwardKey;
-                  keyStrafe = nearestStrafeKey;
-                }
-                if (sprinting && keyForward != 1) {
+              IterativeStudy.ATTACK_REDUCE_ITERATOR.run();
+              for (boolean jumped : estimatedJump ? OPTIMISTIC : PESSIMISTIC) {
+                // Jumps are only allowed on the ground :(
+                if (jumped && !lastOnGround && !inLava && !inWater) {
                   continue;
                 }
-                iterativeRuns++;
-                MovementConfiguration movementConfiguration = MovementConfiguration.select(
-                  keyForward, keyStrafe, attackReduce, sprinting, jumped, useItemState
-                );
-                Simulation simulation = simulateAndAppend(
-                  user, simulator,
-                  simulationStack,
-                  movementConfiguration,
-                  false
-                );
-                double distance = simulation.accuracy(movementData.motion());
-                if (distance < nearestKeyDistance) {
-                  nearestKeyDistance = distance;
-                  nearestForwardKey = keyForward;
-                  nearestStrafeKey = keyStrafe;
+                if (jumped && movementData.denyJump()) {
+                  continue;
                 }
-                if (simulationStack.smallestDistance() <= (movementData.recentlyEncounteredFlyingPacket(2) ? REQUIRED_ACCURACY_FOR_FLYING_PROC_EXIT : REQUIRED_ACCURACY_FOR_QUICK_PROC_EXIT)) {
-//                  correctVariation = variationIndex;
-                  break SIMULATION;
+                IterativeStudy.JUMP_ITERATOR.run();
+                boolean hasKeyEstimate = nearestKeyDistance < 1;
+                for (int i = (hasKeyEstimate ? -1 : 0); i < 9; i++) {
+                  int keyForward;
+                  int keyStrafe;
+                  if (i >= 0) {
+                    int[] keyPair = KEYS_USAGE_ORDERED[i];
+                    keyForward = keyPair[0];
+                    keyStrafe = keyPair[1];
+                    if (hasKeyEstimate && keyForward == nearestForwardKey && keyStrafe == nearestStrafeKey) {
+                      continue;
+                    }
+                  } else {
+                    keyForward = nearestForwardKey;
+                    keyStrafe = nearestStrafeKey;
+                  }
+                  if (sprinting && keyForward != 1) {
+                    continue;
+                  }
+                  iterativeRuns++;
+                  MovementConfiguration movementConfiguration = MovementConfiguration.select(
+                    keyForward, keyStrafe, attackReduce, sprinting, jumped, useItemState
+                  );
+                  Simulation simulation = simulateAndAppend(
+                    user, simulator,
+                    simulationStack,
+                    movementConfiguration,
+                    false
+                  );
+                  double distance = simulation.accuracy(movementData.motion());
+                  if (distance < nearestKeyDistance) {
+                    nearestKeyDistance = distance;
+                    nearestForwardKey = keyForward;
+                    nearestStrafeKey = keyStrafe;
+                  }
+                  if (simulationStack.smallestDistance() <= (movementData.recentlyEncounteredFlyingPacket(2) ? REQUIRED_ACCURACY_FOR_FLYING_PROC_EXIT : REQUIRED_ACCURACY_FOR_QUICK_PROC_EXIT)) {
+                    correctSuperpositions[j] = variationIndex;
+                    break SIMULATION;
+                  }
                 }
               }
             }
           }
         }
+        if (IntaveControl.USE_SUPERPOSITIONS) {
+          superposition.resetVariation(variationIndex);
+        }
       }
-//      velocitySuperposition.resetVariation(variationIndex);
-//    }
-//    velocitySuperposition.collapseVariation(correctVariation);
+    }
+    if (IntaveControl.USE_SUPERPOSITIONS) {
+      for (int i = 0; i < superpositions.size(); i++) {
+        Superposition<?> superposition = superpositions.get(i);
+        superposition.collapseVariation(correctSuperpositions[i]);
+      }
+    }
     if (simulationStack.noMatch()) {
       simulateAndAppend(
         user, simulator,

@@ -4,7 +4,7 @@ import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.wrappers.EnumWrappers;
 import com.google.common.util.concurrent.AtomicDouble;
-import de.jpx3.intave.check.BlueprintLayout;
+import de.jpx3.intave.check.Blueprint;
 import de.jpx3.intave.check.combat.Heuristics;
 import de.jpx3.intave.module.linker.packet.ListenerPriority;
 import de.jpx3.intave.module.linker.packet.PacketSubscription;
@@ -22,7 +22,7 @@ import java.util.List;
 import static de.jpx3.intave.module.linker.packet.PacketId.Client.*;
 
 public abstract class SwingBlueprint<M extends SwingBlueprintMeta>
-  extends BlueprintLayout<Heuristics, SwingBlueprintMeta, M> {
+  extends Blueprint<Heuristics, SwingBlueprintMeta, M> {
   private final int sampleSize;
   // Could use bit-shift operations for these options in constructor? they're always true & false for now
   private final boolean ignoreDoubleClicks;

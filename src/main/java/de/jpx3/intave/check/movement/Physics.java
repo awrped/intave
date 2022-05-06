@@ -102,7 +102,7 @@ public final class Physics extends Check {
     try {
       simulation = simulationProcessor.simulate(user, movementData.simulator());
     } catch (IllegalStateException exception) {
-      user.synchronizedDisconnect("An error occurred processing a movement packet");
+      user.kick("Internal error, contact the servers administrator.");
       exception.printStackTrace();
       return;
     }
@@ -579,6 +579,7 @@ public final class Physics extends Check {
         violationLevelInfo = "g:" + displayPhysicsVL;
       }
       String debug = String.valueOf(chatColor);
+//      debug += "motion x: " + predictedX + ", y: " + predictedY + ", z: " + predictedZ;
       debug += movementData.simulator().debugName();
       debug += " ";
       if (movementData.recentlyEncounteredFlyingPacket(0)) {

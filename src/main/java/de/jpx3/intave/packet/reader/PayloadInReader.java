@@ -7,8 +7,8 @@ import io.netty.buffer.ByteBuf;
 public final class PayloadInReader extends AbstractPacketReader {
   public String tag() {
     String tag;
-    if (packet.getStrings().getValues().isEmpty()) {
-      Object minecraftKey = packet.getMinecraftKeys().getValues().get(0);
+    if (packet().getStrings().getValues().isEmpty()) {
+      Object minecraftKey = packet().getMinecraftKeys().getValues().get(0);
       try {
         tag = (String) minecraftKey.getClass().getMethod("toString").invoke(minecraftKey);
       } catch (Exception exception) {
@@ -16,7 +16,7 @@ public final class PayloadInReader extends AbstractPacketReader {
         tag = "error";
       }
     } else {
-      tag = packet.getStrings().getValues().get(0);
+      tag = packet().getStrings().getValues().get(0);
     }
     if (tag.startsWith("minecraft:")) {
       tag = tag.substring(10);
@@ -25,7 +25,7 @@ public final class PayloadInReader extends AbstractPacketReader {
   }
 
   public String readString() {
-    ByteBuf bytes = (ByteBuf) packet.getSpecificModifier(Lookup.serverClass("PacketDataSerializer")).getValues().get(0);
+    ByteBuf bytes = (ByteBuf) packet().getSpecificModifier(Lookup.serverClass("PacketDataSerializer")).getValues().get(0);
     try {
       bytes.markReaderIndex();
       int length = bytes.readByte();

@@ -5,6 +5,7 @@ import com.comphenix.protocol.reflect.StructureModifier;
 import com.comphenix.protocol.wrappers.WrappedAttribute;
 import com.comphenix.protocol.wrappers.WrappedAttributeModifier;
 import com.google.common.collect.ImmutableList;
+import de.jpx3.intave.IntaveControl;
 import de.jpx3.intave.adapter.MinecraftVersions;
 import de.jpx3.intave.adapter.ProtocolLibraryAdapter;
 import de.jpx3.intave.annotate.DispatchTarget;
@@ -199,11 +200,15 @@ public final class MovementMetadata implements SimulationEnvironment {
       .apply(MovementDispatcher::applyVelocitySuperposition)
       .collapse(MovementDispatcher::collapseVelocitySuperposition)
       .reset(MovementDispatcher::resetVelocitySuperposition)
-      .mergeSelectOverride()
+      .overrideMerge()
       .user(user)
-      .timeout(2)
+      .timeout(1)
       .build();
-    superpositions = ImmutableList.of(/*velocitySuperposition*/);
+    if (IntaveControl.USE_SUPERPOSITIONS) {
+      superpositions = ImmutableList.of(velocitySuperposition);
+    } else {
+      superpositions = ImmutableList.of();
+    }
   }
 
   public void setup() {

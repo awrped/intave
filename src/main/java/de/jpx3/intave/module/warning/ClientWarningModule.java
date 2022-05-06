@@ -53,7 +53,7 @@ public final class ClientWarningModule extends Module {
         Synchronizer.synchronize(() -> warn(player, clientData));
       }
     }
-    reader.close();
+    reader.release();
   }
 
   private void warn(Player player, ClientData clientData) {

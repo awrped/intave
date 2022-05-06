@@ -28,7 +28,7 @@ public final class ConnectionTracker extends Module {
         long dur = System.currentTimeMillis() - lastKeepAliveResponse(user);
         if (TIMEOUT_DURATION < dur) {
           IntaveLogger.logger().printLine("[Intave] " + player.getName() + " was not responding to keep-alive packets for at least 30 seconds");
-          user.synchronizedDisconnect("Timed out");
+          user.kick("Timed out");
           if (IntaveControl.NETTY_DUMP_ON_TIMEOUT) {
             dumpNettyThreads();
           }
@@ -109,7 +109,7 @@ public final class ConnectionTracker extends Module {
     }
     if (!remainingPingPackets.containsKey(id)) {
       IntaveLogger.logger().error(player.getName() + " sent keep-alive id " + id + ", but expected one of " + remainingPingPackets.keySet());
-      user.synchronizedDisconnect("Unknown keep-alive identifier");
+      user.kick("Unknown keep-alive identifier");
       return;
     }
     List<Long> differenceBalance = synchronizeData.latencyDifferenceBalance();

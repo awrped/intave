@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class EntityReader extends AbstractPacketReader {
   public int entityId() {
-    return packet.getIntegers().read(0);
+    return packet().getIntegers().read(0);
   }
 
   public @Nullable Entity entityBy(PacketEvent event) {
@@ -16,7 +16,7 @@ public class EntityReader extends AbstractPacketReader {
   }
 
   public @Nullable Entity entityBy(World world) {
-    int identifier = packet.getIntegers().read(0);
+    int identifier = packet().getIntegers().read(0);
     return EntityLookup.findEntity(world, identifier);
   }
 }

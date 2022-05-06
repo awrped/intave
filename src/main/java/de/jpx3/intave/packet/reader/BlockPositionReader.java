@@ -11,10 +11,10 @@ public class BlockPositionReader extends AbstractPacketReader {
 
   public BlockPosition blockPosition() {
     if (MODERN_RESOLVE) {
-      MovingObjectPositionBlock movingObjectPositionBlock = packet.getMovingBlockPositions().readSafely(0);
+      MovingObjectPositionBlock movingObjectPositionBlock = packet().getMovingBlockPositions().readSafely(0);
       return movingObjectPositionBlock == null ? null : movingObjectPositionBlock.getBlockPosition();
     } else {
-      return packet.getModifier()
+      return packet().getModifier()
         .withType(Lookup.serverClass("BlockPosition"), BlockPositionConverter.threadConverter())
         .readSafely(0);
     }

@@ -129,7 +129,7 @@ public final class InteractionRaytrace extends MetaCheck<InteractionRaytrace.Int
         event.setCancelled(true);
       }
     } finally {
-      reader.close();
+      reader.release();
     }
   }
 
@@ -537,7 +537,7 @@ public final class InteractionRaytrace extends MetaCheck<InteractionRaytrace.Int
     PacketContainer packet = event.getPacket();
     EntityReader entityReader = PacketReaders.readerOf(packet);
     Entity entity = entityReader.entityBy(event);
-    entityReader.close();
+    entityReader.release();
 
     if (entity instanceof Player && UserRepository.hasUser((Player) entity)) {
       User breakingUser = UserRepository.userOf((Player) entity);

@@ -263,7 +263,7 @@ public final class EntityTracker extends Module {
     PacketContainer packet = event.getPacket();
     EntityDestroyReader reader = PacketReaders.readerOf(packet);
     reader.readEntities(entityId -> enterEntityDestroy(player, entityId));
-    reader.close();
+    reader.release();
   }
 
   private void enterEntityDestroy(Player player, int entityID) {

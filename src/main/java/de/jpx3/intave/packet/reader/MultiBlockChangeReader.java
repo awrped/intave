@@ -15,12 +15,12 @@ public final class MultiBlockChangeReader extends CompiledPacketReader implement
 
   public void compile() {
     if (USE_SELECTION_POSITION) {
-      BlockPosition blockPosition = packet.getSectionPositions().readSafely(0);
+      BlockPosition blockPosition = packet().getSectionPositions().readSafely(0);
       int chunkXBase = blockPosition.getX() << 4;
       int chunkYBase = blockPosition.getY() << 4;
       int chunkZBase = blockPosition.getZ() << 4;
-      short[] relativePositions = packet.getShortArrays().read(0);
-      WrappedBlockData[] blockInfos = packet.getBlockDataArrays().read(0);
+      short[] relativePositions = packet().getShortArrays().read(0);
+      WrappedBlockData[] blockInfos = packet().getBlockDataArrays().read(0);
       int expectedOutputLength = blockInfos.length;
       blockPositions = new ArrayList<>(expectedOutputLength);
       blockDataList = new ArrayList<>(expectedOutputLength);
@@ -33,7 +33,7 @@ public final class MultiBlockChangeReader extends CompiledPacketReader implement
         blockDataList.add(blockInfos[i]);
       }
     } else {
-      MultiBlockChangeInfo[] multiBlockChangeInfos = packet.getMultiBlockChangeInfoArrays().readSafely(0);
+      MultiBlockChangeInfo[] multiBlockChangeInfos = packet().getMultiBlockChangeInfoArrays().readSafely(0);
       int expectedOutputLength = multiBlockChangeInfos.length;
       blockPositions = new ArrayList<>(expectedOutputLength);
       blockDataList = new ArrayList<>(expectedOutputLength);
@@ -45,8 +45,8 @@ public final class MultiBlockChangeReader extends CompiledPacketReader implement
   }
 
   @Override
-  public void close() {
-    super.close();
+  public void release() {
+    super.release();
     blockPositions = null;
     blockDataList = null;
   }

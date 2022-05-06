@@ -4,5 +4,5 @@ import com.comphenix.protocol.events.PacketContainer;
 
 public interface PacketReader {
   void flush(PacketContainer packet);
-  void close();
+  void release();
 }

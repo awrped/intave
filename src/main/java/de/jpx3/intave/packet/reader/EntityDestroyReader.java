@@ -12,15 +12,15 @@ public final class EntityDestroyReader extends AbstractPacketReader {
 
   public void readEntities(Consumer<Integer> subscriber) {
     if (INT_LIST_ENTITY_DESTROY) {
-      List<Integer> entityIDs = packet.getIntLists().read(0);
+      List<Integer> entityIDs = packet().getIntLists().read(0);
       entityIDs.forEach(subscriber);
     } else if (INT_ARRAY_ENTITY_DESTROY) {
-      int[] entityIDs = packet.getIntegerArrays().read(0);
+      int[] entityIDs = packet().getIntegerArrays().read(0);
       for (int entityID : entityIDs) {
         subscriber.accept(entityID);
       }
     } else {
-      subscriber.accept(packet.getIntegers().read(0));
+      subscriber.accept(packet().getIntegers().read(0));
     }
   }
 }

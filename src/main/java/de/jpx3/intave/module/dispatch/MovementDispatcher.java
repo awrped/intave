@@ -9,6 +9,7 @@ import com.comphenix.protocol.reflect.StructureModifier;
 import com.comphenix.protocol.wrappers.BlockPosition;
 import com.comphenix.protocol.wrappers.EnumWrappers;
 import com.comphenix.protocol.wrappers.WrappedWatchableObject;
+import de.jpx3.intave.IntaveControl;
 import de.jpx3.intave.adapter.MinecraftVersions;
 import de.jpx3.intave.annotate.Relocate;
 import de.jpx3.intave.block.collision.Collision;
@@ -249,7 +250,6 @@ public final class MovementDispatcher extends Module {
     }
     PacketContainer packet = event.getPacket();
     User user = UserRepository.userOf(player);
-
     MetadataBundle meta = user.meta();
     MovementMetadata movementData = meta.movement();
     AttackMetadata attackData = meta.attack();
@@ -260,9 +260,16 @@ public final class MovementDispatcher extends Module {
 
     PacketType packetType = event.getPacketType();
     boolean vehicleMove = packetType == PacketType.Play.Client.VEHICLE_MOVE;
-
     boolean hasMovement = vehicleMove || packet.getBooleans().read(1);
     boolean hasRotation = vehicleMove || packet.getBooleans().read(2);
+
+    boolean awaitTeleport = movementData.awaitTeleport || movementData.awaitOutgoingTeleport;
+
+    if (violationLevelData.disableActiveTeleportBundleNextTick /*&& !awaitTeleport*/) {
+      violationLevelData.disableActiveTeleportBundleNextTick = false;
+      violationLevelData.isInActiveTeleportBundle = false;
+//      violationLevelData.ignorePostTickMotionReset = true;
+    }
 
     if (movementData.isInVehicle() && !vehicleMove && hasRotation && !hasMovement) {
       movementData.applyGroundInformationToPacket(packet);
@@ -310,15 +317,18 @@ public final class MovementDispatcher extends Module {
       }
     }
 
-    for (Superposition<?> superposition : movementData.superpositions()) {
-      superposition.computeVariations();
-    }
-
     connectionData.receiveMovement();
     movementData.updateMovement(packet, hasMovement, hasRotation);
     teleportApplyEnforcer.receiveMovement(event);
 
-    if (movementData.awaitTeleport || movementData.awaitOutgoingTeleport) {
+    for (Superposition<?> superposition : movementData.superpositions()) {
+      superposition.beginTick();
+    }
+    for (Superposition<?> superposition : movementData.superpositions()) {
+      superposition.computeVariations();
+    }
+
+    if (awaitTeleport) {
       event.setCancelled(true);
       return;
     }
@@ -473,9 +483,7 @@ public final class MovementDispatcher extends Module {
   )
   public void receiveFinalMovement(PacketEvent event) {
     Player player = event.getPlayer();
-    if (player.isDead()) {
-      return;
-    }
+
     PacketContainer packet = event.getPacket();
     User user = UserRepository.userOf(player);
 
@@ -489,12 +497,11 @@ public final class MovementDispatcher extends Module {
     boolean hasMovement = vehicleMove || packet.getBooleans().read(1);
     boolean hasRotation = vehicleMove || packet.getBooleans().read(2);
 
-//    movementData.velocitySuperposition().completeTick();
     for (Superposition<?> superposition : movementData.superpositions()) {
       superposition.completeTick();
     }
 
-    if (movementData.awaitTeleport) {
+    if (player.isDead() || movementData.awaitTeleport) {
       return;
     }
 
@@ -556,7 +563,9 @@ public final class MovementDispatcher extends Module {
     movementData.pastWaterMovement++;
     movementData.pastVelocity++;
     movementData.ignoredAttackReduce = false;
-    movementData.pastExternalVelocity++;
+    if (hasMovement || hasRotation) {
+      movementData.pastExternalVelocity++;
+    }
     movementData.pastLongTeleport++;
     abilityData.ticksToLastHealthUpdate++;
     inventoryData.pastSlotSwitch++;
@@ -616,7 +625,7 @@ public final class MovementDispatcher extends Module {
     int strafeKey = (int) (packet.getFloat().read(0) / 0.98f);
     int forwardKey = (int) (packet.getFloat().read(1) / 0.98f);
     if (Math.abs(strafeKey) > 1 || Math.abs(forwardKey) > 1) {
-      user.synchronizedDisconnect("Invalid key input");
+      user.kick("Invalid key input");
       return;
     }
     Boolean jumping = packet.getBooleans().read(0);
@@ -739,13 +748,13 @@ public final class MovementDispatcher extends Module {
           integers.writeSafely(1, (int) (velocity.getX() * 8000d));
           integers.writeSafely(2, (int) (velocity.getY() * 8000d));
           integers.writeSafely(3, (int) (velocity.getZ() * 8000d));
-        }/* else {
+        } else {
           if (event.isReadOnly()) {
             event.setReadOnly(false);
           }
           event.setCancelled(true);
           return;
-        }*/
+        }
       }
       movementData.pendingVelocityPackets.incrementAndGet();
       movementData.emulationVelocity = velocity.clone();
@@ -753,8 +762,11 @@ public final class MovementDispatcher extends Module {
         movementData.sneakPatchVelocity = velocity.clone();
       }
       Motion motion = Motion.fromVector(velocity);
-//      movementData.velocitySuperposition().stateSynchronize(event, motion);
-      Modules.feedback().synchronize(player, velocity, this::receiveVelocity);
+      if (IntaveControl.USE_SUPERPOSITIONS) {
+        movementData.velocitySuperposition().stateSynchronize(event, motion);
+      } else {
+        Modules.feedback().synchronize(player, velocity, this::receiveVelocity);
+      }
     }
   }
 
@@ -802,6 +814,7 @@ public final class MovementDispatcher extends Module {
       movementData.physicsMotionX = velocity.motionX();
       movementData.physicsMotionY = velocity.motionY();
       movementData.physicsMotionZ = velocity.motionZ();
+//      user.player().sendMessage("Applied velocity " + velocity);
       movementData.lastVelocity = new Vector(velocity.motionX(), velocity.motionY(), velocity.motionZ());
     }
   }
@@ -817,6 +830,7 @@ public final class MovementDispatcher extends Module {
         movementData.pastExternalVelocity = 0;
       }
       movementData.willReceiveSetbackVelocity = false;
+//      user.player().sendMessage("Collapsed velocity " + velocity);
 //      if (!movementData.willReceiveSetbackVelocity) {
 //        movementData.pastExternalVelocity = 0;
 //      }
