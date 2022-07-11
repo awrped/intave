@@ -104,12 +104,12 @@ public final class Heuristics extends MetaCheck<Heuristics.HeuristicMeta> {
 
     // for testing
     if (!IntaveControl.GOMME_MODE && IntaveControl.DISABLE_LICENSE_CHECK) {
-      appendCheckPart(new RotationPrevisionDetermination(this));
       appendCheckPart(new RotationPrevisionFluctuation(this));
       appendCheckPart(new TestingHeuristic(this));
     }
 
     // Lucky experimental heuristics
+    appendCheckPart(new RotationPrevisionDetermination(this));
     appendCheckPart(new SwingLimitHeuristics(this));
     appendCheckPart(new SwingDeviationHeuristics(this));
 
