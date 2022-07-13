@@ -145,6 +145,8 @@ public abstract class SwingBlueprint<M extends SwingBlueprintMeta>
       if (meta.delays.size() == sampleSize) {
         check(user, meta.delays);
         meta.delays.clear();
+        meta.delaysDelta.clear();
+        meta.doubleClicks = 0;
       }
     }
     meta.pendingClicks.clear();

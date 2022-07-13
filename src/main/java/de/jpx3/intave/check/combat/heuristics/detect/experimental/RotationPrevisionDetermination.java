@@ -3,6 +3,7 @@ package de.jpx3.intave.check.combat.heuristics.detect.experimental;
 import de.jpx3.intave.check.combat.Heuristics;
 import de.jpx3.intave.check.combat.heuristics.Anomaly;
 import de.jpx3.intave.check.combat.heuristics.Confidence;
+import de.jpx3.intave.check.combat.heuristics.detect.clickpatterns.SwingLimitHeuristics;
 import de.jpx3.intave.user.User;
 
 import java.util.List;
@@ -18,6 +19,7 @@ public final class RotationPrevisionDetermination extends RotationPrevisionBluep
 
   @Override
   public void check(User user, List<RotationData> rotationValues) {
+    RotationPrevisionDeterminationMeta meta = metaOf(userOf(user.player()));
     double determination = determinationCoefficientYaw(rotationValues);
 
     List<Float> yawDeltas = rotationValues.stream()
@@ -26,9 +28,12 @@ public final class RotationPrevisionDetermination extends RotationPrevisionBluep
     double yawAverage = average(yawDeltas);
 
     if (yawAverage > 0.5 && determination > 0.55) {
-      String description = String.format("suspicious aiming pattern %.2f %.2f", determination, yawAverage);
+      meta.vl++;
+      String description = String.format("suspicious aiming pattern %.2f %.2f %.2f", determination, yawAverage, meta.vl);
       Anomaly anomaly = Anomaly.anomalyOf("410", Confidence.NONE, Anomaly.Type.KILLAURA, description);
       parentCheck().saveAnomaly(user.player(), anomaly);
+    } else {
+      meta.vl = Math.max(0, meta.vl - 0.25);
     }
   }
 
