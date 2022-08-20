@@ -9,6 +9,7 @@ import de.jpx3.intave.math.MathHelper;
 import de.jpx3.intave.module.Module;
 import de.jpx3.intave.module.linker.packet.PacketId;
 import de.jpx3.intave.module.linker.packet.PacketSubscription;
+import de.jpx3.intave.player.FaultKicks;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserRepository;
 import de.jpx3.intave.user.meta.ConnectionMetadata;
@@ -27,9 +28,9 @@ public final class ConnectionTracker extends Module {
       for (Player player : Bukkit.getOnlinePlayers()) {
         User user = UserRepository.userOf(player);
         long dur = System.currentTimeMillis() - lastKeepAliveResponse(user);
-        if (dur > TIMEOUT_DURATION) {
-          IntaveLogger.logger().printLine("[Intave] " + player.getName() + " was not responding to keep-alive packets for at least 30 seconds");
-          user.kick("Timed out");
+        if (dur > TIMEOUT_DURATION && FaultKicks.IGNORING_KEEP_ALIVE) {
+          IntaveLogger.logger().printLine("[Intave] " + player.getName() + " is not responding to keep-alive packets");
+          user.kick("Not responding to keep-alive packets");
           if (IntaveControl.NETTY_DUMP_ON_TIMEOUT) {
             dumpNettyThreads();
           }
@@ -110,7 +111,7 @@ public final class ConnectionTracker extends Module {
     }
     if (!remainingPingPackets.containsKey(id)) {
       event.setCancelled(true);
-      if (!user.justJoined()) {
+      if (!user.justJoined() && FaultKicks.IGNORING_KEEP_ALIVE) {
         IntaveLogger.logger().error(player.getName() + " sent keep-alive id " + id + ", but expected one of " + remainingPingPackets.keySet());
         user.kick("Unknown keep-alive identifier");
       }

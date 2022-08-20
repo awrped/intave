@@ -52,7 +52,7 @@ public final class FeedbackReceiver extends Module {
       connection.eligibleForTransactionTimeout
     ) {
       IntaveLogger.logger().error(player.getName() + " is not responding to any feedback packets");
-      user.kick("Timed out");
+      user.kick("Not responding to feedback packets");
       if (IntaveControl.NETTY_DUMP_ON_TIMEOUT) {
         dumpNettyThreads();
       }

@@ -18,7 +18,6 @@ import de.jpx3.intave.block.collision.CollisionModifiers;
 import de.jpx3.intave.block.fluid.Fluids;
 import de.jpx3.intave.block.physics.BlockPhysics;
 import de.jpx3.intave.block.physics.BlockProperties;
-import de.jpx3.intave.block.shape.resolve.ShapeResolver;
 import de.jpx3.intave.block.shape.resolve.patch.BoundingBoxPatcher;
 import de.jpx3.intave.block.type.BlockTypeAccess;
 import de.jpx3.intave.block.variant.BlockVariantAccess;
@@ -50,6 +49,7 @@ import de.jpx3.intave.module.linker.bukkit.BukkitEventSubscriptionLinker;
 import de.jpx3.intave.module.linker.packet.PacketSubscriptionLinker;
 import de.jpx3.intave.module.tracker.entity.EntityShade;
 import de.jpx3.intave.packet.reader.PacketReaders;
+import de.jpx3.intave.player.FaultKicks;
 import de.jpx3.intave.player.ItemProperties;
 import de.jpx3.intave.player.fake.IdentifierReserve;
 import de.jpx3.intave.player.fake.event.FakePlayerEventService;
@@ -608,6 +608,7 @@ public final class IntavePlugin extends JavaPlugin {
       prefix = configurationService.configuration().getString("layout.prefix", prefix);
       prefix = ChatColor.translateAlternateColorCodes('&', prefix);
       defaultColor = ChatColor.getLastColors(prefix);
+      FaultKicks.applyFrom(configurationService.configuration().getConfigurationSection("fault-kicks"));
 
       // stage 8
       Modules.proceedBoot(BootSegment.STAGE_8);

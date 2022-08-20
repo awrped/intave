@@ -24,6 +24,7 @@ import de.jpx3.intave.module.mitigate.HurttimeModifier;
 import de.jpx3.intave.module.violation.placeholder.PlayerContext;
 import de.jpx3.intave.module.violation.placeholder.UserContext;
 import de.jpx3.intave.packet.PacketSender;
+import de.jpx3.intave.player.FaultKicks;
 import de.jpx3.intave.player.collider.Colliders;
 import de.jpx3.intave.player.collider.complex.Collider;
 import de.jpx3.intave.player.collider.simple.SimpleCollider;
@@ -393,10 +394,10 @@ final class PlayerUser implements User {
   @Override
   public void noteHardTransactionResponse() {
     ConnectionMetadata connectionData = metadata.connection();
-    if (connectionData.hardTransactionResponse++ > 100) {
+    if (connectionData.hardTransactionResponse++ > 100 && FaultKicks.FEEDBACK_FAULTS) {
       Player player = player();
       IntaveLogger.logger().error(player.getName() + " has been removed for repeated feedback faults");
-      kick("Timed out");
+      kick("Repeated feedback faults");
     }
   }
 

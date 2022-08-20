@@ -3,7 +3,6 @@ state: 0
 
 check:
   physics:
-
     high-tolerance: false
 
     # Mitigation mode
@@ -30,47 +29,35 @@ check:
         - "kick {player} &cYou have been removed from the game based on data that was collected by the anti-cheat"
 
   timer:
-
     high-tolerance: true
-
     reverse-blink: true
-
     reverse-lag: false
-
     thresholds:
       50: "intave internals sendnotify &c{player}&7/{trust-color}&7 is moving too frequently / is lagging"
       100: "intave internals sendnotify &c{player}&7/{trust-color}&7 is moving too frequently / is lagging for a long period"
 
   heuristics:
-
     enabled: true
-
     combat-sampling: true
-
     disable-reducing: false
-
     confidence-thresholds:
       "!!":
         25:
           - "intave internals sendnotify &c{player}&7/{trust-color}&7 has been removed for attacking suspiciously (!!) (heuristics)"
           - "intave internals collectivekick {player} &cYou have been kicked, as an account with your ip address was removed from the game"
           - "kick {player} &cYou have been removed from the game based on data that was collected by the anti-cheat"
-
       "!":
         25: "intave internals sendnotify &c{player}&7/{trust-color}&7 is attacking suspiciously (!) (heuristics)"
         50:
           - "intave internals sendnotify &c{player}&7/{trust-color}&7 has been removed for attacking suspiciously (!) (heuristics)"
           - "intave internals collectivekick {player} &cYou have been kicked, as an account with your ip address was removed from the game"
           - "kick {player} &cYou have been removed from the game based on data that was collected by the anti-cheat"
-
       "?!":
         50: "intave internals sendnotify &c{player}&7/{trust-color}&7 is attacking suspiciously (?!) (heuristics)"
         75: "intave internals sendnotify &c{player}&7/{trust-color}&7 is attacking suspiciously #2 (?!) (heuristics)"
 
   attackraytrace:
-
     enabled: true
-
     applicable-thresholds:
       reach:
         50: "intave internals sendnotify &c{player}&7/{trust-color}&7 is attacking suspiciously (reach)"
@@ -84,17 +71,13 @@ check:
         100: "intave internals sendnotify &c{player}&7/{trust-color}&7 is attacking suspiciously #2 (hitbox)"
 
   interactionraytrace:
-
     enabled: true
-
     thresholds:
       50: "intave internals sendnotify &c{player}&7/{trust-color}&7 is interacting suspiciously"
       100: "intave internals sendnotify &c{player}&7/{trust-color}&7 is interacting suspiciously #2"
 
   clickpatterns:
-
     enabled: true
-
     thresholds:
       50: "intave internals sendnotify &c{player}&7/{trust-color}&7 is clicking statistically anomalously (auto-clicker)"
       100:
@@ -103,11 +86,8 @@ check:
         - "kick {player} &cYou have been removed from the game based on data that was collected by the anti-cheat"
 
   clickspeedlimiter:
-
     enabled: true
-
     max-cps: 20
-
     thresholds:
       50: "intave internals sendnotify &c{player}&7/{trust-color}&7 is attacking too quickly"
       100:
@@ -116,20 +96,14 @@ check:
         - "kick {player} &cYou have been removed from the game based on data that was collected by the anti-cheat"
 
   breakspeedlimiter:
-
     enabled: true
-
     thresholds:
       100: "intave internals sendnotify &c{player}&7/{trust-color}&7 is breaking blocks too quickly"
 
   protocolscanner:
-
     enabled: true
-
     invokant: false
-
     check_sent_slot_twice_vl: 100
-
     thresholds:
       50: "intave internals sendnotify &c{player}&7/{trust-color}&7 is sending invalid packets"
       100:
@@ -138,11 +112,8 @@ check:
         - "kick {player} &cYou have been removed from the game based on data that was collected by the anti-cheat"
 
   placementanalysis:
-
     enabled: true
-
     check_timings: false
-
     thresholds:
       50: "intave internals sendnotify &c{player}&7/{trust-color}&7 is placing blocks incorrectly"
       100:
@@ -151,11 +122,8 @@ check:
         - "kick {player} &cYou have been removed from the game based on data that was collected by the anti-cheat"
 
   inventoryclickanalysis:
-
     enabled: true
-
     high-tolerance: true
-
     thresholds:
       50: "intave internals sendnotify &c{player}&7/{trust-color}&7 is performing invalid item-operations"
       100:
@@ -165,55 +133,47 @@ check:
 
 
 blacklist:
-
   apply: true
 
 proxy:
-
   enable: false
 
 clientwarning:
-
   enable: true
 
 filter:
-
   health: true
-
   equipmentdata: true
 
-  chat-insults: true
-
-  chat-spam: true
-
 command:
-
   hide: true
 
 rejoin:
-
   delay: 3600
-
   refresh: true
-
   message: "&cYou were recently removed, please wait before connecting again"
 
+# You should disable any of these options **ONLY**
+# when experiencing serious problems and **ONLY** after reporting the issue to us.
+# Leaving any of these disabled can result to severely reduced security and stability.
+fault-kicks:
+  position-faults: true
+  missing-position-update: true
+  feedback-faults: true
+  ignoring-feedback: true
+  ignoring-keep-alive: true
+  invalid-key-input: true
+
+
 logging:
-
   console-log: false
-
   file-log: true
 
 analytics:
-
   errorReporting: true
-
   usageReporting: true
 
 layout:
-
   verbose: "{prefix} &c{player}&7/{trust-color}&7 {message} {details} (+{vladded} -> {vl})"
-
   notify: "{prefix} &c&lNotify&8: &7{text}"
-
   prefix: "&8[&c&lIntave&8]&7 "

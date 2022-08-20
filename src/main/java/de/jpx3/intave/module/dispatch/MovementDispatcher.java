@@ -40,6 +40,7 @@ import de.jpx3.intave.packet.converter.PlayerAction;
 import de.jpx3.intave.packet.converter.PlayerActionResolver;
 import de.jpx3.intave.packet.reader.BlockActionReader;
 import de.jpx3.intave.packet.reader.PacketReaders;
+import de.jpx3.intave.player.FaultKicks;
 import de.jpx3.intave.player.ItemProperties;
 import de.jpx3.intave.player.fake.FakePlayer;
 import de.jpx3.intave.share.BoundingBox;
@@ -352,7 +353,7 @@ public final class MovementDispatcher extends Module {
     if (hasMovement) {
       StructureModifier<Double> modifier = packet.getDoubles();
       for (int i = 0; i < 3; i++) {
-        if (Double.isInfinite(modifier.read(i))) {
+        if (Double.isInfinite(modifier.read(i)) && FaultKicks.POSITION_FAULTS) {
           user.kick("Infinite position?");
           return;
         }
@@ -362,7 +363,7 @@ public final class MovementDispatcher extends Module {
     if (hasRotation) {
       StructureModifier<Float> modifier = packet.getFloat();
       for (int i = 0; i < 2; i++) {
-        if (Double.isInfinite(modifier.read(i))) {
+        if (Double.isInfinite(modifier.read(i)) && FaultKicks.POSITION_FAULTS) {
           user.kick("Infinite rotation?");
           return;
         }
@@ -371,7 +372,7 @@ public final class MovementDispatcher extends Module {
 
     if (hasMovement || movementData.isInVehicle()) {
       movementData.lastPositionUpdate = 0;
-    } else if (++movementData.lastPositionUpdate > 20 && !user.trustFactor().atLeast(BYPASS)) {
+    } else if (++movementData.lastPositionUpdate > 20 && FaultKicks.MISSING_POSITION_UPDATE) {
       user.kick("Missing position update after 20 ticks");
     }
 
@@ -738,7 +739,7 @@ public final class MovementDispatcher extends Module {
     PacketContainer packet = event.getPacket();
     int strafeKey = (int) (packet.getFloat().read(0) / 0.98f);
     int forwardKey = (int) (packet.getFloat().read(1) / 0.98f);
-    if (Math.abs(strafeKey) > 1 || Math.abs(forwardKey) > 1) {
+    if ((Math.abs(strafeKey) > 1 || Math.abs(forwardKey) > 1) && FaultKicks.INVALID_KEY_INPUT) {
       user.kick("Invalid key input");
       return;
     }
