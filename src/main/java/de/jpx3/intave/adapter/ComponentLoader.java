@@ -28,8 +28,11 @@ public final class ComponentLoader {
   }
 
   public void prepareComponents() {
-//    essentialComponents.put("ProtocolLib", "https://ci.dmulloy2.net/job/ProtocolLib/lastSuccessfulBuild/artifact/target/ProtocolLib.jar");
-    essentialComponents.put("ProtocolLib", "https://service.intave.de/resource/ProtocolLib-4-8-0.jar");
+    if (Bukkit.getVersion().contains("MC: 1.19")) {
+      essentialComponents.put("ProtocolLib", "https://ci.dmulloy2.net/job/ProtocolLib/lastSuccessfulBuild/artifact/target/ProtocolLib.jar");
+    } else {
+      essentialComponents.put("ProtocolLib", "https://service.intave.de/resource/ProtocolLib-4-8-0.jar");
+    }
   }
 
   public void loadComponents() {
