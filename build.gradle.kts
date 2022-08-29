@@ -3,7 +3,8 @@ import xyz.jpenilla.runpaper.task.RunServerTask
 
 plugins {
     java
-    kotlin("jvm") version "1.7.10"
+    // TODO: uncomment if we actually use Kotlin
+    // kotlin("jvm") version "1.7.10"
     id("net.minecrell.plugin-yml.bukkit") version "0.5.2"
     id("com.github.johnrengelman.shadow") version "7.1.2"
     id("xyz.jpenilla.run-paper") version "1.0.6"
@@ -187,8 +188,9 @@ fun registerServerTask(serverVersion: String, javaVersion: Int) {
 java.toolchain.languageVersion.set(JavaLanguageVersion.of(8))
 
 tasks {
-    compileKotlin { kotlinOptions.jvmTarget = "1.8" }
-    compileTestKotlin { kotlinOptions.jvmTarget = "1.8" }
+    // TODO: uncomment if we actually use Kotlin
+    // compileKotlin { kotlinOptions.jvmTarget = "1.8" }
+    // compileTestKotlin { kotlinOptions.jvmTarget = "1.8" }
 
     build { dependsOn(shadowJar) }
 
