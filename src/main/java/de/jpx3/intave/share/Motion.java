@@ -90,8 +90,4 @@ public final class Motion {
   public static Motion copyFrom(Motion context) {
     return new Motion(context.motionX, context.motionY, context.motionZ);
   }
-
-  public static Motion zero() {
-    return new Motion();
-  }
 }

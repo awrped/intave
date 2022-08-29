@@ -13,9 +13,16 @@ final class PowderSnowCollisionModifier extends CollisionModifier {
   @Override
   public BlockShape modify(User user, BoundingBox userBox, int posX, int posY, int posZ, BlockShape shape) {
     ItemStack boots = user.player().getInventory().getBoots();
-    boolean hasLeatherBootsEquipped = boots != null && boots.getType() == Material.LEATHER_BOOTS;
-    if (hasLeatherBootsEquipped && userBox.minY >= posY + 1) {
-      return POWDER_SNOW_FROM_ABOVE.contextualized(posX, posY, posZ);
+    boolean leatherBootsEquipped = boots != null && boots.getType() == Material.LEATHER_BOOTS;
+    // TODO Check for sneaking?
+    if (leatherBootsEquipped && userBox.minY >= posY + 1) {
+      BlockShape contextualized = POWDER_SNOW_FROM_ABOVE.contextualized(posX, posY + 1, posZ);
+      for (BoundingBox boundingBox : contextualized.boundingBoxes()) {
+        System.out.println("bb:" + boundingBox);
+      }
+
+      System.out.println(contextualized);
+      return contextualized;
     } else {
       return BlockShapes.emptyShape();
     }

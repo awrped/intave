@@ -14,6 +14,7 @@ import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserRepository;
 import de.jpx3.intave.user.meta.ProtocolMetadata;
 import org.bukkit.entity.Player;
+import org.bukkit.util.Vector;
 
 import static de.jpx3.intave.user.meta.ProtocolMetadata.VER_1_8;
 
@@ -52,6 +53,14 @@ public final class Colliders {
     User user, Motion motion, boolean inWeb,
     double positionX, double positionY, double positionZ
   ) {
+    // Apply motion multiplier
+    Vector motionMultiplier = user.meta().movement().motionMultiplier();
+    if (motionMultiplier != null) {
+      motion.motionX *= motionMultiplier.getX();
+      motion.motionY *= motionMultiplier.getY();
+      motion.motionZ *= motionMultiplier.getZ();
+    }
+
     return user.collider().collide(user, motion, positionX, positionY, positionZ, inWeb);
   }
 

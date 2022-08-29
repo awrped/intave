@@ -9,7 +9,6 @@ import de.jpx3.intave.block.fluid.LegacyWaterflow;
 import de.jpx3.intave.block.physics.BlockPhysics;
 import de.jpx3.intave.block.physics.BlockProperties;
 import de.jpx3.intave.block.physics.MaterialMagic;
-import de.jpx3.intave.math.MathHelper;
 import de.jpx3.intave.module.Modules;
 import de.jpx3.intave.module.tracker.entity.EntityShade;
 import de.jpx3.intave.player.Effects;
@@ -139,15 +138,6 @@ class BaseSimulator extends Simulator {
       tryRelinkFlyingPosition(user, motion, environment);
     }
 
-    Vector motionMultiplier = environment.motionMultiplier();
-    if (motionMultiplier != null) {
-      motion.motionX *= motionMultiplier.getX();
-      motion.motionY *= motionMultiplier.getY();
-      motion.motionZ *= motionMultiplier.getZ();
-      movementData.physicsMotionX = 0;
-      movementData.physicsMotionY = 0;
-      movementData.physicsMotionZ = 0;
-    }
     ColliderResult collisionResult =
         Colliders.collision(user, motion, environment.inWeb(), positionX, positionY, positionZ);
     notePossibleFlyingPacket(user, collisionResult);
@@ -387,6 +377,11 @@ class BaseSimulator extends Simulator {
     motionVector.reset(motionX, motionY, motionZ);
     Pose pose = movementData.pose();
 
+    if (movementData.motionMultiplier() != null) {
+      motionVector.reset(0, 0, 0);
+      movementData.resetMotionMultiplier();
+    }
+
     boolean elytraFlying = pose == Pose.FALL_FLYING;
     boolean inWater = movementData.inWater();
     boolean inLava = movementData.inLava();
@@ -422,7 +417,6 @@ class BaseSimulator extends Simulator {
       motionVector.motionZ = 0.0;
     }
 
-    movementData.resetMotionMultiplier();
     simulateMovementOfCollidedBlocks(user, motionVector, boundingBox);
     updateFallState(user, motionY, movementData.onGround);
 

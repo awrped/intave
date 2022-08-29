@@ -99,7 +99,13 @@ public final class Collision {
           }
           BlockShape resolve = stateAccess.collisionShapeAt(x, y, z);
           Material material = stateAccess.typeAt(x, y, z);
+
+          boolean behinderung = false;
+
           if (CollisionModifiers.isModified(material)) {
+            System.out.println("material " + material + " is modified");
+
+            behinderung = true;
             // this should not happen too often
             resolve = CollisionModifiers.modified(material, user, playerBox, x, y, z, resolve);
           }
@@ -117,6 +123,10 @@ public final class Collision {
             }
           }
           if (resolve.intersectsWith(playerBox)) {
+            if (behinderung) {
+              System.out.println("block intersects with bb");
+            }
+
             if (!enforceContainer && container == null) {
               container = containerSupplier.get();
             }
@@ -124,6 +134,8 @@ public final class Collision {
             if (--collisionsRemaining <= 0) {
               return finisher.apply(container);
             }
+          } else if (behinderung) {
+            System.out.println("block does not intersect with bb: " + playerBox);
           }
         }
       }
