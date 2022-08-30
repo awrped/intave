@@ -165,8 +165,6 @@ public final class Physics extends Check {
     }
   }
 
-  private static final int BOAT_ID = 41;
-
   private Simulator selectSimulator(User user) {
     MovementMetadata movementData = user.meta().movement();
     ProtocolMetadata protocol = user.meta().protocol();
@@ -174,13 +172,11 @@ public final class Physics extends Check {
 
     if (movementData.isInVehicle() && clientVehicleMovement) {
       EntityShade entityShade = movementData.ridingEntity();
-      int typeId = entityShade.typeData().identifier();
-      return typeId == BOAT_ID ? Simulators.BOAT : Simulators.HORSE;
+      return entityShade.typeData().isBoat() ? Simulators.BOAT : Simulators.HORSE;
     } else {
       boolean inLava = movementData.inLava();
       boolean inWater = movementData.inWater();
-//      Pose pose = movementData.pose();
-      if (movementData.elytraFlying/*pose == Pose.FALL_FLYING*/ && !inWater && !inLava) {
+      if (movementData.elytraFlying && !inWater && !inLava) {
         return Simulators.ELYTRA;
       }
     }

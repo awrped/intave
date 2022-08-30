@@ -9,16 +9,27 @@ public final class EntityTypeData {
   private final HitboxSize hitBoxSize;
   private final int entityTypeId;
   private final boolean isLivingEntity;
-  private final boolean isBoat;
   public final int creationID;
+  private boolean boat;
+  private boolean shulker;
 
   public EntityTypeData(String entityName, HitboxSize hitBoxSize, int entityTypeId, boolean isLivingEntity, int creationID) {
     this.entityName = entityName;
     this.hitBoxSize = hitBoxSize;
     this.entityTypeId = entityTypeId;
     this.isLivingEntity = isLivingEntity;
-    this.isBoat = entityName.toLowerCase(Locale.ROOT).contains("boat");
     this.creationID = creationID;
+
+    String lowercaseName = entityName.toLowerCase(Locale.ROOT);
+    switch (lowercaseName) {
+      case "boat":
+      case "chestboat":
+        this.boat = true;
+        break;
+      case "shulker":
+        this.shulker = true;
+        break;
+    }
   }
 
   public boolean isLivingEntity() {
@@ -26,7 +37,11 @@ public final class EntityTypeData {
   }
 
   public boolean isBoat() {
-    return isBoat;
+    return boat;
+  }
+
+  public boolean isShulker() {
+    return shulker;
   }
 
   public String name() {

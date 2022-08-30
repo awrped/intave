@@ -170,8 +170,14 @@ public final class AttackRaytrace extends MetaCheck<AttackRaytrace.AttackRaytrac
         }
 
         if (entityIsAlive && entityHasNotTimedOut) {
-          if (entity.mountedEntity() == null && !player.isInsideVehicle() && entity.typeData().isLivingEntity() && !abilityData.ignoringMovementPackets()) {
-            if (!protocolMetadata.flyingPacketStream()/*protocolMetadata.protocolVersion() >= VER_1_9 || protocolMetadata.outdatedClient()*/) {
+          boolean checkActivated = entity.mountedEntity() == null
+            && !player.isInsideVehicle()
+            && entity.typeData().isLivingEntity()
+            && !entity.typeData().isShulker()
+            && !abilityData.ignoringMovementPackets();
+
+          if (checkActivated) {
+            if (!protocolMetadata.flyingPacketStream()) {
               // >= 1.9.x
               if (entity.clientSynchronized
                 && !movementData.recentlyEncounteredFlyingPacket(2)
