@@ -224,9 +224,14 @@ public final class SibylAuthentication implements BukkitEventSubscriber {
       if (channel.startsWith("MC|")) {
         channel = channel.substring(3);
       }
-      packetContainer
-          .getMinecraftKeys()
-          .write(0, new MinecraftKey(channel.toLowerCase(Locale.ROOT)));
+      MinecraftKey key;
+      if (channel.contains(":")) {
+        String[] parts = channel.toLowerCase(Locale.ROOT).split(":");
+        key = new MinecraftKey(parts[0], parts[1]);
+      } else {
+        key = new MinecraftKey(channel.toLowerCase(Locale.ROOT));
+      }
+      packetContainer.getMinecraftKeys().write(0, key);
     } else {
       packetContainer.getStrings().write(0, channel);
     }
