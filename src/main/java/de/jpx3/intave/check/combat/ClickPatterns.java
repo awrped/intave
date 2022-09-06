@@ -2,6 +2,7 @@ package de.jpx3.intave.check.combat;
 
 import com.comphenix.protocol.events.PacketEvent;
 import de.jpx3.intave.IntaveControl;
+import de.jpx3.intave.adapter.MinecraftVersions;
 import de.jpx3.intave.annotate.Relocate;
 import de.jpx3.intave.check.Check;
 import de.jpx3.intave.check.CheckViolationLevelDecrementer;
@@ -16,6 +17,7 @@ import de.jpx3.intave.user.User;
 import org.bukkit.entity.Player;
 
 import static de.jpx3.intave.module.linker.packet.PacketId.Client.ARM_ANIMATION;
+import static de.jpx3.intave.user.meta.ProtocolMetadata.VER_1_13;
 
 @Relocate
 public final class ClickPatterns extends Check {
@@ -47,6 +49,11 @@ public final class ClickPatterns extends Check {
   }
 
   public void makeDetection(Player player, String details, String specifics, double vl) {
+    User user = userOf(player);
+    // Disable auto-clicker checks for players on 1.13 or higher due to integrated auto-clicker causing false flags
+    if (user.protocolVersion() >= VER_1_13) {
+      return;
+    }
     if (IntaveControl.CLICKPATTERNS_OUTPUT) {
       details += " " + specifics.trim();
     }
