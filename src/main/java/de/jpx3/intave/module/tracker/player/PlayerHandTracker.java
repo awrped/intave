@@ -78,8 +78,12 @@ public class PlayerHandTracker extends Module {
     InventoryMetadata inventoryData = user.meta().inventory();
 
     Integer slot = packet.getIntegers().read(0);
-    ItemStack item = player.getInventory().getItem(slot);
 
+    if (isInvalidSlot(slot)) {
+      return;
+    }
+
+    ItemStack item = player.getInventory().getItem(slot);
     inventoryData.slotSwitchData = new InventoryMetadata.SlotSwitchData(slot, item);
   }
 
@@ -92,9 +96,18 @@ public class PlayerHandTracker extends Module {
     Player player = event.getPlayer();
     User user = UserRepository.userOf(player);
     int slot = event.getPacket().getIntegers().read(0);
+
+    if (isInvalidSlot(slot)) {
+      return;
+    }
+
     Modules.feedback().synchronize(player, slot, (player1, slot1) -> {
       user.meta().inventory().setHeldItemSlot(slot);
     });
+  }
+
+  private boolean isInvalidSlot(int slot) {
+    return slot >= 36 || slot < 0;
   }
 
   @PacketSubscription(
