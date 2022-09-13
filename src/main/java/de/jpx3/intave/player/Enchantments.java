@@ -5,11 +5,11 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 public final class Enchantments {
+  public static final Enchantment ENCHANTMENT_RIPTIDE = Enchantment.getByName("RIPTIDE");
   private static final Enchantment ENCHANTMENT_SWIFT_SNEAK = Enchantment.getByName("SWIFT_SNEAK");
   private static final Enchantment ENCHANTMENT_SOUL_SPEED = Enchantment.getByName("SOUL_SPEED");
   private static final Enchantment ENCHANTMENT_DEPTH_STRIDER =
-      Enchantment.getByName("DEPTH_STRIDER");
-  public static final Enchantment ENCHANTMENT_RIPTIDE = Enchantment.getByName("RIPTIDE");
+    Enchantment.getByName("DEPTH_STRIDER");
 
   public static boolean tridentRiptideEnchanted(ItemStack itemStack) {
     return itemStack.getEnchantments().containsKey(ENCHANTMENT_RIPTIDE);
@@ -20,7 +20,7 @@ public final class Enchantments {
       return 0;
     }
     return resolveEnchantmentLevel(
-        ENCHANTMENT_DEPTH_STRIDER, player.getInventory().getArmorContents());
+      ENCHANTMENT_DEPTH_STRIDER, player.getInventory().getArmorContents());
   }
 
   public static int resolveSoulSpeedModifier(Player player) {
@@ -33,7 +33,7 @@ public final class Enchantments {
 
   public static int resolveSwiftSpeedModifier(Player player) {
     ItemStack leggings = player.getInventory().getLeggings();
-    if (ENCHANTMENT_SOUL_SPEED == null || leggings == null) {
+    if (ENCHANTMENT_SWIFT_SNEAK == null || leggings == null) {
       return 0;
     }
     return resolveEnchantmentLevel(ENCHANTMENT_SWIFT_SNEAK, leggings);
