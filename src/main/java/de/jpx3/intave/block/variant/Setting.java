@@ -15,5 +15,7 @@ public interface Setting<T extends Comparable<T>> {
 
   Class<T> type();
 
+  int indexOf(T value);
+
   Optional<T> findByName(String name);
 }
