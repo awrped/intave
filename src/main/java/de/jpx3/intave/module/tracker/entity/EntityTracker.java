@@ -167,12 +167,16 @@ public final class EntityTracker extends Module {
       // Another entity
       if (vehicleEntityID == -1) {
         // when an entity dismounts
-        sittingEntity.unmountFromEntity();
+        Modules.feedback().synchronize(player, null, (player1, target) -> {
+          sittingEntity.unmountFromEntity();
+        });
       } else {
         // mounts on entity
         EntityShade sittingOnEntity = connection.entityBy(vehicleEntityID);
         if (sittingOnEntity != null) {
-          sittingEntity.mountToEntity(sittingOnEntity);
+          Modules.feedback().synchronize(player, null, (player1, x) ->
+            sittingEntity.mountToEntity(sittingOnEntity)
+          );
         } else {
           if (IntaveControl.DISABLE_LICENSE_CHECK) {
             IntaveLogger.logger().error("mounted On Entity could not be found");

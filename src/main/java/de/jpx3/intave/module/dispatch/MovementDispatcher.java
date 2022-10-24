@@ -329,7 +329,7 @@ public final class MovementDispatcher extends Module {
     InventoryMetadata inventoryData = meta.inventory();
     ViolationMetadata violationLevelData = meta.violationLevel();
     ConnectionMetadata connectionData = meta.connection();
-    ProtocolMetadata clientData = meta.protocol();
+    ProtocolMetadata protocol = meta.protocol();
 
     PacketType packetType = event.getPacketType();
     boolean vehicleMove = packetType == PacketType.Play.Client.VEHICLE_MOVE;
@@ -348,6 +348,11 @@ public final class MovementDispatcher extends Module {
       movementData.rotationYaw = packet.getFloat().read(0);
       movementData.rotationPitch = packet.getFloat().read(1);
       return;
+    }
+
+    boolean clientVehicleMovement = MinecraftVersions.VER1_9_0.atOrAbove() && protocol.combatUpdate();
+    if (movementData.isInVehicle() && !vehicleMove && clientVehicleMovement) {
+      movementData.dismountRidingEntity();
     }
 
     if (hasMovement) {
@@ -378,7 +383,7 @@ public final class MovementDispatcher extends Module {
 
     // garbage fix for sending POSITION_LOOK packets on newer client versions when rightclicking
     if (
-      clientData.cavesAndCliffsUpdate() && !movementData.awaitTeleport
+      protocol.cavesAndCliffsUpdate() && !movementData.awaitTeleport
         && !movementData.awaitOutgoingTeleport
         && packet.getType() == PacketType.Play.Client.POSITION_LOOK
       // maybe check for actual rightclick packet?
@@ -631,6 +636,7 @@ public final class MovementDispatcher extends Module {
     movement.dropPostTickMotionProcessing = false;
 
     Map<BlockPosition, ShulkerBox> shulkerData = movement.shulkerData;
+    Map<Integer, ShulkerBox> shulkerDataHashCodeAccess = movement.shulkerDataHashCodeAccess;
     if (!shulkerData.isEmpty()) {
       int shulkerLimit = 2048;
       for (Iterator<BlockPosition> iterator = movement.shulkers.iterator(); iterator.hasNext(); ) {
@@ -646,6 +652,7 @@ public final class MovementDispatcher extends Module {
         if (shulkerBox.complete()) {
           iterator.remove();
           shulkerData.remove(shulkerBlock);
+          shulkerDataHashCodeAccess.remove(shulkerBox.hashCode());
         } else if (shulkerBox.shouldTick()) {
           shulkerBox.tick();
         }
@@ -956,19 +963,21 @@ public final class MovementDispatcher extends Module {
             shulkerBox.close();
           }
         } else {
+          int positionHash = blockPosition.getX() << 12 | blockPosition.getY() << 8 | blockPosition.getZ();
           ShulkerBox box = opening ? ShulkerBox.opening(facing) : ShulkerBox.closing(facing);
           movement.shulkerData.put(blockPosition, box);
           movement.shulkers.add(blockPosition);
+          movement.shulkerDataHashCodeAccess.putIfAbsent(positionHash, box);
         }
         switch (facing.axis()) {
           case X_AXIS:
-            movement.shulkerXToleranceRemaining = 10;
+            movement.shulkerXToleranceRemaining = 20;
             break;
           case Y_AXIS:
-            movement.shulkerYToleranceRemaining = 10;
+            movement.shulkerYToleranceRemaining = 20;
             break;
           case Z_AXIS:
-            movement.shulkerZToleranceRemaining = 10;
+            movement.shulkerZToleranceRemaining = 20;
             break;
         }
       });

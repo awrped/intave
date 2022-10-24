@@ -124,6 +124,7 @@ public final class MovementMetadata implements SimulationEnvironment {
   public int shulkerZToleranceRemaining;
   public List<BlockPosition> shulkers = new ArrayList<>();
   public Map<BlockPosition, ShulkerBox> shulkerData = new HashMap<>();
+  public Map<Integer, ShulkerBox> shulkerDataHashCodeAccess = new HashMap<>();
   // Will be set to true if the player sends a flying packet and receives server velocity later
   public boolean physicsUnpredictableVelocityExpected;
   // Jump prevention
@@ -746,6 +747,17 @@ public final class MovementMetadata implements SimulationEnvironment {
       player.teleport(player.getLocation());
     });
     this.vehicle = null;
+  }
+
+  public ShulkerBox shulkerBoxAt(int posX, int posY, int posZ) {
+    if (shulkerData.isEmpty()) {
+      return null;
+    }
+    int positionHash = posX << 12 | posY << 8 | posZ;
+    if (shulkerDataHashCodeAccess.containsKey(positionHash)) {
+      return shulkerDataHashCodeAccess.get(positionHash);
+    }
+    return shulkerData.get(new BlockPosition(posX, posY, posZ));
   }
 
   public void resetFlyingPacketAccurate() {

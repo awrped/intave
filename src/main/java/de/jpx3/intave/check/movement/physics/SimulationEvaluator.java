@@ -77,7 +77,7 @@ public final class SimulationEvaluator {
       vecticalLegitimateDeviation = Math.max(vecticalLegitimateDeviation, 0.5);
     }
 
-    if (movement.shulkerYToleranceRemaining > 0 && Math.abs(receivedMotionY) < 0.09) {
+    if (movement.shulkerYToleranceRemaining > 0 && Math.abs(receivedMotionY) <= 0.15) {
       vecticalLegitimateDeviation = Math.max(vecticalLegitimateDeviation, 0.2);
     }
 

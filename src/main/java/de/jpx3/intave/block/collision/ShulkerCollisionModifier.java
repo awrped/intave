@@ -1,18 +1,24 @@
 package de.jpx3.intave.block.collision;
 
-import com.comphenix.protocol.wrappers.BlockPosition;
 import de.jpx3.intave.block.shape.BlockShape;
+import de.jpx3.intave.block.shape.BlockShapes;
 import de.jpx3.intave.block.tick.ShulkerBox;
 import de.jpx3.intave.share.BoundingBox;
 import de.jpx3.intave.user.User;
 import org.bukkit.Material;
 
+import static de.jpx3.intave.block.collision.CollisionRequestType.INTERSECTION_CHECK;
+
 final class ShulkerCollisionModifier extends CollisionModifier {
   @Override
   public BlockShape modify(
-      User user, BoundingBox userBox, int posX, int posY, int posZ, BlockShape shape) {
-    BlockPosition blockPosition = new BlockPosition(posX, posY, posZ);
-    ShulkerBox shulker = user.meta().movement().shulkerData.get(blockPosition);
+    User user, BoundingBox userBox, int posX, int posY, int posZ, BlockShape shape,
+    CollisionRequestType collisionType
+  ) {
+    if (collisionType == INTERSECTION_CHECK) {
+      return BlockShapes.emptyShape();
+    }
+    ShulkerBox shulker = user.meta().movement().shulkerBoxAt(posX, posY, posZ);
     return shulker != null ? shulker.originShape().contextualized(posX, posY, posZ) : shape;
   }
 

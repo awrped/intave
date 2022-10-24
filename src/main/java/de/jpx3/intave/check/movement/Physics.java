@@ -426,7 +426,7 @@ public final class Physics extends Check {
     boolean boundingBoxIntersectionCurrent = Collision.present(player, currentBoundingBox);
     boolean movedIntoBlock = !boundingBoxIntersectionLast && boundingBoxIntersectionCurrent;
     if (boundingBoxIntersectionCurrent && !spectator) {
-      List<BoundingBox> intersectionBoundingBoxesCurrent = Collision.__INVALID__resolveBoxes(player, currentBoundingBox);
+      List<BoundingBox> intersectionBoundingBoxesCurrent = Collision.__INVALID__resolveBoxes__OnlyForBoxIntersectionChecks__(player, currentBoundingBox);
       if (movedIntoBlock && !intersectionBoundingBoxesCurrent.isEmpty()) {
         movementData.invalidMovement = true;
         BoundingBox boundingBox = intersectionBoundingBoxesCurrent.get(0);
@@ -628,7 +628,7 @@ public final class Physics extends Check {
 //      debug += " ai ?" + movementData.aiMoveSpeed();
 //      debug += " sprint " + shortenBoolean(movementData.sprinting) + "/" + shortenBoolean(movementData.hasSprintSpeed);
 //      debug += " (sneak " + movementData.sneaking + "/"+movementData.actualSneaking()+")";
-//      debug += " (size:" + movementData.width + "," + movementData.height + ")";
+      debug += " (size:" + movementData.width + "," + movementData.height + ")";
 //      debug += " hand=" + shortenBoolean(meta.inventory().handActive());
 //      debug += inventoryData.heldItem().getType().name();
 //      debug += " flying:" + movementData.pastFlyingPacketAccurate;

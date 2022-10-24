@@ -14,7 +14,7 @@ import org.bukkit.block.Block;
 
 final class ScaffoldingCollisionModifier extends CollisionModifier {
   @Override
-  public BlockShape modify(User user, BoundingBox userBox, int posX, int posY, int posZ, BlockShape shape) {
+  public BlockShape modify(User user, BoundingBox userBox, int posX, int posY, int posZ, BlockShape shape, CollisionRequestType type) {
     if (useCustomCollision(user, posY)) {
       double yStart = 14.0 / 16.0;
       double yEnd = 1.0;

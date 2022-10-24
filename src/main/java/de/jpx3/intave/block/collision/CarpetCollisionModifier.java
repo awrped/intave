@@ -11,13 +11,15 @@ import java.util.EnumSet;
 
 final class CarpetCollisionModifier extends CollisionModifier {
   private static final BlockShape CARPET_FROM_ABOVE =
-      BoundingBox.originFromX16(0, -1, 0, 16, 0, 16);
+    BoundingBox.originFromX16(0, -1, 0, 16, 0, 16);
   private static final BlockShape CARPET_FROM_BELOW = BoundingBox.originFromX16(0, 0, 0, 16, 1, 16);
   private final EnumSet<Material> CARPETS = EnumSet.noneOf(Material.class);
 
   @Override
   public BlockShape modify(
-      User user, BoundingBox userBox, int posX, int posY, int posZ, BlockShape shape) {
+    User user, BoundingBox userBox, int posX, int posY, int posZ, BlockShape shape,
+    CollisionRequestType type
+  ) {
     if (user.protocolVersion() <= 5) {
       Material material = VolatileBlockAccess.typeAccess(user, posX, posY - 1, posZ);
       boolean isCarpetBelow = CARPETS.contains(material);

@@ -43,13 +43,13 @@ public final class Collision {
   private static final int COLLISION_CHECK_LIMIT = 256;
 
   private static final Collector<BlockShape, ?, BlockShape> SHAPE_COMPILATION =
-      Collectors.collectingAndThen(Collectors.toList(), BlockShapes.shapeMerger());
+    Collectors.collectingAndThen(Collectors.toList(), BlockShapes.shapeMerger());
   //    Collectors.reducing(BlockShapes.emptyShape(), BlockShapes::merge, BlockShapes::merge);
 
   private static final Collector<BlockShape, ?, Boolean> EXISTS_ANY_SHAPE =
-      shapeCountMatch(s -> s > 0);
+    shapeCountMatch(s -> s > 0);
   private static final Collector<BlockShape, ?, Boolean> EXISTS_NO_SHAPE =
-      shapeCountMatch(s -> s == 0);
+    shapeCountMatch(s -> s == 0);
 
   private static Collector<BlockShape, ?, Boolean> shapeCountMatch(LongPredicate predicate) {
     return Collectors.collectingAndThen(Collectors.counting(), predicate::test);
@@ -70,11 +70,11 @@ public final class Collision {
   }
 
   public static <C, R> R collectCollisionShapes(
-      Player player,
-      BoundingBox playerBox,
-      int collisionLimit,
-      boolean enforceContainer,
-      Collector<BlockShape, C, R> collector
+    Player player,
+    BoundingBox playerBox,
+    int collisionLimit,
+    boolean enforceContainer,
+    Collector<BlockShape, C, R> collector
   ) {
     Supplier<C> containerSupplier = collector.supplier();
     C container = null;
@@ -112,7 +112,7 @@ public final class Collision {
 
           if (CollisionModifiers.isModified(material)) {
             // this should not happen too often
-            resolve = CollisionModifiers.modified(material, user, playerBox, x, y, z, resolve);
+            resolve = CollisionModifiers.modified(material, user, playerBox, x, y, z, resolve, CollisionRequestType.MOTION_CALCULATION);
           }
           boolean blockOutsideBorder = !blockInsideBorder(world, x, z);
           if (blockOutsideBorder && !movementData.outsideBorder) {
@@ -146,10 +146,10 @@ public final class Collision {
   }
 
   public static <C, R> R collectCollidingPositions(
-      Player player,
-      BoundingBox playerBox,
-      int collisionLimit,
-      Collector<Position, C, R> collector
+    Player player,
+    BoundingBox playerBox,
+    int collisionLimit,
+    Collector<Position, C, R> collector
   ) {
     C container = collector.supplier().get();
     BiConsumer<C, Position> accumulator = collector.accumulator();
@@ -221,21 +221,21 @@ public final class Collision {
   }
 
   private static boolean intersects(
-      BoundingBox boundingBox, int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
+    BoundingBox boundingBox, int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
     return boundingBox.maxX > minX
-        && boundingBox.minX < maxX
-        && (boundingBox.maxY > minY
-            && boundingBox.minY < maxY
-            && boundingBox.maxZ > minZ
-            && boundingBox.minZ < maxZ);
+      && boundingBox.minX < maxX
+      && (boundingBox.maxY > minY
+      && boundingBox.minY < maxY
+      && boundingBox.maxZ > minZ
+      && boundingBox.minZ < maxZ);
   }
 
   private static final ShapeResolverPipeline SHAPE_RESOLVER = ShapeResolver.globalPipeline();
 
   @Deprecated
   // I suck, please remove
-  public static List<BoundingBox> __INVALID__resolveBoxes(
-      Player player, BoundingBox playerBoundingBox) {
+  public static List<BoundingBox> __INVALID__resolveBoxes__OnlyForBoxIntersectionChecks__(
+    Player player, BoundingBox playerBoundingBox) {
     int minX = floor(playerBoundingBox.minX);
     int maxX = floor(playerBoundingBox.maxX + 1.0D);
     int minY = floor(playerBoundingBox.minY);
@@ -274,12 +274,11 @@ public final class Collision {
                   break exit;
                 }
                 BlockShape blockShape = stateAccess.collisionShapeAt(x, y, z);
-                //                List<BoundingBox> resolve = blockShape.boundingBoxes();
                 Material material = stateAccess.typeAt(x, y, z);
                 if (CollisionModifiers.isModified(material)) {
-                  blockShape =
-                      CollisionModifiers.modified(
-                          material, user, playerBoundingBox, x, y, z, blockShape);
+                  blockShape = CollisionModifiers.modified(
+                    material, user, playerBoundingBox, x, y, z, blockShape, CollisionRequestType.INTERSECTION_CHECK
+                  );
                 }
                 boolean blockOutsideBorder = !blockInsideBorder(world, x, z);
                 if (blockOutsideBorder && !movementData.outsideBorder) {
@@ -350,12 +349,12 @@ public final class Collision {
   }
 
   public static boolean playerInImaginaryBlock(
-      User user, World world, int posX, int posY, int posZ, Material type, int data) {
+    User user, World world, int posX, int posY, int posZ, Material type, int data) {
     BlockShape boundingBoxes =
-        SHAPE_RESOLVER.collisionShapeOf(world, user.player(), type, data, posX, posY, posZ);
+      SHAPE_RESOLVER.collisionShapeOf(world, user.player(), type, data, posX, posY, posZ);
     if (CollisionModifiers.isModified(type)) {
       BlockShape customShape =
-          CollisionModifiers.imaginaryBlockShape(type, user, posX, posY, posZ, data);
+        CollisionModifiers.imaginaryBlockShape(type, user, posX, posY, posZ, data);
       if (customShape != null) {
         boundingBoxes = customShape;
       }
@@ -390,12 +389,12 @@ public final class Collision {
   }
 
   public static boolean containsBlockInBB(
-      World world, BoundingBox playerBoundingBox, Material blockType) {
+    World world, BoundingBox playerBoundingBox, Material blockType) {
     return containsBlockInBB(world, playerBoundingBox, material -> material == blockType);
   }
 
   public static boolean containsBlockInBB(
-      World world, BoundingBox playerBoundingBox, Function<Material, Boolean> blockTypeApplier) {
+    World world, BoundingBox playerBoundingBox, Function<Material, Boolean> blockTypeApplier) {
     int minX = floor(playerBoundingBox.minX);
     int maxX = floor(playerBoundingBox.maxX);
     int minY = floor(playerBoundingBox.minY);

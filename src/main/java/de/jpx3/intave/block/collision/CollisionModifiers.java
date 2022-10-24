@@ -5,11 +5,13 @@ import de.jpx3.intave.share.BoundingBox;
 import de.jpx3.intave.user.User;
 import org.bukkit.Material;
 
+import java.util.EnumSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class CollisionModifiers {
   private static final Map<Material, CollisionModifier> repository = new ConcurrentHashMap<>();
+  private static final EnumSet<Material> activeMaterials = EnumSet.noneOf(Material.class);
 
   public static void setup() {
     setup(ScaffoldingCollisionModifier.class);
@@ -28,12 +30,13 @@ public final class CollisionModifiers {
     for (Material value : Material.values()) {
       if (modifier.matches(value)) {
         repository.put(value, modifier);
+        activeMaterials.add(value);
       }
     }
   }
 
-  public static BlockShape modified(Material type, User user, BoundingBox userBox, int posX, int posY, int posZ, BlockShape shape) {
-    return repository.get(type).modify(user, userBox, posX, posY, posZ, shape);
+  public static BlockShape modified(Material type, User user, BoundingBox userBox, int posX, int posY, int posZ, BlockShape shape, CollisionRequestType requestType) {
+    return repository.get(type).modify(user, userBox, posX, posY, posZ, shape, requestType);
   }
 
   public static BlockShape imaginaryBlockShape(Material type, User user, int posX, int posY, int posZ, int data) {
@@ -41,6 +44,6 @@ public final class CollisionModifiers {
   }
 
   public static boolean isModified(Material type) {
-    return repository.containsKey(type);
+    return activeMaterials.contains(type);
   }
 }
