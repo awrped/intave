@@ -107,37 +107,38 @@ public final class Balance extends MetaCheckPart<Timer, Balance.BalanceMeta> {
     List<Double> timerBalanceHistory = timerData.timerBalanceHistory;
 
     MovementMetadata movementData = user.meta().movement();
-    boolean flyingPackets = user.meta().protocol().flyingPacketStream();
-    boolean moving = Hypot.fast(movementData.motionX(), movementData.motionZ()) + Math.abs(movementData.motionY()) >= 0.1 && movementData.pastFlyingPacketAccurate() > 8;
-    boolean checkAllowed = moving || flyingPackets;
-    if (checkAllowed) {
-      safeTimerBalanceHistory.add(Math.min(timerData.timerBalance, timerData.confirmedBalance));
-      timerBalanceHistory.add(timerData.timerBalance);
-    }
-    if (safeTimerBalanceHistory.size() > 30) {
-      safeTimerBalanceHistory.remove(0);
-    }
-    if (timerBalanceHistory.size() > 40) {
-      timerBalanceHistory.remove(0);
-    }
-    int safeMean = mean(safeTimerBalanceHistory);
-    int mean = mean(timerBalanceHistory);
-    double absoluteBalance = Math.abs(timerData.timerBalance);
-    double safeAbsoluteMean = Math.abs(safeMean);
-    double absoluteMean = Math.abs(mean);
-    double safeDiff = safeAbsoluteMean - absoluteBalance;
-    double diff = absoluteMean - absoluteBalance;
-    boolean safeVl = checkAllowed && safeDiff < -15;
-    double vl = checkAllowed ? (diff < -10 ? diff < -50 ? 16 : 8 : -0.5) : -0.5;
-    boolean combatMicroLag = parentCheck().combatMicroLag();
-    if (safeVl || vl < 0) {
-      timerData.balanceUnderflowVL += vl;
-    }
-    timerData.balanceUnderflowVL = MathHelper.minmax(-50, timerData.balanceUnderflowVL, 30);
-    if (timerData.balanceUnderflowVL > 15 && combatMicroLag && !user.trustFactor().atLeast(TrustFactor.ORANGE)) {
-      connection.lastAttackQueueRequest = System.currentTimeMillis();
-    }
+//    boolean flyingPackets = user.meta().protocol().flyingPacketStream();
+//    boolean moving = Hypot.fast(movementData.motionX(), movementData.motionZ()) + Math.abs(movementData.motionY()) >= 0.1 && movementData.pastFlyingPacketAccurate() > 8;
+//    boolean checkAllowed = moving || flyingPackets;
+//    if (checkAllowed) {
+//      safeTimerBalanceHistory.add(Math.min(timerData.timerBalance, timerData.confirmedBalance));
+//      timerBalanceHistory.add(timerData.timerBalance);
+//    }
+//    if (safeTimerBalanceHistory.size() > 20) {
+//      safeTimerBalanceHistory.remove(0);
+//    }
+//    if (timerBalanceHistory.size() > 40) {
+//      timerBalanceHistory.remove(0);
+//    }
+//    int safeMean = mean(safeTimerBalanceHistory);
+//    int mean = mean(timerBalanceHistory);
+//    double absoluteBalance = Math.abs(timerData.timerBalance);
+//    double safeAbsoluteMean = Math.abs(safeMean);
+//    double absoluteMean = Math.abs(mean);
+//    double safeDiff = safeAbsoluteMean - absoluteBalance;
+//    double diff = absoluteMean - absoluteBalance;
+//    boolean safeVl = checkAllowed && safeDiff < -50;
+//    double vl = checkAllowed ? (diff < -20 ? diff < -50 ? 5 : 3 : -0.5) : -0.5;
+//    boolean combatMicroLag = parentCheck().combatMicroLag();
+//    if (safeVl || vl < 0) {
+//      timerData.balanceUnderflowVL += vl;
+//    }
+//    timerData.balanceUnderflowVL = MathHelper.minmax(-50, timerData.balanceUnderflowVL, 30);
+//    if (timerData.balanceUnderflowVL > 15 && combatMicroLag && !user.trustFactor().atLeast(TrustFactor.ORANGE)) {
+//      connection.lastAttackQueueRequest = System.currentTimeMillis();
+//    }
 
+//    player.sendMessage("vl: " + timerData.balanceUnderflowVL);
 //    player.sendMessage("§c" + timerData.timerBalance + "§7 ~§c" + mean + "§7 -> §c" + formatDouble(timerData.balanceUnderflowVL, 2));
 //    System.out.println(timerData.timerBalance + "/" + overflowLimit);
 
