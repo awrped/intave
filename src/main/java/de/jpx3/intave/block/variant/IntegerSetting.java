@@ -1,7 +1,6 @@
 package de.jpx3.intave.block.variant;
 
 import com.google.common.collect.ImmutableSet;
-import it.unimi.dsi.fastutil.Hash;
 
 import java.util.*;
 import java.util.stream.Collectors;

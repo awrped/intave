@@ -4,12 +4,15 @@ import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.wrappers.WrappedDataWatcher;
+import com.comphenix.protocol.wrappers.WrappedWatchableObject;
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.module.linker.packet.PacketSubscription;
-import de.jpx3.intave.packet.reader.EntityReader;
+import de.jpx3.intave.packet.reader.EntityMetadataReader;
 import de.jpx3.intave.packet.reader.PacketReaders;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
+
+import java.util.List;
 
 import static de.jpx3.intave.module.linker.packet.PacketId.Server.ENTITY_METADATA;
 
@@ -36,14 +39,15 @@ public final class HealthFilter extends Filter {
         return;
       }
       PacketContainer packet = event.getPacket();
-      EntityReader entityReader = PacketReaders.readerOf(packet);
-      Entity entity = entityReader.entityBy(event);
-      entityReader.release();
+      EntityMetadataReader reader = PacketReaders.readerOf(packet);
+      Entity entity = reader.entityBy(event);
+      List<WrappedWatchableObject> watchables = reader.metadataObjects();
+      reader.release();
       if (entity == null) {
         return;
       }
-      if (entity instanceof LivingEntity && entity.getUniqueId() != event.getPlayer().getUniqueId())
-        if (packet.getWatchableCollectionModifier().read(0) != null) {
+      if (entity instanceof LivingEntity && entity.getUniqueId() != event.getPlayer().getUniqueId()) {
+        if (watchables != null) {
           packet = packet.deepClone();
           event.setPacket(packet);
           if (event.getPacket().getType() == PacketType.Play.Server.ENTITY_METADATA) {
@@ -52,6 +56,7 @@ public final class HealthFilter extends Filter {
             packet.getWatchableCollectionModifier().write(0, watcher.getWatchableObjects());
           }
         }
+      }
     } catch (Exception ignored) {
     }
   }

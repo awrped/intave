@@ -17,12 +17,10 @@ import de.jpx3.intave.module.linker.packet.PacketSubscription;
 import de.jpx3.intave.module.mitigate.AttackNerfStrategy;
 import de.jpx3.intave.module.tracker.entity.EntityShade;
 import de.jpx3.intave.packet.PacketSender;
-import de.jpx3.intave.player.ItemProperties;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserRepository;
 import de.jpx3.intave.user.meta.*;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
 
 import static de.jpx3.intave.module.linker.packet.PacketId.Client.USE_ENTITY;
 import static de.jpx3.intave.user.meta.ProtocolMetadata.VER_1_8;

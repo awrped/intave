@@ -11,18 +11,18 @@ public final class SibylPacketRegister {
 
   static {
     availablePackets.put("out-attack-cancel", SibylPacketOutAttackCancel.class);
-    availablePackets.put("out-message", SibylPacketMessage.class);
+    availablePackets.put("out-message", SibylPacketOutMessage.class);
 
     availablePackets = ImmutableMap.copyOf(availablePackets);
   }
 
   public static <P extends SibylPacket> P createFrom(String label, JsonElement data) {
-    P generatedPacket = generatePacket(label);
+    P generatedPacket = createPacket(label);
     generatedPacket.buildFrom(data);
     return generatedPacket;
   }
 
-  private static <P extends SibylPacket> P generatePacket(String label) {
+  private static <P extends SibylPacket> P createPacket(String label) {
     try {
       //noinspection unchecked
       return (P) availablePackets.get(label).newInstance();

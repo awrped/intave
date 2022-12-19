@@ -2,7 +2,6 @@ package de.jpx3.intave.module.player;
 
 import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteArrayDataOutput;
-import de.jpx3.intave.access.player.storage.EmptyStorageGateway;
 import de.jpx3.intave.access.player.storage.MemoryStorageGateway;
 import de.jpx3.intave.access.player.storage.StorageGateway;
 import de.jpx3.intave.module.Modules;
@@ -51,8 +50,8 @@ public final class StorageTests extends Tests {
 
   @Before
   public void setup() {
-    StorageGateway remoteGateway = Modules.storage().storageGateway();
-    exampleGateway = remoteGateway == null || remoteGateway instanceof EmptyStorageGateway ? new MemoryStorageGateway() : remoteGateway;
+    StorageLoader storageLoader = Modules.storage();
+    exampleGateway = storageLoader.hasStorageGateway() ? storageLoader.storageGateway() : new MemoryStorageGateway();
     player = FakePlayerFactory.createPlayer((s, objects) -> s.equals("getUniqueId") ? ZERO_UUID : null);
     user = UserFactory.createTestUserFor(player, 47);
     UserRepository.manuallyRegisterUser(player, user);

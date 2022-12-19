@@ -229,6 +229,7 @@ public class TinyProtocol {
    * @return The packet to send instead, or NULL to cancel the transmission.
    */
   public Object onPacketOutAsync(Player receiver, Channel channel, Object packet) {
+//    System.out.println("Sent packet " + packet.getClass().getSimpleName() + " to " + receiver);
     return packet;
   }
 
@@ -243,6 +244,7 @@ public class TinyProtocol {
    * @return The packet to recieve instead, or NULL to cancel.
    */
   public Object onPacketInAsync(Player sender, Channel channel, Object packet) {
+//    System.out.println("Received packet " + packet.getClass().getSimpleName());
     return packet;
   }
 

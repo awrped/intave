@@ -61,6 +61,11 @@ public final class TeleportApplyEnforcer implements PacketEventSubscriber {
     boolean relativeY = flags.contains(TeleportFlag.Y);
     boolean relativeZ = flags.contains(TeleportFlag.Z);
 
+    Boolean funkyBoolean = packet.getBooleans().readSafely(0);
+    if (funkyBoolean == null) {
+      funkyBoolean = false;
+    }
+
     if (relativeX || relativeY || relativeZ) {
       Vector teleportOffset = new Vector(positionX, positionY, positionZ);
       if (teleportOffset.length() == 0) {
@@ -68,8 +73,10 @@ public final class TeleportApplyEnforcer implements PacketEventSubscriber {
       }
     }
 
-//    System.out.println("Teleporting " + player.getName() + " to " + positionX + ", " + positionY + ", " + positionZ);
-//    Thread.dumpStack();
+    if (IntaveControl.DEBUG_TELEPORT_PACKET_STACKTRACE) {
+      System.out.println("Teleporting " + player.getName() + " to " + positionX + ", " + positionY + ", " + positionZ + " with flags " + flags + " and funkyBoolean " + funkyBoolean);
+      Thread.dumpStack();
+    }
     // dump packet
 
     Location teleportLocation = new Location(player.getWorld(), positionX, positionY, positionZ);
@@ -171,7 +178,11 @@ public final class TeleportApplyEnforcer implements PacketEventSubscriber {
         IntaveLogger.logger().printLine("[Intave] Resent outgoing teleport with shift to " + player.getName());
       }
       Synchronizer.synchronize(() -> {
-        Location location = movementData.teleportLocation.clone();
+        Location teleportLocation = movementData.teleportLocation;
+        if (teleportLocation == null) {
+          return;
+        }
+        Location location = teleportLocation.clone();
         Material material = VolatileBlockAccess.typeAccess(user, location);
         int limit = 10;
         while (limit-- > 0 && ((material.isBlock() && material != Material.AIR) || MaterialMagic.blocksMovement(material))) {

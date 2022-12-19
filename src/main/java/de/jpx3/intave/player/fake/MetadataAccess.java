@@ -33,7 +33,7 @@ public final class MetadataAccess {
         watchableObject.setValue(value);
       }
     }
-    updateMetaData(player, identity, watchableObjects);
+    updateMetadata(player, identity, watchableObjects);
   }
 
   private static final int SNEAK_BYTE = 1;
@@ -56,7 +56,7 @@ public final class MetadataAccess {
         watchableObject.setValue(value);
       }
     }
-    updateMetaData(player, identity, watchableObjects);
+    updateMetadata(player, identity, watchableObjects);
   }
 
   public static void updateHealthFor(
@@ -72,7 +72,7 @@ public final class MetadataAccess {
       }
       watchableObject.setValue(newHealth);
     }
-    updateMetaData(player, identity, watchableObjects);
+    updateMetadata(player, identity, watchableObjects);
   }
 
   private static final int INVISIBLE_BYTE = 5;
@@ -92,10 +92,10 @@ public final class MetadataAccess {
       byte value = invisible ? (byte) (b0 | 1 << INVISIBLE_BYTE) : (byte) (b0 & ~(1 << INVISIBLE_BYTE));
       watchableObject.setValue(value);
     }
-    updateMetaData(player, identity, watchableObjects);
+    updateMetadata(player, identity, watchableObjects);
   }
 
-  private static void updateMetaData(
+  private static void updateMetadata(
     Player player,
     FakePlayerIdentity identity,
     List<WrappedWatchableObject> watchableObjects

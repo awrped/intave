@@ -1,6 +1,5 @@
 package de.jpx3.intave.check.movement.physics;
 
-import de.jpx3.intave.IntaveControl;
 import de.jpx3.intave.annotate.Relocate;
 import de.jpx3.intave.diagnostic.IterativeStudy;
 import de.jpx3.intave.diagnostic.KeyPressStudy;

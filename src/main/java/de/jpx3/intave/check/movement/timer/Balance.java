@@ -102,8 +102,8 @@ public final class Balance extends MetaCheckPart<Timer, Balance.BalanceMeta> {
     statisticApply(user, CheckStatistics::increaseTotal);
     boolean suspicious = parentCheck().lowToleranceMode() &&/*violationLevelOf(user) > 10 && */!user.trustFactor().atLeast(TrustFactor.ORANGE) /*&& System.currentTimeMillis() - timerData.lastTimerFlag < 2000*/;
     int overflowLimit = highToleranceMode ? 750 : (suspicious ? 25 : 250);
-    List<Double> safeTimerBalanceHistory = timerData.safeTimerBalanceHistory;
-    List<Double> timerBalanceHistory = timerData.timerBalanceHistory;
+//    List<Double> safeTimerBalanceHistory = timerData.safeTimerBalanceHistory;
+//    List<Double> timerBalanceHistory = timerData.timerBalanceHistory;
 
     MovementMetadata movementData = user.meta().movement();
 //    boolean flyingPackets = user.meta().protocol().flyingPacketStream();

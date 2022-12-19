@@ -6,7 +6,6 @@ import com.comphenix.protocol.wrappers.BlockPosition;
 import com.comphenix.protocol.wrappers.WrappedAttribute;
 import com.comphenix.protocol.wrappers.WrappedAttributeModifier;
 import com.google.common.collect.ImmutableList;
-import de.jpx3.intave.IntaveControl;
 import de.jpx3.intave.adapter.MinecraftVersions;
 import de.jpx3.intave.annotate.DispatchTarget;
 import de.jpx3.intave.annotate.Nullable;
@@ -33,7 +32,10 @@ import de.jpx3.intave.share.Motion;
 import de.jpx3.intave.share.Rotation;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserRepository;
-import org.bukkit.*;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
@@ -159,7 +161,7 @@ public final class MovementMetadata implements SimulationEnvironment {
   public volatile boolean awaitTeleport = false, expectTeleport = false, awaitOutgoingTeleport = false;
   public volatile boolean transactionTeleportAllow = false;
   public boolean awaitClickMovementSkip;
-  public Location teleportLocation = null;
+  public Location teleportLocation;
   public Vector teleportOffset = null;
   public int teleportResendCountdown = 10;
   public int outgoingTeleportCountdown = 5;
@@ -239,6 +241,8 @@ public final class MovementMetadata implements SimulationEnvironment {
       Location location = player.getLocation();
       boundingBox = BoundingBox.fromPosition(user, location.getX(), location.getY(), location.getZ());
       boundingBoxSetup = true;
+      // just a default non-null value
+      teleportLocation = location;
     }
   }
 
@@ -343,13 +347,10 @@ public final class MovementMetadata implements SimulationEnvironment {
     InventoryMetadata inventory = user.meta().inventory();
     InventoryMetadata.SlotSwitchData slotSwitchData = inventory.slotSwitchData;
     if (slotSwitchData != null) {
-
       int slot = slotSwitchData.slot();
       ItemStack item = slotSwitchData.item();
 
-      boolean handActive = ItemProperties.canItemBeUsed(player, item) &&
-        inventory.handActive();
-
+      boolean handActive = ItemProperties.canItemBeUsed(player, item) && inventory.handActive();
       if (handActive) {
         inventory.activateHand();
       } else {

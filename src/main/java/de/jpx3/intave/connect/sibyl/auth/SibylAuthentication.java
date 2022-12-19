@@ -55,9 +55,12 @@ public final class SibylAuthentication implements BukkitEventSubscriber {
   private final Map<UUID, SibylAuthenticationState> authStates =
     GarbageCollector.watch(Maps.newConcurrentMap());
 
-  public SibylAuthentication(IntavePlugin plugin) {
+  private final List<? extends Consumer<UUID>> authenticationSubscribers;
+
+  public SibylAuthentication(IntavePlugin plugin, List<? extends Consumer<UUID>> authenticationSubscribers) {
     this.plugin = plugin;
     this.authenticationListener = new LabymodClientListener(plugin, "sibyl-auth", this::processIncomingMessage);
+    this.authenticationSubscribers = authenticationSubscribers;
     Modules.linker().bukkitEvents().registerEventsIn(this);
   }
 
@@ -77,7 +80,7 @@ public final class SibylAuthentication implements BukkitEventSubscriber {
           String splitLicense = license.substring(0, license.length() / 3);
           JsonObject object = new JsonObject();
           object.addProperty("action", "greet");
-          object.addProperty("key", "pCt.T0cvVF:.J7Au?fTbIcnVK-$tHl24");
+          object.addProperty("key", SERVER_KEY);
           object.addProperty("license", splitLicense);
           setAuthState(player, SibylAuthenticationState.AW_AK);
           sendMessageToClient(player, messageChannelOf(player), "sibyl-auth", object);
@@ -99,21 +102,27 @@ public final class SibylAuthentication implements BukkitEventSubscriber {
                   object.addProperty("action", "verify");
                   object.addProperty("state", success ? "success" : "rejected");
                   SibylAuthentication.this.sendMessageToClient(player, SibylAuthentication.this.messageChannelOf(player), "sibyl-auth", object);
-                  SibylAuthentication.this.setAuthState(
-                    player,
-                    success ? SibylAuthenticationState.ATH : SibylAuthenticationState.RGF);
-                  IntavePlugin.singletonInstance().sibylIntegrationService().publishTest(player, 1);
-                  IntavePlugin.singletonInstance().sibylIntegrationService().publishTest(player, 1);
-                  IntavePlugin.singletonInstance().sibylIntegrationService().publishTest(player, 1);
-                  IntavePlugin.singletonInstance().sibylIntegrationService().publishTest(player, 1);
+                  SibylAuthentication.this.setAuthState(player, success ? SibylAuthenticationState.ATH : SibylAuthenticationState.RGF
+                  );
+                  if (success) {
+                    onSuccessfulAuthentication(player);
+                  }
                 }
               });
           }
         } catch (RuntimeException exception) {
+          exception.printStackTrace();
           setAuthState(player, SibylAuthenticationState.RGF);
         }
         break;
     }
+  }
+
+  @Native
+  private void onSuccessfulAuthentication(Player player) {
+    MessageChannelSubscriptions.setSibyl(player, true);
+    authenticationSubscribers.forEach(authenticationSubscriber ->
+      authenticationSubscriber.accept(player.getUniqueId()));
   }
 
   @Native
@@ -209,7 +218,6 @@ public final class SibylAuthentication implements BukkitEventSubscriber {
     if (SIBYL_DEBUG) {
       player.sendMessage("Sibyl -> " + state + "/" + state.ordinal());
     }
-    MessageChannelSubscriptions.setSibyl(player, state == SibylAuthenticationState.ATH);
     authStates.put(player.getUniqueId(), state);
   }
 

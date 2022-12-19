@@ -37,7 +37,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import static de.jpx3.intave.IntaveControl.USE_DEBUG_LOCATE_RESOURCE;

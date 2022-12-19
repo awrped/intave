@@ -27,6 +27,8 @@ import org.bukkit.entity.Zombie;
 import java.lang.reflect.Field;
 import java.util.List;
 
+import static de.jpx3.intave.module.tracker.entity.EntityTypeResolver.AgeCategory.*;
+
 public final class EntityTypeResolver {
   private final boolean AT_OR_ABOVE_1_9 = MinecraftVersions.VER1_9_0.atOrAbove();
   private final boolean AT_OR_ABOVE_1_10 = MinecraftVersions.VER1_10_0.atOrAbove();
@@ -131,19 +133,19 @@ public final class EntityTypeResolver {
     }
   }
 
-  public EntityTypeData entityTypeDataOfEntityMetaData(PacketEvent event, int entityTypeId, List<WrappedWatchableObject> watchableObjects) {
+  public EntityTypeData entityTypeDataOfEntityMetadata(PacketEvent event, int entityTypeId, List<WrappedWatchableObject> watchableObjects) {
     PacketContainer packet = event.getPacket();
     int entityId = packet.getIntegers().read(0);
     Entity entity = EntityTracker.serverEntityByIdentifier(event.getPlayer(), entityId);
     if (entity != null) {
       return entityTypeDataOfBukkitEntity(entity);
     } else {
-      Boolean isChild = isChildByWatchableObjects(watchableObjects, entityTypeId);
-      if (isChild == null) {
+      AgeCategory age = entityAgeByWatchableObjects(watchableObjects, entityTypeId);
+      if (age == UNKNOWN) {
         return null;
       } else {
         EntityTypeData entityTypeData = EntityTypeDataAccessor.resolveFromId(entityTypeId, false);
-        if (isChild) {
+        if (age == BABY) {
           return convertHitboxBoundariesToBaby(entityTypeData);
         } else {
           return entityTypeData;
@@ -152,66 +154,67 @@ public final class EntityTypeResolver {
     }
   }
 
-  private Boolean isChildByWatchableObjects(List<WrappedWatchableObject> watchableObjects, int entityTypeId) {
-    int correctIndex;
-    if (AT_OR_ABOVE_1_9) {
-      if (AT_OR_ABOVE_1_10) {
-        if (AT_OR_ABOVE_1_14) {
-          if (AT_OR_ABOVE_1_15) {
-            // 1.15+
-            if (entityTypeId == 30) {
-              // armorstand
-              correctIndex = 14;
-            } else {
-              correctIndex = 15;
-            }
-          } else {
-            if (entityTypeId == 30) {
-              // armorstand
-              correctIndex = 13;
-            } else {
-              // 1.14+
-              correctIndex = 14;
-            }
-          }
-        } else {
-          // 1.10+
-          correctIndex = 12;
-        }
-      } else {
-        // 1.9
-        correctIndex = 11;
-      }
-    } else {
-      // 1.8
-      correctIndex = 12;
-    }
-
+  private AgeCategory entityAgeByWatchableObjects(
+    List<? extends WrappedWatchableObject> watchableObjects, int entityTypeId
+  ) {
+    int correctIndex = hardcodedAgeMetaIndexFor(entityTypeId);
     for (WrappedWatchableObject watchableObject : watchableObjects) {
       // needs a lot of performance and affects tps
-      int index = watchableObject.getIndex();
-      if (index == correctIndex) {
+      if (watchableObject.getIndex() == correctIndex) {
         // needs a lot of performance and affects tps
         Object object = watchableObject.getRawValue();
         if (object != null) {
           if (object instanceof Boolean) {
-            return (Boolean) object;
+            return (boolean) object ? BABY : ADULT;
           } else if (object instanceof Byte) {
             byte isChild = (byte) object;
             if (AT_OR_ABOVE_1_14 && entityTypeId == 30) {
-              return isChild == 1;
+              return isChild == 1 ? BABY : ADULT;
             } else {
-              return isChild < 0;
+              return isChild < 0 ? BABY : ADULT;
             }
           } else {
-            return null;
+            return UNKNOWN;
           }
         }
       }
-
     }
+    return UNKNOWN;
+  }
 
-    return null;
+  public enum AgeCategory {
+    BABY,
+    ADULT,
+    UNKNOWN
+  }
+
+  private int hardcodedAgeMetaIndexFor(int entityTypeId) {
+    if (!AT_OR_ABOVE_1_9) {
+      // 1.8
+      return 12;
+    } else if (!AT_OR_ABOVE_1_10) {
+      // 1.9
+      return 11;
+    } else if (!AT_OR_ABOVE_1_14) {
+      // 1.10+
+      return 12;
+    } else if (!AT_OR_ABOVE_1_15) {
+      if (entityTypeId == 30) {
+        // armorstand
+        return 13;
+      } else {
+        // 1.14+
+        return 14;
+      }
+    } else {
+      // 1.15+
+      if (entityTypeId == 30) {
+        // armorstand
+        return 14;
+      } else {
+        return 15;
+      }
+    }
   }
 
   private EntityTypeData convertHitboxBoundariesToBaby(EntityTypeData entityTypeData) {
@@ -219,7 +222,7 @@ public final class EntityTypeResolver {
       return null;
     }
     HitboxSize size = HitboxSize.of(entityTypeData.size().width() * 0.5f, entityTypeData.size().height() * 0.5f);
-    return new EntityTypeData(entityTypeData.name(), size, entityTypeData.identifier(), entityTypeData.isLivingEntity(), 5);
+    return new EntityTypeData(entityTypeData.name(), size, entityTypeData.typeId(), entityTypeData.isLivingEntity(), 5);
   }
 
   public HitboxSize hitBoxBoundariesByBukkitEntity(Entity bukkitEntity) {

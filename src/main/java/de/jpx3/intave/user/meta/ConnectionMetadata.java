@@ -30,6 +30,11 @@ public final class ConnectionMetadata {
   private final List<EntityShade> synchronizedEntities = Lists.newCopyOnWriteArrayList();
   private final Map<Long, Long> remainingPingPacketTimestamps = Maps.newConcurrentMap();
   private final List<Long> latencyDifferenceBalance = Lists.newCopyOnWriteArrayList();
+  private final Map<Integer, Integer> localEntityIdsToGlobalIds = Maps.newConcurrentMap();
+  private final Map<Integer, Integer> globalEntityIdsToLocalIds = Maps.newConcurrentMap();
+  private final Set<Integer> globalEntityIdsForRemoval = new HashSet<>();
+//  private final Set<Integer> takenLocalEntityIds = new HashSet<>();
+  private int localEntityIdCounter = 1;
   public long lastCCCInfoMessageSent = 0;
   public boolean sendAsyncMessage = false;
   public boolean eligibleForTransactionTimeout = false;
@@ -67,6 +72,16 @@ public final class ConnectionMetadata {
 
   public ConnectionMetadata(Player player) {
     this.player = player;
+
+    this.globalEntityIdsToLocalIds.put(-1, -1);
+    this.localEntityIdsToGlobalIds.put(-1, -1);
+    this.globalEntityIdsToLocalIds.put(0, 0);
+    this.localEntityIdsToGlobalIds.put(0, 0);
+    if (player != null) {
+      int entityId = player.getEntityId();
+      this.globalEntityIdsToLocalIds.put(entityId, entityId);
+      this.localEntityIdsToGlobalIds.put(entityId, entityId);
+    }
   }
 
   @DispatchTarget
@@ -160,6 +175,63 @@ public final class ConnectionMetadata {
 
   public Map<Long, Queue<FeedbackRequest<?>>> transactionAppendMap() {
     return transactionOptionalAppendixMap;
+  }
+
+  public Integer globalEntityIdFromLocal(Integer localEntityId) {
+    return localEntityIdsToGlobalIds.getOrDefault(localEntityId, -1);
+  }
+
+  public Integer localEntityIdFromGlobal(Integer globalEntityId) {
+    return globalEntityIdsToLocalIds.getOrDefault(globalEntityId, -1);
+  }
+
+  public Map<Integer, Integer> globalEntityIdsToLocalIds() {
+    return new HashMap<>(globalEntityIdsToLocalIds);
+  }
+
+  public void insertIdTranslations(Map<Integer, Integer> globalToLocal) {
+    int highestLocalId = 0;
+    for (Map.Entry<Integer, Integer> entry : globalToLocal.entrySet()) {
+      globalEntityIdsToLocalIds.put(entry.getKey(), entry.getValue());
+      localEntityIdsToGlobalIds.put(entry.getValue(), entry.getKey());
+      if (entry.getValue() > highestLocalId) {
+        highestLocalId = entry.getValue();
+      }
+    }
+    localEntityIdCounter = highestLocalId + 1;
+  }
+
+  public synchronized Integer newLocalIdFor(int globalEntityId) {
+    int localEntityId = localEntityIdCounter++;
+    int attempt = 0;
+    while (localEntityIdsToGlobalIds.containsKey(localEntityId)) {
+      localEntityId = localEntityIdCounter += 7;
+      if (attempt++ > 50) {
+        localEntityId = localEntityIdCounter += 100;
+      }
+    }
+    globalEntityIdsForRemoval.remove(globalEntityId);
+    localEntityIdsToGlobalIds.put(localEntityId, globalEntityId);
+    globalEntityIdsToLocalIds.put(globalEntityId, localEntityId);
+    return localEntityId;
+  }
+
+  public synchronized void markIdAsDeprecated(int globalEntityId) {
+    globalEntityIdsForRemoval.add(globalEntityId);
+  }
+
+  public synchronized void removeId(int globalEntityId) {
+    if (globalEntityId == -1 || globalEntityId == 0 || player == null || globalEntityId == player.getEntityId()) {
+      return;
+    }
+    if (!globalEntityIdsForRemoval.remove(globalEntityId)) {
+      return;
+    }
+    Integer localEntityId = globalEntityIdsToLocalIds.remove(globalEntityId);
+    if (localEntityId != null) {
+      localEntityIdsToGlobalIds.remove(localEntityId);
+//      localEntityIdCounter = Math.min(localEntityIdCounter, localEntityId);
+    }
   }
 
   @Deprecated

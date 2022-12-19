@@ -1,10 +1,8 @@
 package de.jpx3.intave.block.shape;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.function.Function;
 
 public final class BlockShapes {
   private static final BlockShape EMPTY = new EmptyBlockShape();
@@ -64,9 +62,5 @@ public final class BlockShapes {
 
   private static BlockShape shapeFromMultiple(@NotNull List<? extends BlockShape> shapes) {
     return new ArrayBlockShape(shapes);
-  }
-
-  public static Function<@Nullable List<BlockShape>, @NotNull BlockShape> shapeMerger() {
-    return shapes -> shapes == null ? emptyShape() : merge(shapes);
   }
 }

@@ -14,7 +14,7 @@ import de.jpx3.intave.user.meta.CheckCustomMetadata;
 import de.jpx3.intave.user.meta.MovementMetadata;
 import org.bukkit.entity.Player;
 
-import static de.jpx3.intave.module.linker.packet.PacketId.Client.*;
+import static de.jpx3.intave.module.linker.packet.PacketId.Client.LOOK;
 import static de.jpx3.intave.module.linker.packet.PacketId.Client.POSITION_LOOK;
 
 public class RoundedRotation extends MetaCheckPart<PlacementAnalysis, RoundedRotation.Meta> {
@@ -61,9 +61,8 @@ public class RoundedRotation extends MetaCheckPart<PlacementAnalysis, RoundedRot
       int avgNotBuilding = averageOf(zerosNotBuilding);
 
       if (avgNotBuilding <= 3 && avgBuilding >= 6) {
-        String format = "[Intave] %s has sus 0 in rots [notBuilding: %s, building: %s]";
-
-        sendDebug(String.format(format, player.getName(), avgNotBuilding, avgBuilding));
+//        String format = "[Intave] %s has sus 0 in rots [notBuilding: %s, building: %s]";
+//        sendDebug(String.format(format, player.getName(), avgNotBuilding, avgBuilding));
       }
 
       meta.lastCheckedBuildingIndex = meta.indexBuilding;

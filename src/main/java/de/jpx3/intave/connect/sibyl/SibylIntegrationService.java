@@ -1,13 +1,13 @@
 package de.jpx3.intave.connect.sibyl;
 
+import de.jpx3.intave.IntaveControl;
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.annotate.HighOrderService;
 import de.jpx3.intave.annotate.Native;
+import de.jpx3.intave.cleanup.GarbageCollector;
 import de.jpx3.intave.connect.sibyl.auth.SibylAuthentication;
 import de.jpx3.intave.connect.sibyl.data.SibylPacketTransmitter;
-import de.jpx3.intave.connect.sibyl.data.packet.SibylPacket;
-import de.jpx3.intave.connect.sibyl.data.packet.SibylPacketMessage;
-import de.jpx3.intave.connect.sibyl.data.packet.SibylPacketOutAttackCancel;
+import de.jpx3.intave.connect.sibyl.data.packet.*;
 import de.jpx3.intave.executor.Synchronizer;
 import de.jpx3.intave.module.linker.bukkit.BukkitEventSubscriber;
 import de.jpx3.intave.module.linker.bukkit.BukkitEventSubscription;
@@ -16,18 +16,90 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerJoinEvent;
 
+import javax.crypto.Cipher;
+import javax.crypto.spec.SecretKeySpec;
+import java.security.Key;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Consumer;
+
 @HighOrderService
 public final class SibylIntegrationService implements BukkitEventSubscriber {
   private final IntavePlugin plugin;
   private final SibylAuthentication authentication;
   private final SibylPacketTransmitter packetTransmitter;
 
+  private static final KeyPair globalKeyPair;
+  private static final byte[] verifyToken;
+  private static final Map<UUID, Key> KEYS = GarbageCollector.watch(new HashMap<>());
+
+  static {
+    KeyPair keyPair;
+    try {
+      KeyPairGenerator keypairgenerator = KeyPairGenerator.getInstance("RSA");
+      keypairgenerator.initialize(1024);
+      keyPair = keypairgenerator.generateKeyPair();
+    } catch (NoSuchAlgorithmException ignored) {
+      keyPair = null;
+    }
+    globalKeyPair = keyPair;
+    verifyToken = new byte[16];
+    ThreadLocalRandom.current().nextBytes(verifyToken);
+  }
+
   public SibylIntegrationService(IntavePlugin plugin) {
     this.plugin = plugin;
-    this.authentication = new SibylAuthentication(plugin);
-    this.packetTransmitter = new SibylPacketTransmitter(authentication);
+    List<Consumer<UUID>> subscribers = new ArrayList<>();
+    subscribers.add(this::afterAuthentication);
+    this.authentication = new SibylAuthentication(plugin, subscribers);
+    this.packetTransmitter = new SibylPacketTransmitter(authentication, this);
     this.plugin.eventLinker().registerEventsIn(this);
     broadcastRestart();
+  }
+
+  private void afterAuthentication(UUID id) {
+    Player player = Bukkit.getPlayer(id);
+    if (player == null) {
+      return;
+    }
+    if (encryptionAvailable()) {
+      packetTransmitter.transmitPacket(player, new SibylPacketOutBeginEncryption(globalKeyPair.getPublic(), verifyToken));
+    }
+  }
+
+  @Native
+  public void confirmEncryption(Player player, SibylPacketInConfirmEncryption packet) {
+    if (!encryptionAvailable()) {
+      return;
+    }
+    if (!Arrays.equals(decrypt(packet.encryptedVerifyToken()), verifyToken)) {
+      if (IntaveControl.SIBYL_DEBUG) {
+        System.out.println("Sibyl: Invalid verify token for " + player.getName());
+      }
+      return;
+    }
+    byte[] keyBytes = decrypt(packet.encryptedSharedSecret());
+    if (keyBytes != null) {
+      KEYS.put(player.getUniqueId(), new SecretKeySpec(keyBytes, "AES"));
+    }
+  }
+
+  private static byte[] decrypt(byte[] data) {
+    try {
+      Cipher cipher = Cipher.getInstance("RSA");
+      cipher.init(Cipher.DECRYPT_MODE, globalKeyPair.getPrivate());
+      return cipher.doFinal(data);
+    } catch (Exception exception) {
+      exception.printStackTrace();
+      return null;
+    }
+  }
+
+  public boolean encryptionActiveFor(Player player) {
+    return KEYS.containsKey(player.getUniqueId());
   }
 
   @Native
@@ -49,6 +121,18 @@ public final class SibylIntegrationService implements BukkitEventSubscriber {
     }
   }
 
+  public static KeyPair globalKeyPair() {
+    return globalKeyPair;
+  }
+
+  public static byte[] verifyToken() {
+    return verifyToken;
+  }
+
+  public static boolean encryptionAvailable() {
+    return globalKeyPair != null && verifyToken != null;
+  }
+
   public void publishAttackCancel(Player attacker, Entity attacked, boolean damage) {
     SibylPacketOutAttackCancel packet = new SibylPacketOutAttackCancel();
     packet.setAttacker(attacker.getUniqueId());
@@ -58,7 +142,7 @@ public final class SibylIntegrationService implements BukkitEventSubscriber {
   }
 
   public void publishTest(Player player, int id) {
-    SibylPacketMessage packet = new SibylPacketMessage();
+    SibylPacketOutMessage packet = new SibylPacketOutMessage();
     packet.setDebugId(id);
     broadcastTrustedPacket(packet);
   }
@@ -83,5 +167,9 @@ public final class SibylIntegrationService implements BukkitEventSubscriber {
   @Native
   public boolean isAuthenticated(Player user) {
     return authentication.isAuthenticated(user);
+  }
+
+  public Key keyOf(Player player) {
+    return KEYS.get(player.getUniqueId());
   }
 }

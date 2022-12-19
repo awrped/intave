@@ -13,6 +13,7 @@ import de.jpx3.intave.check.movement.physics.Pose;
 import de.jpx3.intave.entity.EntityLookup;
 import de.jpx3.intave.entity.size.HitboxSize;
 import de.jpx3.intave.entity.type.EntityTypeData;
+import de.jpx3.intave.executor.Synchronizer;
 import de.jpx3.intave.executor.TaskTracker;
 import de.jpx3.intave.module.Module;
 import de.jpx3.intave.module.Modules;
@@ -24,6 +25,7 @@ import de.jpx3.intave.module.nayoro.Nayoro;
 import de.jpx3.intave.module.nayoro.event.EntityMoveEvent;
 import de.jpx3.intave.module.nayoro.event.sink.EventSink;
 import de.jpx3.intave.packet.reader.EntityDestroyReader;
+import de.jpx3.intave.packet.reader.EntityMetadataReader;
 import de.jpx3.intave.packet.reader.PacketReaders;
 import de.jpx3.intave.player.fake.FakePlayer;
 import de.jpx3.intave.share.ClientMathHelper;
@@ -31,20 +33,22 @@ import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserRepository;
 import de.jpx3.intave.user.meta.*;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.util.Vector;
 
 import javax.annotation.Nullable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.OptionalInt;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -233,15 +237,15 @@ public final class EntityTracker extends Module {
     AttackMetadata attackData = user.meta().attack();
     PacketType packetType = event.getPacketType();
     PacketContainer packet = event.getPacket();
-    EntityTypeData entityTypeData;
+    EntityTypeData typeData;
     boolean entityIsPlayer = false;
     Integer entityId = packet.getIntegers().read(0);
     if (packetType == PacketType.Play.Server.SPAWN_ENTITY) {
       // dead entities
-      entityTypeData = entityTypeResolver.entityTypeDataOfDeadEntity(event);
+      typeData = entityTypeResolver.entityTypeDataOfDeadEntity(event);
     } else if (packetType == PacketType.Play.Server.SPAWN_ENTITY_LIVING) {
       // entities
-      entityTypeData = entityTypeResolver.entityTypeDataOfLivingEntity(event);
+      typeData = entityTypeResolver.entityTypeDataOfLivingEntity(event);
     } else {
       // player
       FakePlayer fakePlayer = attackData.fakePlayer();
@@ -254,15 +258,15 @@ public final class EntityTracker extends Module {
 
       HitboxSize hitBoxSize = HitboxSize.playerDefault();
       entityIsPlayer = true;
-      entityTypeData = new EntityTypeData(entityName, hitBoxSize, 105, true, 1);
+      typeData = new EntityTypeData(entityName, hitBoxSize, 105, true, 1);
     }
-    if (entityTypeData == null) {
+    if (typeData == null) {
       if (IntaveControl.DISABLE_LICENSE_CHECK) {
         IntavePlugin.singletonInstance().logger().error("Cannot resolve entityType: " + entityId);
       }
       return;
     }
-    processPacketSpawnMob(user, event.getPacketType(), entityTypeData, packet, entityId, entityIsPlayer);
+    processPacketSpawnMob(user, packet, typeData, entityId, entityIsPlayer);
   }
 
 
@@ -277,7 +281,7 @@ public final class EntityTracker extends Module {
     Player player = event.getPlayer();
     PacketContainer packet = event.getPacket();
     EntityDestroyReader reader = PacketReaders.readerOf(packet);
-    reader.readEntities(entityId -> enterEntityDestroy(player, entityId));
+    reader.forEach(entityId -> enterEntityDestroy(player, entityId));
     reader.release();
   }
 
@@ -317,6 +321,16 @@ public final class EntityTracker extends Module {
           }
         }
       }
+    }
+    if (IntaveControl.DEBUG_ENTITY_TRACKING) {
+      Synchronizer.synchronize(() -> {
+        Player target = user.player();
+        if (target == null || entity == null) {
+          return;
+        }
+        EntityTypeData typeData = entity.typeData();
+        target.sendMessage(ChatColor.RED + typeData.name() + "/" + typeData.typeId() + " as " + entity.entityId());
+      });
     }
   }
 
@@ -500,10 +514,9 @@ public final class EntityTracker extends Module {
   }
 
   private void processPacketSpawnMob(
-    User user,
-    PacketType packetType,
-    EntityTypeData entityTypeData, PacketContainer packet,
-    int entityId, boolean player
+    User user, PacketContainer packet,
+    EntityTypeData entityTypeData,
+    int entityId, boolean isPlayer
   ) {
     if (NEW_POSITION_PROCESSING_1_9) {
       double posX = packet.getDoubles().read(0);
@@ -512,8 +525,7 @@ public final class EntityTracker extends Module {
 
       processEntitySpawnNewVersion(
         user, entityTypeData, entityId,
-        posX, posY, posZ,
-        player
+        posX, posY, posZ, isPlayer
       );
     } else {
       // 1.8.x
@@ -521,7 +533,7 @@ public final class EntityTracker extends Module {
       Integer serverPosY;
       Integer serverPosZ;
 
-      if (packetType == PacketType.Play.Server.SPAWN_ENTITY_LIVING) {
+      if (packet.getType() == PacketType.Play.Server.SPAWN_ENTITY_LIVING) {
         // dead or living entities
         serverPosX = packet.getIntegers().read(2);
         serverPosY = packet.getIntegers().read(3);
@@ -536,23 +548,35 @@ public final class EntityTracker extends Module {
       processEntitySpawn(
         user, entityId, entityTypeData,
         serverPosX, serverPosY, serverPosZ,
-        player
+        isPlayer
       );
 
 //      WrappedEntity wrappedEntity = entityByIdentifier(user, entityID);
 //      if (wrappedEntity != null)
-//        Bukkit.broadcastMessage("pt " + packetType.name() + " p " + user.player().getName() + " e " + wrappedEntity.position);
+//        Bukkit.broadcastMessage("pt " + packetType.name() + " p " + user.isPlayer().getName() + " e " + wrappedEntity.position);
+    }
+
+    if (IntaveControl.DEBUG_ENTITY_TRACKING) {
+      Synchronizer.synchronize(() -> {
+        Player target = user.player();
+        if (target == null) {
+          return;
+        }
+        HitboxSize size = entityTypeData.size();
+        String sizeToString = size == null ? "null" : "w:" + size.width() + " h:" + size.height();
+        target.sendMessage(ChatColor.GREEN + entityTypeData.name() + "/" + entityTypeData.typeId() + " as " + entityId + " with " + sizeToString);
+      });
     }
   }
 
   private void processEntitySpawnNewVersion(
     User user, EntityTypeData entityTypeData, int entityId,
     double posX, double posY, double posZ,
-    boolean player
+    boolean isPlayer
   ) {
     ConnectionMetadata synchronizeData = user.meta().connection();
 //    Map<Integer, WrappedEntity> entities = synchronizeData.entities();
-    EntityShade entity = createEntityOf(user, entityId, entityTypeData, player);
+    EntityShade entity = createEntityOf(entityId, entityTypeData, isPlayer);
     entity.serverPosX = ClientMathHelper.positionLong(posX);
     entity.serverPosY = ClientMathHelper.positionLong(posY);
     entity.serverPosZ = ClientMathHelper.positionLong(posZ);
@@ -571,7 +595,7 @@ public final class EntityTracker extends Module {
     double posX = serverPosX / 32d;
     double posY = serverPosY / 32d;
     double posZ = serverPosZ / 32d;
-    EntityShade entity = createEntityOf(user, entityId, entityTypeData, player);
+    EntityShade entity = createEntityOf(entityId, entityTypeData, player);
     entity.serverPosX = serverPosX;
     entity.serverPosY = serverPosY;
     entity.serverPosZ = serverPosZ;
@@ -583,12 +607,11 @@ public final class EntityTracker extends Module {
   }
 
   private EntityShade createEntityOf(
-    User user,
     int entityId,
     EntityTypeData entityTypeData,
-    boolean player
+    boolean isPlayer
   ) {
-    return new EntityShade(entityId, entityTypeData, player);
+    return new EntityShade(entityId, entityTypeData, isPlayer);
   }
 
   @PacketSubscription(
@@ -601,7 +624,7 @@ public final class EntityTracker extends Module {
   public void receiveEntityStatus(PacketEvent event) {
     Player player = event.getPlayer();
     User user = UserRepository.userOf(player);
-    if (user == null || !user.hasPlayer()) {
+    if (!user.hasPlayer()) {
       return;
     }
     PacketContainer packet = event.getPacket();
@@ -632,50 +655,57 @@ public final class EntityTracker extends Module {
     },
     ignoreCancelled = false
   )
-  public void receiveEntityMetaData(PacketEvent event) {
+  public void receiveEntityMetadata(PacketEvent event) {
     Player player = event.getPlayer();
     User user = UserRepository.userOf(player);
     PacketContainer packet = event.getPacket();
     Integer entityId = packet.getIntegers().read(0);
+
+    EntityMetadataReader reader = PacketReaders.readerOf(packet);
+    List<WrappedWatchableObject> watchableObjects = reader.metadataObjects();
+
     if (player.getEntityId() == entityId) {
-      synchronizePlayerHealth(player, packet);
+      synchronizePlayerHealth(player, watchableObjects);
+      reader.release();
       return;
     }
+
     EntityShade entity = entityByIdentifier(user, entityId);
     if (entity == null) {
+      reader.release();
       return;
     }
+
     EntityTypeData type = entity.typeData();
     if (type == null) {
+      reader.release();
       return;
     }
 
-    boolean livingEntity = entity.typeData().isLivingEntity();
-    int entityTypeId = type.identifier();
-
-    boolean fireWorkRocket = type.name() != null && type.name().contains("Firework");
-    List<WrappedWatchableObject> watchableObjects = packet.getWatchableCollectionModifier().read(0);
+    boolean isLivingEntity = entity.typeData().isLivingEntity();
+    boolean isFireworkRocket = type.name() != null && type.name().contains("Firework");
+    int entityTypeId = type.typeId();
 
     // Firework
-    if (fireWorkRocket) {
+    if (isFireworkRocket) {
       handleFirework(player, watchableObjects);
-    } else if (livingEntity && watchableObjects != null) {
+    } else if (isLivingEntity && watchableObjects != null) {
       // Health
-      processHealthMetaData(player, entity, watchableObjects);
+      processHealthMetadata(player, entity, watchableObjects);
 
       // Entity Size
-      EntityTypeData entityTypeData = entityTypeResolver.entityTypeDataOfEntityMetaData(event, entityTypeId, watchableObjects);
-      if (entityTypeData != null) {
-        entity.setTypeData(entityTypeData);
+      EntityTypeData entityTypedata = entityTypeResolver.entityTypeDataOfEntityMetadata(event, entityTypeId, watchableObjects);
+      if (entityTypedata != null) {
+        entity.setTypeData(entityTypedata);
       } else {
 //        IntaveLogger.logger().info("Unable to update entity metadata of entity " + entityId + " of type " + entityTypeId);
       }
     }
+    reader.release();
   }
 
   private void handleFirework(
-    Player player,
-    List<WrappedWatchableObject> watchableObjects
+    Player player, List<? extends WrappedWatchableObject> watchableObjects
   ) {
     if (!MinecraftVersions.VER1_11_0.atOrAbove()) {
       return;
@@ -772,10 +802,9 @@ public final class EntityTracker extends Module {
 
   private static final String FIREWORK_IDENTIFIER = "FIREWORK";
 
-  private void processHealthMetaData(
-    Player player,
-    EntityShade entity,
-    List<WrappedWatchableObject> watchableObjects
+  private void processHealthMetadata(
+    Player player, EntityShade entity,
+    List<? extends WrappedWatchableObject> watchableObjects
   ) {
     Float health = readHealthOf(watchableObjects);
     if (health != null) {
@@ -789,8 +818,7 @@ public final class EntityTracker extends Module {
     }
   }
 
-  private void synchronizePlayerHealth(Player player, PacketContainer packet) {
-    List<WrappedWatchableObject> watchableObjects = packet.getWatchableCollectionModifier().read(0);
+  private void synchronizePlayerHealth(Player player, List<? extends WrappedWatchableObject> watchableObjects) {
     if (watchableObjects == null) {
       return;
     }
@@ -808,7 +836,7 @@ public final class EntityTracker extends Module {
   private final boolean HEALTH_PROCESSING_1_10 = MinecraftVersions.VER1_10_0.atOrAbove();
   private final boolean HEALTH_PROCESSING_1_14 = MinecraftVersions.VER1_14_0.atOrAbove();
 
-  private Float readHealthOf(List<WrappedWatchableObject> watchableObjects) {
+  private Float readHealthOf(List<? extends WrappedWatchableObject> watchableObjects) {
     for (WrappedWatchableObject watchableObject : watchableObjects) {
       int index = watchableObject.getIndex();
       int requiredIndex;

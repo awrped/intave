@@ -6,7 +6,10 @@ import de.jpx3.intave.block.variant.index.VariantIndex;
 import de.jpx3.intave.cleanup.ReferenceMap;
 import org.bukkit.Material;
 
-import java.util.*;
+import java.util.EnumMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public final class BlockVariantRegister {
   private static final Map<Material, Map<Object, Integer>> blockDataIndex = new EnumMap<>(Material.class);

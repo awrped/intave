@@ -4,10 +4,9 @@ import de.jpx3.intave.klass.Lookup;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
-import java.lang.ref.WeakReference;
 
 final class ClassLocation extends Location {
-  private static final Reference<Class<?>> EMPTY_CLASS_REFERENCE = new WeakReference<>(null);
+  private static final Reference<Class<?>> EMPTY_CLASS_REFERENCE = new SoftReference<>(null);
   private final String location;
   private Reference<Class<?>> classCache = EMPTY_CLASS_REFERENCE;
 

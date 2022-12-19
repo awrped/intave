@@ -13,7 +13,7 @@ public final class BlockAccessTests extends Tests {
   private Block block, blockBelow;
   private BlockStorage priorMaterial, priorMaterialBelow;
 
-  private final Set<Material> blacklistedMaterials = MaterialSearch.materialsThatContain("REDSTONE", "BED");
+  private final Set<Material> blacklistedMaterials = MaterialSearch.materialsThatContain("REDSTONE", "BED", "SOIL", "GRASS_PATH");
 
   public BlockAccessTests() {
     super("BA");

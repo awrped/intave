@@ -60,7 +60,7 @@ public class EntityShade {
   public boolean verifiedPosition;
   public float health;
   public int ticksAlive;
-  public final boolean player;
+  public final boolean isPlayer;
   private int deathTime;
   private EntityShade mountedOnEntity;
   private BoundingBox boundingBox;
@@ -77,9 +77,9 @@ public class EntityShade {
   public EntityShade(
     int entityId,
     @NotNull EntityTypeData typeData,
-    boolean player
+    boolean isPlayer
   ) {
-    this.player = player;
+    this.isPlayer = isPlayer;
     this.entityId = entityId;
     this.typeData = typeData;
 
@@ -480,7 +480,7 @@ public class EntityShade {
   }
 
   public EntityShade temporaryCopy() {
-    EntityShade clone = new EntityShade(entityId, typeData(), player);
+    EntityShade clone = new EntityShade(entityId, typeData(), isPlayer);
     clone.temporaryCopy = true;
     clone.position = position.clone();
     clone.alternativePosition = alternativePosition.clone();

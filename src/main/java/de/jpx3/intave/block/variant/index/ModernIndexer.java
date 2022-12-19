@@ -13,7 +13,6 @@ import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static java.lang.Integer.MAX_VALUE;
-import static java.lang.Integer.MIN_VALUE;
 
 class ModernIndexer implements Indexer {
   @Override

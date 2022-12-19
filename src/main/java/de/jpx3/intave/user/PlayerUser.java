@@ -46,12 +46,13 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
 import java.lang.ref.Reference;
+import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import static de.jpx3.intave.module.feedback.FeedbackOptions.SELF_SYNCHRONIZATION;
@@ -246,6 +247,39 @@ final class PlayerUser implements User {
   @Override
   public Storage mainStorage() {
     return storage;
+  }
+
+  private boolean storageLoaded;
+  private final Lock storageSubscriptionLock = new ReentrantLock();
+  private final Queue<Reference<Runnable>> storageSubscriptionQueue = new ArrayDeque<>();
+
+  @Override
+  public void onStorageReady(Consumer<? super Storage> consumer) {
+    try {
+      storageSubscriptionLock.lock();
+      if (storageLoaded) {
+        consumer.accept(storage);
+      } else {
+        storageSubscriptionQueue.add(new SoftReference<>(() -> consumer.accept(storage)));
+      }
+    } finally {
+      storageSubscriptionLock.unlock();
+    }
+  }
+
+  @Override
+  public void notifyStorageLoadSubscribers() {
+    try {
+      storageSubscriptionLock.lock();
+      storageLoaded = true;
+      Reference<Runnable> runnableRef;
+      Runnable runnable;
+      while ((runnableRef = storageSubscriptionQueue.poll()) != null && (runnable = runnableRef.get()) != null) {
+        runnable.run();
+      }
+    } finally {
+      storageSubscriptionLock.unlock();
+    }
   }
 
   @Override
@@ -451,7 +485,7 @@ final class PlayerUser implements User {
 
   @Override
   public void tickFeedback(FeedbackCallback<Void> callback) {
-    Modules.feedback().synchronize(player(), (player1, target) -> callback.success(player1, null));
+    Modules.feedback().synchronize(player(), (player1, target) -> callback.success(player1, null), SELF_SYNCHRONIZATION);
   }
 
   private void sendStatsUpdate(Player player, int foodLevel, float saturationLevel) {

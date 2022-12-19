@@ -37,6 +37,8 @@ import de.jpx3.intave.module.tracker.entity.EntityShade;
 import de.jpx3.intave.module.violation.Violation;
 import de.jpx3.intave.packet.PacketSender;
 import de.jpx3.intave.packet.reader.BlockActionReader;
+import de.jpx3.intave.packet.reader.EntityMetadataReader;
+import de.jpx3.intave.packet.reader.PacketReaders;
 import de.jpx3.intave.packet.reader.PlayerActionReader;
 import de.jpx3.intave.player.FaultKicks;
 import de.jpx3.intave.player.ItemProperties;
@@ -67,7 +69,6 @@ import java.util.Map;
 import java.util.Set;
 
 import static de.jpx3.intave.IntaveControl.DEBUG_MOVEMENT_IGNORE;
-import static de.jpx3.intave.IntaveControl.USE_SUPERPOSITIONS;
 import static de.jpx3.intave.module.feedback.FeedbackOptions.SELF_SYNCHRONIZATION;
 import static de.jpx3.intave.module.linker.packet.PacketId.Client.POSITION;
 import static de.jpx3.intave.module.linker.packet.PacketId.Client.VEHICLE_MOVE;
@@ -80,7 +81,7 @@ import static de.jpx3.intave.user.meta.ProtocolMetadata.VER_1_9;
 public final class MovementDispatcher extends Module {
   private static final Set<Material> SHULKER_BOX_MATERIALS = MaterialSearch.materialsThatContain("SHULKER_BOX");
   private static final Set<Material> PISTON_MATERIALS = MaterialSearch.materialsThatContain("PISTON");
-  private final boolean ELYTRA_SUPPORTED = MinecraftVersions.VER1_9_0.atOrAbove();
+  private static final boolean ELYTRA_SUPPORTED = MinecraftVersions.VER1_9_0.atOrAbove();
   private TeleportApplyEnforcer teleportApplyEnforcer;
   private Physics physicsCheck;
   private InteractionRaytrace interactionRaytraceCheck;
@@ -531,7 +532,7 @@ public final class MovementDispatcher extends Module {
       movementData.canResetMotion = true;
     }
 
-    // flag -> remove packet
+    // flag & setback -> remove packet
     if (movementData.invalidMovement && violationLevelData.isInActiveTeleportBundle) {
       movementData.awaitOutgoingTeleport = true; // awaiting next teleport
       event.setCancelled(true);
@@ -819,35 +820,45 @@ public final class MovementDispatcher extends Module {
   public void receiveElytraUpdate(PacketEvent event) {
     Player player = event.getPlayer();
     PacketContainer packet = event.getPacket();
-    Integer entityID = packet.getIntegers().read(0);
-    if (!ELYTRA_SUPPORTED || entityID != player.getEntityId()) {
+    Integer entityId = packet.getIntegers().read(0);
+
+    if (!ELYTRA_SUPPORTED || entityId != player.getEntityId()) {
       return;
     }
-    List<WrappedWatchableObject> wrappedWatchableObjects = packet.getWatchableCollectionModifier().read(0);
-    WrappedWatchableObject watchableObject = wrappedWatchableObjects
+
+    EntityMetadataReader reader = PacketReaders.readerOf(packet);
+    List<WrappedWatchableObject> watchableObjects = reader.metadataObjects();
+
+    WrappedWatchableObject elytraObject = watchableObjects
       .stream()
       .filter(wrappedWatchableObject -> wrappedWatchableObject.getIndex() == 0)
       .findFirst()
       .orElse(null);
-    if (watchableObject == null) {
+
+    if (elytraObject == null) {
+      reader.release();
       return;
     }
+
     User user = UserRepository.userOf(player);
     MetadataBundle meta = user.meta();
     MovementMetadata movement = meta.movement();
     ProtocolMetadata protocol = meta.protocol();
+
     if (!protocol.canUseElytra()) {
+      reader.release();
       return;
     }
-    byte data = (byte) watchableObject.getValue();
+
+    byte data = (byte) elytraObject.getValue();
     boolean gliding = (data & 1 << 7) != 0;
-    FeedbackCallback<Boolean> callback = (p, g) -> {
-      movement.elytraFlying = g;
+
+    user.tickFeedback(unused -> {
+      movement.elytraFlying = gliding;
       movement.updatePose();
-//      ChatColor color = g ? ChatColor.GREEN : ChatColor.RED;
-//      p.sendMessage(color + "Elytra flying toggled to " + g);
-    };
-    Modules.feedback().synchronize(player, gliding, callback);
+    });
+
+    reader.release();
   }
 
   @BukkitEventSubscription(priority = EventPriority.LOWEST)

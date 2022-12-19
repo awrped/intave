@@ -178,6 +178,10 @@ public interface User {
 
   Storage mainStorage();
 
+  void onStorageReady(Consumer<? super Storage> consumer);
+
+  void notifyStorageLoadSubscribers();
+
   <T extends Storage> T storageOf(Class<T> storageClass);
 
   /**

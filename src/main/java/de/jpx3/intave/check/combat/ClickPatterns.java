@@ -2,7 +2,6 @@ package de.jpx3.intave.check.combat;
 
 import com.comphenix.protocol.events.PacketEvent;
 import de.jpx3.intave.IntaveControl;
-import de.jpx3.intave.adapter.MinecraftVersions;
 import de.jpx3.intave.annotate.Relocate;
 import de.jpx3.intave.check.Check;
 import de.jpx3.intave.check.CheckViolationLevelDecrementer;

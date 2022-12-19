@@ -11,4 +11,9 @@ final class EmptyTrustFactorResolver implements TrustFactorResolver {
   public void resolve(Player player, Consumer<TrustFactor> callback) {
 
   }
+
+  @Override
+  public String toString() {
+    return "Empty";
+  }
 }

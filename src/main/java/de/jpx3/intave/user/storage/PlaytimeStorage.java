@@ -9,7 +9,7 @@ public final class PlaytimeStorage implements Storage {
   private long totalJoins;
   private long minutesPlayed;
   private long minutesAfk;
-  private long _reserved0;
+  private long firstSight = System.currentTimeMillis();
   private long _reserved1;
   private long _reserved2;
   private long _reserved3;
@@ -24,7 +24,7 @@ public final class PlaytimeStorage implements Storage {
     output.writeLong(totalJoins);
     output.writeLong(minutesPlayed);
     output.writeLong(minutesAfk);
-    output.writeLong(_reserved0);
+    output.writeLong(firstSight);
     output.writeLong(_reserved1);
     output.writeLong(_reserved2);
     output.writeLong(_reserved3);
@@ -40,7 +40,10 @@ public final class PlaytimeStorage implements Storage {
     totalJoins = input.readLong();
     minutesPlayed = input.readLong();
     minutesAfk = input.readLong();
-    _reserved0 = input.readLong();
+    firstSight = input.readLong();
+    if (firstSight == 0) {
+      firstSight = System.currentTimeMillis();
+    }
     _reserved1 = input.readLong();
     _reserved2 = input.readLong();
     _reserved3 = input.readLong();
@@ -61,10 +64,22 @@ public final class PlaytimeStorage implements Storage {
   }
 
   public void incrementMinutesPlayedBy(int minutes) {
-    minutesPlayed++;
+    minutesPlayed += minutes;
   }
 
   public void incrementMinutesAfkBy(int minutes) {
-    minutesAfk++;
+    minutesAfk += minutes;
+  }
+
+  public long totalJoins() {
+    return totalJoins;
+  }
+
+  public long minutesPlayed() {
+    return minutesPlayed;
+  }
+
+  public long minutesAfk() {
+    return minutesAfk;
   }
 }

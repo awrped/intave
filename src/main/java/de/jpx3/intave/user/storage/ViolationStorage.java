@@ -5,7 +5,6 @@ import com.google.common.io.ByteArrayDataOutput;
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.module.violation.Violation;
 import de.jpx3.intave.module.violation.ViolationContext;
-import org.bukkit.entity.Player;
 
 import java.util.Comparator;
 import java.util.Locale;

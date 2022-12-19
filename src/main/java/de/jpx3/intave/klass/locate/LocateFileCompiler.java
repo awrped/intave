@@ -169,10 +169,6 @@ final class LocateFileCompiler {
     }
   }
 
-  public static LocateFileCompiler create() {
-    return new LocateFileCompiler();
-  }
-
   private static final Collector<String, ?, Locations> RESOURCE_COLLECTOR = LineCollector.withFinisher(LocateFileCompiler::apply);
 
   public static Collector<String, ?, Locations> resourceCollector() {

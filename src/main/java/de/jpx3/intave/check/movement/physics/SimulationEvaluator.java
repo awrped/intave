@@ -225,7 +225,7 @@ public final class SimulationEvaluator {
 
     boolean justInPowderSnow = movement.pastInPowderSnow < 5;
     double maxLadderVel = justInPowderSnow ? LADDER_UPWARDS_MOTION * 1.5 : LADDER_UPWARDS_MOTION;
-    if ((onLadder || justInPowderSnow) && movement.motionY() <= maxLadderVel) {
+    if ((onLadder || justInPowderSnow) && movement.motionY() <= maxLadderVel && movement.motionY() >= -0.05) {
       abuseVertically = 0;
     }
 
@@ -387,7 +387,6 @@ public final class SimulationEvaluator {
         boolean smallMovement = Math.abs(movement.motionX()) < 0.08 && Math.abs(movement.motionZ()) < 0.08 && movement.onGround();
         double limit = movement.pastEdgeSneak == 1 ? 0.12 : (smallMovement ? 0.099 : (movement.pastEdgeSneak < 10 ? 0.05 : 0.035));
         horizontalLegitimateDeviation = Math.max(horizontalLegitimateDeviation, limit);
-//        player.sendMessage(String.format("Deviation extra granted: %s %s %s", extraGranted, limit, movement.pastEdgeSneak));
       }
     }
 

@@ -48,7 +48,7 @@ public final class EntityTypeData {
     return entityName;
   }
 
-  public int identifier() {
+  public int typeId() {
     return entityTypeId;
   }
 

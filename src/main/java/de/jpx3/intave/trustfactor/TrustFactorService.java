@@ -3,6 +3,7 @@ package de.jpx3.intave.trustfactor;
 import de.jpx3.intave.IntaveControl;
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.access.player.trust.DefaultForwardingPermissionTrustFactorResolver;
+import de.jpx3.intave.access.player.trust.StorageTrustfactorResolver;
 import de.jpx3.intave.access.player.trust.TrustFactor;
 import de.jpx3.intave.access.player.trust.TrustFactorResolver;
 import de.jpx3.intave.annotate.HighOrderService;
@@ -11,6 +12,7 @@ import de.jpx3.intave.diagnostic.message.MessageCategory;
 import de.jpx3.intave.diagnostic.message.MessageSeverity;
 import de.jpx3.intave.executor.BackgroundExecutor;
 import de.jpx3.intave.executor.Synchronizer;
+import de.jpx3.intave.module.Modules;
 import de.jpx3.intave.module.linker.bukkit.BukkitEventSubscriber;
 import de.jpx3.intave.module.linker.bukkit.BukkitEventSubscription;
 import de.jpx3.intave.user.User;
@@ -24,6 +26,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 @HighOrderService
 public final class TrustFactorService implements BukkitEventSubscriber {
   private static final TrustFactorResolver DEFAULT_RESOLVER = new DefaultForwardingPermissionTrustFactorResolver(new EmptyTrustFactorResolver());
+  private static final TrustFactorResolver AUTO_STORAGE_RESOLVER = new DefaultForwardingPermissionTrustFactorResolver(new StorageTrustfactorResolver());
   private final IntavePlugin plugin;
   private TrustFactorResolver trustFactorResolver;
   private TrustFactorConfiguration trustFactorConfiguration;
@@ -54,6 +57,10 @@ public final class TrustFactorService implements BukkitEventSubscriber {
     }
   }
 
+  private boolean hasEnabledAutoStorageTrustFactor() {
+    return IntavePlugin.singletonInstance().settings().getBoolean("storage.auto-trustfactor", true);
+  }
+
   private void resolveTrustFactorFor(Player player) {
     User user = UserRepository.userOf(player);
     user.setTrustFactor(defaultTrustFactor);
@@ -64,8 +71,11 @@ public final class TrustFactorService implements BukkitEventSubscriber {
     if (trustFactorResolver == null) {
       trustFactorResolver = DEFAULT_RESOLVER;
     }
+    if (trustFactorResolver == DEFAULT_RESOLVER && Modules.storage().hasStorageGateway() && hasEnabledAutoStorageTrustFactor()) {
+      trustFactorResolver = AUTO_STORAGE_RESOLVER;
+    }
     trustFactorResolver.resolve(
-      player, (trustFactor) -> trustfactorApply(player, trustFactor, trustFactorResolver.getClass().getSimpleName())
+      player, (trustFactor) -> trustfactorApply(player, trustFactor, trustFactorResolver.toString())
     );
   }
 

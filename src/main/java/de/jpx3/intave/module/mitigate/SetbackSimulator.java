@@ -6,7 +6,6 @@ import de.jpx3.intave.access.IntaveBootFailureException;
 import de.jpx3.intave.access.IntaveInternalException;
 import de.jpx3.intave.block.access.VolatileBlockAccess;
 import de.jpx3.intave.block.collision.Collision;
-import de.jpx3.intave.block.physics.MaterialMagic;
 import de.jpx3.intave.block.shape.BlockShape;
 import de.jpx3.intave.block.type.BlockTypeAccess;
 import de.jpx3.intave.check.movement.Physics;
@@ -217,7 +216,7 @@ public final class SetbackSimulator extends Module {
       motion = motionProceed(motion, user, boundingBox, startingTicks > ticks);
     }
 
-    // add y motion to falldistance
+    // add y-motion to fall distance
     if (motion.getY() < 0) {
       movementData.artificialFallDistance += -motion.getY();
     }
@@ -228,7 +227,9 @@ public final class SetbackSimulator extends Module {
     futurePosition.setYaw(movementData.rotationYaw);
     futurePosition.setPitch(movementData.rotationPitch);
 
-    if ((Math.abs(motion.getX()) < 0.01 && Math.abs(motion.getZ()) < 0.01 && motion.getY() == 0.0 && cancellable) || ticks <= 0) {
+    boolean exitBundle = (Math.abs(motion.getX()) < 0.01 && Math.abs(motion.getZ()) < 0.01 && motion.getY() == 0.0 && cancellable) || ticks <= 0;
+
+    if (exitBundle) {
       // velocity
 
       // fixes stuck in block below, please remove and fix me differently
@@ -277,11 +278,10 @@ public final class SetbackSimulator extends Module {
         double positionY = (boundingBox.minY + boundingBox.maxY) / 2.0;
         double positionZ = (boundingBox.minZ + boundingBox.maxZ) / 2.0;
         Vector pushVector = resolvePushVector(player, positionX, positionY, positionZ);
-        Location location = futurePosition.add(pushVector);
-        teleport(player, location);
-      } else {
-        teleport(player, futurePosition);
+        futurePosition = futurePosition.add(pushVector);
       }
+
+      teleport(player, futurePosition);
 
       if (IntaveControl.DEBUG_EMULATION) {
         String s = ChatColor.DARK_PURPLE + "[E/] " + MathHelper.formatMotion(motion) + (boundingBoxIntersection ? " (block-push)" : "") + " at " + MathHelper.formatPosition(futurePosition) + " (" + ticks + " ticks remaining)";
@@ -300,7 +300,7 @@ public final class SetbackSimulator extends Module {
 
       movementData.willReceiveSetbackVelocity = true;
       movementData.setbackOverrideVelocity = futureMotion;
-      // this is not the real setback motion - velocity will be altered later
+      // this is not the real setback motion - velocity will be applied later
       player.setVelocity(new Vector(0, 0, 0));
     }
   }

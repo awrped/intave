@@ -4,7 +4,6 @@ import de.jpx3.intave.block.shape.ShapeResolverPipeline;
 import de.jpx3.intave.block.state.ExtendedBlockStateCache;
 
 import static de.jpx3.intave.adapter.MinecraftVersions.VER1_13_0;
-import static de.jpx3.intave.adapter.MinecraftVersions.VER1_9_0;
 
 /**
  * The {@link ShapeResolver} is a factory object that constructs the main bounding box resolver pipeline.

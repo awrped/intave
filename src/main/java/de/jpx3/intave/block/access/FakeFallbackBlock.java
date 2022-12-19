@@ -1,7 +1,10 @@
 package de.jpx3.intave.block.access;
 
 import de.jpx3.intave.world.WorldHeight;
-import org.bukkit.*;
+import org.bukkit.Chunk;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.block.*;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.metadata.MetadataValue;

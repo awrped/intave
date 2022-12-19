@@ -8,10 +8,10 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 public final class DefaultForwardingPermissionTrustFactorResolver implements TrustFactorResolver {
-  private final TrustFactorResolver defaultResolver;
+  private final TrustFactorResolver forward;
 
-  public DefaultForwardingPermissionTrustFactorResolver(TrustFactorResolver defaultResolver) {
-    this.defaultResolver = defaultResolver;
+  public DefaultForwardingPermissionTrustFactorResolver(TrustFactorResolver forward) {
+    this.forward = forward;
   }
 
   @Override
@@ -24,7 +24,7 @@ public final class DefaultForwardingPermissionTrustFactorResolver implements Tru
     if (resolvedTrustFactor.isPresent()) {
       callback.accept(resolvedTrustFactor.get());
     } else {
-      defaultResolver.resolve(player, callback);
+      forward.resolve(player, callback);
     }
   }
 
@@ -34,8 +34,6 @@ public final class DefaultForwardingPermissionTrustFactorResolver implements Tru
 
   @Override
   public String toString() {
-    return "DefaultForwardingPermissionTrustFactorResolver{" +
-      "defaultResolver=" + defaultResolver +
-      '}';
+    return "PermissionCheck, defaults to " + forward.toString();
   }
 }

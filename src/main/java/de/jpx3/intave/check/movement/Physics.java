@@ -334,7 +334,7 @@ public final class Physics extends Check {
     double positionZ = movementData.verifiedPositionZ;
 
     boolean onLadderCurrent = MovementCharacteristics.isOnLadder(user, positionX, positionY, positionZ);
-    boolean onLadder = onLadderCurrent | movementData.onLadderLast;
+    boolean onLadder = onLadderCurrent || movementData.onLadderLast;
     movementData.onLadderLast = onLadderCurrent;
 
     // Entity collision check

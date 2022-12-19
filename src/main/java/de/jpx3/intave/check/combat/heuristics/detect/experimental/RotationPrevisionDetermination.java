@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static de.jpx3.intave.check.combat.heuristics.Anomaly.AnomalyOption.DELAY_64s;
+import static de.jpx3.intave.check.combat.heuristics.Anomaly.AnomalyOption.LIMIT_4;
 import static de.jpx3.intave.check.combat.heuristics.detect.experimental.RotationPrevisionBlueprintMeta.RotationData;
 import static de.jpx3.intave.check.combat.heuristics.detect.experimental.RotationPrevisionDetermination.RotationPrevisionDeterminationMeta;
 
@@ -32,7 +33,7 @@ public final class RotationPrevisionDetermination extends RotationPrevisionBluep
     if (yawAverage > 0.5 && determination > 0.55) {
       String description = String.format("suspicious aiming pattern %.2f %.2f %.2f", determination, yawAverage, meta.vl);
       if (++meta.vl >= 5) {
-        Anomaly anomaly = Anomaly.anomalyOf("410", Confidence.VERY_LIKELY, Anomaly.Type.KILLAURA, description, DELAY_64s);
+        Anomaly anomaly = Anomaly.anomalyOf("410", Confidence.LIKELY, Anomaly.Type.KILLAURA, description, DELAY_64s | LIMIT_4);
         parentCheck().saveAnomaly(user.player(), anomaly);
       } else {
         Anomaly anomaly = Anomaly.anomalyOf("410", Confidence.NONE, Anomaly.Type.KILLAURA, description);

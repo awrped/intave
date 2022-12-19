@@ -8,6 +8,7 @@ import de.jpx3.intave.executor.Synchronizer;
 import de.jpx3.intave.executor.TaskTracker;
 import de.jpx3.intave.module.Module;
 import de.jpx3.intave.module.linker.bukkit.BukkitEventSubscription;
+import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserRepository;
 import de.jpx3.intave.user.storage.PlayerStorage;
 import de.jpx3.intave.user.storage.Storage;
@@ -74,10 +75,15 @@ public final class StorageLoader extends Module {
   }
 
   public void requestStorageFor(Player player) {
-    Storage storage = UserRepository.userOf(player).mainStorage();
+    User user = UserRepository.userOf(player);
+    Storage storage = user.mainStorage();
     UUID id = player.getUniqueId();
     BackgroundExecutor.execute(() ->
-      storageGateway.requestStorage(id, buffer -> StorageIOProcessor.inputTo(storage, buffer)/*storage::read*/));
+      storageGateway.requestStorage(id, buffer -> {
+        StorageIOProcessor.inputTo(storage, buffer);
+        user.notifyStorageLoadSubscribers();
+      })
+    );
   }
 
   public void saveStorageFor(Player player) {
@@ -86,6 +92,10 @@ public final class StorageLoader extends Module {
     ByteBuffer buffer = StorageIOProcessor.outputFrom(storage);
     BackgroundExecutor.execute(() ->
       storageGateway.saveStorage(id, buffer));
+  }
+
+  public boolean hasStorageGateway() {
+    return storageGateway != null && !(storageGateway instanceof EmptyStorageGateway);
   }
 
   public StorageGateway storageGateway() {

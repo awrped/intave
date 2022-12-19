@@ -62,6 +62,7 @@ public final class Modules {
     return find(CustomEvents.class);
   }
 
+  @Deprecated
   public static FeedbackSender feedback() {
     return find(FeedbackSender.class);
   }

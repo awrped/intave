@@ -2,7 +2,10 @@ package de.jpx3.intave.block.variant;
 
 import org.bukkit.Material;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 final class IndexedBlockVariant implements BlockVariant {
   private final Material type;

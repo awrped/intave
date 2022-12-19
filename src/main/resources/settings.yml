@@ -13,6 +13,7 @@ check:
     # Experimental feature, reduces feedback-related false positives
     use-superpositions: false
 
+    # Unused, will be removed in the future
     speculative-forward-emulation:
       enabled: false
       activation-threshold: 0
@@ -142,8 +143,11 @@ check:
         - "kick {player} &cYou have been removed from the game based on data that was collected by the anti-cheat"
 
 storage:
-  # Do you want Intave to ignore the "storelog" command and auto-store suggested violations instead?
+  # Set to ignore the "storelog" command and auto-store suggested violations instead?
   auto-logs: false
+
+  # Set to let Intave find a suitable trustfactor when you don't specify one
+  auto-trustfactor: true
 
 blacklist:
   apply: true
@@ -157,6 +161,7 @@ clientwarning:
 filter:
   health: true
   equipmentdata: true
+  entityids: true
 
 command:
   hide: true

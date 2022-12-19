@@ -2,6 +2,7 @@ package de.jpx3.intave.check.world.placementanalysis;
 
 import com.comphenix.protocol.events.PacketEvent;
 import de.jpx3.intave.IntavePlugin;
+import de.jpx3.intave.access.player.trust.TrustFactor;
 import de.jpx3.intave.check.MetaCheckPart;
 import de.jpx3.intave.check.world.PlacementAnalysis;
 import de.jpx3.intave.math.MathHelper;
@@ -61,14 +62,26 @@ public final class RotationSpeed extends MetaCheckPart<PlacementAnalysis, Rotati
     User user = userOf(player);
     RotationSpeedMeta meta = metaOf(user);
     meta.lastBlockPlacement = System.currentTimeMillis();
-    if (place.getBlock().getY() < player.getLocation().getBlockY() && blockAgainstWasPlaced(user, place.getBlockAgainst())) {
+//    Block belowPlaced = place.getBlockPlaced().getRelative(BlockFace.DOWN);
+    if (place.getBlock().getY() < player.getLocation().getBlockY() /*&& belowPlaced.getType() == Material.AIR*/ && blockAgainstWasPlaced(user, place.getBlockAgainst())) {
       List<Float> rotationHistory = meta.rotationHistory;
       double rotationSum = 0.0;
       for (Float value : rotationHistory) {
-        double v = value;
-        rotationSum += v;
+        rotationSum += value;
       }
-      if (rotationSum > 3000) {
+
+      float limit = 3000;
+      if (!user.trustFactor().atLeast(TrustFactor.ORANGE)) {
+        limit -= 750;
+      }
+
+      // check if past placements are in a straight line on one axis
+      List<Vector> lastBlocksPlaced = meta.lastBlocksPlaced;
+      if (isOneLine(lastBlocksPlaced)) {
+        limit -= 750;
+      }
+
+      if (rotationSum > limit) {
         Violation violation = Violation.builderFor(PlacementAnalysis.class)
           .forPlayer(player).withDefaultThreshold()
           .withMessage(COMMON_FLAG_MESSAGE)
@@ -81,10 +94,28 @@ public final class RotationSpeed extends MetaCheckPart<PlacementAnalysis, Rotati
     if (place.isCancelled()) {
       return;
     }
-    if (meta.lastBlocksPlaced.size() > 10) {
+    if (meta.lastBlocksPlaced.size() > 4) {
       meta.lastBlocksPlaced.remove(0);
     }
     meta.lastBlocksPlaced.add(place.getBlock().getLocation().toVector());
+  }
+
+  private boolean isOneLine(List<? extends Vector> blocks) {
+    int lastBlockX = 0, lastBlockZ = 0;
+    boolean lockedOnX = false, lockedOnZ = false;
+    boolean first = true;
+    for (Vector block : blocks) {
+      if (!first) {
+        if (lastBlockX == block.getX()) lockedOnX = true;
+        else if (lockedOnX) return false;
+        if (lastBlockZ == block.getZ()) lockedOnZ = true;
+        else if (lockedOnZ) return false;
+      }
+      lastBlockX = block.getBlockX();
+      lastBlockZ = block.getBlockZ();
+      first = false;
+    }
+    return lockedOnX || lockedOnZ;
   }
 
   private boolean blockAgainstWasPlaced(User user, Block blockAgainst) {

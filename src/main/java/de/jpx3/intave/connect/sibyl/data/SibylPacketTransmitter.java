@@ -5,9 +5,11 @@ import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.wrappers.MinecraftKey;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import de.jpx3.intave.adapter.MinecraftVersions;
 import de.jpx3.intave.annotate.Native;
 import de.jpx3.intave.connect.sibyl.LabyModChannelHelper;
+import de.jpx3.intave.connect.sibyl.SibylIntegrationService;
 import de.jpx3.intave.connect.sibyl.auth.SibylAuthentication;
 import de.jpx3.intave.connect.sibyl.data.packet.SibylPacket;
 import de.jpx3.intave.executor.Synchronizer;
@@ -17,24 +19,53 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import org.bukkit.entity.Player;
 
-import java.lang.reflect.InvocationTargetException;
+import javax.crypto.Cipher;
+import java.util.Base64;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 public final class SibylPacketTransmitter {
   private final SibylAuthentication authentication;
+  private final SibylIntegrationService service;
 
-  public SibylPacketTransmitter(SibylAuthentication authentication) {
+  private final ThreadLocal<Cipher> aesCiphers = ThreadLocal.withInitial(() -> {
+    try {
+      return Cipher.getInstance("AES");
+    } catch (Exception exception) {
+      exception.printStackTrace();
+      return null;
+    }
+  });
+
+  public SibylPacketTransmitter(SibylAuthentication authentication, SibylIntegrationService service) {
     this.authentication = authentication;
+    this.service = service;
   }
 
   @Native
   public void transmitPacket(Player player, SibylPacket sibylPacket) {
     String packetName = sibylPacket.packetName();
-    JsonElement packetContent = sibylPacket.asJsonElement();
-    transmitPacketDataToPlayer(player, "sibyl-packet-" + packetName, packetContent);
+    JsonObject packetContent = new JsonObject();
+    packetContent.addProperty("name", packetName);
+    if (service.encryptionActiveFor(player)) {
+      try {
+        String text = sibylPacket.asJsonElement().toString();
+        byte[] textBytes = text.getBytes(UTF_8);
+        Cipher aes = aesCiphers.get();
+        aes.init(Cipher.ENCRYPT_MODE, service.keyOf(player));
+        byte[] encryptedText = aes.doFinal(textBytes);
+        packetContent.addProperty("content", Base64.getEncoder().encodeToString(encryptedText));
+      } catch (Exception exception) {
+        exception.printStackTrace();
+      }
+    } else {
+      packetContent.add("content", sibylPacket.asJsonElement());
+    }
+    transmitPacketDataToPlayer(player, packetContent);
   }
 
   @Native
-  private void transmitPacketDataToPlayer(Player player, String messageKey, JsonElement jsonElement) {
+  private void transmitPacketDataToPlayer(Player player, JsonElement jsonElement) {
     if (!authenticated(player)) {
       return;
     }
@@ -45,23 +76,16 @@ public final class SibylPacketTransmitter {
       packetContainer.getStrings().write(0, "labymod3:main");
     }
     try {
-      byte[] bytesToSend =
-          LabyModChannelHelper.getBytesToSend(
-              messageKey, jsonElement == null ? null : jsonElement.toString());
+      byte[] bytesToSend = LabyModChannelHelper.getBytesToSend("sibyl-data-s2c", jsonElement == null ? null : jsonElement.toString());
       //noinspection unchecked
-      Class<Object> packetDataSerializerClass =
-          (Class<Object>) Lookup.serverClass("PacketDataSerializer");
-      Object packetDataSerializer =
-          packetDataSerializerClass
-              .getConstructor(ByteBuf.class)
-              .newInstance(Unpooled.wrappedBuffer(bytesToSend));
+      Class<Object> packetDataSerializerClass = (Class<Object>) Lookup.serverClass("PacketDataSerializer");
+      Object packetDataSerializer = packetDataSerializerClass
+        .getConstructor(ByteBuf.class)
+        .newInstance(Unpooled.wrappedBuffer(bytesToSend));
       packetContainer.getSpecificModifier(packetDataSerializerClass).write(0, packetDataSerializer);
       Synchronizer.synchronize(() -> PacketSender.sendServerPacket(player, packetContainer));
-    } catch (InstantiationException
-             | IllegalAccessException
-             | InvocationTargetException
-             | NoSuchMethodException e) {
-      e.printStackTrace();
+    } catch (Exception exception) {
+      exception.printStackTrace();
     }
   }
 

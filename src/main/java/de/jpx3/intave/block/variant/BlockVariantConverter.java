@@ -6,7 +6,9 @@ import de.jpx3.intave.block.variant.convert.ConversionBridge;
 import de.jpx3.intave.klass.rewrite.PatchyLoadingInjector;
 import org.bukkit.Material;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 final class BlockVariantConverter {
   private static final ConversionBridge conversionBridge;

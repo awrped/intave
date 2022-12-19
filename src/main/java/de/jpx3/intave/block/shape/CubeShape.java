@@ -22,6 +22,7 @@ final class CubeShape extends MemoryTraced implements BlockShape {
     this.z = z;
   }
 
+  @Override
   public double allowedOffset(Direction.Axis axis, BoundingBox other, double offset) {
     // always collide if axis is selected
     boolean collidesInXAxis = axis == X_AXIS || other.max(X_AXIS) > this.min(X_AXIS) && other.min(X_AXIS) < this.max(X_AXIS);

@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import static de.jpx3.intave.check.combat.AttackRaytrace.AttackRaytraceResult.of;
 import static de.jpx3.intave.module.linker.packet.PacketId.Client.*;
 import static de.jpx3.intave.module.tracker.entity.EntityTracker.entityByIdentifier;
 import static de.jpx3.intave.module.violation.Violation.ViolationFlags.DONT_PROCESS_VIOSTAT;
@@ -56,7 +57,7 @@ public final class AttackRaytrace extends MetaCheck<AttackRaytrace.AttackRaytrac
   }
 
   @PacketSubscription(
-    priority = ListenerPriority.LOWEST,
+    priority = ListenerPriority.LOW,
     packetsIn = {
       USE_ENTITY
     }
@@ -327,7 +328,7 @@ public final class AttackRaytrace extends MetaCheck<AttackRaytrace.AttackRaytrac
 
     attackData.setLastReach(raytrace.reach());
     String message, details, thresholdKey, special;
-    AttackRaytraceResult attackRaytraceResult = AttackRaytrace.AttackRaytraceResult.of(raytrace.reach(), blockReachDistance);
+    AttackRaytraceResult attackRaytraceResult = of(raytrace.reach(), blockReachDistance);
     int vl = applicableViolationPoints(attackRaytraceResult, raytrace, entity, user, expandHitbox);
     String entityName = entity.entityName();
 
@@ -639,11 +640,11 @@ public final class AttackRaytrace extends MetaCheck<AttackRaytrace.AttackRaytrac
 
     public static AttackRaytraceResult of(double reach, double reachLimit) {
       if (reach == 10.0) {
-        return AttackRaytrace.AttackRaytraceResult.MISS;
+        return MISS;
       } else if (reach > reachLimit) {
-        return AttackRaytrace.AttackRaytraceResult.REACH;
+        return REACH;
       }
-      return AttackRaytrace.AttackRaytraceResult.NORMAL;
+      return NORMAL;
     }
   }
 

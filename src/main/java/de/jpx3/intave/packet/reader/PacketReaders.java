@@ -21,31 +21,55 @@ public final class PacketReaders {
   private static final Map<PacketType, ThreadLocal<? extends PacketReader>> readerLocals = new ConcurrentHashMap<>();
 
   public static void setup() {
+    setup(ATTACH_ENTITY, AttachEntityReader::new);
+    setup(ABILITIES_OUT, AbilityOutReader::new);
     setup(BLOCK_ACTION, BlockActionReader::new);
     setup(BLOCK_CHANGE, SingleBlockChangeReader::new);
     setup(BLOCK_BREAK, SingleBlockChangeReader::new);
-    setup(MULTI_BLOCK_CHANGE, MultiBlockChangeReader::new);
+    setup(BLOCK_BREAK_ANIMATION, EntityReader::new);
+    setup(CAMERA, EntityReader::new);
+    setup(COLLECT, EntityReader::new);
+    setup(COMBAT_EVENT, CombatEventReader::new);
+    setup(ENTITY, EntityReader::new);
+    setup(ENTITY_DESTROY, EntityDestroyReader::new);
+    setup(ENTITY_EFFECT, EntityEffectReader::new);
+    setup(ENTITY_EQUIPMENT, EntityReader::new);
+    setup(ENTITY_HEAD_ROTATION, EntityReader::new);
+    setup(ENTITY_LOOK, EntityReader::new);
+    setup(ENTITY_METADATA, EntityMetadataReader::new);
+    setup(ENTITY_MOVE_LOOK, EntityReader::new);
+    setup(ENTITY_STATUS, EntityReader::new);
+    setup(ENTITY_SOUND, EntityReader::new);
+    setup(ENTITY_TELEPORT, EntityReader::new);
+    setup(ENTITY_VELOCITY, EntityReader::new);
+    setup(LOGIN, EntityReader::new);
+    setup(LOOK_AT, EntityReader::new);
     setup(MAP_CHUNK, MapChunkReader::new);
     setup(MAP_CHUNK_BULK, MapChunkBulkReader::new);
-    setup(ENTITY_METADATA, EntityReader::new);
-    setup(ENTITY_VELOCITY, EntityReader::new);
-    setup(SPAWN_ENTITY_LIVING, EntityReader::new);
-    setup(SPAWN_ENTITY, EntityReader::new);
-    setup(ENTITY_EFFECT, EntityEffectReader::new);
-    setup(REMOVE_ENTITY_EFFECT, EntityReader::new);
+    setup(MOUNT, MountEntityReader::new);
+    setup(MULTI_BLOCK_CHANGE, MultiBlockChangeReader::new);
     setup(NAMED_ENTITY_SPAWN, EntityReader::new);
+    setup(OPEN_WINDOW, OpenWindowReader::new);
+    setup(OPEN_WINDOW_HORSE, OpenWindowReader::new);
+    setup(REMOVE_ENTITY_EFFECT, EntityReader::new);
+    setup(REL_ENTITY_MOVE, EntityReader::new);
+    setup(REL_ENTITY_MOVE_LOOK, EntityReader::new);
+    setup(SPAWN_ENTITY, EntityReader::new);
+    setup(SPAWN_ENTITY_LIVING, EntityReader::new);
+    setup(SPAWN_ENTITY_PAINTING, EntityReader::new);
+    setup(SPAWN_ENTITY_WEATHER, EntityReader::new);
+    setup(SPAWN_ENTITY_EXPERIENCE_ORB, EntityReader::new);
     setup(UPDATE_ATTRIBUTES, EntityReader::new);
-    setup(BLOCK_BREAK_ANIMATION, EntityReader::new);
-    setup(ABILITIES_OUT, AbilityOutReader::new);
+    setup(UPDATE_ENTITY_NBT, EntityReader::new);
+    setup(USE_BED, EntityReader::new);
 
-    setup(ENTITY_ACTION_IN, PlayerActionReader::new);
-    setup(ENTITY_DESTROY, EntityDestroyReader::new);
-    setup(CUSTOM_PAYLOAD_IN, PayloadInReader::new);
+    setup(ABILITIES_IN, AbilityInReader::new);
+    setup(BLOCK_DIG, BlockPositionReader::new);
     setup(BLOCK_PLACE, BlockInteractionReader::new);
+    setup(CUSTOM_PAYLOAD_IN, PayloadInReader::new);
+    setup(ENTITY_ACTION_IN, PlayerActionReader::new);
     setup(USE_ITEM, BlockInteractionReader::new);
     setup(USE_ENTITY, EntityUseReader::new);
-    setup(BLOCK_DIG, BlockPositionReader::new);
-    setup(ABILITIES_IN, AbilityInReader::new);
   }
 
   private static void setup(Server serverPacket, Supplier<? extends PacketReader> supplier) {
@@ -81,7 +105,7 @@ public final class PacketReaders {
     PacketType type = container.getType();
     ThreadLocal<? extends PacketReader> threadLocal = readerLocals.get(type);
     if (threadLocal == null) {
-      throw new IllegalStateException("No interpreter available for " + type);
+      throw new IllegalStateException("No reader available for type " + type);
     }
     PacketReader interpreter = threadLocal.get();
     interpreter.flush(container);

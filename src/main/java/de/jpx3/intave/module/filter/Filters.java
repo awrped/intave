@@ -18,6 +18,7 @@ public final class Filters extends Module {
     setup(VanishFilter.class);
     setup(CommandFilter.class);
     setup(Log4JExploitFilter.class);
+    setup(EntityIdFilter.class);
     linkEnabled();
   }
 
@@ -26,7 +27,11 @@ public final class Filters extends Module {
       Constructor<? extends Filter> constructor = filterClass.getConstructor(IntavePlugin.class);
       filters.add(constructor.newInstance(plugin));
     } catch (Exception exception) {
-      throw new IntaveInternalException("Something went wrong setting up a filter", exception);
+      try {
+        filters.add(filterClass.newInstance());
+      } catch (Exception exception1) {
+        throw new IntaveInternalException("Something went wrong setting up a filter", exception);
+      }
     }
   }
 

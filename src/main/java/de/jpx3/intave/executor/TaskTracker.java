@@ -5,7 +5,6 @@ import de.jpx3.intave.cleanup.ShutdownTasks;
 import io.netty.util.internal.ConcurrentSet;
 import org.bukkit.Bukkit;
 
-import java.util.Collections;
 import java.util.Set;
 
 public final class TaskTracker {

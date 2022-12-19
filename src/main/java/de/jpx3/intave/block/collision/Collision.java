@@ -43,43 +43,38 @@ public final class Collision {
   private static final int COLLISION_CHECK_LIMIT = 256;
 
   private static final Collector<BlockShape, ?, BlockShape> SHAPE_COMPILATION =
-    Collectors.collectingAndThen(Collectors.toList(), BlockShapes.shapeMerger());
-  //    Collectors.reducing(BlockShapes.emptyShape(), BlockShapes::merge, BlockShapes::merge);
+    Collectors.collectingAndThen(Collectors.toList(), BlockShapes::merge);
 
-  private static final Collector<BlockShape, ?, Boolean> EXISTS_ANY_SHAPE =
-    shapeCountMatch(s -> s > 0);
-  private static final Collector<BlockShape, ?, Boolean> EXISTS_NO_SHAPE =
-    shapeCountMatch(s -> s == 0);
+  private static final Collector<BlockShape, ?, Boolean> EXISTS_ANY_SHAPE = shapeCountMatch(s -> s > 0);
+  private static final Collector<BlockShape, ?, Boolean> EXISTS_NO_SHAPE = shapeCountMatch(s -> s == 0);
 
   private static Collector<BlockShape, ?, Boolean> shapeCountMatch(LongPredicate predicate) {
     return Collectors.collectingAndThen(Collectors.counting(), predicate::test);
   }
 
   public static BlockShape collisionShape(Player player, BoundingBox playerBoundingBox) {
-    return collectCollisionShapes(
-      player, playerBoundingBox, COLLISION_CHECK_LIMIT, false, SHAPE_COMPILATION
-    );
+    return collectCollisionShapes(player, playerBoundingBox, COLLISION_CHECK_LIMIT, SHAPE_COMPILATION, BlockShapes::emptyShape);
   }
 
   public static boolean present(Player player, BoundingBox playerBox) {
-    return collectCollisionShapes(player, playerBox, 1, true, EXISTS_ANY_SHAPE);
+    return collectCollisionShapes(player, playerBox, 1, EXISTS_ANY_SHAPE, () -> false);
   }
 
   public static boolean nonePresent(Player player, BoundingBox playerBox) {
-    return collectCollisionShapes(player, playerBox, 1, true, EXISTS_NO_SHAPE);
+    return collectCollisionShapes(player, playerBox, 1, EXISTS_NO_SHAPE, () -> true);
   }
 
   public static <C, R> R collectCollisionShapes(
     Player player,
     BoundingBox playerBox,
     int collisionLimit,
-    boolean enforceContainer,
-    Collector<BlockShape, C, R> collector
+    Collector<BlockShape, C, R> primaryCollector,
+    Supplier<? extends R> escapeReturn
   ) {
-    Supplier<C> containerSupplier = collector.supplier();
+    Supplier<C> containerSupplier = primaryCollector.supplier();
     C container = null;
-    BiConsumer<C, BlockShape> accumulator = collector.accumulator();
-    Function<C, R> finisher = collector.finisher();
+    BiConsumer<C, BlockShape> accumulator = primaryCollector.accumulator();
+    Function<C, R> finisher = primaryCollector.finisher();
     int minX = floor(playerBox.minX);
     int maxX = floor(playerBox.maxX);
     int minY = floor(playerBox.minY);
@@ -109,7 +104,6 @@ public final class Collision {
           }
           BlockShape resolve = stateAccess.collisionShapeAt(x, y, z);
           Material material = stateAccess.typeAt(x, y, z);
-
           if (CollisionModifiers.isModified(material)) {
             // this should not happen too often
             resolve = CollisionModifiers.modified(material, user, playerBox, x, y, z, resolve, CollisionRequestType.MOTION_CALCULATION);
@@ -139,8 +133,8 @@ public final class Collision {
         }
       }
     }
-    if (container == null && enforceContainer) {
-      container = containerSupplier.get();
+    if (container == null) {
+      return escapeReturn.get();
     }
     return finisher.apply(container);
   }

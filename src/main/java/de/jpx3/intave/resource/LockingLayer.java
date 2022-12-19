@@ -81,7 +81,7 @@ final class LockingLayer implements Resource {
       while (lockFile.exists() && attemptsRemaining-- > 0) {
 //        System.out.println("Waiting for lockfile release... " + attemptsRemaining + "rem");
         try {
-          Thread.sleep(50);
+          Thread.sleep(ThreadLocalRandom.current().nextLong(25, 100));
         } catch (InterruptedException exception) {
           exception.printStackTrace();
         }

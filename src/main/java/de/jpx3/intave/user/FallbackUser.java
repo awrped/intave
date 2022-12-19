@@ -28,7 +28,7 @@ import org.bukkit.entity.Player;
 
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 @Relocate
@@ -157,6 +157,16 @@ final class FallbackUser implements User {
   @Override
   public Storage mainStorage() {
     return storage;
+  }
+
+  @Override
+  public void onStorageReady(Consumer<? super Storage> consumer) {
+
+  }
+
+  @Override
+  public void notifyStorageLoadSubscribers() {
+
   }
 
   @Override

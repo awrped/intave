@@ -91,7 +91,7 @@ public final class AttackDispatcher extends Module {
     }
     if (action == EnumWrappers.EntityUseAction.ATTACK) {
       attackData.setLastAttackedEntityID(entityId);
-      if (entity.player) {
+      if (entity.isPlayer) {
         movementData.pastPlayerAttackPhysics = 0;
         if (!REDUCING_DISABLED && knockbackEnchantment) {
           movementData.physicsMotionX *= 0.6;
