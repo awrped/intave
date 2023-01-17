@@ -85,6 +85,7 @@ public final class AttackRaytrace extends MetaCheck<AttackRaytrace.AttackRaytrac
     AttackRaytraceMeta attackRaytraceMeta = metaOf(user);
     AbilityMetadata abilityData = user.meta().abilities();
     MovementMetadata movementData = user.meta().movement();
+    ProtocolMetadata clientData = user.meta().protocol();
     List<Attack> pendingAttacks = attackRaytraceMeta.pendingAttacks;
     PacketContainer packet = event.getPacket();
     // Clear attacks if recently teleported
@@ -105,21 +106,77 @@ public final class AttackRaytrace extends MetaCheck<AttackRaytrace.AttackRaytrac
       if (entityHealth <= 0 || attackedEntity == null || attackedEntity instanceof Entity.Destroyed) {
         return;
       }
-      processAttackRaytraceFor(user, attackedEntity, pendingAttack, computeExpansionFor(user));
+      boolean entityOutOfSync = (!clientData.flyingPacketStream() && movementData.recentlyEncounteredFlyingPacket(2))
+          || !attackedEntity.clientSynchronized;
+      // This might seem confusing but this is definitely required! DO NOT TINKER
+      if (entityOutOfSync) {
+        processAttackRaytraceBruteforceFor(user, attackedEntity, pendingAttack);
+      } else {
+        processAttackRaytraceFor(user, attackedEntity, pendingAttack, computeExpansionFor(user));
+      }
     }
     pendingAttacks.clear();
   }
 
   /**
-   * Processes the reach check for a given user
+   * Processes the reach check 3x for all possible entity and player positions (Interpolation in client is 3 ticks long).
+   * Takes the lowest reach calculated as a result of the calculation.
+   * <p>
+   * This is required when we don't know the exact position of the entity as the player
+   * either didn't send flying packets or it's not synchronized yet
    *
-   * @param user      The user
-   * @param entity    The attacked entity
-   * @param attack    The current attack
-   * @param expansion The hitbox expansion applied for the player (this differs depending on the client)
+   * @param user   The user which attacked
+   * @param entity The attacked entity
+   * @param attack The current attack
    * @since 14.5.8
    */
-  private void processAttackRaytraceFor(User user, Entity entity, Attack attack, double expansion) {
+  private void processAttackRaytraceBruteforceFor(User user, Entity entity, Attack attack) {
+    double lowestReach = fireRaytraceFor(user, entity, 0.13f).reach();
+    Entity cloned = entity.temporaryCopy();
+    boolean living = cloned.typeData().isLivingEntity();
+    // Calculate raytrace for all pos increments
+    while (cloned.position.newPosRotationIncrements > 0 && living) {
+      cloned.onUpdate();
+      double reach = fireRaytraceFor(user, entity, 0.13f).reach();
+      // Set reach if lower
+      if (reach < lowestReach) {
+        lowestReach = reach;
+      }
+      // Don't do any extra calculations if obsolete
+      if (reach <= 3.0) {
+        break;
+      }
+    }
+
+    user.player().sendMessage((lowestReach <= 3 ? ChatColor.AQUA.toString() : ChatColor.RED.toString())
+        + lowestReach + " ESTIMATED Blocks Reach (0.13)");
+  }
+
+  /**
+   * Processes the reach check for a given user
+   *
+   * @param user      The user which attacked
+   * @param entity    The attacked entity
+   * @param attack    The current attack
+   * @param expansion The hit-box expansion applied for the player (this differs depending on the client)
+   * @since 14.5.8
+   */
+  private void processAttackRaytraceFor(User user, Entity entity, Attack attack, float expansion) {
+    Raytrace raytrace = fireRaytraceFor(user, entity, expansion);
+    user.player().sendMessage((raytrace.reach() <= 3 ? ChatColor.AQUA.toString() : ChatColor.RED.toString())
+        + raytrace.reach() + " Blocks Reach (" + expansion + ")");
+  }
+
+  /**
+   * Fires an entity raytrace for the given user
+   *
+   * @param user      The user
+   * @param entity    The entity
+   * @param expansion The hit-box expansion
+   * @return The raytrace result
+   * @since 14.5.8
+   */
+  private Raytrace fireRaytraceFor(User user, Entity entity, float expansion) {
     MetadataBundle meta = user.meta();
     MovementMetadata movementData = meta.movement();
     ProtocolMetadata clientData = meta.protocol();
@@ -129,8 +186,7 @@ public final class AttackRaytrace extends MetaCheck<AttackRaytrace.AttackRaytrac
     float yaw = movementData.rotationYaw % 360f;
     float lastYaw = movementData.lastRotationYaw % 360f;
 
-    // mouse delay fix
-    Raytrace raytrace = Raytracing.doubleMDFBlockConstraintEntityRaytrace(
+    return Raytracing.doubleMDFBlockConstraintEntityRaytrace(
         user.player(),
         entity, requiresAlternativeY,
         movementData.lastPositionX, movementData.lastPositionY, movementData.lastPositionZ,
@@ -139,9 +195,6 @@ public final class AttackRaytrace extends MetaCheck<AttackRaytrace.AttackRaytrac
         expansion,
         !fixedMouseDelay
     );
-
-    user.player().sendMessage((raytrace.reach() <= 3 ? ChatColor.AQUA.toString() : ChatColor.RED.toString())
-        + raytrace.reach() + " Blocks Reach (" + expansion + ")");
   }
 
   /**
