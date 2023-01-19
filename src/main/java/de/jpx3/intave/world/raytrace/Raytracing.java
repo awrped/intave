@@ -63,30 +63,30 @@ public final class Raytracing {
    * @return
    */
   public static Raytrace doubleMDFBlockConstraintEntityRaytrace(
-    Player player, Entity entity, boolean alternativePositionY,
-    double lastPositionX, double lastPositionY, double lastPositionZ,
-    float lastRotationYaw,
-    float rotationYaw, float rotationPitch,
-    double expandHitbox, boolean withoutMouseDelayFix) {
+      Player player, Entity entity, boolean alternativePositionY,
+      double lastPositionX, double lastPositionY, double lastPositionZ,
+      float lastRotationYaw,
+      float rotationYaw, float rotationPitch,
+      double expandHitbox, boolean withoutMouseDelayFix) {
     double blockReachDistance = Raytracing.reachDistance(player);
 //    float rotationYaw = movementData.rotationYaw % 360;
 
     // mouse delay fix
     Raytrace distanceOfResult = blockConstraintEntityRaytrace(
-      player,
-      entity, alternativePositionY,
-      lastPositionX, lastPositionY, lastPositionZ,
-      rotationYaw, rotationPitch,
-      expandHitbox
+        player,
+        entity, alternativePositionY,
+        lastPositionX, lastPositionY, lastPositionZ,
+        rotationYaw, rotationPitch,
+        expandHitbox
     );
     if (withoutMouseDelayFix && distanceOfResult.reach() > blockReachDistance && rotationYaw != lastRotationYaw) {
       // normal
       distanceOfResult = blockConstraintEntityRaytrace(
-        player,
-        entity, alternativePositionY,
-        lastPositionX, lastPositionY, lastPositionZ,
-        lastRotationYaw, rotationPitch,
-        expandHitbox
+          player,
+          entity, alternativePositionY,
+          lastPositionX, lastPositionY, lastPositionZ,
+          lastRotationYaw, rotationPitch,
+          expandHitbox
       );
     }
 
@@ -97,20 +97,20 @@ public final class Raytracing {
    * @param expandBoundingBox should be "0.1f" for a default hitbox
    */
   public static Raytrace blockConstraintEntityRaytrace(
-    Player player, Entity entity,
-    boolean useAlternativePositionY,
-    double prevPosX, double prevPosY, double prevPosZ,
-    float prevYaw, float pitch,
-    double expandBoundingBox
+      Player player, Entity entity,
+      boolean useAlternativePositionY,
+      double prevPosX, double prevPosY, double prevPosZ,
+      float prevYaw, float pitch,
+      double expandBoundingBox
   ) {
     return entityRaytrace(
-      player,
-      entity.entityBoundingBox(),
-      useAlternativePositionY ? (entity.alternativePosition.posY - entity.position.posY) : 0,
-      prevPosX, prevPosY, prevPosZ,
-      prevYaw, pitch,
-      expandBoundingBox,
-      EntityRaytraceBlockConstraint.ACCEPT_BLOCKS
+        player,
+        entity.entityBoundingBox(),
+        useAlternativePositionY ? (entity.alternativePosition.posY - entity.position.posY) : 0,
+        prevPosX, prevPosY, prevPosZ,
+        prevYaw, pitch,
+        expandBoundingBox,
+        EntityRaytraceBlockConstraint.ACCEPT_BLOCKS
     );
   }
 
@@ -118,20 +118,20 @@ public final class Raytracing {
    * @param expandBoundingBox should be "0.1f" for a default hitbox
    */
   public static Raytrace blockIgnoringEntityRaytrace(
-    Player player, Entity entity,
-    boolean useAlternativePositionY,
-    double prevPosX, double prevPosY, double prevPosZ,
-    float prevYaw, float pitch,
-    double expandBoundingBox
+      Player player, Entity entity,
+      boolean useAlternativePositionY,
+      double prevPosX, double prevPosY, double prevPosZ,
+      float prevYaw, float pitch,
+      double expandBoundingBox
   ) {
     return entityRaytrace(
-      player,
-      entity.entityBoundingBox(),
-      useAlternativePositionY ? (entity.alternativePosition.posY - entity.position.posY) : 0,
-      prevPosX, prevPosY, prevPosZ,
-      prevYaw, pitch,
-      expandBoundingBox,
-      EntityRaytraceBlockConstraint.IGNORE_BLOCKS
+        player,
+        entity.entityBoundingBox(),
+        useAlternativePositionY ? (entity.alternativePosition.posY - entity.position.posY) : 0,
+        prevPosX, prevPosY, prevPosZ,
+        prevYaw, pitch,
+        expandBoundingBox,
+        EntityRaytraceBlockConstraint.IGNORE_BLOCKS
     );
   }
 
@@ -143,17 +143,17 @@ public final class Raytracing {
    * entity -1 means the player hit outside of the hitbox of the entity greater than 0 means the reach of the player
    */
   public static Raytrace entityRaytrace(
-    Player player,
-    BoundingBox entityBoundingBox,
-    double alternativeYDifference,
-    double prevPosX, double prevPosY, double prevPosZ,
-    float prevYaw, float pitch,
-    double boundingBoxExpansion,
-    EntityRaytraceBlockConstraint rayTraceBlocks
+      Player player,
+      BoundingBox entityBoundingBox,
+      double alternativeYDifference,
+      double prevPosX, double prevPosY, double prevPosZ,
+      float prevYaw, float pitch,
+      double boundingBoxExpansion,
+      EntityRaytraceBlockConstraint rayTraceBlocks
   ) {
     Timings.SERVICE_RAYTRACER_ENTITY.start();
     NativeVector eyeVector = positionEyes(player, prevPosX, prevPosY, prevPosZ);
-    double blockReachDistance = 6d;
+    double blockReachDistance = 6;
     double attackReachDistance = reachDistance(player);
     double lastReach = 10;
     NativeVector lastHitVec = null;
@@ -162,9 +162,9 @@ public final class Raytracing {
         break;
       NativeVector interpolatedLookVec = wrappedVectorForRotation(pitch, prevYaw, fastMath);
       NativeVector lookVector = eyeVector.addVector(
-        interpolatedLookVec.xCoord * blockReachDistance,
-        interpolatedLookVec.yCoord * blockReachDistance,
-        interpolatedLookVec.zCoord * blockReachDistance
+          interpolatedLookVec.xCoord * blockReachDistance,
+          interpolatedLookVec.yCoord * blockReachDistance,
+          interpolatedLookVec.zCoord * blockReachDistance
       );
       BoundingBox hitBox = entityBoundingBox.grow(boundingBoxExpansion, boundingBoxExpansion, boundingBoxExpansion);
       if (alternativeYDifference != 0) {
@@ -177,14 +177,16 @@ public final class Raytracing {
       } else if (movingObjectPosition != null) {
         double distanceToEntity = eyeVector.distanceTo(movingObjectPosition.hitVec);
         double reach;
+        boolean blockRaytrace = false;
         if (rayTraceBlocks == EntityRaytraceBlockConstraint.ACCEPT_BLOCKS) {
           MovingObjectPosition blockMovingPosition = Raytracing.blockRayTrace(player.getWorld(), player, eyeVector, lookVector);
           double distanceToBlock = blockMovingPosition == null || blockMovingPosition.hitVec == null ? 10 : eyeVector.distanceTo(blockMovingPosition.hitVec);
           reach = distanceToBlock < distanceToEntity ? 10 : distanceToEntity;
+          blockRaytrace = true;
         } else {
           reach = distanceToEntity;
         }
-        if (reach < lastReach) {
+        if (reach < lastReach && (reach < attackReachDistance || blockRaytrace)) {
           lastReach = reach;
           lastHitVec = movingObjectPosition.hitVec;
         }
