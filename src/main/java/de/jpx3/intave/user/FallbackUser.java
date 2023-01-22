@@ -248,6 +248,11 @@ final class FallbackUser implements User {
   }
 
   @Override
+  public void nerfPermanently(AttackNerfStrategy strategy, String checkId) {
+
+  }
+
+  @Override
   public void removeChannelConstraint(MessageChannel channel) {
   }
 

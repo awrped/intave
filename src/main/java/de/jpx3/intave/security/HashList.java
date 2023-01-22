@@ -1,19 +1,20 @@
 package de.jpx3.intave.security;
 
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import de.jpx3.intave.resource.Resource;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 public final class HashList {
-  private final List<String> hashes;
+  private final Set<String> hashes;
   private final MessageDigest sha256Digest;
 
-  private HashList(List<String> hashes) {
+  private HashList(Set<String> hashes) {
     this.hashes = hashes;
     try {
       this.sha256Digest = MessageDigest.getInstance("SHA-256");
@@ -31,13 +32,14 @@ public final class HashList {
     return hashBlacklisted(hashOf(id.toString()));
   }
 
-  private boolean hashBlacklisted(String input) {
-    for (String blacklistedHash : hashes) {
-      if (blacklistedHash.equals(input)) {
-        return true;
-      }
-    }
-    return false;
+  private boolean hashBlacklisted(String hash) {
+//    for (String blacklistedHash : hashes) {
+//      if (blacklistedHash.equals(hash)) {
+//        return true;
+//      }
+//    }
+//    return false;
+    return hashes.contains(hash);
   }
 
   private String hashOf(String input) {
@@ -57,10 +59,10 @@ public final class HashList {
   }
 
   public static HashList empty() {
-    return new HashList(ImmutableList.of());
+    return new HashList(ImmutableSet.of());
   }
 
   public static HashList from(Resource resource) {
-    return new HashList(resource.readLines());
+    return new HashList(new HashSet<>(resource.readLines()));
   }
 }

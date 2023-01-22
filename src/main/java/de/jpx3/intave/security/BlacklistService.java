@@ -130,6 +130,7 @@ public final class BlacklistService implements BukkitEventSubscriber {
     if (graylistKnowledge.contains(player.getUniqueId().toString())) {
       return;
     }
+    // let's not risk it
 //    if (DEBUG_GRAYLIST) {
 //      player.sendMessage(ChatColor.RED + "You are graylisted.");
 //    }
@@ -148,10 +149,13 @@ public final class BlacklistService implements BukkitEventSubscriber {
     return grayList != null && (grayList.containsName(name) || grayList.containsId(id));
   }
 
-  private static final String KICK_MESSAGE = ChatColor.RED + "You can't join this server";
+  private static final String KICK_MESSAGE = ChatColor.RED + "This name or account is on a global cheating blacklist";
 
   private void disconnect(Player player) {
-    Synchronizer.synchronize(() -> player.kickPlayer(KICK_MESSAGE));
+    Synchronizer.synchronize(() -> {
+      player.sendMessage(KICK_MESSAGE);
+      player.kickPlayer(KICK_MESSAGE);
+    });
   }
 
   public boolean enabled() {

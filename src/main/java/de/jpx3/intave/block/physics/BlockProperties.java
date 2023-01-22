@@ -13,7 +13,8 @@ public final class BlockProperties {
   private static final Map<Material, Property> registry = new HashMap<>();
 
   public static void setup() {
-    Property.builderFor(ICE, PACKED_ICE, "FROSTED_ICE", "BLUE_ICE").slipperiness(0.98f).buildAndSave();
+    Property.builderFor(ICE, PACKED_ICE, "FROSTED_ICE").slipperiness(0.98f).buildAndSave();
+    Property.builderFor("BLUE_ICE").slipperiness(0.989f).buildAndSave();
     Property.builderFor(SLIME_BLOCK).slipperiness(0.8f).buildAndSave();
     Property.builderFor(LADDER, VINE).climbable().buildAndSave();
     Property.builderFor("SCAFFOLDING").climbable().buildAndSave();

@@ -378,14 +378,15 @@ public final class RootStage extends CommandStage {
   )
   @Native
   public void playtimeOf(User user, @Optional Player target) {
-    Player player = user.player();
-    Player targetPlayer = target == null ? player : target;
-    User targetUser = UserRepository.userOf(targetPlayer);
-
-    PlaytimeStorage storage = targetUser.storageOf(PlaytimeStorage.class);
-    long minutesPlayed = storage.minutesPlayed();
-    long minutesAfk = storage.minutesAfk();
-    player.sendMessage("The player " + targetPlayer.getName() + targetPlayer.getAddress().getAddress() + " has played for " + minutesPlayed + " minutes and was afk for " + minutesAfk + " minutes");
+    if (IntaveControl.GOMME_MODE) {
+      Player player = user.player();
+      Player targetPlayer = target == null ? player : target;
+      User targetUser = UserRepository.userOf(targetPlayer);
+      PlaytimeStorage storage = targetUser.storageOf(PlaytimeStorage.class);
+      long minutesPlayed = storage.minutesPlayed();
+      long minutesAfk = storage.minutesAfk();
+      player.sendMessage("The player " + targetPlayer.getName() + targetPlayer.getAddress().getAddress() + " has played for " + minutesPlayed + " minutes and was afk for " + minutesAfk + " minutes");
+    }
   }
 
   @SubCommand(
@@ -396,12 +397,13 @@ public final class RootStage extends CommandStage {
   )
   @Native
   public void labymodDataReceive(User user, @Optional Player target) {
-    Player player = user.player();
-    Player targetPlayer = target == null ? player : target;
-    User targetUser = UserRepository.userOf(targetPlayer);
-
-    JsonObject data = targetUser.meta().connection().labyModData;
-    player.sendMessage(targetPlayer.getName() + " sent: " + data.toString());
+    if (IntaveControl.GOMME_MODE) {
+      Player player = user.player();
+      Player targetPlayer = target == null ? player : target;
+      User targetUser = UserRepository.userOf(targetPlayer);
+      JsonObject data = targetUser.meta().connection().labyModData;
+      player.sendMessage(targetPlayer.getName() + " sent: " + data.toString());
+    }
   }
 
   @SubCommand(

@@ -40,6 +40,7 @@ public final class IntaveControl {
   public static final boolean GIVE_RIPTIDE_V_TRIDENT_ON_JOIN = false;
   public static final boolean DEBUG_FEEDBACK_PACKETS = false;
   public static final boolean DEBUG_ITEM_USAGE = false;
+  public static final boolean DEBUG_VELOCITY_RECEIVE = false;
 
   public static final boolean USE_EXTERNAL_CONFIGURATION_FILE = true;
   public static final boolean GOMME_MODE = false;

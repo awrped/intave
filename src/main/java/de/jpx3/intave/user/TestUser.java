@@ -253,6 +253,11 @@ final class TestUser implements User {
   }
 
   @Override
+  public void nerfPermanently(AttackNerfStrategy strategy, String checkId) {
+
+  }
+
+  @Override
   public int latency() {
     return 0;
   }

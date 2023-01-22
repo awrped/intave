@@ -924,6 +924,9 @@ public final class MovementDispatcher extends Module {
         integers.readSafely(2) / 8000d,
         integers.readSafely(3) / 8000d
       );
+      if (IntaveControl.DEBUG_VELOCITY_RECEIVE) {
+        player.sendMessage("§a" + MathHelper.formatMotion(velocity));
+      }
       User user = UserRepository.userOf(player);
       MetadataBundle meta = user.meta();
       MovementMetadata movementData = meta.movement();

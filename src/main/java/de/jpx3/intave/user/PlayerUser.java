@@ -386,6 +386,14 @@ final class PlayerUser implements User {
   }
 
   @Override
+  public void nerfPermanently(AttackNerfStrategy strategy, String checkId) {
+    if (trustFactor().atLeast(TrustFactor.BYPASS)) {
+      return;
+    }
+    Modules.mitigate().combat().mitigatePermanently(this, strategy, checkId);
+  }
+
+  @Override
   public void removeChannelConstraint(MessageChannel channel) {
     channelConstraints.remove(channel);
   }
@@ -482,11 +490,6 @@ final class PlayerUser implements User {
   @Override
   public void noteFeedbackFault() {
     ConnectionMetadata connectionData = metadata.connection();
-    if (plugin().sibyl().isAuthenticated(player())) {
-      Synchronizer.synchronize(() -> {
-        player().sendMessage(ChatColor.RED + "Feedback fault");
-      });
-    }
     if (!justJoined() && connectionData.lastReceivedTransactionNum > 100 && connectionData.hardTransactionResponse++ > 3 && FaultKicks.FEEDBACK_FAULTS) {
       IntaveLogger.logger().info(player().getName() + " will be removed for repeated feedback faults");
       kick("Repeated feedback faults");

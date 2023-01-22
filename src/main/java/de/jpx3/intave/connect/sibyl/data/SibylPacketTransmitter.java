@@ -1,6 +1,5 @@
 package de.jpx3.intave.connect.sibyl.data;
 
-import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.wrappers.MinecraftKey;
@@ -22,6 +21,7 @@ import org.bukkit.entity.Player;
 import javax.crypto.Cipher;
 import java.util.Base64;
 
+import static com.comphenix.protocol.PacketType.Play.Server.CUSTOM_PAYLOAD;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public final class SibylPacketTransmitter {
@@ -46,7 +46,6 @@ public final class SibylPacketTransmitter {
   public void transmitPacket(Player player, SibylPacket sibylPacket) {
     String packetName = sibylPacket.packetName();
     JsonObject packetContent = new JsonObject();
-    packetContent.addProperty("name", packetName);
     if (service.encryptionActiveFor(player)) {
       try {
         String text = sibylPacket.asJsonElement().toString();
@@ -54,11 +53,13 @@ public final class SibylPacketTransmitter {
         Cipher aes = aesCiphers.get();
         aes.init(Cipher.ENCRYPT_MODE, service.keyOf(player));
         byte[] encryptedText = aes.doFinal(textBytes);
+        packetContent.addProperty("name", packetName); // maybe encrypt this too?
         packetContent.addProperty("content", Base64.getEncoder().encodeToString(encryptedText));
       } catch (Exception exception) {
         exception.printStackTrace();
       }
     } else {
+      packetContent.addProperty("name", packetName);
       packetContent.add("content", sibylPacket.asJsonElement());
     }
     transmitPacketDataToPlayer(player, packetContent);
@@ -69,11 +70,11 @@ public final class SibylPacketTransmitter {
     if (!authenticated(player)) {
       return;
     }
-    PacketContainer packetContainer = ProtocolLibrary.getProtocolManager().createPacket(PacketType.Play.Server.CUSTOM_PAYLOAD);
+    PacketContainer packet = ProtocolLibrary.getProtocolManager().createPacket(CUSTOM_PAYLOAD);
     if (MinecraftVersions.VER1_13_0.atOrAbove()) {
-      packetContainer.getSpecificModifier(MinecraftKey.class).write(0, new MinecraftKey("labymod3", "main"));
+      packet.getSpecificModifier(MinecraftKey.class).write(0, new MinecraftKey("labymod3", "main"));
     } else {
-      packetContainer.getStrings().write(0, "labymod3:main");
+      packet.getStrings().write(0, "labymod3:main");
     }
     try {
       byte[] bytesToSend = LabyModChannelHelper.getBytesToSend("sibyl-data-s2c", jsonElement == null ? null : jsonElement.toString());
@@ -82,8 +83,8 @@ public final class SibylPacketTransmitter {
       Object packetDataSerializer = packetDataSerializerClass
         .getConstructor(ByteBuf.class)
         .newInstance(Unpooled.wrappedBuffer(bytesToSend));
-      packetContainer.getSpecificModifier(packetDataSerializerClass).write(0, packetDataSerializer);
-      Synchronizer.synchronize(() -> PacketSender.sendServerPacket(player, packetContainer));
+      packet.getSpecificModifier(packetDataSerializerClass).write(0, packetDataSerializer);
+      Synchronizer.synchronize(() -> PacketSender.sendServerPacket(player, packet));
     } catch (Exception exception) {
       exception.printStackTrace();
     }

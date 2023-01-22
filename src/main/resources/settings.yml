@@ -158,6 +158,17 @@ proxy:
 clientwarning:
   enable: true
 
+# Only works when intave-storage is used
+accountcheck:
+  enable: true
+
+  only-red-trustfactor: true
+  # LOWER_TRUSTFACTOR, LOWEST_TRUSTFACTOR, KICK
+  action: KICK
+
+  kick-message-in-chat: true
+  kick-message: "&cDue to high abuse, your account needs to be at least a month old to join this server."
+
 filter:
   health: false
   vanish: true

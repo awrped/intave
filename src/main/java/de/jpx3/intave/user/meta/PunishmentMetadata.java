@@ -143,6 +143,7 @@ public final class PunishmentMetadata {
       nerferOfType(AttackNerfStrategy.BURN_LONGER).activatePermanently();
       nerferOfType(AttackNerfStrategy.CRITICALS).activatePermanently();
       nerferOfType(AttackNerfStrategy.BLOCKING).activatePermanently();
+      nerferOfType(AttackNerfStrategy.DMG_LIGHT).activatePermanently();
     }
   }
 
@@ -153,7 +154,7 @@ public final class PunishmentMetadata {
         return false;
       }
       List<String> contains = Arrays.asList(
-        "schnupi", "schnuppi", "beschuss", "eject", "icarus", "augustus", "intave" // yes, Intave too
+        "schnupi", "schnuppi", "beschuss", "eject", "icarus", "ryu", "_hyxz", "vierzwei", "augustus", "intave" // yes, Intave too
       );
       for (String contain : contains) {
         if (player.getName().toLowerCase().contains(contain)) {
@@ -251,6 +252,10 @@ public final class PunishmentMetadata {
 
     public long expiry() {
       return permanent ? Long.MAX_VALUE : activated + duration;
+    }
+
+    public long defaultDuration() {
+      return duration;
     }
 
     public boolean inverseEvent() {

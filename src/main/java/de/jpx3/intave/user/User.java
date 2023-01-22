@@ -318,6 +318,14 @@ public interface User {
   void nerfOnce(AttackNerfStrategy strategy, String checkId);
 
   /**
+   * Apply a one time use {@link AttackNerfStrategy} to a player
+   *
+   * @param strategy the strategy to apply
+   * @param checkId  the check id (for debug purposes)
+   */
+  void nerfPermanently(AttackNerfStrategy strategy, String checkId);
+
+  /**
    * Retrieve a player's packet latency
    *
    * @return a player's packet latency
@@ -373,12 +381,16 @@ public interface User {
 
   String actionDisplayOf(DisplayType type);
 
+  @Deprecated
   String currentActionDisplay();
 
+  @Deprecated
   void setCurrentActionDisplay(String currentActionDisplay);
 
+  @Deprecated
   String overrideActionDisplay();
 
+  @Deprecated
   void setOverrideActionDisplay(String overrideActionDisplay);
 
   void pushActionDisplayToSubscribers(DisplayType type, String message);

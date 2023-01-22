@@ -13,6 +13,7 @@ import de.jpx3.intave.executor.Synchronizer;
 import de.jpx3.intave.module.linker.bukkit.BukkitEventSubscriber;
 import de.jpx3.intave.module.linker.bukkit.BukkitEventSubscription;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -78,19 +79,26 @@ public final class SibylIntegrationService implements BukkitEventSubscriber {
     if (!encryptionAvailable()) {
       return;
     }
-    if (!Arrays.equals(decrypt(packet.encryptedVerifyToken()), verifyToken)) {
+    if (!Arrays.equals(decryptRSA(packet.encryptedVerifyToken()), verifyToken)) {
       if (IntaveControl.SIBYL_DEBUG) {
         System.out.println("Sibyl: Invalid verify token for " + player.getName());
       }
       return;
     }
-    byte[] keyBytes = decrypt(packet.encryptedSharedSecret());
+    byte[] keyBytes = decryptRSA(packet.encryptedSharedSecret());
     if (keyBytes != null) {
-      KEYS.put(player.getUniqueId(), new SecretKeySpec(keyBytes, "AES"));
+      try {
+        KEYS.put(player.getUniqueId(), new SecretKeySpec(keyBytes, "AES"));
+      } catch (Exception exception) {
+        exception.printStackTrace();
+        Synchronizer.synchronize(() -> {
+          player.kickPlayer(ChatColor.RED + "Error authenticating");
+        });
+      }
     }
   }
 
-  private static byte[] decrypt(byte[] data) {
+  private static byte[] decryptRSA(byte[] data) {
     try {
       Cipher cipher = Cipher.getInstance("RSA");
       cipher.init(Cipher.DECRYPT_MODE, globalKeyPair.getPrivate());

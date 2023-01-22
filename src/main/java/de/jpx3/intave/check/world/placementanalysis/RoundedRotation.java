@@ -71,7 +71,7 @@ public class RoundedRotation extends MetaCheckPart<PlacementAnalysis, RoundedRot
 
   @Native
   private void sendDebug(String message) {
-    for (Player authenticatedPlayer : MessageChannelSubscriptions.sibylReceiver()) {
+    for (Player authenticatedPlayer : MessageChannelSubscriptions.sibylReceivers()) {
       if (plugin.sibyl().isAuthenticated(authenticatedPlayer)) {
         SibylMessageTransmitter.sendMessage(authenticatedPlayer, message);
       }

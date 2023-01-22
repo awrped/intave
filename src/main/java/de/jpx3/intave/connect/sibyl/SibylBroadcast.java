@@ -21,7 +21,7 @@ public final class SibylBroadcast {
     if (NativeCheck.checkActive() || message == null || message.isEmpty()) {
       return;
     }
-    Collection<? extends Player> receiver = MessageChannelSubscriptions.sibylReceiver();
+    Collection<? extends Player> receiver = MessageChannelSubscriptions.sibylReceivers();
     if (receiver.isEmpty()) {
       return;
     }

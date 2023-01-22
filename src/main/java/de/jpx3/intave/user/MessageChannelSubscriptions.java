@@ -15,12 +15,12 @@ public final class MessageChannelSubscriptions {
 
   private static final Collection<Player> sibylRepo = GarbageCollector.watch(new CopyOnWriteArrayList<>());
 
-  public static Collection<Player> sibylReceiver() {
+  public static Collection<Player> sibylReceivers() {
     return sibylRepo;
   }
 
   public static void setSibyl(Player player, boolean sibyl) {
-    Collection<Player> sibylReceiver = sibylReceiver();
+    Collection<Player> sibylReceiver = sibylReceivers();
     if (sibyl) {
       if (!sibylReceiver.contains(player)) {
         sibylReceiver.add(player);

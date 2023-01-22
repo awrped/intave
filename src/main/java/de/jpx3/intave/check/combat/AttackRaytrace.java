@@ -198,7 +198,8 @@ public final class AttackRaytrace extends MetaCheck<AttackRaytrace.AttackRaytrac
           if (checkActivated) {
             if (!protocolMetadata.flyingPacketStream()) {
               // >= 1.9.x
-              if (entity.clientSynchronized
+              if (
+                entity.clientSynchronized
                 && !movementData.recentlyEncounteredFlyingPacket(2)
                 && attackRaytraceMeta.lastFlyPacketCounterReach > 1
               ) {

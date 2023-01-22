@@ -96,7 +96,7 @@ public final class PacketDelayer extends Module {
       CUSTOM_SOUND_EFFECT,
       NAMED_SOUND_EFFECT,
       ANIMATION,
-      CHAT_OUT,
+      CHAT_OUT
     }
   )
   public void enqueueOutgoingPackets(PacketEvent event) {

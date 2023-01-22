@@ -4,6 +4,7 @@ import de.jpx3.intave.IntaveControl;
 import de.jpx3.intave.IntaveLogger;
 import de.jpx3.intave.annotate.Native;
 import de.jpx3.intave.executor.Synchronizer;
+import de.jpx3.intave.math.MathHelper;
 import de.jpx3.intave.module.Module;
 import de.jpx3.intave.module.linker.bukkit.BukkitEventSubscription;
 import de.jpx3.intave.user.MessageChannelSubscriptions;
@@ -48,8 +49,8 @@ public final class CombatMitigator extends Module {
         return;
       }
       AttackNerfer nerfer = user.meta().punishment().nerferOfType(nerfStrategy);
-      nerfer.activateUntil(expires);
       notify(user, nerfer, "00");
+      nerfer.activateUntil(expires);
     });
   }
 
@@ -102,8 +103,8 @@ public final class CombatMitigator extends Module {
   public void mitigate(User user, AttackNerfStrategy type, String checkId) {
     Synchronizer.synchronize(() -> {
       AttackNerfer nerfer = user.meta().punishment().nerferOfType(type);
-      notify(user, nerfer, checkId);
       nerfer.activate();
+      notify(user, nerfer, checkId);
     });
   }
 
@@ -121,27 +122,51 @@ public final class CombatMitigator extends Module {
 
   @Deprecated
   public void mitigateOnce(User user, AttackNerfStrategy type, String checkId) {
-    Synchronizer.synchronize(() -> user.meta().punishment().nerferOfType(type).activateOnce());
+    Synchronizer.synchronize(() -> {
+      AttackNerfer nerfer = user.meta().punishment().nerferOfType(type);
+      nerfer.activateOnce();
+      notify(user, nerfer, checkId);
+    });
+  }
+
+  public void mitigatePermanently(User user, AttackNerfStrategy type, String checkId) {
+    Synchronizer.synchronize(() -> {
+      AttackNerfer nerfer = user.meta().punishment().nerferOfType(type);
+      nerfer.activatePermanently();
+      notify(user, nerfer, checkId, true);
+    });
+  }
+
+  private void notify(User user, AttackNerfer attackNerfer, String checkId) {
+    notify(user, attackNerfer, checkId, false);
   }
 
   @Native
-  private void notify(User user, AttackNerfer attackNerfer, String checkId) {
+  private void notify(User user, AttackNerfer attackNerfer, String checkId, boolean hide) {
     if (attackNerfer.active()) {
       return;
     }
 
     Player player = user.player();
-    String message = ChatColor.RED + "[CM] Applied " + attackNerfer.name() + " combat nerfer on " + player.getName() + " (dmc" + checkId + ") for " + (System.currentTimeMillis() - attackNerfer.expiry()) + "ms";
+    long expiry = attackNerfer.expiry();
+
+    String durationText;
+    if (expiry == Long.MAX_VALUE) {
+      durationText = "permanently";
+    } else {
+      durationText = "for " + MathHelper.formatDouble(expiry - System.currentTimeMillis() / 1000d, 2) + "s";
+    }
+    String message = ChatColor.RED + "[CM] Applied " + attackNerfer.name() + " combat nerfer on " + player.getName() + " (dmc" + checkId + ") " + durationText;
 
     if (IntaveControl.DEBUG_HEURISTICS && !plugin.sibyl().isAuthenticated(player)) {
       player.sendMessage(message);
     }
 
-    if (IntaveControl.GOMME_MODE) {
+    if (IntaveControl.GOMME_MODE && !hide) {
       IntaveLogger.logger().printLine("[Intave] " + ChatColor.stripColor(message));
     }
 
-    for (Player authenticatedPlayer : MessageChannelSubscriptions.sibylReceiver()/*Bukkit.getOnlinePlayers()*/) {
+    for (Player authenticatedPlayer : MessageChannelSubscriptions.sibylReceivers()/*Bukkit.getOnlinePlayers()*/) {
       if (plugin.sibyl().isAuthenticated(authenticatedPlayer)) {
         authenticatedPlayer.sendMessage(message);
       }
