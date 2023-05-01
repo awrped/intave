@@ -1,5 +1,6 @@
 package de.jpx3.intave.command.stages;
 
+import com.google.gson.JsonObject;
 import de.jpx3.intave.IntaveControl;
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.access.player.trust.TrustFactor;
@@ -24,6 +25,7 @@ import de.jpx3.intave.security.HashAccess;
 import de.jpx3.intave.share.BoundingBox;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserRepository;
+import de.jpx3.intave.user.storage.PlaytimeStorage;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -63,7 +65,7 @@ public final class RootStage extends CommandStage {
     String fullSpecifier = specifier != null ? Arrays.stream(specifier).map(s -> s + " ").collect(Collectors.joining()).trim().toLowerCase(Locale.ROOT) : "";
 
     Player player = user.player();
-    if (plugin.sibylIntegrationService().authentication().isAuthenticated(player)) {
+    if (plugin.sibyl().authentication().isAuthenticated(player)) {
       player.sendMessage(ChatColor.RED + "Loading timings...");
       List<Timing> timings = new ArrayList<>(Timings.timingPool());
       timings.sort(Timing::compareTo);
@@ -109,7 +111,7 @@ public final class RootStage extends CommandStage {
     String fullSpecifier = specifier != null ? Arrays.stream(specifier).map(s -> s + " ").collect(Collectors.joining()).trim().toLowerCase(Locale.ROOT) : "";
 
     Player player = user.player();
-    if (plugin.sibylIntegrationService().authentication().isAuthenticated(player)) {
+    if (plugin.sibyl().authentication().isAuthenticated(player)) {
       player.sendMessage(ChatColor.RED + "Loading timings...");
 
       List<Timing> timings = new ArrayList<>(Timings.timingPool());
@@ -169,7 +171,7 @@ public final class RootStage extends CommandStage {
   @Native
   public void hashCommand(User user) {
     Player player = user.player();
-    if (plugin.sibylIntegrationService().authentication().isAuthenticated(player)) {
+    if (plugin.sibyl().authentication().isAuthenticated(player)) {
       player.sendMessage(ChatColor.GRAY + "Hash is " + ChatColor.COLOR_CHAR + JAR_HASH);
     }
   }
@@ -217,7 +219,7 @@ public final class RootStage extends CommandStage {
     String fullSpecifier = specifier != null ? Arrays.stream(specifier).map(s -> s + " ").collect(Collectors.joining()).trim().toLowerCase(Locale.ROOT) : "";
 
     Player player = user.player();
-    if (plugin.sibylIntegrationService().authentication().isAuthenticated(player)) {
+    if (plugin.sibyl().authentication().isAuthenticated(player)) {
       player.sendMessage(ChatColor.RED + "Loading timings...");
 
       List<Timing> timings = new ArrayList<>(Timings.timingPool());
@@ -354,6 +356,57 @@ public final class RootStage extends CommandStage {
   }
 
   @SubCommand(
+    selectors = "storagetrace",
+    usage = "",
+    description = "",
+    permission = "sibyl"
+  )
+  @Native
+  public void storageTrace(User user) {
+    Player player = user.player();
+    player.sendMessage("You are now in storage trace mode");
+    PlaytimeStorage storage = user.storageOf(PlaytimeStorage.class);
+    storage.setDebugTag();
+    player.sendMessage("Your storage-tag is " + storage.readTag());
+  }
+
+  @SubCommand(
+    selectors = "playtime",
+    usage = "[<target>]",
+    description = "",
+    permission = "sibyl"
+  )
+  @Native
+  public void playtimeOf(User user, @Optional Player target) {
+    if (IntaveControl.GOMME_MODE) {
+      Player player = user.player();
+      Player targetPlayer = target == null ? player : target;
+      User targetUser = UserRepository.userOf(targetPlayer);
+      PlaytimeStorage storage = targetUser.storageOf(PlaytimeStorage.class);
+      long minutesPlayed = storage.minutesPlayed();
+      long minutesAfk = storage.minutesAfk();
+      player.sendMessage("The player " + targetPlayer.getName() + targetPlayer.getAddress().getAddress() + " has played for " + minutesPlayed + " minutes and was afk for " + minutesAfk + " minutes");
+    }
+  }
+
+  @SubCommand(
+    selectors = "lbdr",
+    usage = "[<target>]",
+    description = "",
+    permission = "sibyl"
+  )
+  @Native
+  public void labymodDataReceive(User user, @Optional Player target) {
+    if (IntaveControl.GOMME_MODE) {
+      Player player = user.player();
+      Player targetPlayer = target == null ? player : target;
+      User targetUser = UserRepository.userOf(targetPlayer);
+      JsonObject data = targetUser.meta().connection().labyModData;
+      player.sendMessage(targetPlayer.getName() + " sent: " + data.toString());
+    }
+  }
+
+  @SubCommand(
     selectors = "iter",
     usage = "",
     description = "",
@@ -370,7 +423,6 @@ public final class RootStage extends CommandStage {
     });
     player.sendMessage("");
   }
-
 
   @SubCommand(
     selectors = "bbaf",

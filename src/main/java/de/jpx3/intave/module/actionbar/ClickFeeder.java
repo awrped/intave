@@ -170,6 +170,7 @@ public final class ClickFeeder implements EventProcessor {
 
     public String buildActionBar() {
       int attackTicks = 0, clickTicks = 0;
+      int whileBreaking = 0;
 
       for (int i = tickActions.size() - 1; i >= tickIntensity.size() / 2; i--) {
         TickAction tickAction = tickActions.get(i);
@@ -180,6 +181,9 @@ public final class ClickFeeder implements EventProcessor {
         if (tickAction == TickAction.CLICK) {
           clickTicks++;
         }
+        if (inBlockBreak.get(i)) {
+          whileBreaking++;
+        }
       }
 
       StringBuilder builder = new StringBuilder();
@@ -189,9 +193,23 @@ public final class ClickFeeder implements EventProcessor {
       if (attackTicks == 0 && clickTicks == 0 && (frontVisible / 20) % 2 == 0 && frontVisible <= 60) {
         builder.append("A/C");
       } else {
-        builder.append(attackTicks).append("/").append(clickTicks);
+        boolean breakBlock = whileBreaking > 5;
+        if (breakingBlock) {
+//          builder.append(ChatColor.STRIKETHROUGH);
+        }
+        builder.append(attackTicks);
+        if (breakingBlock) {
+          builder.append(ChatColor.GRAY);
+        }
+        builder.append("/");
+        if (breakingBlock) {
+          builder.append(ChatColor.STRIKETHROUGH);
+        }
+        builder.append(clickTicks);
+        if (breakingBlock) {
+          builder.append(ChatColor.GRAY);
+        }
       }
-
 
       if (tab == 1) {
         builder.append(" | ");

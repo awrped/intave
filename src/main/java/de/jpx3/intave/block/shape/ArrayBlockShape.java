@@ -88,13 +88,14 @@ final class ArrayBlockShape extends MemoryTraced implements BlockShape {
     return raytrace;
   }
 
-  private static final Reference<List<BoundingBox>> EMPTY_REFERENCE = new WeakReference<>(null);
-  private Reference<List<BoundingBox>> boundingBoxCache = EMPTY_REFERENCE;
+  private static final Reference<List<BoundingBox>> NULL_REFERENCE = new WeakReference<>(null);
+  private static final Reference<List<BoundingBox>> EMPTY_REFERENCE = new WeakReference<>(Collections.emptyList());
+  private Reference<List<BoundingBox>> boundingBoxCache = NULL_REFERENCE;
 
   @Override
   public List<BoundingBox> boundingBoxes() {
-    if (boundingBoxCache.get() == null) {
-      List<BoundingBox> boundingBoxes = null;
+    List<BoundingBox> boundingBoxes;
+    if ((boundingBoxes = boundingBoxCache.get()) == null) {
       for (BlockShape content : contents) {
         List<BoundingBox> added = content.boundingBoxes();
         if (!added.isEmpty()) {
@@ -108,10 +109,10 @@ final class ArrayBlockShape extends MemoryTraced implements BlockShape {
           }
         }
       }
-      List<BoundingBox> boundingBoxList = boundingBoxes == null ? Collections.emptyList() : boundingBoxes;
-      boundingBoxCache = new WeakReference<>(boundingBoxList);
+      boundingBoxCache = boundingBoxes == null ? EMPTY_REFERENCE : new WeakReference<>(boundingBoxes);
+      boundingBoxes = boundingBoxes == null ? Collections.emptyList() : boundingBoxes;
     }
-    return boundingBoxCache.get();
+    return boundingBoxes;
   }
 
   @Override

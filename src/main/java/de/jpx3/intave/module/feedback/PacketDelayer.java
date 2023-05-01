@@ -4,7 +4,6 @@ import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
-import de.jpx3.intave.access.player.trust.TrustFactor;
 import de.jpx3.intave.check.movement.Timer;
 import de.jpx3.intave.diagnostic.LatencyStudy;
 import de.jpx3.intave.diagnostic.message.DebugBroadcast;
@@ -20,22 +19,23 @@ import de.jpx3.intave.user.meta.MovementMetadata;
 import org.bukkit.entity.Player;
 
 import java.util.Deque;
-import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.DelayQueue;
 
+import static de.jpx3.intave.access.player.trust.TrustFactor.RED;
 import static de.jpx3.intave.module.linker.packet.PacketId.Server.*;
 
 public final class PacketDelayer extends Module {
   private boolean reverseBlink;
   private boolean reverseLag;
-  private boolean microLag;
+  private boolean lowTolerance;
 
   @Override
   public void enable() {
     Timer timerCheck = plugin.checks().searchCheck(Timer.class);
     this.reverseBlink = timerCheck.reverseBlink();
     this.reverseLag = timerCheck.reverseLag();
-    this.microLag = timerCheck.lowToleranceMode();
+    this.lowTolerance = timerCheck.lowToleranceMode();
   }
 
 //  @PacketSubscription(
@@ -95,7 +95,7 @@ public final class PacketDelayer extends Module {
       CUSTOM_SOUND_EFFECT,
       NAMED_SOUND_EFFECT,
       ANIMATION,
-      CHAT,
+      CHAT_OUT
     }
   )
   public void enqueueOutgoingPackets(PacketEvent event) {
@@ -107,7 +107,7 @@ public final class PacketDelayer extends Module {
     PacketContainer packetContainer = event.getPacket();
     PacketType packetType = event.getPacketType();
 
-    if (user.justJoined() || !(reverseBlink || reverseLag) || user.trustFactor().atLeast(TrustFactor.YELLOW)) {
+    if (user.justJoined() || !(reverseBlink || reverseLag)) {
       return;
     }
 
@@ -116,16 +116,18 @@ public final class PacketDelayer extends Module {
     }
 
     long playerLatencyGain = connection.transactionPingAverage() - LatencyStudy.transactionPingAverage();
-    boolean significantPingGain = playerLatencyGain > user.trustFactorSetting("timer.pg"); // ping gain
+    boolean lowToleranceMode = lowTolerance && user.trustFactor().atOrBelow(RED);
+    boolean significantPingGain = playerLatencyGain * (lowToleranceMode ? 1.5 : 1) > user.trustFactorSetting("timer.pg"); // ping gain
     boolean delayRequested = System.currentTimeMillis() - connection.lastDelayRequest < 60 * 1000;
     boolean delayPackets = significantPingGain || delayRequested;
 
     long lastMovementPacket = System.currentTimeMillis() - connection.lastMovementPacket();
     long oldestTransactionPacket = oldestPendingTransaction(user);
-    long positionTimeoutTolerance = user.meta().protocol().flyingPacketStream() ? 0 : 1050;
+    long positionTimeoutTolerance = user.meta().protocol().flyingPacketsAreSent() ? 0 : 1050;
 
     long lagTolerance = user.trustFactorSetting("timer.lt");
-    boolean transactionTimeout = oldestTransactionPacket > connection.transactionPingAverage() + LatencyStudy.transactionPingAverage() / 2 + lagTolerance;
+
+    boolean transactionTimeout = oldestTransactionPacket * (lowToleranceMode ? 1.25 : 1) > connection.transactionPingAverage() + ((double)LatencyStudy.transactionPingAverage() / 2d) + lagTolerance;
     boolean riding = movement.isInVehicle();
     long positionBlockTolerance = connection.transactionPingAverage() + LatencyStudy.transactionPingAverage() / 2 + lagTolerance + positionTimeoutTolerance;
     boolean positionTimeout = !riding && lastMovementPacket > positionBlockTolerance;
@@ -145,9 +147,16 @@ public final class PacketDelayer extends Module {
     Deque<Object> enqueuedPackets = connection.enqueuedPackets();
     DelayQueue<DelayedPacket> delayedPackets = connection.delayedPackets();
     boolean tooManyPackets = enqueuedPackets.size() > 8000;
-    boolean buffer = !tooManyPackets && !player.isDead() && (transactionTimeout || positionTimeout);
+    boolean requestBuffer = (transactionTimeout || positionTimeout);
 
-    if (buffer && reverseBlink) {
+    if (!requestBuffer && connection.lastBlinkState) {
+      connection.blinkDeactivated = System.currentTimeMillis();
+    }
+
+    connection.lastBlinkState = requestBuffer;
+    boolean activatePacketBuffer = !tooManyPackets && !player.isDead() && System.currentTimeMillis() - connection.lastRespawn > 3000 && (requestBuffer || (System.currentTimeMillis() - connection.blinkDeactivated < 1000));
+
+    if (activatePacketBuffer && reverseBlink) {
       // put all delayed packets into the enqueuedPacket queue
       if (!delayedPackets.isEmpty()) {
         DelayedPacket[] delayedObjectsArray = delayedPackets.toArray(new DelayedPacket[0]);
@@ -228,12 +237,12 @@ public final class PacketDelayer extends Module {
   }
 
   private long oldestPendingTransaction(User user) {
-    ConnectionMetadata synchronizeData = user.meta().connection();
-    Map<Short, FeedbackRequest<?>> transactionFeedBackMap = synchronizeData.transactionShortKeyMap();
-    long duration = System.currentTimeMillis();
-    for (FeedbackRequest<?> value : transactionFeedBackMap.values()) {
-      duration = Math.min(duration, value.requested());
+    ConnectionMetadata connection = user.meta().connection();
+    Queue<FeedbackRequest<?>> feedbackRequests = connection.pendingFeedbackRequests();
+    FeedbackRequest<?> peek = feedbackRequests.peek();
+    if (peek == null) {
+      return 0;
     }
-    return System.currentTimeMillis() - duration;
+    return System.currentTimeMillis() - peek.requested();
   }
 }

@@ -6,6 +6,7 @@ import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.wrappers.BlockPosition;
 import com.comphenix.protocol.wrappers.EnumWrappers;
+import de.jpx3.intave.IntaveControl;
 import de.jpx3.intave.adapter.MinecraftVersions;
 import de.jpx3.intave.adapter.ProtocolLibraryAdapter;
 import de.jpx3.intave.check.MetaCheckPart;
@@ -19,11 +20,11 @@ import de.jpx3.intave.packet.PacketSender;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserRepository;
 import de.jpx3.intave.user.meta.*;
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
 import static de.jpx3.intave.module.linker.packet.PacketId.Client.USE_ENTITY;
-import static de.jpx3.intave.module.mitigate.AttackNerfStrategy.*;
-import static de.jpx3.intave.module.mitigate.AttackNerfStrategy.CRITICALS;
+import static de.jpx3.intave.module.mitigate.AttackNerfStrategy.BLOCKING;
 import static de.jpx3.intave.user.meta.ProtocolMetadata.VER_1_8;
 
 public final class AttackInInvalidStateHeuristic extends MetaCheckPart<Heuristics, AttackInInvalidStateHeuristic.AttackInInvalidStateMeta> {
@@ -58,7 +59,7 @@ public final class AttackInInvalidStateHeuristic extends MetaCheckPart<Heuristic
   private void checkBlocking(PacketEvent event) {
     Player player = event.getPlayer();
     User user = userOf(player);
-    // Disable check on 1.9+ due to inconsitencies in mc source
+    // Disable check on 1.9+ due to inconsistencies in mc source
     if (user.protocolVersion() > 47) {
       return;
     }
@@ -85,6 +86,9 @@ public final class AttackInInvalidStateHeuristic extends MetaCheckPart<Heuristic
       userOf(player).ignoreNextInboundPacket();
       PacketSender.receiveClientPacketFrom(player, packet);
       updatePlayerHandItem(player);
+      if (IntaveControl.DEBUG_ITEM_USAGE) {
+        player.sendMessage(ChatColor.RED + "Manual stop use item packet sent");
+      }
     }
     Synchronizer.synchronize(player::updateInventory);
   }

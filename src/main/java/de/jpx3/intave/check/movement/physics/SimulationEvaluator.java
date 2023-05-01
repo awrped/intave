@@ -21,9 +21,6 @@ import java.util.Set;
 @Relocate
 public final class SimulationEvaluator {
   private static final double LADDER_UPWARDS_MOTION = (0.2 - 0.08) * 0.98005f;
-  private static final double RIPTIDE_TOLERANCE = 3.005;
-  private static final double RIPTIDE_TOLERANCE_2 = 0.05;
-  private static final double RIPTIDE_GROUND_TOLERANCE_2 = 2.5;
 
   @SplitMeUp
   public double calculateVerticalViolationLevelIncrease(
@@ -46,38 +43,38 @@ public final class SimulationEvaluator {
     double receivedMotionZ = movement.motionZ();
     double differenceY = Math.abs(receivedMotionY - predictedY);
     boolean accountedSkippedMovement = movement.recentlyEncounteredFlyingPacket(2);
-    double vecticalLegitimateDeviation = accountedSkippedMovement ? 0.01 : 0.00001;
+    double verticalLegitimateDeviation = accountedSkippedMovement ? 0.01 : 0.00001;
 
     if (accountedSkippedMovement && movement.pastNearbyCollisionInaccuracy == 0) {
       if (Math.abs(movement.motionX()) < 0.05 && Math.abs(movement.motionZ()) < 0.05 && movement.motionY() < 0 && movement.motionY() > -0.4) {
-        vecticalLegitimateDeviation = 0.15;
+        verticalLegitimateDeviation = 0.15;
       }
     }
 
     if (pose.height(user) < 1 && receivedMotionY <= 0 && accountedSkippedMovement) {
-      vecticalLegitimateDeviation = Math.max(vecticalLegitimateDeviation, 0.1);
+      verticalLegitimateDeviation = Math.max(verticalLegitimateDeviation, 0.1);
     }
 
     // MotionY calculations with sin/cos (FastMath affected)
     boolean fastMathAffected = pose == Pose.SWIMMING || pose == Pose.FALL_FLYING;
     if (fastMathAffected) {
-      vecticalLegitimateDeviation = Math.max(vecticalLegitimateDeviation, 0.001);
+      verticalLegitimateDeviation = Math.max(verticalLegitimateDeviation, 0.001);
     }
 
     if ((movement.pastPushedByWaterFlow < 10 || movement.inLava()) && distanceMoved < 0.2) {
-      vecticalLegitimateDeviation = Math.max(vecticalLegitimateDeviation, 0.02);
+      verticalLegitimateDeviation = Math.max(verticalLegitimateDeviation, 0.02);
     }
 
     // Riptide
     if (movement.pastRiptideSpin < 4) {
-      vecticalLegitimateDeviation = resolveRiptideDeviation(movement);
+      verticalLegitimateDeviation = resolveRiptideDeviation(movement);
     }
 
     // Firework
     if (movement.fireworkRocketsTicks < 10 * movement.fireworkRocketsPower) {
-      vecticalLegitimateDeviation = Math.max(vecticalLegitimateDeviation, 1);
+      verticalLegitimateDeviation = Math.max(verticalLegitimateDeviation, 1);
     } else if (movement.fireworkRocketsTicks < 30 * movement.fireworkRocketsPower) {
-      vecticalLegitimateDeviation = Math.max(vecticalLegitimateDeviation, 0.5);
+      verticalLegitimateDeviation = Math.max(verticalLegitimateDeviation, 0.5);
     }
 
     if (movement.shulkerYToleranceRemaining > 0 && // tick restriction
@@ -85,7 +82,7 @@ public final class SimulationEvaluator {
       receivedMotionY - movement.jumpMotion() < 0.2 && // motion restriction
       (Math.abs(receivedMotionY) <= 0.5 || ((movement.positionY % 0.05) < 0.0001 && (Math.abs(receivedMotionY - movement.jumpMotion()) < 0.01 || (receivedMotionY <= 0 && receivedMotionY > -.8)))) // various other restrictions
     ) {
-      vecticalLegitimateDeviation = Math.max(vecticalLegitimateDeviation, 1);
+      verticalLegitimateDeviation = Math.max(verticalLegitimateDeviation, 1);
     }
 
     if (movement.pistonMotionToleranceRemaining > 0) {
@@ -97,13 +94,13 @@ public final class SimulationEvaluator {
         double toleratedPistonMotionDistance = Math.abs(toleratedPistonMotionY - receivedMotionY);
         if (toleratedPistonMotionDistance < 0.02) {
 //          System.out.println("tolerated piston motion: " + toleratedPistonMotion);
-          vecticalLegitimateDeviation = Math.max(vecticalLegitimateDeviation, toleratedPistonMotionY);
+          verticalLegitimateDeviation = Math.max(verticalLegitimateDeviation, toleratedPistonMotionY);
         }
       }
     }
 
     // spamming sneak under blocks
-    // not a good solution, but it works
+    // not a good solution, but it works (sometimes)
     if (protocol.applyModernCollider()) {
       double crouchingHeightGap = 1 - user.sizeOf(Pose.CROUCHING).height() % 1;
       double standingHeightGap = 1 - user.sizeOf(Pose.STANDING).height() % 1;
@@ -120,7 +117,7 @@ public final class SimulationEvaluator {
       } else if (Math.abs(Math.abs(receivedMotionY - crouchingHeightGap) - movement.jumpMotion()) < 0.01) {
         scuffed = true;
       }
-      boolean collides = Collision.present(player, BoundingBox.fromPosition(user, movement.positionX, movement.positionY + 0.0001, movement.positionZ)
+      boolean collides = Collision.present(player, BoundingBox.fromPosition(user, movement, movement.positionX, movement.positionY + 0.0001, movement.positionZ)
         .expand(movement.motionX(), Math.abs(receivedMotionY + 0.1), movement.motionZ()));
 //      player.sendMessage(scuffed + " " + movement.isSneaking() + " " + Math.abs(receivedMotionY - crouchingHeightGap) + " " + Math.abs(receivedMotionY - standingHeightGap));
       if (scuffed && collides) {
@@ -132,23 +129,22 @@ public final class SimulationEvaluator {
       boolean inLiquid = movement.pastWaterMovement <= 10 || movement.inLava();
       int allowedPackets = Hypot.fast(movement.motionX(), movement.motionZ()) < 0.03 ? 3 : 1;
       if (inLiquid || movement.physicsPacketRelinkFlyVL++ <= allowedPackets) {
-        vecticalLegitimateDeviation = Math.max(vecticalLegitimateDeviation, inLiquid ? 0.1 : 0.03);
+        verticalLegitimateDeviation = Math.max(verticalLegitimateDeviation, inLiquid ? 0.1 : 0.03);
       }
     }
 
     if (movement.physicsUnpredictableVelocityExpected) {
-      double velocityY = movement.lastVelocity.getY();
-      vecticalLegitimateDeviation = Math.max(vecticalLegitimateDeviation, velocityY * 1.2 - differenceY);
+      verticalLegitimateDeviation = Math.max(verticalLegitimateDeviation, 0.1);
     }
 
     if (collidedWithBoat && !movement.isInVehicle() && movement.motionY() < 0.605) {
       if (movement.enforceBoatStep) {
         if (movement.motionY() < 0.1) {
-          vecticalLegitimateDeviation = Math.max(vecticalLegitimateDeviation, 10);
+          verticalLegitimateDeviation = Math.max(verticalLegitimateDeviation, 10);
         }
         movement.enforceBoatStep = false;
-      } else if (movement.physicsMotionY < 0) {
-        vecticalLegitimateDeviation = Math.max(vecticalLegitimateDeviation, 10);
+      } else if (movement.baseMotionY < 0) {
+        verticalLegitimateDeviation = Math.max(verticalLegitimateDeviation, 10);
         if (movement.motionY() > movement.jumpMotion()) {
           movement.enforceBoatStep = true;
         }
@@ -163,18 +159,18 @@ public final class SimulationEvaluator {
       && movement.pastExternalVelocity != 0;
 
     if (movement.inWeb) {
-      vecticalLegitimateDeviation = Math.max(vecticalLegitimateDeviation, criticalWeb ? 0.000001 : 0.13);
+      verticalLegitimateDeviation = Math.max(verticalLegitimateDeviation, criticalWeb ? 0.000001 : 0.13);
     }
 
     if (movement.pastInWeb < 10 && !movement.inWeb && differenceY < 0.1) {
-      vecticalLegitimateDeviation = Math.max(vecticalLegitimateDeviation, 0.1);
+      verticalLegitimateDeviation = Math.max(verticalLegitimateDeviation, 0.1);
     }
 
     if (movement.recentlyEncounteredFlyingPacket(1) && movement.pastExternalVelocity <= 4) {
-      vecticalLegitimateDeviation = Math.max(vecticalLegitimateDeviation, 0.03);
+      verticalLegitimateDeviation = Math.max(verticalLegitimateDeviation, 0.03);
     }
 
-    vecticalLegitimateDeviation = Math.max(vecticalLegitimateDeviation, movement.estimatedAttachMovement());
+    verticalLegitimateDeviation = Math.max(verticalLegitimateDeviation, movement.estimatedAttachMovement());
 
     // Jump out of water
     if (movement.pastWaterMovement <= 3) {
@@ -189,11 +185,11 @@ public final class SimulationEvaluator {
       );
       boolean maybeCollidedHorizontally = Collision.nearSolidBlock(player.getWorld(), movement.boundingBox().grow(0.2));
       if (maybeCollidedHorizontally && offsetPositionInLiquid && receivedMotionY < 0.4) {
-        vecticalLegitimateDeviation = Math.max(vecticalLegitimateDeviation, 0.7f);
+        verticalLegitimateDeviation = Math.max(verticalLegitimateDeviation, 0.7f);
       }
     }
 
-    double abuseVertically = Math.max(0, differenceY - vecticalLegitimateDeviation);
+    double abuseVertically = Math.max(0, differenceY - verticalLegitimateDeviation);
     boolean allowDeviation = fastMathAffected || movement.inLava() || movement.isInVehicle();
     double multiplier;
 
@@ -280,6 +276,9 @@ public final class SimulationEvaluator {
         if (collides) {
           horizontalLegitimateDeviation = distanceMoved < 0.04 ? 0.04 : 0.002;
         }
+      }
+      if (user.meta().protocol().beeUpdate() && (Math.abs(motionX) < 0.09 || Math.abs(motionZ) < 0.09)) {
+        horizontalLegitimateDeviation = Math.max(horizontalLegitimateDeviation, 0.009);
       }
     }
 
@@ -379,19 +378,32 @@ public final class SimulationEvaluator {
     if (movement.physicsUnpredictableVelocityExpected) {
       Vector lastVelocity = movement.lastVelocity;
       double velocityDistance = Hypot.fast(lastVelocity.getX(), lastVelocity.getZ());
-      distance -= velocityDistance;
-      horizontalLegitimateDeviation = Math.max(horizontalLegitimateDeviation, velocityDistance * 1.2 - distanceMoved);
+//      distance -= velocityDistance;
+      horizontalLegitimateDeviation = Math.max(horizontalLegitimateDeviation, 0.1);
+//      player.sendMessage("Gave you " + (velocityDistance * 1.2 - distanceMoved) + " tolerance for velocity, plus extra " + velocityDistance + " for distance, " + distanceMoved + " for distance moved");
     }
 
     if (movement.sneaking || movement.lastSneaking) {
+      double limit = 0;
       if ((Math.abs(movement.motionX()) < 0.08 || Math.abs(movement.motionZ()) < 0.08) || (movement.sprinting && protocol.cavesAndCliffsUpdate())) {
         boolean smallMovement = Math.abs(movement.motionX()) < 0.08 && Math.abs(movement.motionZ()) < 0.08 && movement.onGround();
-        double limit = movement.pastEdgeSneak <= 1 ? 0.12 : (smallMovement ? 0.099 : (movement.pastEdgeSneak < 10 ? 0.05 : 0.035));
+        limit = movement.pastEdgeSneak <= 1 ? 0.12 : (smallMovement ? 0.099 : (movement.pastEdgeSneak < 10 ? 0.05 : 0.035));
         if (movement.motionY() >= 0.1 && protocol.cavesAndCliffsUpdate() && movement.pastEdgeSneak <= 1 && movement.sprinting && distanceMoved <= 0.5) {
           limit = 0.3;
         }
-        horizontalLegitimateDeviation = Math.max(horizontalLegitimateDeviation, limit);
+        if (Math.abs(movement.motionY()) < 0.001) {
+          limit = 0.07;
+        }
+        if (movement.pastEdgeSneak <= 3 && !protocol.flyingPacketsAreSent()) {
+          limit = Math.max(limit, 0.07);
+        }
+      } else {
+        if (movement.pastEdgeSneak <= 3) {
+          boolean smallMovement = (Math.abs(movement.motionX()) < 0.099 && Math.abs(movement.motionZ()) < 0.2) || (Math.abs(movement.motionZ()) < 0.099 && Math.abs(movement.motionX()) < 0.2) && movement.onGround();
+          limit = smallMovement ? 0.2 : 0.02;
+        }
       }
+      horizontalLegitimateDeviation = Math.max(horizontalLegitimateDeviation, limit);
     }
 
     if (movement.pushedByEntity) {
@@ -433,12 +445,17 @@ public final class SimulationEvaluator {
     return abuseHorizontally * multiplier;
   }
 
+//  private static final double RIPTIDE_TOLERANCE = 3.005;
+  private static final double RIPTIDE_TOLERANCE_2 = 0.05;
+  private static final double RIPTIDE_GROUND_TOLERANCE_2 = 2.5;
+
   private double resolveRiptideDeviation(MovementMetadata movementData) {
     double riptideTolerance;
+    double imminentSpinTolerance = movementData.highestLocalRiptideLevel + 1.005;
     if (movementData.onGroundWithRiptide) {
-      riptideTolerance = movementData.pastRiptideSpin == 0 ? RIPTIDE_TOLERANCE * 2 : RIPTIDE_GROUND_TOLERANCE_2;
+      riptideTolerance = movementData.pastRiptideSpin == 0 ? imminentSpinTolerance * 1.5 : RIPTIDE_GROUND_TOLERANCE_2;
     } else {
-      riptideTolerance = movementData.pastRiptideSpin == 0 ? RIPTIDE_TOLERANCE : RIPTIDE_TOLERANCE_2;
+      riptideTolerance = movementData.pastRiptideSpin == 0 ? imminentSpinTolerance : RIPTIDE_TOLERANCE_2;
     }
     return riptideTolerance;
   }

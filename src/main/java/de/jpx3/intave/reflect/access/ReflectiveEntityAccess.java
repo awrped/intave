@@ -17,9 +17,7 @@ import java.lang.reflect.Field;
 @Deprecated
 public final class ReflectiveEntityAccess {
   public static final boolean REFLECTIVE_ACCESS = ProtocolLibraryAdapter.serverVersion().isAtLeast(MinecraftVersions.VER1_16_0);
-
-  private static final Class<?> ENTITY_CLASS = Lookup.serverClass("Entity");
-  private static final Field ENTITY_GROUND_FIELD = Lookup.declaredFieldIn(ENTITY_CLASS, MinecraftVersions.VER1_17_0.atOrAbove() ? "z" : "onGround");
+  private static final Field ENTITY_GROUND_FIELD = Lookup.serverField("Entity", "onGround");
 
   static {
     ENTITY_GROUND_FIELD.setAccessible(true);

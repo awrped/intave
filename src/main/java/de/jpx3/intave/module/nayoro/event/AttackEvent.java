@@ -36,6 +36,14 @@ public final class AttackEvent extends Event {
     sink.visit(this);
   }
 
+  public int source() {
+    return source;
+  }
+
+  public int target() {
+    return target;
+  }
+
   public static AttackEvent create(int source, int target) {
     return new AttackEvent(source, target);
   }

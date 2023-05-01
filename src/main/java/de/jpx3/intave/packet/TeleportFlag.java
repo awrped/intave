@@ -61,8 +61,12 @@ public enum TeleportFlag {
     return fromIndex(indexFor(flags));
   }
 
-  public static Set<TeleportFlag> flagSetFrom(PacketContainer packet) {
+  public static Set<TeleportFlag> flagsFrom(PacketContainer packet) {
     return packet.getSets(EnumWrappers.getGenericConverter(nativeClass, TeleportFlag.class)).read(0);
+  }
+
+  public static void writeFlags(PacketContainer packet, Set<TeleportFlag> flags) {
+    packet.getSets(EnumWrappers.getGenericConverter(nativeClass, TeleportFlag.class)).write(0, flags);
   }
 
   private static final Map<Integer, Set<?>> flagCache = Maps.newConcurrentMap();

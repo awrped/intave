@@ -25,7 +25,7 @@ public final class InvalidPitch extends CheckPart<ProtocolScanner> {
   public void receiveRotation(PacketEvent event) {
     Player player = event.getPlayer();
     float rotationPitch = event.getPacket().getFloat().read(1);
-    if (Math.abs(rotationPitch) > 90.05f) {
+    if (Math.abs(rotationPitch) > 90.000001f) {
       event.getPacket().getFloat().writeSafely(1, 0f);
       String message = "sent invalid rotation";
       String details = "pitch at " + MathHelper.formatDouble(rotationPitch, 4);

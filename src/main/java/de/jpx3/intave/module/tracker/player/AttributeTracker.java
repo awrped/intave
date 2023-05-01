@@ -6,7 +6,6 @@ import com.comphenix.protocol.reflect.StructureModifier;
 import com.comphenix.protocol.wrappers.WrappedAttribute;
 import com.comphenix.protocol.wrappers.WrappedAttributeModifier;
 import de.jpx3.intave.module.Module;
-import de.jpx3.intave.module.Modules;
 import de.jpx3.intave.module.linker.packet.ListenerPriority;
 import de.jpx3.intave.module.linker.packet.PacketSubscription;
 import de.jpx3.intave.user.User;
@@ -34,7 +33,10 @@ public final class AttributeTracker extends Module {
       StructureModifier<List<WrappedAttribute>> attributeModifier = packet.getAttributeCollectionModifier();
       List<WrappedAttribute> attributes = patchAttributes(user, attributeModifier.read(0));
       attributeModifier.write(0, attributes);
-      Modules.feedback().synchronize(player, attributes, (player1, target) -> target.forEach(attribute -> receivedAttribute(user, attribute)));
+//      Modules.feedback().synchronize(player, attributes, (player1, target) -> target.forEach(attribute -> receivedAttribute(user, attribute)));
+      user.tickFeedback(() -> {
+        attributes.forEach(attribute -> receivedAttribute(user, attribute));
+      });
     }
   }
 

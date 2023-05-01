@@ -11,14 +11,14 @@ import org.bukkit.Bukkit;
 import java.util.Arrays;
 
 public final class ProtocolLibraryAdapter {
-  private final static String PROTOCOLLIB_OUTDATED = "Your version of ProtocolLib is outdated";
+  private static final String PROTOCOLLIB_OUTDATED = "Your version of ProtocolLib is outdated";
 
   @Deprecated
   public static MinecraftVersion serverVersion() {
     return MinecraftVersion.getCurrentVersion();
   }
 
-  public static boolean protocolLibAlreadyAvailable() {
+  public static boolean protocolLibAvailable() {
     return Bukkit.getPluginManager().getPlugin("ProtocolLib") != null;
   }
 

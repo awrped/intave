@@ -18,8 +18,8 @@ import de.jpx3.intave.executor.Synchronizer;
 import de.jpx3.intave.executor.TaskTracker;
 import de.jpx3.intave.module.Module;
 import de.jpx3.intave.module.Modules;
-import de.jpx3.intave.module.feedback.FeedbackCallback;
-import de.jpx3.intave.module.feedback.FeedbackTracker;
+import de.jpx3.intave.module.feedback.EmptyFeedbackCallback;
+import de.jpx3.intave.module.feedback.FeedbackObserver;
 import de.jpx3.intave.module.linker.packet.ListenerPriority;
 import de.jpx3.intave.module.linker.packet.PacketSubscription;
 import de.jpx3.intave.module.nayoro.Nayoro;
@@ -115,6 +115,9 @@ public final class EntityTracker extends Module {
           firstSurvive = true;
         }
       }
+      if (entity.tracingEnabled() && !firstSurvive) {
+        nayoroEntityDespawn(user, entity);
+      }
       entity.setResponseTracingEnabled(firstSurvive);
     }
     validEntities.sort(Comparator.comparingDouble(entity -> entity.distanceToPlayerCache));
@@ -125,6 +128,11 @@ public final class EntityTracker extends Module {
       if (trace) {
         synchronizeData.tracedEntities().add(entity);
       }
+      if (trace && !entity.wasTracedLastCycle()) {
+        nayoroEntitySpawn(user, entity);
+      } else if (!trace && entity.wasTracedLastCycle()) {
+        nayoroEntityDespawn(user, entity);
+      }
       entity.setResponseTracingEnabled(trace);
       entity.doubleVerification = trace && count < MAX_DOUBLE_TRACED_ENTITIES;
       count++;
@@ -132,10 +140,10 @@ public final class EntityTracker extends Module {
   }
 
   @PacketSubscription(
-      packetsOut = {
-          MOUNT, ATTACH_ENTITY
-      },
-      ignoreCancelled = false
+    packetsOut = {
+      MOUNT, ATTACH_ENTITY
+    },
+    ignoreCancelled = false
   )
   public void sendAttachEntityPacket(PacketEvent event) {
     PacketContainer packet = event.getPacket();
@@ -174,19 +182,15 @@ public final class EntityTracker extends Module {
       // Another entity
       if (vehicleEntityID == -1) {
         // when an entity dismounts
-        Modules.feedback().synchronize(player, null, (player1, target) -> {
-          sittingEntity.unmountFromEntity();
-        });
+        user.tickFeedback(sittingEntity::unmountFromEntity);
       } else {
         // mounts on entity
         Entity sittingOnEntity = connection.entityBy(vehicleEntityID);
         if (sittingOnEntity != null) {
-          Modules.feedback().synchronize(player, null, (player1, x) ->
-              sittingEntity.mountToEntity(sittingOnEntity)
-          );
+          user.tickFeedback(() -> sittingEntity.mountToEntity(sittingOnEntity));
         } else {
           if (IntaveControl.DISABLE_LICENSE_CHECK) {
-            IntaveLogger.logger().error("mounted On Entity could not be found");
+            IntaveLogger.logger().error(String.format("mounted On Entity with id %d could not be found", vehicleEntityID));
           }
         }
       }
@@ -198,12 +202,13 @@ public final class EntityTracker extends Module {
       if (target == null) {
         target = Entity.destroyedEntity();
       }
-      Modules.feedback().synchronize(player, target, (a, ridingEntity) -> {
+      Entity finalTarget = target;
+      user.tickFeedback(() -> {
         if (movementData.isInVehicle()) {
           movementData.dismountRidingEntity("Override");
         }
-        if (ridingEntity != null && !(ridingEntity instanceof Entity.Destroyed)) {
-          movementData.setVehicle(ridingEntity);
+        if (finalTarget != null && !(finalTarget instanceof Entity.Destroyed)) {
+          movementData.setVehicle(finalTarget);
         }
       });
     }
@@ -217,10 +222,10 @@ public final class EntityTracker extends Module {
   }
 
   @PacketSubscription(
-      packetsOut = {
-          SPAWN_ENTITY_LIVING, SPAWN_ENTITY, NAMED_ENTITY_SPAWN
-      },
-      ignoreCancelled = false
+    packetsOut = {
+      SPAWN_ENTITY_LIVING, SPAWN_ENTITY, NAMED_ENTITY_SPAWN
+    },
+    ignoreCancelled = false
   )
   public void sendEntitySpawn(PacketEvent event) {
     /* IMPORTANT: If the entity spawn packet gets synchronized the player could be spammed with transaction packets
@@ -248,7 +253,7 @@ public final class EntityTracker extends Module {
     }
 
     boolean isLivingEntity = (event.getPacketType() == PacketType.Play.Server.SPAWN_ENTITY_LIVING ||
-        event.getPacketType() == PacketType.Play.Server.NAMED_ENTITY_SPAWN) && entity.typeData().isLivingEntity();
+      event.getPacketType() == PacketType.Play.Server.NAMED_ENTITY_SPAWN) && entity.typeData().isLivingEntity();
     boolean isPlayer = event.getPacketType() == PacketType.Play.Server.NAMED_ENTITY_SPAWN;
     boolean hasRedTrustfactor = !user.trustFactor().atLeast(TrustFactor.ORANGE);
     boolean oneInFourChance = ThreadLocalRandom.current().nextInt(4) == 0;
@@ -262,6 +267,7 @@ public final class EntityTracker extends Module {
       PacketContainer oldPacket = event.getPacket();
       PacketContainer newPacket = oldPacket.deepClone();
       modifyWatchablesOf((makeOwnerInvisible ? oldPacket : newPacket));
+      //is this correct?
       connection.shouldNotBeAttacked.add(entityId);
       connection.decoySides.put(entityId, makeOwnerInvisible ? SECOND_IS_DECOY : FIRST_IS_DECOY);
       entity.duplicationId = newId;
@@ -372,13 +378,12 @@ public final class EntityTracker extends Module {
     return processPacketSpawnMob(user, packet, typeData, entityId, entityIsPlayer);
   }
 
-
   @PacketSubscription(
-      priority = ListenerPriority.HIGH,
-      packetsOut = {
-          ENTITY_DESTROY
-      },
-      ignoreCancelled = false
+    priority = ListenerPriority.HIGH,
+    packetsOut = {
+      ENTITY_DESTROY
+    },
+    ignoreCancelled = false
   )
   public void receiveEntityDestroy(PacketEvent event) {
     Player player = event.getPlayer();
@@ -454,10 +459,10 @@ public final class EntityTracker extends Module {
   }
 
   @PacketSubscription(
-      priority = ListenerPriority.HIGHEST,
-      packetsIn = {
-          POSITION, POSITION_LOOK, LOOK, FLYING
-      }
+    priority = ListenerPriority.HIGHEST,
+    packetsIn = {
+      POSITION, POSITION_LOOK, LOOK, FLYING
+    }
   )
   public void receiveMovement(PacketEvent event) {
     Player player = event.getPlayer();
@@ -483,11 +488,11 @@ public final class EntityTracker extends Module {
   }
 
   @PacketSubscription(
-      priority = ListenerPriority.HIGH,
-      packetsOut = {
-          ENTITY_TELEPORT
-      },
-      ignoreCancelled = false
+    priority = ListenerPriority.HIGH,
+    packetsOut = {
+      ENTITY_TELEPORT
+    },
+    ignoreCancelled = false
   )
   public void receiveEntityTeleport(PacketEvent event) {
     Player player = event.getPlayer();
@@ -506,13 +511,22 @@ public final class EntityTracker extends Module {
 
     entity.immediateEntityTeleport(user, packet);
     if (entity.typeData().isLivingEntity() && entity.tracingEnabled()) {
-      FeedbackCallback<PacketEvent> task = (player1, event1) -> {
+      EmptyFeedbackCallback task = () -> {
         entity.verifiedPosition = false;
         entity.flyingPacketMap.put(event, 0);
         entity.handleEntityTeleport(user, packet);
         entity.clientSynchronized = true;
         nayoroEntityPositionUpdate(player, entity);
       };
+//      FeedbackObserver observer = entity.feedbackTracker();
+//////      if (entity.doubleVerification) {
+//////        FeedbackCallback<PacketEvent> verificationTask = (x, theEvent) -> entity.verifiedPosition = true;
+//////        Modules.feedback().tracedDoubleSynchronize(player, event, event, task, verificationTask, feedbackTracker, feedbackTracker);
+//////      } else {
+////      Modules.feedback().tracedSingleSynchronize(player, event, task, observer);
+//      user.tracedTickFeedback(task, observer);
+//
+//////      }
       FeedbackCallback<PacketEvent> doubleTransactionTask = (player1, event1) -> {
         int flyingPacketSent = entity.flyingPacketMap.remove(event);
         // Handle transaction split
@@ -548,11 +562,11 @@ public final class EntityTracker extends Module {
   }
 
   @PacketSubscription(
-      priority = ListenerPriority.HIGH,
-      packetsOut = {
-          REL_ENTITY_MOVE, REL_ENTITY_MOVE_LOOK, ENTITY_LOOK
-      },
-      ignoreCancelled = false
+    priority = ListenerPriority.HIGH,
+    packetsOut = {
+      REL_ENTITY_MOVE, REL_ENTITY_MOVE_LOOK, ENTITY_LOOK
+    },
+    ignoreCancelled = false
   )
   public void receiveEntityMovement(PacketEvent event) {
     Player player = event.getPlayer();
@@ -592,6 +606,14 @@ public final class EntityTracker extends Module {
       };
       FeedbackTracker tracker = entity.feedbackTracker();
       Modules.feedback().tracedDoubleSynchronize(player, event, event, task, doubleTransactionTask, tracker, tracker);
+      FeedbackObserver tracker = entity.feedbackTracker();
+////      if (entity.doubleVerification) {
+////        FeedbackCallback<PacketEvent> verificationTask = (x, theEvent) -> entity.verifiedPosition = true;
+////        Modules.feedback().tracedDoubleSynchronize(player, event, event, task, verificationTask, tracker, tracker);
+////      } else {
+//      Modules.feedback().tracedSingleSynchronize(player, event, task, tracker);
+//      user.tracedTickFeedback(task, tracker);
+////      }
     } else {
       entity.handleEntityMovement(packet);
       entity.clientSynchronized = false;
@@ -599,6 +621,28 @@ public final class EntityTracker extends Module {
   }
 
   private final BiConsumer<User, Consumer<EventSink>> sinkCallback = Modules.nayoro().sinkCallback();
+
+  private void nayoroEntitySpawn(User user, Entity entity) {
+    Nayoro nayoro = Modules.nayoro();
+    if (!nayoro.recordingActiveFor(user)) {
+      return;
+    }
+    EntitySpawnEvent event = new EntitySpawnEvent(
+      entity.entityId(),
+      entity.typeData().size(),
+      entity.position.toPosition()
+    );
+    sinkCallback.accept(user, event::accept);
+  }
+
+  private void nayoroEntityDespawn(User user, Entity entity) {
+    Nayoro nayoro = Modules.nayoro();
+    if (!nayoro.recordingActiveFor(user)) {
+      return;
+    }
+    EntityRemoveEvent event = new EntityRemoveEvent(entity.entityId());
+    sinkCallback.accept(user, event::accept);
+  }
 
   private void nayoroEntityPositionUpdate(Player player, Entity entity) {
     Nayoro nayoro = Modules.nayoro();
@@ -644,10 +688,10 @@ public final class EntityTracker extends Module {
     EntityTypeData entityTypeData = entityTypeResolver.entityTypeDataOfBukkitEntity(bukkitEntity);
 
     Entity entity = processEntitySpawn(
-        user,
-        entityID, entityTypeData,
-        serverPosX, serverPosY, serverPosZ,
-        bukkitEntity.getType() == EntityType.PLAYER
+      user,
+      entityID, entityTypeData,
+      serverPosX, serverPosY, serverPosZ,
+      bukkitEntity.getType() == EntityType.PLAYER
     );
 
     if (bukkitEntity instanceof LivingEntity) {
@@ -659,9 +703,9 @@ public final class EntityTracker extends Module {
   }
 
   private Entity processPacketSpawnMob(
-      User user, PacketContainer packet,
-      EntityTypeData entityTypeData,
-      int entityId, boolean isPlayer
+    User user, PacketContainer packet,
+    EntityTypeData entityTypeData,
+    int entityId, boolean isPlayer
   ) {
     if (NEW_POSITION_PROCESSING_1_9) {
       double posX = packet.getDoubles().read(0);
@@ -669,8 +713,8 @@ public final class EntityTracker extends Module {
       double posZ = packet.getDoubles().read(2);
 
       processEntitySpawnNewVersion(
-          user, entityTypeData, entityId,
-          posX, posY, posZ, isPlayer
+        user, entityTypeData, entityId,
+        posX, posY, posZ, isPlayer
       );
     } else {
       // 1.8.x
@@ -691,9 +735,9 @@ public final class EntityTracker extends Module {
       }
 
       return processEntitySpawn(
-          user, entityId, entityTypeData,
-          serverPosX, serverPosY, serverPosZ,
-          isPlayer
+        user, entityId, entityTypeData,
+        serverPosX, serverPosY, serverPosZ,
+        isPlayer
       );
 
 //      WrappedEntity wrappedEntity = entityByIdentifier(user, entityID);
@@ -717,9 +761,9 @@ public final class EntityTracker extends Module {
   }
 
   private void processEntitySpawnNewVersion(
-      User user, EntityTypeData entityTypeData, int entityId,
-      double posX, double posY, double posZ,
-      boolean isPlayer
+    User user, EntityTypeData entityTypeData, int entityId,
+    double posX, double posY, double posZ,
+    boolean isPlayer
   ) {
     ConnectionMetadata synchronizeData = user.meta().connection();
 //    Map<Integer, WrappedEntity> entities = synchronizeData.entities();
@@ -733,9 +777,9 @@ public final class EntityTracker extends Module {
   }
 
   private Entity processEntitySpawn(
-      User user, int entityId, EntityTypeData entityTypeData,
-      long serverPosX, long serverPosY, long serverPosZ,
-      boolean player
+    User user, int entityId, EntityTypeData entityTypeData,
+    long serverPosX, long serverPosY, long serverPosZ,
+    boolean player
   ) {
     ConnectionMetadata synchronizeData = user.meta().connection();
 //    Map<Integer, WrappedEntity> entities = synchronizeData.entities();
@@ -754,18 +798,18 @@ public final class EntityTracker extends Module {
   }
 
   private Entity createEntityOf(
-      int entityId,
-      EntityTypeData entityTypeData,
-      boolean isPlayer
+    int entityId,
+    EntityTypeData entityTypeData,
+    boolean isPlayer
   ) {
     return new Entity(entityId, entityTypeData, isPlayer);
   }
 
   @PacketSubscription(
-      packetsIn = {
-          USE_ENTITY
-      },
-      priority = ListenerPriority.LOWEST
+    packetsIn = {
+      USE_ENTITY
+    },
+    priority = ListenerPriority.LOWEST
   )
   public void receiveUseEntity(PacketEvent event) {
     User user = UserRepository.userOf(event.getPlayer());
@@ -787,11 +831,11 @@ public final class EntityTracker extends Module {
   }
 
   @PacketSubscription(
-      priority = ListenerPriority.HIGH,
-      packetsOut = {
-          ENTITY_STATUS
-      },
-      ignoreCancelled = false
+    priority = ListenerPriority.HIGH,
+    packetsOut = {
+      ENTITY_STATUS
+    },
+    ignoreCancelled = false
   )
   public void receiveEntityStatus(PacketEvent event) {
     Player player = event.getPlayer();
@@ -808,8 +852,7 @@ public final class EntityTracker extends Module {
     }
     boolean synchronize = entity.clientSynchronized && entity.tracingEnabled();
     if (synchronize) {
-      FeedbackCallback<Entity> task = (p, e) -> updateDeadState(e);
-      Modules.feedback().tracedSingleSynchronize(player, entity, task, entity.feedbackTracker());
+      user.tracedTickFeedback(() -> updateDeadState(entity), entity.feedbackTracker());
     } else {
       updateDeadState(entity);
     }
@@ -821,11 +864,11 @@ public final class EntityTracker extends Module {
   }
 
   @PacketSubscription(
-      priority = ListenerPriority.HIGH,
-      packetsOut = {
-          ENTITY_METADATA
-      },
-      ignoreCancelled = false
+    priority = ListenerPriority.HIGH,
+    packetsOut = {
+      ENTITY_METADATA
+    },
+    ignoreCancelled = false
   )
   public void receiveEntityMetadata(PacketEvent event) {
     Player player = event.getPlayer();
@@ -860,18 +903,18 @@ public final class EntityTracker extends Module {
 //    int targetId = duplicationOwners.get(entityId);
 
 //    if (duplicationOwners.containsKey(entityId)) {
-    if (entity.duplicationId != 0) {
-      // Rule #3151235: When editing metadata, do a deepClone().
-      reader.release();
-      event.setPacket(packet = event.getPacket().deepClone());
-      reader = PacketReaders.readerOf(packet);
+      if (entity.duplicationId != 0) {
+        // Rule #3151235: When editing metadata, do a deepClone().
+        reader.release();
+        event.setPacket(packet = event.getPacket().deepClone());
+        reader = PacketReaders.readerOf(packet);
 
-      PacketContainer packetCopy = packet.deepClone();
-      ConnectionMetadata.DecoySide decoySide = decoySides.get(entityId);
-      modifyWatchablesOf((decoySide == SECOND_IS_DECOY ? packet : packetCopy));
-      packetCopy.getIntegers().write(0, entity.duplicationId);
-      PacketSender.sendServerPacket(player, packetCopy);
-    }
+        PacketContainer packetCopy = packet.deepClone();
+        ConnectionMetadata.DecoySide decoySide = decoySides.get(entityId);
+        modifyWatchablesOf((decoySide == SECOND_IS_DECOY ? packet : packetCopy));
+        packetCopy.getIntegers().write(0, entity.duplicationId);
+        PacketSender.sendServerPacket(player, packetCopy);
+      }
 //    }
 
     EntityTypeData type = entity.typeData();
@@ -903,7 +946,7 @@ public final class EntityTracker extends Module {
   }
 
   private void handleFirework(
-      Player player, List<? extends WrappedWatchableObject> watchableObjects
+    Player player, List<? extends WrappedWatchableObject> watchableObjects
   ) {
     if (!MinecraftVersions.VER1_11_0.atOrAbove()) {
       return;
@@ -1001,15 +1044,17 @@ public final class EntityTracker extends Module {
   private static final String FIREWORK_IDENTIFIER = "FIREWORK";
 
   private void processHealthMetadata(
-      Player player, Entity entity,
-      List<? extends WrappedWatchableObject> watchableObjects
+    Player player, Entity entity,
+    List<? extends WrappedWatchableObject> watchableObjects
   ) {
     Float health = readHealthOf(watchableObjects);
     if (health != null) {
       boolean synchronize = entity.clientSynchronized && entity.tracingEnabled();
       if (synchronize) {
-        FeedbackTracker tracker = entity.feedbackTracker();
-        Modules.feedback().tracedSingleSynchronize(player, entity, (p, e) -> updateHealthState(e, health), tracker);
+//        FeedbackObserver tracker = entity.feedbackTracker();
+//        Modules.feedback().tracedSingleSynchronize(player, entity, (p, e) -> updateHealthState(e, health), tracker);
+        User user = UserRepository.userOf(player);
+        user.tracedTickFeedback(() -> updateHealthState(entity, health), entity.feedbackTracker());
       } else {
         updateHealthState(entity, health);
       }
@@ -1022,10 +1067,11 @@ public final class EntityTracker extends Module {
     }
     Float health = readHealthOf(watchableObjects);
     if (health != null) {
-      AbilityMetadata abilityData = UserRepository.userOf(player).meta().abilities();
+      User user = UserRepository.userOf(player);
+      AbilityMetadata abilityData = user.meta().abilities();
       abilityData.unsynchronizedHealth = health;
-      Modules.feedback().synchronize(player, health, (p, retrievedHealth) -> {
-        abilityData.health = retrievedHealth;
+      user.tickFeedback(() -> {
+        abilityData.health = health;
         abilityData.ticksToLastHealthUpdate = 0;
       });
     }
@@ -1061,7 +1107,6 @@ public final class EntityTracker extends Module {
       if (!optionalInt.isPresent()) {
         return null;
       }
-
       rawValue = optionalInt.getAsInt();
     }
     return ((Number) rawValue).floatValue();
@@ -1083,7 +1128,6 @@ public final class EntityTracker extends Module {
 
   @Nullable
   public static Entity entityByIdentifier(User user, int entityID) {
-    ConnectionMetadata synchronizeData = user.meta().connection();
-    return synchronizeData.entityBy(entityID);
+    return user.meta().connection().entityBy(entityID);
   }
 }

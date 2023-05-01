@@ -153,7 +153,7 @@ public final class PacketDependenciesHeuristic extends MetaCheckPart<Heuristics,
       ARM_ANIMATION,
       BLOCK_DIG,
       BLOCK_PLACE,
-      HELD_ITEM_SLOT
+      HELD_ITEM_SLOT_IN
     }
   )
   public void receivePackets(PacketEvent event) {

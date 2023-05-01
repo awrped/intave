@@ -3,6 +3,7 @@ package de.jpx3.intave.user;
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.events.PacketContainer;
+import com.comphenix.protocol.events.PacketEvent;
 import com.google.common.collect.Maps;
 import de.jpx3.intave.IntaveLogger;
 import de.jpx3.intave.IntavePlugin;
@@ -15,11 +16,13 @@ import de.jpx3.intave.block.type.BlockTypeAccess;
 import de.jpx3.intave.check.movement.physics.Pose;
 import de.jpx3.intave.cleanup.GarbageCollector;
 import de.jpx3.intave.connect.customclient.CustomClientSupportConfig;
+import de.jpx3.intave.diagnostic.ConsoleOutput;
 import de.jpx3.intave.entity.size.HitboxSize;
 import de.jpx3.intave.executor.Synchronizer;
 import de.jpx3.intave.module.Modules;
 import de.jpx3.intave.module.actionbar.DisplayType;
-import de.jpx3.intave.module.feedback.FeedbackCallback;
+import de.jpx3.intave.module.feedback.EmptyFeedbackCallback;
+import de.jpx3.intave.module.feedback.FeedbackObserver;
 import de.jpx3.intave.module.feedback.FeedbackSender;
 import de.jpx3.intave.module.mitigate.AttackNerfStrategy;
 import de.jpx3.intave.module.mitigate.HurttimeModifier;
@@ -43,7 +46,6 @@ import de.jpx3.intave.user.storage.PlayerStorage;
 import de.jpx3.intave.user.storage.Storage;
 import de.jpx3.intave.user.storage.Storages;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
@@ -134,6 +136,9 @@ final class PlayerUser implements User {
   }
 
   private void outputVersionJoinInfo() {
+    if (!ConsoleOutput.CLIENT_VERSION_DEBUG) {
+      return;
+    }
     Player player = player();
     ProtocolMetadata clientData = meta().protocol();
     String string = player.getName() + " joined with version " + clientData.versionString() + "/" + clientData.protocolVersion();
@@ -141,7 +146,7 @@ final class PlayerUser implements User {
       string += " (behind)";
     }
     string += " and locale " + clientData.locale();
-    IntaveLogger.logger().printLine(string);
+    IntaveLogger.logger().info(string);
   }
 
   @Override
@@ -378,11 +383,19 @@ final class PlayerUser implements User {
   }
 
   @Override
-  public void applyShortAttackStimulus(AttackNerfStrategy strategy, String checkId) {
+  public void nerfOnce(AttackNerfStrategy strategy, String checkId) {
     if (trustFactor().atLeast(TrustFactor.BYPASS)) {
       return;
     }
     Modules.mitigate().combat().mitigateOnce(this, strategy, checkId);
+  }
+
+  @Override
+  public void nerfPermanently(AttackNerfStrategy strategy, String checkId) {
+    if (trustFactor().atLeast(TrustFactor.BYPASS)) {
+      return;
+    }
+    Modules.mitigate().combat().mitigatePermanently(this, strategy, checkId);
   }
 
   @Override
@@ -482,15 +495,10 @@ final class PlayerUser implements User {
   @Override
   public void noteFeedbackFault() {
     ConnectionMetadata connectionData = metadata.connection();
-    if (plugin().sibylIntegrationService().isAuthenticated(player())) {
-      Synchronizer.synchronize(() -> {
-        player().sendMessage(ChatColor.RED + "Feedback fault");
-      });
-    }
-
-    // why is the limit at 100? I don't know!
-    if (connectionData.hardTransactionResponse++ > 100 && FaultKicks.FEEDBACK_FAULTS) {
-      IntaveLogger.logger().info(player().getName() + " has been removed for repeated feedback faults");
+    if (!justJoined() && connectionData.lastReceivedTransactionNum > 100 && connectionData.hardTransactionResponse++ > 3 && FaultKicks.FEEDBACK_FAULTS) {
+      if (ConsoleOutput.FAULT_KICKS) {
+        IntaveLogger.logger().info(player().getName() + " will be removed for repeated feedback faults");
+      }
       kick("Repeated feedback faults");
     }
   }
@@ -503,8 +511,10 @@ final class PlayerUser implements User {
       return;
     }
     disconnectQueued = true;
-    IntaveLogger.logger().info("Queuing manual disconnect of player " + player().getName() + " for \"" + reason + "\"");
-    IntaveLogger.logger().info("This measure is a security-constraint necessity, but feel free to contact us if this happens too often");
+    if (ConsoleOutput.FAULT_KICKS) {
+      IntaveLogger.logger().info("Queuing manual disconnect of player " + player().getName() + " for \"" + reason + "\"");
+      IntaveLogger.logger().info("This measure is a security-constraint necessity, but feel free to contact us if this happens too often");
+    }
     Synchronizer.synchronize(() -> {
       if (player().isOnline()) {
         player().kickPlayer(reason);
@@ -549,8 +559,43 @@ final class PlayerUser implements User {
   }
 
   @Override
-  public void tickFeedback(FeedbackCallback<Void> callback) {
-    Modules.feedback().synchronize(player(), (player1, target) -> callback.success(player1, null), SELF_SYNCHRONIZATION);
+  public void tickFeedback(EmptyFeedbackCallback callback) {
+    Modules.feedback().synchronize(player(), (player1, target) -> callback.success(player1, null));
+  }
+
+  @Override
+  public void tickFeedback(EmptyFeedbackCallback callback, int options) {
+    Modules.feedback().synchronize(player(), (player1, target) -> callback.success(player1, null), options);
+  }
+
+  @Override
+  public void tracedTickFeedback(EmptyFeedbackCallback callback, FeedbackObserver tracker) {
+    Modules.feedback().tracedSingleSynchronize(player(), null,callback, tracker);
+  }
+
+  @Override
+  public void tracedTickFeedback(EmptyFeedbackCallback callback, FeedbackObserver tracker, int options) {
+    Modules.feedback().tracedSingleSynchronize(player(), null, callback, tracker, options);
+  }
+
+  @Override
+  public void doubleTickFeedback(PacketEvent event, EmptyFeedbackCallback callback, EmptyFeedbackCallback callback2) {
+    Modules.feedback().doubleSynchronize(player(), event, null, callback, callback2);
+  }
+
+  @Override
+  public void doubleTickFeedback(PacketEvent event, EmptyFeedbackCallback callback, EmptyFeedbackCallback callback2, int options) {
+    Modules.feedback().doubleSynchronize(player(), event, null, callback, callback2, options);
+  }
+
+  @Override
+  public void doubleTracedTickFeedback(PacketEvent event, EmptyFeedbackCallback callback, EmptyFeedbackCallback callback2, FeedbackObserver tracker) {
+    Modules.feedback().tracedDoubleSynchronize(player(), event, null, callback, callback2, tracker, tracker);
+  }
+
+  @Override
+  public void doubleTracedTickFeedback(PacketEvent event, EmptyFeedbackCallback callback, EmptyFeedbackCallback callback2, FeedbackObserver tracker, int options) {
+    Modules.feedback().tracedDoubleSynchronize(player(), event, null, callback, callback2, tracker, tracker, options);
   }
 
   private void sendStatsUpdate(Player player, int foodLevel, float saturationLevel) {

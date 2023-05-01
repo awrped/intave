@@ -134,7 +134,7 @@ public final class InternalsStage extends CommandStage {
   }
 
   @SubCommand(
-    selectors = "collectivekick",
+    selectors = {"collectivekick", "kickip"},
     usage = "<player> <message>",
     permission = "intave.command.internals.collectivekick",
     description = "Kicks all players with the same ip as the target player"

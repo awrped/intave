@@ -3,18 +3,16 @@ package de.jpx3.intave.user.storage;
 import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteArrayDataOutput;
 
-import java.io.EOFException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class PlayerStorage implements Storage {
-  private static final int STORAGE_VERSION = 2;
+  private static final int STORAGE_VERSION = 3;
 
   private final Map<Class<? extends Storage>, Storage> subStorages = new ConcurrentHashMap<>();
-  private final List<Storage> storageList = new ArrayList<>();
+  private final Map<Integer, Storage> storageList = new HashMap<>();
   private final UUID id;
   private long creation;
 
@@ -29,7 +27,13 @@ public final class PlayerStorage implements Storage {
     output.writeLong(id.getMostSignificantBits());
     output.writeLong(id.getLeastSignificantBits());
     output.writeLong(creation);
-    storageList.forEach(child -> child.writeTo(output));
+    for (Storage child : storageList.values()) {
+      output.writeByte(child.id());
+      output.writeByte(child.version());
+      child.writeTo(output);
+    }
+    output.writeByte(-1);
+    output.writeByte(-1);
   }
 
   private static final String INVALID_ID_ERROR = "Invalid entry fetched, expected %s but received id %s";
@@ -52,13 +56,26 @@ public final class PlayerStorage implements Storage {
       throw new IllegalStateException(errorMessage);
     }
     creation = input.readLong();
-    storageList.forEach(child -> child.readFrom(input));
+    do {
+      int storageId = input.readByte();
+      int storageVersion = input.readByte();
+      if (storageId == -1 && storageVersion == -1) {
+        break;
+      }
+      Storage storage = storageList.get(storageId);
+      if (storage != null && storage.version() == storageVersion) {
+        storage.readFrom(input);
+      }
+    } while (true);
   }
 
   <T extends Storage> void append(Class<T> storageClass) {
     T value = instanceOf(storageClass);
+    if (storageList.get(value.id()) != null) {
+      throw new IllegalStateException("Storage with id " + value.id() + " already exists");
+    }
     subStorages.put(storageClass, value);
-    storageList.add(value);
+    storageList.put(value.id(), value);
   }
 
   public <T extends Storage> T storageOf(Class<T> storageClass) {
@@ -70,8 +87,16 @@ public final class PlayerStorage implements Storage {
     try {
       return tClass.newInstance();
     } catch (Exception exception) {
-      exception.printStackTrace();
-      return null;
+      throw new IllegalStateException("Failed to create instance of " + tClass.getName(), exception);
     }
+  }
+
+  public int id() {
+    throw new UnsupportedOperationException("No id here");
+  }
+
+  @Override
+  public int version() {
+    return STORAGE_VERSION;
   }
 }

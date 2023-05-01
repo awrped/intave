@@ -45,4 +45,14 @@ public final class HeuristicsStorage implements Storage {
   public long timeOfSave() {
     return timeOfSave;
   }
+
+  @Override
+  public int id() {
+    return 2;
+  }
+
+  @Override
+  public int version() {
+    return 1;
+  }
 }

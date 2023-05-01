@@ -52,7 +52,7 @@ public final class Collision {
     return Collectors.collectingAndThen(Collectors.counting(), predicate::test);
   }
 
-  public static BlockShape collisionShape(Player player, BoundingBox playerBoundingBox) {
+  public static BlockShape shape(Player player, BoundingBox playerBoundingBox) {
     return collectCollisionShapes(player, playerBoundingBox, COLLISION_CHECK_LIMIT, SHAPE_COMPILATION, BlockShapes::emptyShape);
   }
 
@@ -88,6 +88,7 @@ public final class Collision {
     ExtendedBlockStateCache stateAccess = user.blockStates();
     boolean outsideBorderLast = movementData.outsideBorder;
     boolean outsideBorderCurrent = playerOutsideBorder(user);
+    // this works, but why?
     if (outsideBorderLast && outsideBorderCurrent) {
       movementData.outsideBorder = false;
     } else if (!outsideBorderLast && !outsideBorderCurrent) {
@@ -106,7 +107,7 @@ public final class Collision {
           Material material = stateAccess.typeAt(x, y, z);
           if (CollisionModifiers.isModified(material)) {
             // this should not happen too often
-            resolve = CollisionModifiers.modified(material, user, playerBox, x, y, z, resolve, CollisionRequestType.MOTION_CALCULATION);
+            resolve = CollisionModifiers.modified(user, playerBox, material, x, y, z, resolve, CollisionOrigin.MOTION_CALCULATION);
           }
           boolean blockOutsideBorder = !blockInsideBorder(world, x, z);
           if (blockOutsideBorder && !movementData.outsideBorder) {
@@ -133,10 +134,7 @@ public final class Collision {
         }
       }
     }
-    if (container == null) {
-      return escapeReturn.get();
-    }
-    return finisher.apply(container);
+    return container == null ? escapeReturn.get() : finisher.apply(container);
   }
 
   public static <C, R> R collectCollidingPositions(
@@ -271,7 +269,7 @@ public final class Collision {
                 Material material = stateAccess.typeAt(x, y, z);
                 if (CollisionModifiers.isModified(material)) {
                   blockShape = CollisionModifiers.modified(
-                    material, user, playerBoundingBox, x, y, z, blockShape, CollisionRequestType.INTERSECTION_CHECK
+                    user, playerBoundingBox, material, x, y, z, blockShape, CollisionOrigin.INTERSECTION_CHECK
                   );
                 }
                 boolean blockOutsideBorder = !blockInsideBorder(world, x, z);

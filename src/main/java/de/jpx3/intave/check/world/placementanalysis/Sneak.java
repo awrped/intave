@@ -60,17 +60,17 @@ public final class Sneak extends MetaCheckPart<PlacementAnalysis, Sneak.SneakMet
         double average = placementSpeedHistory.stream().mapToDouble(value -> value).average().orElse(500);
         boolean inOneLine = isOneLine(meta.placementHistory);
         boolean noSneaking = System.currentTimeMillis() - movementData.lastSneakingTimestamps > 6000;
-
         double limit = 500;
 
         int speedAmplifier = potionData.potionEffectSpeedAmplifier();
         limit /= 0.15 * speedAmplifier * speedAmplifier + 1;
 
         if (average < limit && inOneLine && noSneaking) {
+          int ticksPerBlock = (int) (average / 50d);
           Violation violation = Violation.builderFor(PlacementAnalysis.class)
             .forPlayer(player).withDefaultThreshold()
             .withMessage(COMMON_FLAG_MESSAGE)
-            .withDetails(((int) average) + "ms/block in a straight line without sneaking")
+            .withDetails(ticksPerBlock + " t/b in a straight line without sneaking")
             .withDefaultThreshold().withVL(3).build();
           ViolationContext violationContext = Modules.violationProcessor().processViolation(violation);
           if (violationContext.violationLevelAfter() > 20) {
@@ -105,7 +105,7 @@ public final class Sneak extends MetaCheckPart<PlacementAnalysis, Sneak.SneakMet
     return collisions;
   }
 
-  private boolean isOneLine(List<Location> blocks) {
+  private boolean isOneLine(List<? extends Location> blocks) {
     int lastBlockX = 0, lastBlockY = 0, lastBlockZ = 0;
     boolean lockedOnX = false, lockedOnZ = false;
     boolean first = true;

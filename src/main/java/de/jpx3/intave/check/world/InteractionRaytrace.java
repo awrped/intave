@@ -510,8 +510,8 @@ public final class InteractionRaytrace extends MetaCheck<InteractionRaytrace.Int
     InteractionType type = interaction.type();
     Block targetLocationBlock = VolatileBlockAccess.blockAccess(targetLocation);
     Block raycastLocationBlock = VolatileBlockAccess.blockAccess(raycastLocation);
-    Material raycastLocationBlockType = BlockTypeAccess.typeAccess(raycastLocationBlock);
     Material targetLocationBlockType = BlockTypeAccess.typeAccess(targetLocationBlock);
+    Material raycastLocationBlockType = BlockTypeAccess.typeAccess(raycastLocationBlock);
     if (targetLocationBlockType == Material.AIR || raycastLocationBlockType == Material.AIR) {
       return true;
     }

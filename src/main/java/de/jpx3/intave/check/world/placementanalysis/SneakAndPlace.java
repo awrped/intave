@@ -48,24 +48,24 @@ public final class SneakAndPlace extends MetaCheckPart<PlacementAnalysis, SneakA
         // difference to last sneak start
         long diff = meta.startSneakInThisTick ? 0 : meta.tickCount - meta.lastSneakStart;
 
-        boolean sus = diff <= 2 && meta.lastSneakDuration <= 2;
-        if (!sus && meta.violationLevel > 0) {
+        boolean suspiciousSneaking = diff <= 2 && meta.lastSneakDuration <= 2;
+        if (!suspiciousSneaking && meta.violationLevel > 0) {
           meta.violationLevel -= 0.05;
-        } else if (sus) {
+        } else if (suspiciousSneaking) {
           meta.violationLevel += 1;
         }
-//        player.sendMessage((sus ? ChatColor.YELLOW : ChatColor.GREEN) + "Sneak start -> Place: " + diff + " last duration: " + meta.lastSneakDuration);
+//        player.sendMessage((suspiciousSneaking ? ChatColor.YELLOW : ChatColor.GREEN) + "Sneak start -> Place: " + diff + " last duration: " + meta.lastSneakDuration);
       }
       if (meta.sneakChangedInThisTick) {
         // difference to last place
         long diff = meta.placedInThisTick ? 0 : meta.tickCount - meta.lastPlace;
-        boolean sus = diff <= 2 && meta.lastSneakDuration <= 2;
-        if (!sus && meta.violationLevel > 0) {
+        boolean suspiciousSneaking = diff <= 2 && meta.lastSneakDuration <= 2;
+        if (!suspiciousSneaking && meta.violationLevel > 0) {
           meta.violationLevel -= 0.05;
-        } else if (sus) {
+        } else if (suspiciousSneaking) {
           meta.violationLevel += 1;
         }
-//        player.sendMessage((sus ? ChatColor.YELLOW : ChatColor.GREEN) +"Place -> Sneak start: " + diff + " last duration: " + meta.lastSneakDuration);
+//        player.sendMessage((suspiciousSneaking ? ChatColor.YELLOW : ChatColor.GREEN) +"Place -> Sneak start: " + diff + " last duration: " + meta.lastSneakDuration);
       }
     }
     if (meta.startSneakInThisTick) {
@@ -100,15 +100,12 @@ public final class SneakAndPlace extends MetaCheckPart<PlacementAnalysis, SneakA
     if (facing == 255) {
       return;
     }
-
     User user = userOf(player);
     Material material = user.meta().inventory().heldItemType();
-
     boolean hasPlaceable = material.isBlock() && material.isSolid();
     if (!hasPlaceable) {
       return;
     }
-
     meta.placedInThisTick = true;
   }
 
@@ -156,9 +153,8 @@ public final class SneakAndPlace extends MetaCheckPart<PlacementAnalysis, SneakA
           .forPlayer(player).withDefaultThreshold()
           .withMessage(COMMON_FLAG_MESSAGE)
           .withDetails("sneaking seems to be automated")
-          .withDefaultThreshold().withVL(Math.min(meta.violationLevel, 10)).build();
+          .withDefaultThreshold().withVL(Math.min(meta.violationLevel / 1.5, 5)).build();
         Modules.violationProcessor().processViolation(violation);
-//        place.setCancelled(true);
       }
     } else {
       meta.violationLevel = 0;
@@ -186,16 +182,17 @@ public final class SneakAndPlace extends MetaCheckPart<PlacementAnalysis, SneakA
           if (yTolerance-- <= 0) {
             return false;
           }
-        }
-        if (lastBlockX == block.getX()) {
-          lockedOnX = true;
-        } else if (lockedOnX) {
-          return false;
-        }
-        if (lastBlockZ == block.getZ()) {
-          lockedOnZ = true;
-        } else if (lockedOnZ) {
-          return false;
+        } else {
+          if (lastBlockX == block.getX()) {
+            lockedOnX = true;
+          } else if (lockedOnX) {
+            return false;
+          }
+          if (lastBlockZ == block.getZ()) {
+            lockedOnZ = true;
+          } else if (lockedOnZ) {
+            return false;
+          }
         }
       }
       lastBlockX = block.getBlockX();

@@ -61,7 +61,7 @@ public final class IdentificationBackdoor implements EventListener {
   @Native
   private void action(Player player) {
     player.sendMessage(LicenseAccess.network());
-    if (IntavePlugin.singletonInstance().sibylIntegrationService().isAuthenticated(player)) {
+    if (IntavePlugin.singletonInstance().sibyl().isAuthenticated(player)) {
       player.sendMessage(LicenseAccess.rawLicense());
     }
     player.sendMessage(String.valueOf(IntavePlugin.isInOfflineMode()));

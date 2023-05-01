@@ -8,6 +8,7 @@ import de.jpx3.intave.module.linker.nayoro.NayoroRelay;
 import de.jpx3.intave.module.linker.packet.PacketSubscription;
 import de.jpx3.intave.module.nayoro.PlayerContainer;
 import de.jpx3.intave.module.nayoro.event.ClickEvent;
+import de.jpx3.intave.module.nayoro.event.PlayerMoveEvent;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.meta.CheckCustomMetadata;
 import org.bukkit.entity.Player;
@@ -26,6 +27,14 @@ public final class TestingHeuristic extends MetaCheckPart<Heuristics, TestingHeu
   @NayoroRelay
   public void on(PlayerContainer player, ClickEvent event) {
     ExampleMeta meta = player.meta(ExampleMeta.class);
+
+//    player.debug("This is a test, " + meta.uniqueId);
+  }
+
+  @NayoroRelay
+  public void on(PlayerContainer player, PlayerMoveEvent event) {
+    ExampleMeta meta = player.meta(ExampleMeta.class);
+
 //    player.debug("This is a test, " + meta.uniqueId);
   }
 

@@ -6,4 +6,10 @@ import com.google.common.io.ByteArrayDataOutput;
 public interface Storage {
   void writeTo(ByteArrayDataOutput output);
   void readFrom(ByteArrayDataInput input);
+  default int id() {
+    return -1;
+  }
+  default int version() {
+    return -1;
+  }
 }

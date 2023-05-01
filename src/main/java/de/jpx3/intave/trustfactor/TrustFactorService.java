@@ -1,12 +1,14 @@
 package de.jpx3.intave.trustfactor;
 
 import de.jpx3.intave.IntaveControl;
+import de.jpx3.intave.IntaveLogger;
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.access.player.trust.DefaultForwardingPermissionTrustFactorResolver;
 import de.jpx3.intave.access.player.trust.StorageTrustfactorResolver;
 import de.jpx3.intave.access.player.trust.TrustFactor;
 import de.jpx3.intave.access.player.trust.TrustFactorResolver;
 import de.jpx3.intave.annotate.HighOrderService;
+import de.jpx3.intave.diagnostic.ConsoleOutput;
 import de.jpx3.intave.diagnostic.message.DebugBroadcast;
 import de.jpx3.intave.diagnostic.message.MessageCategory;
 import de.jpx3.intave.diagnostic.message.MessageSeverity;
@@ -37,7 +39,7 @@ public final class TrustFactorService implements BukkitEventSubscriber {
   }
 
   public void setup() {
-    TrustFactorLoader trustFactorLoader = IntaveControl.USE_DEBUG_RESOURCES ? new DebugYamlTrustFactorLoader() : new InternetYamlTrustFactorLoader();
+    TrustFactorLoader trustFactorLoader = IntaveControl.USE_DEBUG_TRUSTFACTOR_RESOURCE ? new DebugYamlTrustFactorLoader() : new InternetYamlTrustFactorLoader();
     trustFactorConfiguration = trustFactorLoader.fetch();
     trustFactorResolver = DEFAULT_RESOLVER;
 
@@ -92,6 +94,11 @@ public final class TrustFactorService implements BukkitEventSubscriber {
     );
     User user = UserRepository.userOf(player);
     user.setTrustFactor(trustFactor);
+
+    if (ConsoleOutput.TRUSTFACTOR_DEBUG) {
+      String message2 = ChatColor.RED + player.getName() + IntavePlugin.defaultColor() + " was assigned a " + trustFactor.coloredBaseName() + IntavePlugin.defaultColor() + " trustfactor by " + source;
+      IntaveLogger.logger().info(message2);
+    }
   }
 
   public int trustFactorSetting(String key, Player player) {

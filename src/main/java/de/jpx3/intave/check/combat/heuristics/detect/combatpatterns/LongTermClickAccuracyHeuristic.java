@@ -4,7 +4,6 @@ import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.wrappers.EnumWrappers;
-import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.annotate.Reserved;
 import de.jpx3.intave.check.MetaCheckPart;
 import de.jpx3.intave.check.combat.Heuristics;
@@ -23,11 +22,8 @@ import static de.jpx3.intave.module.linker.packet.PacketId.Client.USE_ENTITY;
 
 @Reserved
 public final class LongTermClickAccuracyHeuristic extends MetaCheckPart<Heuristics, LongTermClickAccuracyHeuristic.ClickAccuracyMeta> {
-  private final IntavePlugin plugin;
-
   public LongTermClickAccuracyHeuristic(Heuristics parentCheck) {
     super(parentCheck, ClickAccuracyMeta.class);
-    this.plugin = IntavePlugin.singletonInstance();
   }
 
   @PacketSubscription(

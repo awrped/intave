@@ -11,8 +11,6 @@ import org.bukkit.World;
 import org.bukkit.craftbukkit.v1_14_R1.CraftWorld;
 import org.bukkit.entity.Player;
 
-import java.util.List;
-
 @PatchyAutoTranslation
 public final class v14ShapeDrill extends AbstractShapeDrill {
   @Override
@@ -35,8 +33,8 @@ public final class v14ShapeDrill extends AbstractShapeDrill {
     if (blockData == null || blockAccess == null) {
       return BlockShapes.emptyShape();
     }
-    VoxelShape shape = blockData.getShape(blockAccess, blockPositionOf(posX, posY, posZ));
-    return shapeFromVoxel(shape, posX, posY, posZ);
+    VoxelShape voxel = blockData.getShape(blockAccess, blockPositionOf(posX, posY, posZ));
+    return shapeFromVoxel(voxel, posX, posY, posZ);
   }
 
   @PatchyAutoTranslation
@@ -47,22 +45,21 @@ public final class v14ShapeDrill extends AbstractShapeDrill {
 
   @PatchyAutoTranslation
   @PatchyTranslateParameters
-  private BlockShape shapeFromVoxel(VoxelShape shape, int posX, int posY, int posZ) {
+  private BlockShape shapeFromVoxel(VoxelShape voxel, int posX, int posY, int posZ) {
     // should never happen, but just in case
-    if (shape == null) {
+    if (voxel == null) {
       return BlockShapes.emptyShape();
     }
-    // check if shape is static empty
-    if (VoxelShapes.a() == shape) {
+    // check if voxel is static empty
+    if (VoxelShapes.a() == voxel) {
       return BlockShapes.emptyShape();
     }
-    // check if shape is static cube
-    if (VoxelShapes.b() == shape) {
+    // check if voxel is static cube
+    if (VoxelShapes.b() == voxel) {
       return BlockShapes.cubeAt(posX, posY, posZ);
     }
     // convert complex blocks to native BBs
-    List<AxisAlignedBB> nativeBoxes = shape.d();
-    return translateWithOffset(nativeBoxes, posX, posY, posZ);
+    return translateWithOffset(voxel.d(), posX, posY, posZ);
   }
 
   @PatchyAutoTranslation

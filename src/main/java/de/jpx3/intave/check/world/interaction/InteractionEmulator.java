@@ -126,7 +126,7 @@ public final class InteractionEmulator implements EventProcessor {
     Location blockBreakLocation = blockPosition.toLocation(world);
     boolean access =
       WorldPermission.blockBreakPermission(
-        player, VolatileBlockAccess.blockAccess(blockBreakLocation));
+        player, VolatileBlockAccess.fakeBlockAccess(user, blockBreakLocation));
     if (access) {
       int blockX = blockBreakLocation.getBlockX();
       int blockY = blockBreakLocation.getBlockY();

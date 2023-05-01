@@ -130,12 +130,32 @@ public final class EntityMoveEvent extends Event {
     return z;
   }
 
+  public void setX(double x) {
+    this.x = x;
+  }
+
+  public void setY(double y) {
+    this.y = y;
+  }
+
+  public void setZ(double z) {
+    this.z = z;
+  }
+
   public float yaw() {
     return yaw;
   }
 
   public float pitch() {
     return pitch;
+  }
+
+  public void setYaw(float yaw) {
+    this.yaw = yaw;
+  }
+
+  public void setPitch(float pitch) {
+    this.pitch = pitch;
   }
 
   public boolean applyX() {

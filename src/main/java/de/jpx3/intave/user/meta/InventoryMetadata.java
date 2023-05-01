@@ -1,9 +1,11 @@
 package de.jpx3.intave.user.meta;
 
+import de.jpx3.intave.IntaveControl;
 import de.jpx3.intave.adapter.MinecraftVersions;
 import de.jpx3.intave.annotate.Nullable;
 import de.jpx3.intave.annotate.Relocate;
-import de.jpx3.intave.annotate.refactoring.IdoNotBelongHere;
+import de.jpx3.intave.block.type.MaterialSearch;
+import de.jpx3.intave.executor.Synchronizer;
 import de.jpx3.intave.player.Enchantments;
 import de.jpx3.intave.player.ItemProperties;
 import de.jpx3.intave.user.User;
@@ -14,6 +16,8 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Relocate
 public final class InventoryMetadata {
@@ -29,18 +33,20 @@ public final class InventoryMetadata {
   public boolean releaseItemNextTick = false;
   public Material releaseItemType = Material.AIR;
   public volatile SlotSwitchData slotSwitchData;
-  private int handSlot;
-  private boolean handActive;
-  private Material activeItem;
-  private boolean foodItem;
+  public int pastSlotSwitch;
   private boolean inventoryOpen;
+  private int handSlot;
+  private volatile boolean handActive;
+  private final Lock handActiveLock = new ReentrantLock();
+  private Material activeItemType;
+  private boolean foodItem;
 
   public InventoryMetadata(Player player) {
     this.player = player;
     if (player != null) {
       this.handSlot = player.getInventory().getHeldItemSlot();
     }
-    activeItem = Material.AIR;
+    activeItemType = Material.AIR;
   }
 
   public boolean handActive() {
@@ -70,6 +76,10 @@ public final class InventoryMetadata {
     return player == null ? null : player.getInventory().getItemInOffHand();
   }
 
+  public boolean usableItemInEitherHand() {
+    return ItemProperties.canItemBeUsed(player, heldItem()) || ItemProperties.canItemBeUsed(player, offhandItem());
+  }
+
   @Nullable
   public Material offhandItemType() {
     ItemStack item = offhandItem();
@@ -89,33 +99,68 @@ public final class InventoryMetadata {
     return inventoryOpen;
   }
 
-  @IdoNotBelongHere
-  public void deactivateHand() {
-    User user = UserRepository.userOf(player);
-    MovementMetadata movementData = user.meta().movement();
-    ItemStack heldItem = heldItem();
-    ItemStack offhandItem = offhandItem();
-    if (heldItem != null && Enchantments.tridentRiptideEnchanted(heldItem)
-        || offhandItem != null && Enchantments.tridentRiptideEnchanted(offhandItem)) {
-      movementData.pastRiptideSpin = 0;
-      movementData.onGroundWithRiptide = movementData.onGround;
-    }
-    this.handActive = false;
-    this.pastItemUsageTransition = 0;
-    this.handActiveTicks = 0;
-    this.activeItem = Material.AIR;
-  }
-
   public void activateHand() {
-    this.handActive = true;
-    this.foodItem = ItemProperties.foodConsumable(player, heldItemType());
-    this.pastItemUsageTransition = 0;
-    this.handActiveTicks = 0;
-    this.activeItem = heldItemType();
+    handActiveLock.lock();
+    try {
+      if (handActive) {
+        return;
+      }
+      this.handActive = true;
+      this.foodItem = ItemProperties.foodConsumable(player, heldItemType());
+      this.pastItemUsageTransition = 0;
+      this.handActiveTicks = 0;
+      this.activeItemType = heldItemType();
+      if (IntaveControl.DEBUG_ITEM_USAGE) {
+        Material activeItem = this.activeItemType;
+        Synchronizer.synchronize(() -> {
+          player.sendMessage("Item usage started: " + activeItem);
+        });
+        Thread.dumpStack();
+        System.out.println("Item usage started: " + this.activeItemType);
+      }
+    } finally {
+      handActiveLock.unlock();
+    }
   }
 
-  public Material activeItem() {
-    return activeItem;
+  public void deactivateHand() {
+    handActiveLock.lock();
+    try {
+      User user = UserRepository.userOf(player);
+      MovementMetadata movementData = user.meta().movement();
+      if (!handActive) {
+        return;
+      }
+      ItemStack heldItem = heldItem();
+      ItemStack offhandItem = offhandItem();
+      if (heldItem != null && Enchantments.tridentRiptideEnchanted(heldItem)
+        || offhandItem != null && Enchantments.tridentRiptideEnchanted(offhandItem)) {
+        movementData.pastRiptideSpin = 0;
+        movementData.highestLocalRiptideLevel = Math.max(
+          movementData.highestLocalRiptideLevel,
+          Math.max(Enchantments.resolveRiptideModifier(heldItem), Enchantments.resolveRiptideModifier(offhandItem))
+        );
+        movementData.onGroundWithRiptide = movementData.onGround;
+      }
+      this.handActive = false;
+      this.pastItemUsageTransition = 0;
+      this.handActiveTicks = 0;
+      if (IntaveControl.DEBUG_ITEM_USAGE) {
+        Material activeItem = this.activeItemType;
+        Synchronizer.synchronize(() -> {
+          player.sendMessage("Item usage ended: " + activeItem);
+        });
+//        Thread.dumpStack();
+        System.out.println("Item usage ended: " + activeItem);
+      }
+      this.activeItemType = Material.AIR;
+    } finally {
+      handActiveLock.unlock();
+    }
+  }
+
+  public Material activeItemType() {
+    return activeItemType;
   }
 
   public void releaseItemNextTick() {
@@ -127,6 +172,7 @@ public final class InventoryMetadata {
     this.handSlot = slot;
   }
 
+  @Deprecated
   public void setHandActive(boolean handActive) {
     this.handActive = handActive;
   }
@@ -143,6 +189,28 @@ public final class InventoryMetadata {
 
   public boolean foodItem() {
     return foodItem;
+  }
+
+  private static final Material CROSSBOW = MaterialSearch.materialThatIsNamed("CROSSBOW");
+
+  public boolean couldChargeCrossbow() {
+//    User user = UserRepository.userOf(player);
+    if (CROSSBOW == null) {
+      return false;
+    }
+    return (heldItemType() == CROSSBOW || offhandItemType() == CROSSBOW) && hasArrowInInventory();
+  }
+
+  private boolean hasArrowInInventory() {
+    for (ItemStack item : player.getInventory().getContents()) {
+      if (item == null) {
+        continue;
+      }
+      if (item.getType() == Material.ARROW) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public static class SlotSwitchData {

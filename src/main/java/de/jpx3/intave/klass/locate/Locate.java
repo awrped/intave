@@ -74,12 +74,14 @@ public final class Locate {
   public static String patchyMethodCovert(String classInput, String methodName, String methodDescription) {
     classInput = classInput.replace("/", ".");
     String outputName;
+    String methodKey = methodName + methodDescription;
     if (classInput.startsWith("net.minecraft.server.v")) {
-      outputName = methodNameByKey(classInput.split("\\.")[4], methodName + methodDescription);
+      String classKey = classInput.split("\\.")[4];
+      outputName = methodNameByKey(classKey, methodKey);
     } else if (classInput.startsWith("net.minecraft")) {
       String[] packages = classInput.split("\\.");
       String classKey = packages[packages.length - 1];
-      outputName = methodNameByKey(classKey, methodName + methodDescription);
+      outputName = methodNameByKey(classKey, methodKey);
     } else {
       outputName = methodName;
     }
@@ -117,15 +119,20 @@ public final class Locate {
   }
 
   public static Field fieldByKey(String classKey, String fieldKey) {
-    String key = classKey + "." + fieldKey;
-    FieldLocation fieldLocation = fieldLocationCache.computeIfAbsent(key, s -> fieldLookupByKey(classKey, fieldKey));
-    return fieldLocation.access();
+    return fieldLocationCache.computeIfAbsent(
+      classKey + "." + fieldKey,
+      x -> fieldLookupByKey(classKey, fieldKey)
+    ).access();
   }
 
   private static String fieldNameByKey(String classKey, String fieldKey) {
-    String key = classKey + "." + fieldKey;
-    FieldLocation fieldLocation = fieldLocationCache.computeIfAbsent(key, s -> fieldLookupByKey(classKey, fieldKey));
-    return fieldLocation.targetName();
+//    String key = classKey + "." + fieldKey;
+//    FieldLocation fieldLocation = fieldLocationCache.computeIfAbsent(key, s -> fieldLookupByKey(classKey, fieldKey));
+//    return fieldLocation.targetName();
+    return fieldLocationCache.computeIfAbsent(
+      classKey + "." + fieldKey,
+      x -> fieldLookupByKey(classKey, fieldKey)
+    ).targetName();
   }
 
   private static FieldLocation fieldLookupByKey(String classKey, String fieldKey) {

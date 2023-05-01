@@ -73,6 +73,7 @@ final class ModuleLoader {
     prepareModule("de.jpx3.intave.module.player.StorageLoader", lateBoot);
     prepareModule("de.jpx3.intave.module.player.PlaytimeUpdater", lateBoot);
     prepareModule("de.jpx3.intave.module.player.MiscBukkitEvents", defaultBoot);
+    prepareModule("de.jpx3.intave.module.player.AccountCheck", defaultBoot);
     prepareModule("de.jpx3.intave.module.actionbar.ActionBarDisplayer", defaultBoot);
   }
 
@@ -108,7 +109,7 @@ final class ModuleLoader {
         return (T) klass.getConstructor(IntavePlugin.class).newInstance(IntavePlugin.singletonInstance());
       } catch (InvocationTargetException internalException) {
         throw new IntaveInternalException(internalException);
-      } catch (Exception exception) {
+      } catch (Exception methodNotFound) {
         return (T) klass.newInstance();
       }
     } catch (InstantiationException | IllegalAccessException | ClassNotFoundException exception) {

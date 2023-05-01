@@ -103,7 +103,7 @@ public final class EntityTypeResolver {
         String entityClassName = entityClass.getSimpleName();
         if (IntaveControl.DISABLE_LICENSE_CHECK) {
           // still necessary?
-          IntaveLogger.logger().info("Unable to lookup hitbox for entity " + entityClassName);
+//          IntaveLogger.logger().info("Unable to lookup hitbox for entity " + entityClassName);
         }
         return new EntityTypeData(entityClassName, HitboxSize.zero(), -2, false, 4);
       }

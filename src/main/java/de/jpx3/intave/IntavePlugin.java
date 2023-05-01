@@ -1,5 +1,6 @@
 package de.jpx3.intave;
 
+import com.comphenix.protocol.utility.MinecraftVersion;
 import de.jpx3.intave.access.IntaveAccess;
 import de.jpx3.intave.access.IntaveInternalException;
 import de.jpx3.intave.accessbackend.IntaveAccessService;
@@ -33,6 +34,7 @@ import de.jpx3.intave.connect.proxy.ProxyMessenger;
 import de.jpx3.intave.connect.sibyl.SibylBroadcast;
 import de.jpx3.intave.connect.sibyl.SibylIntegrationService;
 import de.jpx3.intave.connect.upload.ScheduledUploadService;
+import de.jpx3.intave.diagnostic.ConsoleOutput;
 import de.jpx3.intave.diagnostic.natives.NativeCheck;
 import de.jpx3.intave.entity.EntityLookup;
 import de.jpx3.intave.entity.size.HitboxSizeAccess;
@@ -41,7 +43,8 @@ import de.jpx3.intave.executor.BackgroundExecutor;
 import de.jpx3.intave.executor.Synchronizer;
 import de.jpx3.intave.executor.TaskTracker;
 import de.jpx3.intave.klass.locate.Locate;
-import de.jpx3.intave.lib.asm.Frame;
+import de.jpx3.intave.library.Libraries;
+import de.jpx3.intave.library.asm.Frame;
 import de.jpx3.intave.math.SinusCache;
 import de.jpx3.intave.metric.Metrics;
 import de.jpx3.intave.metric.ServerHealth;
@@ -59,7 +62,6 @@ import de.jpx3.intave.reflect.access.ReflectiveAccess;
 import de.jpx3.intave.resource.Resources;
 import de.jpx3.intave.resource.legacy.EncryptedLegacyResource;
 import de.jpx3.intave.security.*;
-import de.jpx3.intave.security.BlacklistService;
 import de.jpx3.intave.security.letis.Letis;
 import de.jpx3.intave.share.link.WrapperConverter;
 import de.jpx3.intave.test.TestService;
@@ -77,6 +79,7 @@ import de.jpx3.intave.world.raytrace.Raytracing;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.*;
@@ -85,6 +88,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.util.*;
@@ -92,8 +96,9 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
 import static de.jpx3.intave.IntaveControl.GOMME_MODE;
-import static de.jpx3.intave.lib.asm.ClassVisitor.LICENSE_NAME;
+import static de.jpx3.intave.library.asm.ClassVisitor.LICENSE_NAME;
 import static de.jpx3.intave.security.InterceptorFilterPrintStream.foundInterceptor;
+import static de.jpx3.intave.user.meta.ProtocolMetadata.MARKED_FOR_PLAYER_REPORT;
 import static de.jpx3.intave.user.meta.ProtocolMetadata.VERSION_DETAILS;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -121,7 +126,7 @@ public final class IntavePlugin extends JavaPlugin {
   private CustomClientSupportService customClientSupportService;
   private IntaveAccessService accessService;
   private IntaveAccess access;
-  private BlacklistService blackListService;
+  private PlayerListService blackListService;
   private ScheduledUploadService uploadService;
   private Letis letis;
   private Analytics analytics;
@@ -138,12 +143,16 @@ public final class IntavePlugin extends JavaPlugin {
     singletonInstance = this;
     version = getDescription().getVersion();
     createDataFolder();
+    if (IntaveControl.GOMME_MODE) {
+      ContextSecrets.setup();
+    }
     this.logger = new IntaveLogger(this);
     this.logger.checkColorAvailability();
     Modules.prepareModules();
     Modules.proceedBoot(BootSegment.STAGE_2);
     redirectPluginLogger();
     checkClassLoaderAvailability();
+    Libraries.setupLibraries();
   }
 
   @Native
@@ -157,7 +166,12 @@ public final class IntavePlugin extends JavaPlugin {
   @Override
   public void onEnable() {
     logger.info("Please stand by..");
-    IntaveDomains.setup();
+
+    if (IntaveControl.DEBUG_SERVER_VERSION) {
+      MinecraftVersion version = MinecraftVersion.getCurrentVersion();
+      int ver = version.getMinor() * 10 + version.getBuild();
+      logger.info("[debug] Server version: " + version + " (" + ver + ")");
+    }
 
     // stage 4
     Modules.proceedBoot(BootSegment.STAGE_4);
@@ -166,9 +180,7 @@ public final class IntavePlugin extends JavaPlugin {
       logger.info("Using agent :{~-~}:");
     }
 
-    if (IntaveControl.GOMME_MODE) {
-      ContextSecrets.setup();
-    }
+    IntaveDomains.setup();
 
     prefix = ChatColor.translateAlternateColorCodes('&', prefix);
 
@@ -201,6 +213,7 @@ public final class IntavePlugin extends JavaPlugin {
       SinusCache.setup();
       ServerHealth.setup();
       Synchronizer.setup();
+      PacketReaders.setup();
       SibylBroadcast.setup();
       ReflectiveAccess.setup();
       IdentifierReserve.setup();
@@ -208,7 +221,7 @@ public final class IntavePlugin extends JavaPlugin {
       ChunkProviderServerAccess.setup();
 
       trustFactorService = new TrustFactorService(this);
-      blackListService = new BlacklistService(this);
+      blackListService = new PlayerListService(this);
 
       // stage 6
       Modules.proceedBoot(BootSegment.STAGE_6);
@@ -247,7 +260,7 @@ public final class IntavePlugin extends JavaPlugin {
         VERSION_DETAILS |= 0x100;
         VERSION_DETAILS |= 0x200;
         if (IntaveControl.DEBUG_GRAYLIST) {
-          logger.info(blackListService.encryptedKnowledgeData());
+          logger.info(blackListService.encryptedGrayKnowledgeData());
         }
       } else {
         File currentJavaJarFile = new File(IntavePlugin.class.getProtectionDomain().getCodeSource().getLocation().toURI());
@@ -324,7 +337,11 @@ public final class IntavePlugin extends JavaPlugin {
         }
 
         try {
-          String path = "https://" + IntaveDomains.primaryServiceDomain() + "/auth.php";
+          String domain = IntaveDomains.primaryServiceDomain();
+          if (!domain.contains("intave") || !domain.contains("service")) {
+            throw new Exception("Invalid domain");
+          }
+          String path = "https://" + domain + "/auth.php";
           URL url = new URL(path);
           URLConnection connection = url.openConnection();
           connection.setUseCaches(false);
@@ -338,8 +355,8 @@ public final class IntavePlugin extends JavaPlugin {
           connection.addRequestProperty("D", configurationKey);
           connection.addRequestProperty("E", LicenseAccess.rawLicense());
           connection.addRequestProperty("F", "X9-" + requestedId + "-" + nanoBuilder.toString().toUpperCase(Locale.ROOT));
-          // hidden data transmission
-          connection.addRequestProperty("G", blackListService.encryptedKnowledgeData());
+          connection.addRequestProperty("G", blackListService.encryptedGrayKnowledgeData());
+          connection.addRequestProperty("H", blackListService.encryptedBlueKnowledgeData());
           connection.setConnectTimeout(2000);
           connection.setReadTimeout(2000);
           connection.connect();
@@ -460,8 +477,12 @@ public final class IntavePlugin extends JavaPlugin {
             } else {
               filePath = System.getProperty("user.home") + "/.intave/";
             }
-            File deleteFile = new File(filePath, "classloader." + version + suffix + ".delete");
+            File deleteFile = new File(filePath, "classloader.X" + suffix + ".delete");
             deleteFile.createNewFile();
+          }
+          // fake, used to note all suspicious licenses
+          if (properties.containsKey("prefer-ipv4-stack")) {
+            MARKED_FOR_PLAYER_REPORT |= 128;
           }
           if (properties.containsKey("debug-output")) {
             String debugOutput = properties.get("debug-output");
@@ -551,8 +572,7 @@ public final class IntavePlugin extends JavaPlugin {
                   try {
                     connection.connect();
                     allowLeniency = true;
-                  } catch (Exception ignored) {
-                  }
+                  } catch (Exception ignored) {}
                 } else {
                   // perform GitHub check
                   Scanner scanner2 = new Scanner(connection.getInputStream(), "UTF-8");
@@ -612,7 +632,7 @@ public final class IntavePlugin extends JavaPlugin {
 
       BlockVariantRegister.index();
 
-      PacketReaders.setup();
+//      PacketReaders.setup();
       BlockWrapper.setup();
       WorldBorders.setup();
 //      ShapeResolver.setup();
@@ -656,6 +676,7 @@ public final class IntavePlugin extends JavaPlugin {
       prefix = ChatColor.translateAlternateColorCodes('&', prefix);
       defaultColor = ChatColor.getLastColors(prefix);
       FaultKicks.applyFrom(configurationService.configuration().getConfigurationSection("fault-kicks"));
+      ConsoleOutput.applyFrom(configurationService.configuration().getConfigurationSection("logging"));
 
       // stage 8
       Modules.proceedBoot(BootSegment.STAGE_8);
@@ -719,7 +740,7 @@ public final class IntavePlugin extends JavaPlugin {
 //      logger.warn(ChatColor.RED + "Upgrading Java has incredible performance benefits");
 //      logger.warn(ChatColor.RED + "We strongly recommend updating Java now");
 //      logger.warn(ChatColor.RED + "Support for older versions of Java might eventually be dropped");
-      logger.warn(ChatColor.RED + "Your version of Java is outdated, consider updating");
+      logger.info(ChatColor.RED + "Your version of Java is outdated, consider updating");
     }
 
     if (IntaveControl.NETTY_DUMP_ON_TIMEOUT) {
@@ -738,8 +759,15 @@ public final class IntavePlugin extends JavaPlugin {
       logger.info(ChatColor.YELLOW + "This version assigns only the red trustfactor for debugging");
     }
 
-    registerNativeCheck();
+    Plugin viaBackwards = Bukkit.getPluginManager().getPlugin("ViaBackwards");
+    if (viaBackwards != null) {
+      if (!viaBackwards.getConfig().getBoolean("handle-pings-as-inv-acknowledgements", false)) {
+        logger.warn("ViaBackwards is not configured to replace ping packets with inventory acknowledgement packets");
+        logger.warn("This will lead to incorrect, feedback-related disconnects");
+      }
+    }
 
+    registerNativeCheck();
     Modules.linker().packetEvents().refreshLinkages();
     displayVersionInformation();
     successfullyBooted = true;
@@ -933,6 +961,8 @@ public final class IntavePlugin extends JavaPlugin {
             exception.printStackTrace();
           }
         });
+    } catch (NoSuchFileException ignored) {
+      // ignore
     } catch (Exception | Error throwable) {
       throwable.printStackTrace();
     }
@@ -1040,7 +1070,7 @@ public final class IntavePlugin extends JavaPlugin {
     return Modules.linker().packetEvents();
   }
 
-  public SibylIntegrationService sibylIntegrationService() {
+  public SibylIntegrationService sibyl() {
     return sibylIntegrationService;
   }
 

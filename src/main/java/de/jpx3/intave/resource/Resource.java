@@ -2,10 +2,8 @@ package de.jpx3.intave.resource;
 
 import de.jpx3.intave.resource.legacy.LegacyResource;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.List;
 import java.util.Scanner;
@@ -26,7 +24,7 @@ public interface Resource extends LegacyResource {
   }
 
   default void write(String string) {
-    write(string.getBytes());
+    write(string.getBytes(StandardCharsets.UTF_8));
   }
 
   default void write(Collection<String> lines) {

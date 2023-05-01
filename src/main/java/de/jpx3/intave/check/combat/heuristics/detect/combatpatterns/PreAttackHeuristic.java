@@ -67,7 +67,7 @@ public final class PreAttackHeuristic extends MetaCheckPart<Heuristics, PreAttac
   @PacketSubscription(
     priority = ListenerPriority.HIGH,
     packetsIn = {
-      HELD_ITEM_SLOT
+      HELD_ITEM_SLOT_IN
     }
   )
   public void receiveSlotSwitch(PacketEvent event) {

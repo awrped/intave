@@ -9,7 +9,7 @@ import com.comphenix.protocol.injector.packet.PacketRegistry;
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.annotate.DoNotFlowObfuscate;
 import de.jpx3.intave.klass.create.IRXClassFactory;
-import de.jpx3.intave.lib.asm.Type;
+import de.jpx3.intave.library.asm.Type;
 import de.jpx3.intave.module.Module;
 import de.jpx3.intave.module.linker.packet.tinyprotocol.InjectionService;
 import de.jpx3.intave.packet.reader.PacketReader;
@@ -172,14 +172,14 @@ public final class PacketSubscriptionLinker extends Module {
     if (clientPackets.length == 1 && clientPackets[0].lookupName().equals("*")) {
       return PacketRegistry.getClientPacketTypes().toArray(new PacketType[0]);
     }
-    return Arrays.stream(clientPackets).map(this::translateClientPacketType).toArray(PacketType[]::new);
+    return Arrays.stream(clientPackets).map(this::translateClientPacketType).flatMap(Arrays::stream).toArray(PacketType[]::new);
   }
 
   private PacketType[] serverTranslate(PacketId.Server[] serverPackets) {
-    if (serverPackets.length == 1 && serverPackets[0].lookupName().equals("*")) {
+    if (serverPackets.length == 1 && "*".equals(serverPackets[0].lookupName())) {
       return PacketRegistry.getClientPacketTypes().toArray(new PacketType[0]);
     }
-    return Arrays.stream(serverPackets).map(this::translateServerPacketType).toArray(PacketType[]::new);
+    return Arrays.stream(serverPackets).map(this::translateServerPacketType).flatMap(Arrays::stream).toArray(PacketType[]::new);
   }
 
   private <T> T[] distinct(T[] input, IntFunction<T[]> generator) {
@@ -209,11 +209,11 @@ public final class PacketSubscriptionLinker extends Module {
     return false;
   }
 
-  private PacketType translateClientPacketType(PacketId.Client clientPacket) {
+  private PacketType[] translateClientPacketType(PacketId.Client clientPacket) {
     return searchByName(selectPacketTypesFor(ConnectionSide.CLIENT_SIDE), clientPacket.lookupName());
   }
 
-  private PacketType translateServerPacketType(PacketId.Server serverPacket) {
+  private PacketType[] translateServerPacketType(PacketId.Server serverPacket) {
     return searchByName(selectPacketTypesFor(ConnectionSide.SERVER_SIDE), serverPacket.lookupName());
   }
 
@@ -224,11 +224,13 @@ public final class PacketSubscriptionLinker extends Module {
     return availableTypes;
   }
 
-  private PacketType searchByName(Collection<? extends PacketType> packetPool, String name) {
+  private PacketType[] searchByName(Collection<? extends PacketType> packetPool, String name) {
     Collection<PacketType> packetTypes = PacketType.fromName(name);
-    return packetTypes.stream().filter(packetPool::contains).findFirst().orElse(
-      packetPool.stream().filter(packetType -> matches(packetType, name)).findFirst().orElse(null)
-    );
+    PacketType[] types = packetTypes.stream().filter(packetPool::contains).toArray(PacketType[]::new);
+    if (types.length == 0) {
+      types = packetPool.stream().filter(packetType -> matches(packetType, name)).toArray(PacketType[]::new);
+    }
+    return types;
   }
 
   private boolean matches(PacketType packetType, String name) {
@@ -260,6 +262,7 @@ public final class PacketSubscriptionLinker extends Module {
       return instanceOf(executorClass);
     } else {
       Class<?>[] parameterTypes = calledMethod.getParameterTypes();
+      int length = parameterTypes.length;
 
       int playerParameterIndex = findParameterPosition(parameterTypes, Player.class);
       int userParameterPosition = findParameterPosition(parameterTypes, User.class);
@@ -271,14 +274,13 @@ public final class PacketSubscriptionLinker extends Module {
 
       return (subscriber, event) -> {
         Player player = event.getPlayer();
-        User user = UserRepository.userOf(player);
 
-        Object[] arguments = new Object[parameterTypes.length];
+        Object[] arguments = new Object[length];
         if (playerParameterIndex != -1) {
           arguments[playerParameterIndex] = player;
         }
         if (userParameterPosition != -1) {
-          arguments[userParameterPosition] = user;
+          arguments[userParameterPosition] = UserRepository.userOf(player);
         }
         if (cancelableParameterPosition != -1) {
           arguments[cancelableParameterPosition] = event;

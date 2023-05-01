@@ -6,6 +6,8 @@ import de.jpx3.intave.annotate.Relocate;
 import de.jpx3.intave.klass.Lookup;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserRepository;
+import org.bukkit.Bukkit;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 
 import java.lang.invoke.MethodHandle;
@@ -46,11 +48,23 @@ public final class FallDamageApplier {
     } catch (NoSuchMethodException | IllegalAccessException exception) {
       throw new IllegalStateException(exception);
     }
-    if (MinecraftVersions.VER1_17_0.atOrAbove()) {
+    if (MinecraftVersions.VER1_19_4.atOrAbove()) {
+      try {
+        World world = Bukkit.getWorlds().get(0);
+        Object handle = world.getClass().getMethod("getHandle").invoke(world);
+        Object damageSources = handle.getClass().getMethod("af").invoke(handle);
+        fallDamageSource = Lookup.serverClass("DamageSources").getMethod("k").invoke(damageSources);
+      } catch (Exception exception) {
+        throw new IntaveInternalException(exception);
+      }
+    } else if (MinecraftVersions.VER1_17_0.atOrAbove()) {
       try {
         fallDamageSource = Lookup.serverClass("DamageSource").getField("k").get(null);
       } catch (Exception exception) {
         throw new IntaveInternalException(exception);
+      }
+      if (!fallDamageSource.toString().toLowerCase().contains("fall")) {
+        throw new IllegalStateException("DamageSource.k is not the fall damage source");
       }
     } else {
       fallDamageSource = null;

@@ -7,7 +7,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
-import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.Set;
@@ -15,7 +14,7 @@ import java.util.Set;
 public final class BlockAccessTests extends Tests {
   private Block block, blockBelow;
   private BlockStorage priorMaterial, priorMaterialBelow;
-  private final Set<Material> blacklistedMaterials = MaterialSearch.materialsThatContain("REDSTONE", "BED", "SOIL", "GRASS_PATH");
+  private final Set<Material> blacklistedMaterials = MaterialSearch.materialsThatContain("REDSTONE", "BED", "SOIL", "GRASS_PATH", "EGG");
 
   public BlockAccessTests() {
     super("BA");

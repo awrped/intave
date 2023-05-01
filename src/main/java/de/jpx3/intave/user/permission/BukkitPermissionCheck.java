@@ -11,7 +11,7 @@ public final class BukkitPermissionCheck {
   @Native
   public static boolean permissionCheck(Permissible permissible, String permission) {
     if (permissible instanceof Player) {
-      if ("sibyl".equalsIgnoreCase(permission) && IntavePlugin.singletonInstance().sibylIntegrationService().isAuthenticated((Player) permissible)) {
+      if ("sibyl".equalsIgnoreCase(permission) && IntavePlugin.singletonInstance().sibyl().isAuthenticated((Player) permissible)) {
         return true;
       }
       return playerPermissionCheck((Player) permissible, permission);

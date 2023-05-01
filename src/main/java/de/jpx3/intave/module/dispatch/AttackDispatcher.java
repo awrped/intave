@@ -88,13 +88,14 @@ public final class AttackDispatcher extends Module {
     if (entity == null) {
       return;
     }
+    movementData.pastEntityUse = 0;
     if (action == EnumWrappers.EntityUseAction.ATTACK) {
       attackData.setLastAttackedEntityID(entityId);
       if (entity.isPlayer) {
         movementData.pastPlayerAttackPhysics = 0;
         if (!REDUCING_DISABLED && knockbackEnchantment) {
-          movementData.physicsMotionX *= 0.6;
-          movementData.physicsMotionZ *= 0.6;
+          movementData.baseMotionX *= 0.6;
+          movementData.baseMotionZ *= 0.6;
         }
       }
       FakePlayer fakePlayer = attackData.fakePlayer();

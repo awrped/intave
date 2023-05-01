@@ -2,11 +2,11 @@ package de.jpx3.intave.klass.rewrite;
 
 import de.jpx3.intave.annotate.Native;
 import de.jpx3.intave.klass.locate.Locate;
-import de.jpx3.intave.lib.asm.ClassReader;
-import de.jpx3.intave.lib.asm.ClassWriter;
-import de.jpx3.intave.lib.asm.Handle;
-import de.jpx3.intave.lib.asm.Type;
-import de.jpx3.intave.lib.asm.tree.*;
+import de.jpx3.intave.library.asm.ClassReader;
+import de.jpx3.intave.library.asm.ClassWriter;
+import de.jpx3.intave.library.asm.Handle;
+import de.jpx3.intave.library.asm.Type;
+import de.jpx3.intave.library.asm.tree.*;
 import org.bukkit.Bukkit;
 
 import java.util.ArrayList;
@@ -15,10 +15,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static de.jpx3.intave.lib.asm.ClassReader.SKIP_FRAMES;
-import static de.jpx3.intave.lib.asm.ClassWriter.COMPUTE_FRAMES;
-import static de.jpx3.intave.lib.asm.Opcodes.*;
-import static de.jpx3.intave.lib.asm.Type.OBJECT;
+import static de.jpx3.intave.library.asm.ClassReader.SKIP_FRAMES;
+import static de.jpx3.intave.library.asm.ClassWriter.COMPUTE_FRAMES;
+import static de.jpx3.intave.library.asm.Opcodes.*;
+import static de.jpx3.intave.library.asm.Type.OBJECT;
 
 final class PatchyTranslator {
   public static final String TRANSLATION_MARKER_ANNOTATION_PATH = slashify(PatchyAutoTranslation.class.getName());
@@ -136,11 +136,11 @@ final class PatchyTranslator {
     if (methodReference == null) {
       if (configuration.translateEverything()) {
         String name = original.name;
-        if (original.type == InstructionTargetType.FIELD) {
-          name = Locate.patchyFieldCovert(original.owner, name);
-        }
         if (original.type == InstructionTargetType.METHOD) {
           name = Locate.patchyMethodCovert(original.owner, name, translate(original.desc));
+        }
+        if (original.type == InstructionTargetType.FIELD) {
+          name = Locate.patchyFieldCovert(original.owner, name);
         }
         return InstructionTarget.methodInstructionTarget(translate(original.owner), name, translate(original.desc));
       }

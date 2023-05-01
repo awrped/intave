@@ -2,10 +2,10 @@ package de.jpx3.intave;
 
 public final class IntaveControl {
   public static final boolean APPLY_GLOBAL_LOW_TRUSTFACTOR = false;
-  public static final boolean USE_DEBUG_RESOURCES = false;
   public static final boolean DEBUG_MOVEMENT = false;
   public static final boolean DEBUG_EMULATION = false;
   public static final boolean DEBUG_HEURISTICS = false;
+  public static final boolean DEBUG_STUCK_REVIVAL = false;
   public static final boolean LATENCY_PING_AS_XP_LEVEL = false;
   public static final boolean DEBUG_MOVEMENT_IGNORE = false;
   public static final boolean DEBUG_MOUNTING = false;
@@ -14,6 +14,7 @@ public final class IntaveControl {
   public static final boolean DEBUG_TELEPORT_LOCKS = false;
   public static final boolean DEBUG_TELEPORT_CAUSE_AND_CAUSER = false;
   public static final boolean DEBUG_TELEPORT_PACKET_STACKTRACE = false;
+  public static final boolean TELEPORT_FAR_AWAY_ON_Q_PRESS = false;
   public static final boolean DEBUG_INTAVE_TELEPORT_EVENT_CANCELS = false;
   public static final boolean DISABLE_BLOCK_CACHING_ENTIRELY = false;
   public static final boolean IGNORE_CHUNK_PACKETS = false;
@@ -23,18 +24,27 @@ public final class IntaveControl {
   public static final boolean IGNORE_CACHE_REFRESH_ON_SIMULATION_FAULT = false;
   public static final boolean SIBYL_DEBUG = false;
   public static final boolean ENABLE_MEMTRACE = false;
-  public static final boolean NETTY_DUMP_ON_TIMEOUT = true;
+  public static final boolean NETTY_DUMP_ON_TIMEOUT = false;
   public static final boolean FILL_UFOE_STACKTRACE = false;
   public static final boolean USE_TIMINGS = true;
   public static final boolean DUMP_BLOCK_HITBOX_ON_RIGHT_CLICK = false;
   public static final boolean SETBACK_WITH_PRESSED_KEYS = false;
   public static final boolean CLICKPATTERNS_OUTPUT = false;
   public static final boolean DEBUG_GRAYLIST = false;
+  public static final boolean DEBUG_BLUELIST = false;
   public static final boolean USE_DEBUG_LOCATE_RESOURCE = false;
+  public static final boolean USE_DEBUG_TRUSTFACTOR_RESOURCE = false;
   public static final boolean DEBUG_OUTPUT_FOR_TESTS = false;
   public static final boolean DEBUG_VARIANT_COMPILATION = false;
   public static final boolean DEBUG_ENTITY_TRACKING = false;
   public static final boolean DEBUG_ATTACK_DAMAGE_MODIFIERS = false;
+  public static final boolean GIVE_RIPTIDE_V_TRIDENT_ON_JOIN = false;
+  public static final boolean DEBUG_FEEDBACK_PACKETS = false;
+  public static final boolean DEBUG_ITEM_USAGE = false;
+  public static final boolean DEBUG_VELOCITY_RECEIVE = false;
+  public static final boolean DEBUG_PLACE_AND_BREAK_PERMISSIONS = false;
+  public static final boolean DEBUG_SERVER_VERSION = false;
+  public static final boolean REPLACE_JOAP_SETBACK_WITH_CM = true;
 
   public static final boolean USE_EXTERNAL_CONFIGURATION_FILE = true;
   public static final boolean GOMME_MODE = false;

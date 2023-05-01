@@ -12,6 +12,7 @@ import de.jpx3.intave.block.shape.resolve.BlockShapeDrillTests;
 import de.jpx3.intave.block.shape.resolve.BlockShapePipelineTests;
 import de.jpx3.intave.block.variant.BlockVariantTests;
 import de.jpx3.intave.check.EventProcessor;
+import de.jpx3.intave.check.movement.physics.SimulatorBasicTests;
 import de.jpx3.intave.executor.Synchronizer;
 import de.jpx3.intave.klass.locate.ReferenceExistenceTests;
 import de.jpx3.intave.math.MathHelper;
@@ -156,6 +157,7 @@ public final class TestService implements EventProcessor {
       performTest(BlockShapeTests.class);
       performTest(StorageTests.class);
       performTest(ReaderTests.class);
+//      performTest(SimulatorBasicTests.class);
 
       // checks
 //      performTest(SimulatorBasicTests.class);
@@ -207,9 +209,10 @@ public final class TestService implements EventProcessor {
   private static final long MILLIS_IN_A_MONTH = 1000L * 60L * 60L * 24L * 30L;
 
   public void dontCheckThisEnvironmentAgain() {
-    supportedEnvironments.put(environmentHash, System.currentTimeMillis());
+    long currentTimeMillis = System.currentTimeMillis();
+    supportedEnvironments.put(environmentHash, currentTimeMillis);
     // delete system older than 1 month
-    supportedEnvironments.entrySet().removeIf(entry -> entry.getValue() < System.currentTimeMillis() - MILLIS_IN_A_MONTH);
+    supportedEnvironments.entrySet().removeIf(entry -> entry.getValue() < currentTimeMillis - MILLIS_IN_A_MONTH);
     environmentHashResource.write(supportedEnvironments.entrySet().stream().map(entry -> entry.getKey() + ":" + entry.getValue()).collect(Collectors.joining(System.lineSeparator())));
   }
 

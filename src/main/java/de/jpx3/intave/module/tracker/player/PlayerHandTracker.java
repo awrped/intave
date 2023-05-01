@@ -5,14 +5,14 @@ import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.reflect.StructureModifier;
 import com.comphenix.protocol.wrappers.BlockPosition;
 import com.comphenix.protocol.wrappers.EnumWrappers;
+import de.jpx3.intave.IntaveControl;
 import de.jpx3.intave.adapter.MinecraftVersions;
-import de.jpx3.intave.adapter.ProtocolLibraryAdapter;
+import de.jpx3.intave.executor.Synchronizer;
 import de.jpx3.intave.klass.Lookup;
 import de.jpx3.intave.module.Module;
 import de.jpx3.intave.module.Modules;
 import de.jpx3.intave.module.linker.bukkit.BukkitEventSubscription;
 import de.jpx3.intave.module.linker.packet.ListenerPriority;
-import de.jpx3.intave.module.linker.packet.PacketId;
 import de.jpx3.intave.module.linker.packet.PacketSubscription;
 import de.jpx3.intave.packet.PacketSender;
 import de.jpx3.intave.packet.converter.BlockPositionConverter;
@@ -25,25 +25,27 @@ import de.jpx3.intave.user.meta.PunishmentMetadata;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
+import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.inventory.ItemStack;
 
 import static de.jpx3.intave.module.linker.packet.PacketId.Client.*;
+import static de.jpx3.intave.module.linker.packet.PacketId.Server.HELD_ITEM_SLOT_OUT;
 
 public class PlayerHandTracker extends Module {
-  private final boolean NEW_ITEM_REQUEST = ProtocolLibraryAdapter.serverVersion().isAtLeast(MinecraftVersions.VER1_9_0);
+  private final boolean NEW_ITEM_REQUEST = MinecraftVersions.VER1_9_0.atOrAbove();
 
-  @BukkitEventSubscription
-  public void itemConsume(FoodLevelChangeEvent event) {
-    if (!(event.getEntity() instanceof Player)) {
-      return;
-    }
-    Player player = (Player) event.getEntity();
-    User user = UserRepository.userOf(player);
-    InventoryMetadata inventoryData = user.meta().inventory();
-    if (event.getFoodLevel() >= 20 && inventoryData.foodItem() && inventoryData.handActive()) {
-      inventoryData.deactivateHand();
-    }
-  }
+//  @BukkitEventSubscription
+//  public void itemConsume(FoodLevelChangeEvent event) {
+//    if (!(event.getEntity() instanceof Player)) {
+//      return;
+//    }
+//    Player player = (Player) event.getEntity();
+//    User user = UserRepository.userOf(player);
+//    InventoryMetadata inventoryData = user.meta().inventory();
+//    if (event.getFoodLevel() >= 20 && inventoryData.foodItem() && inventoryData.handActive()) {
+//      inventoryData.deactivateHand();
+//    }
+//  }
 
   @BukkitEventSubscription
   public void entityFoodChange(FoodLevelChangeEvent event) {
@@ -64,10 +66,18 @@ public class PlayerHandTracker extends Module {
     }
   }
 
+  @BukkitEventSubscription
+  public void receiveItemConsume(PlayerItemConsumeEvent event) {
+    Player player = event.getPlayer();
+    User user = UserRepository.userOf(player);
+    InventoryMetadata inventoryData = user.meta().inventory();
+    inventoryData.deactivateHand();
+  }
+
   @PacketSubscription(
     priority = ListenerPriority.LOWEST,
     packetsIn = {
-      HELD_ITEM_SLOT
+      HELD_ITEM_SLOT_IN
     }
   )
   public void receiveSlotSwitch(PacketEvent event) {
@@ -83,19 +93,32 @@ public class PlayerHandTracker extends Module {
       return;
     }
 
+    if (IntaveControl.DEBUG_ITEM_USAGE) {
+      Synchronizer.synchronize(() -> {
+        player.sendMessage("Slot changed to " + slot);
+        System.out.println("Slot changed to " + slot);
+      });
+    }
+
     ItemStack item = player.getInventory().getItem(slot);
+    inventoryData.pastSlotSwitch = 0;
+    if (inventoryData.handActive()) {
+      inventoryData.deactivateHand();
+      inventoryData.activateHand();
+    }
     inventoryData.slotSwitchData = new InventoryMetadata.SlotSwitchData(slot, item);
   }
 
   @PacketSubscription(
     packetsOut = {
-      PacketId.Server.HELD_ITEM_SLOT
+      HELD_ITEM_SLOT_OUT
     }
   )
   public void sentSlotSwitch(PacketEvent event) {
     Player player = event.getPlayer();
     User user = UserRepository.userOf(player);
-    int slot = event.getPacket().getIntegers().read(0);
+    PacketContainer packet = event.getPacket();
+    int slot = packet.getIntegers().read(0);
 
     if (isInvalidSlot(slot)) {
       return;
@@ -176,6 +199,7 @@ public class PlayerHandTracker extends Module {
     BlockPosition blockPosition = event.getPacket().getModifier()
       .withType(Lookup.serverClass("BlockPosition"), BlockPositionConverter.threadConverter())
       .read(0);
+
     if (digType == EnumWrappers.PlayerDigType.RELEASE_USE_ITEM
       && !inventoryData.handActive()
       && packet.getDirections().read(0).equals(EnumWrappers.Direction.DOWN)
@@ -184,7 +208,10 @@ public class PlayerHandTracker extends Module {
       return;
     }
 
-    boolean usedFoodItem = inventoryData.foodItem() && inventoryData.handActive();
+    if (IntaveControl.DEBUG_ITEM_USAGE) {
+      player.sendMessage("Digtype: " + digType);
+    }
+
     switch (digType) {
       case RELEASE_USE_ITEM:
       case DROP_ALL_ITEMS:
@@ -194,6 +221,7 @@ public class PlayerHandTracker extends Module {
       }
     }
 
+    boolean usedFoodItem = inventoryData.foodItem() && inventoryData.handActive();
     // Fix eating while sprinting bug: https://www.youtube.com/watch?v=5ZHMrVmtdNY
     if (digType == EnumWrappers.PlayerDigType.DROP_ITEM && usedFoodItem) {
       PacketContainer unblockPacket = packet.deepClone();

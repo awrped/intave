@@ -3,7 +3,6 @@ package de.jpx3.intave.connect.sibyl.data;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import de.jpx3.intave.IntaveControl;
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.annotate.Native;
 import de.jpx3.intave.connect.sibyl.LabymodClientListener;
@@ -47,12 +46,6 @@ public final class SibylPacketReceiver {
       JsonObject packetData = element.getAsJsonObject();
       String packetName = packetData.get("name").getAsString();
       JsonElement packetContent = packetData.get("content");
-      if (!packetName.startsWith("in")) {
-        if (IntaveControl.SIBYL_DEBUG) {
-          System.out.println("Received packet with invalid name: " + packetName);
-        }
-        return;
-      }
 
       if (service.encryptionActiveFor(player)) {
         String base64encryptedText = packetContent.getAsString();

@@ -4,6 +4,7 @@ import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.google.common.collect.Lists;
 import de.jpx3.intave.IntavePlugin;
+import de.jpx3.intave.module.Modules;
 import de.jpx3.intave.module.linker.packet.PacketEventSubscriber;
 import de.jpx3.intave.module.linker.packet.PacketSubscription;
 import de.jpx3.intave.player.fake.FakePlayer;
@@ -21,7 +22,7 @@ public final class EntityVelocityCache implements PacketEventSubscriber {
   private final List<Double> verticalVelocities = Lists.newArrayList();
 
   public EntityVelocityCache(IntavePlugin plugin) {
-    plugin.packetSubscriptionLinker().linkSubscriptionsIn(this);
+    Modules.linker().packetEvents().linkSubscriptionsIn(this);
   }
 
   @PacketSubscription(

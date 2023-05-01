@@ -66,7 +66,7 @@ public final class AttackRequiredHeuristic extends MetaCheckPart<Heuristics, Att
   @PacketSubscription(
     priority = ListenerPriority.HIGH,
     packetsIn = {
-      HELD_ITEM_SLOT
+      HELD_ITEM_SLOT_IN
     }
   )
   public void receiveSlotSwitch(PacketEvent event) {

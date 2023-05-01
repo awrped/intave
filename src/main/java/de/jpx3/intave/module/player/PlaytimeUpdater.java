@@ -19,15 +19,18 @@ public final class PlaytimeUpdater extends Module {
         User user = UserRepository.userOf(player);
         PlaytimeRecorder recorder = plugin.analytics().recorderOf(PlaytimeRecorder.class);
         PlaytimeStorage playtimeStorage = user.storageOf(PlaytimeStorage.class);
-        if (System.currentTimeMillis() - user.meta().movement().lastMovement > 1000 * 60 * 2) {
-          playtimeStorage.incrementMinutesAfkBy(3);
-          recorder.incrementAfkMinutesBy(3);
+        if (System.currentTimeMillis() - user.joined() < 30000) {
+          return;
+        }
+        if (System.currentTimeMillis() - user.meta().movement().lastRotation > 1000 * 60 * 2) {
+          playtimeStorage.incrementMinutesAfkBy(1);
+          recorder.incrementAfkMinutesBy(1);
         } else {
-          playtimeStorage.incrementMinutesPlayedBy(3);
-          recorder.incrementActiveMinutesBy(3);
+          playtimeStorage.incrementMinutesPlayedBy(1);
+          recorder.incrementActiveMinutesBy(1);
         }
       }
-    ), 20 * 60 * 3, 20 * 60 * 3);
+    ), 20 * 60, 20 * 60);
     TaskTracker.begun(taskId);
   }
 

@@ -2,6 +2,7 @@ package de.jpx3.intave;
 
 import de.jpx3.intave.adapter.MinecraftVersions;
 import de.jpx3.intave.adapter.ProtocolLibraryAdapter;
+import de.jpx3.intave.diagnostic.ConsoleOutput;
 import de.jpx3.intave.executor.BackgroundExecutor;
 import de.jpx3.intave.resource.FileArchiver;
 import de.jpx3.intave.version.JavaVersion;
@@ -45,7 +46,7 @@ public final class IntaveLogger extends PluginLogger {
   }
 
   public void checkColorAvailability() {
-    if (!ProtocolLibraryAdapter.protocolLibAlreadyAvailable()) {
+    if (!ProtocolLibraryAdapter.protocolLibAvailable()) {
       return;
     }
     if (JavaVersion.current() > 8 && MinecraftVersions.VER1_16_2.atOrAbove() && !IntaveControl.GOMME_MODE) {
@@ -83,30 +84,30 @@ public final class IntaveLogger extends PluginLogger {
     logToFile("(INF) " + infoMessage);
   }
 
-  public void error(String errorMessage) {
-    String message = IntavePlugin.prefix() + ChatColor.DARK_RED + ChatColor.BOLD + "ERROR" + IntavePlugin.defaultColor() + ": " + ChatColor.RED + errorMessage;
+  public void error(String message) {
+    String fullMessage = IntavePlugin.prefix() + ChatColor.DARK_RED + ChatColor.BOLD + "ERROR" + IntavePlugin.defaultColor() + ": " + ChatColor.RED + message;
     for (PrintStream outputStream : outputStreams) {
-      outputStream.print(ChatColor.stripColor(message));
+      outputStream.print(ChatColor.stripColor(fullMessage));
     }
     if (DISABLE_COLOR_OUTPUT) {
-      Bukkit.getLogger().warning(ChatColor.stripColor(message));
+      Bukkit.getLogger().warning(ChatColor.stripColor(fullMessage));
     } else {
-      Bukkit.getConsoleSender().sendMessage(message);
+      Bukkit.getConsoleSender().sendMessage(fullMessage);
     }
-    logToFile("(ERR) " + errorMessage);
+    logToFile("(ERR) " + message);
   }
 
-  public void warn(String errorMessage) {
-    String message = IntavePlugin.prefix() + ChatColor.YELLOW + ChatColor.BOLD + "WARNING" + IntavePlugin.defaultColor() + ": " + ChatColor.RED + errorMessage;
+  public void warn(String message) {
+    String fullMessage = IntavePlugin.prefix() + ChatColor.YELLOW + ChatColor.BOLD + "WARNING" + IntavePlugin.defaultColor() + ": " + ChatColor.RED + message;
     for (PrintStream outputStream : outputStreams) {
-      outputStream.print(ChatColor.stripColor(message));
+      outputStream.print(ChatColor.stripColor(fullMessage));
     }
     if (DISABLE_COLOR_OUTPUT) {
-      Bukkit.getLogger().warning(ChatColor.stripColor(message));
+      Bukkit.getLogger().warning(ChatColor.stripColor(fullMessage));
     } else {
-      Bukkit.getConsoleSender().sendMessage(message);
+      Bukkit.getConsoleSender().sendMessage(fullMessage);
     }
-    logToFile("(WARN) " + errorMessage);
+    logToFile("(WARN) " + message);
   }
 
   public void violation(String violation) {
@@ -117,9 +118,11 @@ public final class IntaveLogger extends PluginLogger {
   }
 
   public void commandExecution(String command) {
-    command = ChatColor.stripColor(command);
-    printLine("[Intave] Issued server command /" + command);
-    logToFile("(EXE) " + command);
+    if (ConsoleOutput.COMMAND_EXECUTION_DEBUG) {
+      command = ChatColor.stripColor(command);
+      printLine("[Intave] Issued server command /" + command);
+      logToFile("(EXE) " + command);
+    }
   }
 
   @Deprecated

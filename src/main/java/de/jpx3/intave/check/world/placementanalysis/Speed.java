@@ -3,6 +3,7 @@ package de.jpx3.intave.check.world.placementanalysis;
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
+import de.jpx3.intave.IntaveControl;
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.annotate.Reserved;
 import de.jpx3.intave.check.MetaCheckPart;
@@ -94,11 +95,11 @@ public final class Speed extends MetaCheckPart<PlacementAnalysis, Speed.Placemen
         double average = placementSpeedHistory.stream().mapToDouble(value -> value).average().orElse(500);
         boolean inOneLine = isOneLine(meta.placementHistory);
 
-        boolean noHardFault = System.currentTimeMillis() - meta.lastHardFaultClick > 6000;
+        boolean noHardFault = IntaveControl.GOMME_MODE && System.currentTimeMillis() - meta.lastHardFaultClick > 6000;
         boolean noSneaking = System.currentTimeMillis() - movementData.lastSneakingTimestamps > 8000;
         boolean recentJump = System.currentTimeMillis() - movementData.lastJump < 750;
-        float distToNextNinety = Math.abs(user.meta().movement().rotationYaw()) % 90;
-        boolean ninetyDegreeAngle = distToNextNinety < 10 || distToNextNinety > 80;
+        float yawToNextNinetyDeg = Math.abs(user.meta().movement().rotationYaw()) % 90;
+        boolean ninetyDegreeAngle = yawToNextNinetyDeg < 10 || yawToNextNinetyDeg > 80;
 
         double minAverage;
 
@@ -115,7 +116,7 @@ public final class Speed extends MetaCheckPart<PlacementAnalysis, Speed.Placemen
             }
           }
         } else {
-          minAverage = ninetyDegreeAngle ? 400 : 150;
+          minAverage = ninetyDegreeAngle || noSneaking ? 300 : 150;
         }
 
         int speedAmplifier = potionData.potionEffectSpeedAmplifier();
@@ -126,7 +127,7 @@ public final class Speed extends MetaCheckPart<PlacementAnalysis, Speed.Placemen
           Violation violation = Violation.builderFor(PlacementAnalysis.class)
             .forPlayer(player).withDefaultThreshold()
             .withMessage(COMMON_FLAG_MESSAGE)
-            .withDetails(((int) average / 50) + "ticks/block, limit at " + ((int) minAverage / 50) + "ticks/block")
+            .withDetails(((int) average / 50) + " t/b, limit at " + ((int) minAverage / 50) + " t/b")
             .withDefaultThreshold().withVL(average > 400 ? 3 : average < 300 ? 5 : 4).build();
 
           ViolationContext violationContext = Modules.violationProcessor().processViolation(violation);
@@ -177,16 +178,17 @@ public final class Speed extends MetaCheckPart<PlacementAnalysis, Speed.Placemen
           if (yTolerance-- <= 0) {
             return false;
           }
-        }
-        if (lastBlockX == block.getX()) {
-          lockedOnX = true;
-        } else if (lockedOnX) {
-          return false;
-        }
-        if (lastBlockZ == block.getZ()) {
-          lockedOnZ = true;
-        } else if (lockedOnZ) {
-          return false;
+        } else {
+          if (lastBlockX == block.getX()) {
+            lockedOnX = true;
+          } else if (lockedOnX) {
+            return false;
+          }
+          if (lastBlockZ == block.getZ()) {
+            lockedOnZ = true;
+          } else if (lockedOnZ) {
+            return false;
+          }
         }
       }
       lastBlockX = block.getBlockX();

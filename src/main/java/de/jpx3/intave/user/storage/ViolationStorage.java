@@ -122,6 +122,16 @@ public final class ViolationStorage implements Storage {
     );
   }
 
+  @Override
+  public int id() {
+    return 1;
+  }
+
+  @Override
+  public int version() {
+    return 1;
+  }
+
   public StorageViolationEvents violations() {
     return interestingViolations;
   }

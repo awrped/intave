@@ -7,6 +7,7 @@ import com.comphenix.protocol.wrappers.PlayerInfoData;
 import com.comphenix.protocol.wrappers.WrappedChatComponent;
 import com.comphenix.protocol.wrappers.WrappedGameProfile;
 import de.jpx3.intave.IntavePlugin;
+import de.jpx3.intave.module.Modules;
 import de.jpx3.intave.module.linker.packet.PacketEventSubscriber;
 import de.jpx3.intave.module.linker.packet.PacketSubscription;
 import de.jpx3.intave.player.fake.FakePlayer;
@@ -22,7 +23,7 @@ public final class PlayerPingPacketDispatcher implements PacketEventSubscriber {
   private static final long MIN_TIME_BETWEEN_PLAYER_INFO_UPDATE = 10_000;
 
   public PlayerPingPacketDispatcher(IntavePlugin plugin) {
-    plugin.packetSubscriptionLinker().linkSubscriptionsIn(this);
+    Modules.linker().packetEvents().linkSubscriptionsIn(this);
   }
 
   @PacketSubscription(

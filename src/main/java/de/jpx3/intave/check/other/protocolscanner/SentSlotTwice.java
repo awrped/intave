@@ -11,7 +11,7 @@ import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.meta.CheckCustomMetadata;
 import org.bukkit.entity.Player;
 
-import static de.jpx3.intave.module.linker.packet.PacketId.Client.HELD_ITEM_SLOT;
+import static de.jpx3.intave.module.linker.packet.PacketId.Client.HELD_ITEM_SLOT_IN;
 
 public final class SentSlotTwice extends MetaCheckPart<ProtocolScanner, SentSlotTwice.SentSlotTwiceMeta> {
   private final int vl;
@@ -23,7 +23,7 @@ public final class SentSlotTwice extends MetaCheckPart<ProtocolScanner, SentSlot
 
   @PacketSubscription(
     packetsIn = {
-      HELD_ITEM_SLOT
+      HELD_ITEM_SLOT_IN
     }
   )
   public void receiveSlotSwitch(PacketEvent event) {

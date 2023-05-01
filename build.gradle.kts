@@ -4,8 +4,6 @@ import xyz.jpenilla.runpaper.task.RunServerTask
 
 plugins {
   java
-  // TODO: uncomment if we actually use Kotlin (requires some thinking before)
-  // kotlin("jvm") version "1.7.10"
   id("net.minecrell.plugin-yml.bukkit") version "0.5.2"
   id("com.github.johnrengelman.shadow") version "7.1.2"
   id("xyz.jpenilla.run-paper") version "1.0.6"
@@ -13,7 +11,7 @@ plugins {
 
 val simpleName = "Intave"
 group = "de.jpx3"
-version = "14.5.7"
+version = "14.5.9"
 description = "Cheat detection software, providing fair play"
 
 /*
@@ -75,6 +73,7 @@ bukkit {
     register("intave.command.history") { default = OP }
     register("intave.command.cps") { default = OP }
     register("intave.command.proxy") { default = FALSE }
+    register("intave.command.noupdate") { default = FALSE }
     register("intave.command.diagnostics") {
       default = OP
       children =
@@ -142,8 +141,10 @@ run {
   registerServerTask("1.18", 17)
   registerServerTask("1.18.2", 17)
   registerServerTask("1.19", 17)
+  registerServerTask("1.19.1", 17)
   registerServerTask("1.19.2", 17)
   registerServerTask("1.19.3", 17)
+  registerServerTask("1.19.4", 17)
 }
 
 fun registerServerTask(serverVersion: String, javaVersion: Int) {
@@ -170,10 +171,6 @@ fun registerServerTask(serverVersion: String, javaVersion: Int) {
 java.toolchain.languageVersion.set(JavaLanguageVersion.of(8))
 
 tasks {
-  // TODO: uncomment if we actually use Kotlin
-  // compileKotlin { kotlinOptions.jvmTarget = "1.8" }
-  // compileTestKotlin { kotlinOptions.jvmTarget = "1.8" }
-
   build { dependsOn(shadowJar) }
 
   jar {

@@ -17,16 +17,19 @@ public final class PlayerInfoDataConverter {
   private static Class<?> gameProfileClass;
   private static Class<?> gameModeClass;
   private static Class<?> chatBaseComponentClass;
+  private static final EquivalentConverter<WrappedGameProfile> gameProfileConverter = BukkitConverters.getWrappedGameProfileConverter();
+  private static final EquivalentConverter<EnumWrappers.NativeGameMode> gameModeConverter = EnumWrappers.getGameModeConverter();
+  private static final EquivalentConverter<WrappedChatComponent> chatComponentConverter = BukkitConverters.getWrappedChatComponentConverter();
 
-  private static final ThreadLocal<EquivalentConverter<PlayerInfoData>> converterThreadLocal =
+  private static final ThreadLocal<EquivalentConverter<List<PlayerInfoData>>> converterThreadLocal =
     ThreadLocal.withInitial(PlayerInfoDataConverter::newConverter);
 
-  public static EquivalentConverter<PlayerInfoData> threadConverter() {
+  public static EquivalentConverter<List<PlayerInfoData>> threadConverter() {
     return converterThreadLocal.get();
   }
 
-  public static EquivalentConverter<PlayerInfoData> newConverter() {
-    return new EquivalentConverter<PlayerInfoData>() {
+  public static EquivalentConverter<List<PlayerInfoData>> newConverter() {
+    EquivalentConverter<PlayerInfoData> converter = new EquivalentConverter<PlayerInfoData>() {
       public Object getGeneric(PlayerInfoData specific) {
         if (constructor == null) {
           try {
@@ -43,7 +46,6 @@ public final class PlayerInfoDataConverter {
             throw new RuntimeException("Cannot find PlayerInfoData constructor.", var5);
           }
         }
-
         try {
           Object gameMode = EnumWrappers.getGameModeConverter().getGeneric(specific.getGameMode());
           Object displayName = specific.getDisplayName() != null ? specific.getDisplayName().getHandle() : null;
@@ -55,24 +57,23 @@ public final class PlayerInfoDataConverter {
         }
       }
 
-      public PlayerInfoData getSpecific(Object generic) {
+      private StructureModifier<Object> gameProfileModifier;
+
+      public synchronized PlayerInfoData getSpecific(Object generic) {
         if (gameProfileClass == null) {
           gameProfileClass = MinecraftReflection.getGameProfileClass();
-        }
-        if (gameModeClass == null) {
           gameModeClass = EnumWrappers.getGameModeClass();
-        }
-        if (chatBaseComponentClass == null) {
           chatBaseComponentClass = MinecraftReflection.getIChatBaseComponentClass();
+          gameProfileModifier = new StructureModifier<>(generic.getClass(), null, false);
         }
-        StructureModifier<Object> modifier = new StructureModifier<>(generic.getClass(), null, false).withTarget(generic);
-        StructureModifier<WrappedGameProfile> gameProfiles = modifier.withType(gameProfileClass, BukkitConverters.getWrappedGameProfileConverter());
+        StructureModifier<Object> modifier = gameProfileModifier.withTarget(generic);
+        StructureModifier<WrappedGameProfile> gameProfiles = modifier.withType(gameProfileClass, gameProfileConverter);
         WrappedGameProfile gameProfile = gameProfiles.read(0);
         StructureModifier<Integer> ints = modifier.withType(Integer.TYPE);
         int latency = ints.read(0);
-        StructureModifier<EnumWrappers.NativeGameMode> gameModes = modifier.withType(gameModeClass, EnumWrappers.getGameModeConverter());
+        StructureModifier<EnumWrappers.NativeGameMode> gameModes = modifier.withType(gameModeClass, gameModeConverter);
         EnumWrappers.NativeGameMode gameMode = gameModes.read(0);
-        StructureModifier<WrappedChatComponent> displayNames = modifier.withType(chatBaseComponentClass, BukkitConverters.getWrappedChatComponentConverter());
+        StructureModifier<WrappedChatComponent> displayNames = modifier.withType(chatBaseComponentClass, chatComponentConverter);
         WrappedChatComponent displayName = displayNames.read(0);
         return new PlayerInfoData(gameProfile, latency, gameMode, displayName);
       }
@@ -81,5 +82,6 @@ public final class PlayerInfoDataConverter {
         return PlayerInfoData.class;
       }
     };
+    return BukkitConverters.getListConverter(converter);
   }
 }

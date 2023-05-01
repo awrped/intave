@@ -4,7 +4,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 public class SibylPacketOutMessage extends SibylPacket {
-  private int debugId;
+  private String message;
 
   public SibylPacketOutMessage() {
     super("out-message");
@@ -13,21 +13,21 @@ public class SibylPacketOutMessage extends SibylPacket {
   @Override
   public JsonElement asJsonElement() {
     JsonObject object = new JsonObject();
-    object.addProperty("id", debugId);
+    object.addProperty("message", message);
     return object;
   }
 
   @Override
   public void buildFrom(JsonElement element) {
     JsonObject object = element.getAsJsonObject();
-    debugId = object.get("id").getAsInt();
+    message = object.get("message").getAsString();
   }
 
-  public int debugId() {
-    return debugId;
+  public String message() {
+    return message;
   }
 
-  public void setDebugId(int debugId) {
-    this.debugId = debugId;
+  public void setMessage(String message) {
+    this.message = message;
   }
 }

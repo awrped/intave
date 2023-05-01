@@ -27,7 +27,9 @@ import de.jpx3.intave.check.combat.heuristics.detect.other.*;
 import de.jpx3.intave.check.combat.heuristics.detect.testing.TestingHeuristic;
 import de.jpx3.intave.check.combat.heuristics.mine.MiningStrategyContainer;
 import de.jpx3.intave.check.combat.heuristics.mine.MiningStrategyExecutor;
-import de.jpx3.intave.check.world.placementanalysis.PacketOrder;
+import de.jpx3.intave.diagnostic.message.DebugBroadcast;
+import de.jpx3.intave.diagnostic.message.MessageCategory;
+import de.jpx3.intave.diagnostic.message.MessageSeverity;
 import de.jpx3.intave.diagnostic.natives.NativeCheck;
 import de.jpx3.intave.executor.Synchronizer;
 import de.jpx3.intave.executor.TaskTracker;
@@ -35,7 +37,6 @@ import de.jpx3.intave.module.Modules;
 import de.jpx3.intave.module.linker.bukkit.BukkitEventSubscription;
 import de.jpx3.intave.module.linker.packet.PacketSubscription;
 import de.jpx3.intave.module.violation.Violation;
-import de.jpx3.intave.user.MessageChannelSubscriptions;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.meta.AttackMetadata;
 import de.jpx3.intave.user.meta.CheckCustomMetadata;
@@ -93,8 +94,14 @@ public final class Heuristics extends MetaCheck<Heuristics.HeuristicMeta> {
         appendCheckPart(new OldAirClickLimitHeuristic(this));
         appendCheckPart(new AttackReduceIgnoreHeuristic(this));
         appendCheckPart(new RotationStandardDeviationHeuristic(this));
+        if (!IntaveControl.GOMME_MODE && IntaveControl.DISABLE_LICENSE_CHECK) {
+          appendCheckPart(new RotationStandardDeviationRelayHeuristic(this));
+        }
         appendCheckPart(new RotationSnapHeuristic(this));
         appendCheckPart(new LongTermClickAccuracyHeuristic(this));
+        if (!IntaveControl.GOMME_MODE && IntaveControl.DISABLE_LICENSE_CHECK) {
+          appendCheckPart(new LongTermClickAccuracyRelayHeuristic(this));
+        }
         appendCheckPart(new ReshapedJumpHeuristic(this));
         appendCheckPart(new RotationAccuracyYawHeuristic(this));
         appendCheckPart(new RotationAccuracyPitchHeuristic(this));
@@ -177,19 +184,24 @@ public final class Heuristics extends MetaCheck<Heuristics.HeuristicMeta> {
     String description = anomaly.description();
 
     String confidenceDetails = overallConfidence.output() + " (" + levelFrom(allConfidences.toArray(new Confidence[0])) + "+" + anomaly.confidence().level() + ")";
-    String message = ChatColor.RED + "[IH] " + player.getName() + " on p[" + pattern + "]" + confidenceDetails + " " + description;
+    String defaultPrefix = ChatColor.RED + "[IH] ";
+    if (IntavePlugin.singletonInstance().sibyl().encryptionActiveFor(player)) {
+      defaultPrefix = "";
+    }
+    String message = defaultPrefix + player.getName() + " on p[" + pattern + "]" + confidenceDetails + " " + description;
 
-    if (IntaveControl.DEBUG_HEURISTICS && !plugin.sibylIntegrationService().isAuthenticated(player)) {
+    if (IntaveControl.DEBUG_HEURISTICS && !plugin.sibyl().isAuthenticated(player)) {
       player.sendMessage(message);
     }
     if (IntaveControl.GOMME_MODE) {
       IntaveLogger.logger().printLine(message);
     }
-    for (Player authenticatedPlayer : MessageChannelSubscriptions.sibylReceiver()/*Bukkit.getOnlinePlayers()*/) {
-      if (plugin.sibylIntegrationService().isAuthenticated(authenticatedPlayer)) {
-        authenticatedPlayer.sendMessage(message);
-      }
-    }
+//    for (Player authenticatedPlayer : MessageChannelSubscriptions.sibylReceiver()/*Bukkit.getOnlinePlayers()*/) {
+//      if (plugin.sibyl().isAuthenticated(authenticatedPlayer)) {
+//        authenticatedPlayer.sendMessage(message);
+//      }
+//    }
+    DebugBroadcast.broadcast(player, MessageCategory.HERAN, MessageSeverity.HIGH, message, message);
   }
 
   private void evaluateAll() {

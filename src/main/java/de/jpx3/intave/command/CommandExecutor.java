@@ -94,7 +94,7 @@ public final class CommandExecutor {
     String[] args = executedCommand.split(" ");
     if ("sibyl".equalsIgnoreCase(permission)) {
       if (sender instanceof Player) {
-        if (!IntavePlugin.singletonInstance().sibylIntegrationService().isAuthenticated(((Player) sender).getPlayer())) {
+        if (!IntavePlugin.singletonInstance().sibyl().isAuthenticated(((Player) sender).getPlayer())) {
           sender.sendMessage(NO_PERMISSION_MESSAGE);
           return null;
         }

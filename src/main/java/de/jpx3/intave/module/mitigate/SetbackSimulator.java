@@ -17,7 +17,6 @@ import de.jpx3.intave.klass.trace.Caller;
 import de.jpx3.intave.klass.trace.PluginInvocation;
 import de.jpx3.intave.math.MathHelper;
 import de.jpx3.intave.module.Module;
-import de.jpx3.intave.module.Modules;
 import de.jpx3.intave.module.linker.bukkit.BukkitEventSubscription;
 import de.jpx3.intave.player.Effects;
 import de.jpx3.intave.share.BlockPosition;
@@ -87,6 +86,16 @@ public final class SetbackSimulator extends Module {
     int ticks,
     boolean cancellable
   ) {
+    emulationSetBack(player, motion, ticks, 1, cancellable);
+  }
+
+  public void emulationSetBack(
+    Player player,
+    Vector motion,
+    int ticks,
+    int delay,
+    boolean cancellable
+  ) {
     User user = UserRepository.userOf(player);
     MetadataBundle meta = user.meta();
     MovementMetadata movementData = meta.movement();
@@ -108,7 +117,7 @@ public final class SetbackSimulator extends Module {
       player.sendMessage(ChatColor.DARK_PURPLE + "[E+] " + motion + " (" + ticks + " ticks)");
     }
 
-    proceedEmulationTick(player, motion, ticks, ticks, cancellable);
+    proceedEmulationTick(player, motion, ticks, ticks, delay, cancellable);
   }
 
 //  public void emulationPushOutOfBlock(
@@ -183,11 +192,12 @@ public final class SetbackSimulator extends Module {
     Vector motion,
     int ticks,
     int startingTicks,
+    int delay,
     boolean cancellable
   ) {
     if (!Bukkit.isPrimaryThread()) {
       Vector finalMotion1 = motion;
-      Synchronizer.synchronizeDelayed(() -> proceedEmulationTick(player, finalMotion1, ticks, startingTicks, cancellable), 0);
+      Synchronizer.synchronizeDelayed(() -> proceedEmulationTick(player, finalMotion1, ticks, startingTicks, delay, cancellable), 0);
       return;
     }
 
@@ -206,7 +216,7 @@ public final class SetbackSimulator extends Module {
 
     // check motion status (velocity?)
     Location futurePosition = movementData.verifiedLocation();
-    BoundingBox boundingBox = BoundingBox.fromPosition(user, futurePosition);
+    BoundingBox boundingBox = BoundingBox.fromPosition(user, movementData, futurePosition);
 
     Vector emulationVelocity = movementData.emulationVelocity;
     if (emulationVelocity != null) {
@@ -221,7 +231,7 @@ public final class SetbackSimulator extends Module {
       movementData.artificialFallDistance += -motion.getY();
     }
 
-    if (!Collision.present(player, BoundingBox.fromPosition(user, futurePosition.clone().add(motion)))) {
+    if (!Collision.present(player, BoundingBox.fromPosition(user, movementData, futurePosition.clone().add(motion)))) {
       futurePosition = futurePosition.clone().add(motion);
     }
     futurePosition.setYaw(movementData.rotationYaw);
@@ -234,18 +244,21 @@ public final class SetbackSimulator extends Module {
 
       // fixes stuck in block below, please remove and fix me differently
       futurePosition.subtract(0, 0.02, 0);
-      boundingBox = BoundingBox.fromPosition(user, futurePosition);
+      boundingBox = BoundingBox.fromPosition(user, movementData, futurePosition);
       futurePosition.add(0, Collision.nonePresent(player, boundingBox) ? 0.03 : 0.0201, 0);
-      boundingBox = BoundingBox.fromPosition(user, futurePosition);
+      boundingBox = BoundingBox.fromPosition(user, movementData, futurePosition);
 
       /*
        * giving the client control over the atb variable is actually very bad,
        * because it would allow the client to disable the entire movement system.
        * however, we have a teleport packet after, requiring the client to respond
        */
-      Modules.feedback().synchronize(player, (player1, nothing) -> {
-        violationLevelData.disableActiveTeleportBundleNextTick = true;
-      });
+//      Modules.feedback().synchronize(player, (player1, nothing) -> {
+//        violationLevelData.disableActiveTeleportBundleNextTick = true;
+//      });
+      user.tickFeedback(
+        () -> violationLevelData.disableActiveTeleportBundleNextTick = true
+      );
       teleport(player, futurePosition);
 //      violationLevelData.isInActiveTeleportBundle = false;
 
@@ -255,9 +268,9 @@ public final class SetbackSimulator extends Module {
       player.setVelocity(futureMotion);
 
 //      player.sendMessage("Setback velocity: " + MathHelper.formatMotion(futureMotion));
-      movementData.physicsMotionX = futureMotion.getX();
-      movementData.physicsMotionY = futureMotion.getY();
-      movementData.physicsMotionZ = futureMotion.getZ();
+      movementData.baseMotionX = futureMotion.getX();
+      movementData.baseMotionY = futureMotion.getY();
+      movementData.baseMotionZ = futureMotion.getZ();
 
       if (movementData.onGround) {
         physicsCheck.applyFallDamageUpdate(user);
@@ -271,7 +284,7 @@ public final class SetbackSimulator extends Module {
       // teleport
       //player.teleport(futurePosition);
 
-      boundingBox = BoundingBox.fromPosition(user, futurePosition);
+      boundingBox = BoundingBox.fromPosition(user, movementData, futurePosition);
       boolean boundingBoxIntersection = Collision.present(user.player(), boundingBox);
       if (boundingBoxIntersection) {
         double positionX = (boundingBox.minX + boundingBox.maxX) / 2.0;
@@ -290,7 +303,7 @@ public final class SetbackSimulator extends Module {
       //   s += " @" + movementData.entityBoundingBox();
 
       Vector finalMotion = motion.clone();
-      Synchronizer.synchronizeDelayed(() -> proceedEmulationTick(player, finalMotion, ticks - 1, startingTicks, cancellable), 1);
+      Synchronizer.synchronizeDelayed(() -> proceedEmulationTick(player, finalMotion, ticks - 1, startingTicks, delay, cancellable), delay);
 
       // velocity
       Vector futureMotion = motionProceed(motion, user, boundingBox, true);
@@ -420,7 +433,7 @@ public final class SetbackSimulator extends Module {
     User user = UserRepository.userOf(player);
     MovementMetadata movementData = user.meta().movement();
 
-    BoundingBox entityBoundingBox = BoundingBox.fromPosition(user, teleportLocation);
+    BoundingBox entityBoundingBox = BoundingBox.fromPosition(user, movementData, teleportLocation);
     movementData.setBoundingBox(entityBoundingBox);
     movementData.setVerifiedLocation(teleportLocation.clone(), "Emulation-Setback");
 //    player.teleport(teleportLocation);
@@ -500,7 +513,7 @@ public final class SetbackSimulator extends Module {
     motionY = minmax(-4, motionY, 4);
     motionZ = minmax(-4, motionZ, 4);
 
-    BlockShape collisionBox = Collision.collisionShape(player, entityBoundingBox.expand(motionX, motionY, motionZ));
+    BlockShape collisionBox = Collision.shape(player, entityBoundingBox.expand(motionX, motionY, motionZ));
 
     // motion y
     motionY = collisionBox.allowedOffset(Y_AXIS, entityBoundingBox, motionY);
@@ -562,6 +575,7 @@ public final class SetbackSimulator extends Module {
   }
 
   private boolean hasEmptyCollisionBox(Player player, BlockPosition blockPosition) {
-    return Collision.nonePresent(player, BoundingBox.fromPosition(UserRepository.userOf(player), blockPosition));
+    User user = UserRepository.userOf(player);
+    return Collision.nonePresent(player, BoundingBox.fromPosition(user, user.meta().movement(), blockPosition));
   }
 }

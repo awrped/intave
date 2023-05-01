@@ -9,9 +9,12 @@ import de.jpx3.intave.share.Position;
 import de.jpx3.intave.user.User;
 import org.bukkit.*;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
+import org.bukkit.metadata.MetadataValue;
 
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static de.jpx3.intave.world.WorldHeight.LOWER_WORLD_LIMIT;
@@ -21,16 +24,75 @@ public final class VolatileBlockAccess {
   public static void setup() {
   }
 
+  public static Block fakeBlockAccess(User user, Location location) {
+    int blockX = location.getBlockX();
+    int blockY = location.getBlockY();
+    int blockZ = location.getBlockZ();
+    return new FakeFallbackBlock(location.getWorld()) {
+      @Override
+      public Material getType() {
+        return typeAccess(user, blockX, blockY, blockZ);
+//        return BlockTypeAccess.typeAccess(this);
+      }
+
+      @Override
+      @Deprecated
+      public int getTypeId() {
+        return getType().getId();
+      }
+
+      @Override
+      public int getX() {
+        return blockX;
+      }
+
+      @Override
+      public int getY() {
+        return blockY;
+      }
+
+      @Override
+      public int getZ() {
+        return blockZ;
+      }
+
+      @Override
+      public Block getRelative(int x, int y, int z) {
+        return fakeBlockAccess(user, getLocation().clone().add(x, y, z));
+      }
+
+      @Override
+      public Block getRelative(BlockFace blockFace) {
+        return getRelative(blockFace, 1);
+      }
+
+      @Override
+      public Block getRelative(BlockFace blockFace, int length) {
+        return fakeBlockAccess(user, getLocation().clone().add(blockFace.getModX() * length, blockFace.getModY() * length, blockFace.getModZ() * length));
+      }
+
+      @Override
+      public boolean hasMetadata(String key) {
+        return blockAccess(getLocation()).hasMetadata(key);
+      }
+
+      @Override
+      public List<MetadataValue> getMetadata(String key) {
+        return blockAccess(getLocation()).getMetadata(key);
+      }
+    };
+  }
+
   public static Block blockAccess(Location location) {
     return blockAccess(location.getWorld(), location.getBlockX(), location.getBlockY(), location.getBlockZ());
   }
 
-  public static Block blockAccess(World blockAccess, double x, double y, double z) {
-    return blockAccess(blockAccess, floor(x), floor(y), floor(z));
-  }
-
   public static Block blockAccess(World blockAccess, BlockPosition position) {
     return blockAccess(blockAccess, position.xCoord, position.yCoord, position.zCoord);
+  }
+
+  public static Block blockAccess(World blockAccess, double x, double y, double z) {
+    return blockAccess(blockAccess, floor(x), floor(y), floor(z));
   }
 
   public static Block blockAccess(World blockAccess, int x, int y, int z) {
@@ -83,7 +145,7 @@ public final class VolatileBlockAccess {
   }
 
   public static Material typeAccess(User user, World blockAccess, int blockX, int blockY, int blockZ) {
-    if (isInLoadedChunk(blockAccess, blockX, blockZ) || Bukkit.isPrimaryThread()) {
+    if (blockAccess == null || isInLoadedChunk(blockAccess, blockX, blockZ) || Bukkit.isPrimaryThread()) {
       return user.blockStates().typeAt(blockX, blockY, blockZ);
     }
     return Material.AIR;

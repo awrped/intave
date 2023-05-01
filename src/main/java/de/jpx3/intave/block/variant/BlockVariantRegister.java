@@ -35,8 +35,8 @@ public final class BlockVariantRegister {
 
   static final BlockVariant EMPTY_ERROR = new EmptyBlockVariant();
 
-  // Note: Caching all materials can become quite memory-intensive.
-  //       Only pass in materials that are actually used, always filter random materials
+  // Note: Caching all materials will become quite memory-intensive.
+  //       Only pass in materials that are actually used, always filter random materials!
   public static BlockVariant variantOf(Material type, int variantIndex) {
     Map<Integer, BlockVariant> variantMap = blockVariants.computeIfAbsent(type, BlockVariantRegister::translateFromServer);
     BlockVariant variant = variantMap.get(variantIndex);
@@ -47,8 +47,18 @@ public final class BlockVariantRegister {
     return variant;
   }
 
+  public static BlockVariant uncachedVariantOf(Material type, int variantIndex) {
+    Map<Integer, BlockVariant> variantMap = translateFromServer(type);
+    BlockVariant variant = variantMap.get(variantIndex);
+    if (variant == null) {
+      IntaveLogger.logger().error("Could not find variant for " + type + " with index " + variantIndex + " (map size: " + variantMap.size() + ")");
+      return EMPTY_ERROR;
+    }
+    return variant;
+  }
+
   private static Map<Integer, BlockVariant> translateFromServer(Material material) {
-    Map<Integer, BlockVariant> map = BlockVariantConverter.translateSettings(material, blockDataRegister.get(material));
+    Map<Integer, BlockVariant> map = BlockVariantConverter.translateVariants(material, blockDataRegister.get(material));
     if (IntaveControl.DEBUG_VARIANT_COMPILATION) {
       System.out.println("[variant/debug] Compiled " + map.size() + " variants for " + material);
       System.out.println("[variant/debug] Zero variant is: ");

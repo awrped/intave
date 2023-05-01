@@ -1,5 +1,8 @@
 package de.jpx3.intave.module.mitigate;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public enum AttackNerfStrategy {
   CANCEL("cancel"),
   CANCEL_FIRST_HIT("cancel/first"),
@@ -14,7 +17,9 @@ public enum AttackNerfStrategy {
   BLOCKING("dmg/blocking"),
   CRITICALS("dmg/criticals"),
   BURN_LONGER("burn-longer"),
-  WALK_SLOW("walk-slower");
+  WALK_SLOW("walk-slower")
+
+  ;
 
   private final String typeName;
 
@@ -24,5 +29,17 @@ public enum AttackNerfStrategy {
 
   public String typeName() {
     return typeName;
+  }
+
+  private static final Map<String, AttackNerfStrategy> BY_NAME = new HashMap<>();
+
+  static {
+    for (AttackNerfStrategy strategy : values()) {
+      BY_NAME.put(strategy.typeName, strategy);
+    }
+  }
+
+  public static AttackNerfStrategy byName(String name) {
+    return BY_NAME.get(name);
   }
 }

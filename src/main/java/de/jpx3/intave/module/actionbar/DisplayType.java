@@ -6,5 +6,5 @@ package de.jpx3.intave.module.actionbar;
  */
 
 public enum DisplayType {
- CLICKS,
+  CLICKS,
 }

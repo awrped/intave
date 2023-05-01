@@ -23,16 +23,18 @@ import static de.jpx3.intave.user.meta.ProtocolMetadata.VER_1_8;
 
 public final class UserPlayerContainer implements PlayerContainer {
   private final User user;
-  private Environment environment;
+  private final Environment environment;
 
-  public UserPlayerContainer(User user) {
+  public UserPlayerContainer(User user, Environment environment) {
     this.user = user;
+    this.environment = environment;
   }
 
   @Override
   public void debug(String message) {
-    if (IntaveControl.DISABLE_LICENSE_CHECK) {
+    if (IntaveControl.DEBUG_HEURISTICS) {
       user.player().sendMessage("[debug] " + message);
+      System.out.println("[debug] " + message);
     }
   }
 
@@ -44,21 +46,19 @@ public final class UserPlayerContainer implements PlayerContainer {
   @Override
   public void noteAnomaly(String key, Confidence confidence, String description) {
     // ignore
+    if (IntaveControl.DEBUG_HEURISTICS) {
+      user.player().sendMessage("Nayoro Relay Anomaly: " + key + " (" + confidence + ") " + description);
+    }
   }
 
   @Override
-  public void applyIfUserPresent(Consumer<User> action) {
+  public void applyIfUserPresent(Consumer<? super User> action) {
     action.accept(user);
   }
 
   @Override
   public Environment environment() {
     return environment;
-  }
-
-  @Override
-  public void setEnvironment(Environment environment) {
-    this.environment = environment;
   }
 
   @Override
@@ -90,6 +90,22 @@ public final class UserPlayerContainer implements PlayerContainer {
   @Override
   public boolean recentlySwitchedEntity(long millis) {
     return user.meta().attack().recentlySwitchedEntity(millis);
+  }
+
+  @Override
+  public int lastAttackedEntity() {
+    Entity entity = user.meta().attack().lastAttackedEntity();
+    return entity == null ? -1 : entity.entityId();
+  }
+
+  @Override
+  public float perfectYaw() {
+    return user.meta().attack().perfectYaw();
+  }
+
+  @Override
+  public float perfectPitch() {
+    return user.meta().attack().perfectPitch();
   }
 
   @Override

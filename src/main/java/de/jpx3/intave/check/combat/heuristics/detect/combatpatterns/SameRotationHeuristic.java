@@ -247,7 +247,6 @@ public final class SameRotationHeuristic extends MetaCheckPart<Heuristics, SameR
     }
   }
 
-
   @Reserved
   public static final class SameRotationHeuristicMeta extends CheckCustomMetadata {
     private int violationLevel;

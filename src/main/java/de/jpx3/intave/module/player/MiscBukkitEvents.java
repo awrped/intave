@@ -37,8 +37,7 @@ public final class MiscBukkitEvents extends Module {
   @IdoNotBelongHere
   public void on(PlayerJoinEvent join) {
     Player player = join.getPlayer();
-
-    boolean hasNotificationPermission = BukkitPermissionCheck.permissionCheck(player, "intave.command");
+    boolean hasNotificationPermission = BukkitPermissionCheck.permissionCheck(player, "intave.command") && !BukkitPermissionCheck.permissionCheck(player, "intave.command.noupdate");
     if (!hasNotificationPermission) {
       return;
     }

@@ -132,6 +132,11 @@ public final class CompletionDurationCheck extends MetaCheckPart<BreakSpeedLimit
 //            }
 //          }
 //        } else {
+
+        if (meta.targetBlockPosition != blockPosition) {
+          blockPosition = meta.targetBlockPosition;
+        }
+
         long requiredDuration = resolveMillisecondsOf(resolveBlockDamageOnGround(player, heldItem, blockPosition));
         long actualDuration = System.currentTimeMillis() - meta.breakProcessStartTime;
         long exceeded = Math.max(0, requiredDuration - actualDuration);
@@ -150,14 +155,14 @@ public final class CompletionDurationCheck extends MetaCheckPart<BreakSpeedLimit
           }
         }
 //        }
-
+//        break;
+      }
+      case ABORT_DESTROY_BLOCK:
         meta.breakProcessStartTime = System.currentTimeMillis();
         meta.curBlockDamageMP = 0f;
         meta.targetBlockPosition = null;
         meta.breakProcess = false;
         meta.maximumBlockDamage = Float.MIN_VALUE;
-        break;
-      }
     }
   }
 
@@ -181,7 +186,6 @@ public final class CompletionDurationCheck extends MetaCheckPart<BreakSpeedLimit
     Object handle = BlockVariantNativeAccess.nativeVariantAccess(block);
     WrappedBlockData blockData = WrappedBlockData.fromHandle(handle);
     packet.getBlockData().write(0, blockData);
-
     BlockPosition position = new BlockPosition(location.getBlockX(), location.getBlockY(), location.getBlockZ());
     packet.getBlockPositionModifier().write(0, position);
     PacketSender.sendServerPacket(player, packet);

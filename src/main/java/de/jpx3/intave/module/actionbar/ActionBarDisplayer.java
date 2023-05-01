@@ -2,10 +2,15 @@ package de.jpx3.intave.module.actionbar;
 
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.events.PacketContainer;
+import com.comphenix.protocol.events.PacketEvent;
+import com.comphenix.protocol.wrappers.EnumWrappers;
 import com.comphenix.protocol.wrappers.WrappedChatComponent;
+import de.jpx3.intave.adapter.MinecraftVersions;
 import de.jpx3.intave.executor.TaskTracker;
 import de.jpx3.intave.module.Module;
 import de.jpx3.intave.module.Modules;
+import de.jpx3.intave.module.linker.packet.ListenerPriority;
+import de.jpx3.intave.module.linker.packet.PacketSubscription;
 import de.jpx3.intave.packet.PacketSender;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserRepository;
@@ -16,6 +21,8 @@ import java.util.UUID;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static de.jpx3.intave.module.linker.packet.PacketId.Server.CHAT_OUT;
+
 public final class ActionBarDisplayer extends Module {
   private final ClickFeeder clickFeeder = new ClickFeeder();
   private final Lock lock = new ReentrantLock();
@@ -24,6 +31,25 @@ public final class ActionBarDisplayer extends Module {
   public void enable() {
     Modules.linker().bukkitEvents().registerEventsIn(clickFeeder);
     Modules.linker().packetEvents().linkSubscriptionsIn(clickFeeder);
+  }
+
+
+  @PacketSubscription(
+    priority = ListenerPriority.HIGH,
+    packetsOut = {
+      CHAT_OUT
+    }
+//    engine = Engine.ASYNC_INTERNAL
+  )
+  public void clientClickUpdate(PacketEvent event) {
+    Player player = event.getPlayer();
+    User user = UserRepository.userOf(player);
+    PacketContainer packet = event.getPacket();
+    Byte read = packet.getBytes().readSafely(0);
+    EnumWrappers.ChatType type = packet.getChatTypes().read(0);
+    if (((read != null && read.intValue() == 2) || (type == EnumWrappers.ChatType.GAME_INFO)) && inSubscription(user)) {
+      event.setCancelled(true);
+    }
   }
 
   public void subscribe(User receiver, User target, DisplayType type) {
@@ -82,11 +108,19 @@ public final class ActionBarDisplayer extends Module {
     TaskTracker.begun(taskId[0]);
   }
 
+  private static final boolean TYPE_AS_GAME_INFO = MinecraftVersions.VER1_12_0.atOrAbove();
+
   private void sendActionBar(Player player, String message) {
     PacketContainer packet = new PacketContainer(PacketType.Play.Server.CHAT);
     packet.getChatComponents().write(0, WrappedChatComponent.fromText(message));
-    packet.getBytes().write(0, (byte) 2);
-    PacketSender.sendServerPacket(player, packet);
+
+    if (TYPE_AS_GAME_INFO) {
+      packet.getChatTypes().write(0, EnumWrappers.ChatType.GAME_INFO);
+    } else {
+      packet.getBytes().write(0, (byte) 2);
+    }
+
+    PacketSender.sendServerPacketWithoutEvent(player, packet);
 //    Synchronizer.synchronize(() -> {
 //      player.sendMessage(message);
 //    });

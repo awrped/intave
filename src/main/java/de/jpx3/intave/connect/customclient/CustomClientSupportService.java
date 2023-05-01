@@ -14,6 +14,7 @@ import de.jpx3.intave.check.EventProcessor;
 import de.jpx3.intave.connect.sibyl.LabyModChannelHelper;
 import de.jpx3.intave.executor.Synchronizer;
 import de.jpx3.intave.klass.Lookup;
+import de.jpx3.intave.module.Modules;
 import de.jpx3.intave.module.linker.packet.PacketSubscription;
 import de.jpx3.intave.packet.PacketSender;
 import de.jpx3.intave.user.User;
@@ -41,7 +42,7 @@ public final class CustomClientSupportService implements EventProcessor {
     } catch (Exception exception) {
 //      IntaveLogger.logger().info("Failed to register output channel: " + exception.getClass().getSimpleName());
     }
-    plugin.packetSubscriptionLinker().linkSubscriptionsIn(this);
+    Modules.linker().packetEvents().linkSubscriptionsIn(this);
   }
 
   @PacketSubscription(

@@ -13,12 +13,8 @@ check:
     # Experimental feature, reduces feedback-related false positives
     use-superpositions: false
 
-    # Unused, will be removed in the future
-    speculative-forward-emulation:
-      enabled: false
-      activation-threshold: 0
-      ticks: 3
-      ticks-for-hard-sync: -1
+    # Experimental feature, detects NoSlowdown cheats
+    enforce-item-slowdown: true
 
     on-detection:
       reset-item-usage: true
@@ -30,7 +26,7 @@ check:
       400: "intave internals sendnotify &c{player}&7/{trust-color}&7 is moving incorrectly #2"
       500: "intave internals storelog {player} {check} {vl}"
       999:
-        - "intave internals collectivekick {player} &cYou have been kicked, as an account with your ip address was removed from the game"
+        - "intave internals kickip {player} &cYou have been kicked, as an account with your ip address was removed from the game"
         - "kick {player} &cYou have been removed from the game based on data that was collected by the anti-cheat"
 
   timer:
@@ -38,6 +34,8 @@ check:
     reverse-blink: true
     reverse-lag: false
     low-tolerance: false
+    reduce-stutter-hits: false
+
     thresholds:
       50: "intave internals sendnotify &c{player}&7/{trust-color}&7 is moving too frequently / is lagging"
       100: "intave internals sendnotify &c{player}&7/{trust-color}&7 is moving too frequently / is lagging for a long period"
@@ -51,7 +49,7 @@ check:
         25:
           - "intave internals storelog {player} {check} {vl}"
           - "intave internals sendnotify &c{player}&7/{trust-color}&7 has been removed for attacking suspiciously (!!) (heuristics)"
-          - "intave internals collectivekick {player} &cYou have been kicked, as an account with your ip address was removed from the game"
+          - "intave internals kickip {player} &cYou have been kicked, as an account with your ip address was removed from the game"
           - "kick {player} &cYou have been removed from the game based on data that was collected by the anti-cheat"
       "!":
         25:
@@ -59,7 +57,7 @@ check:
           - "intave internals sendnotify &c{player}&7/{trust-color}&7 is attacking suspiciously (!) (heuristics)"
         50:
           - "intave internals sendnotify &c{player}&7/{trust-color}&7 has been removed for attacking suspiciously (!) (heuristics)"
-          - "intave internals collectivekick {player} &cYou have been kicked, as an account with your ip address was removed from the game"
+          - "intave internals kickip {player} &cYou have been kicked, as an account with your ip address was removed from the game"
           - "kick {player} &cYou have been removed from the game based on data that was collected by the anti-cheat"
       "?!":
         50: "intave internals sendnotify &c{player}&7/{trust-color}&7 is attacking suspiciously (?!) (heuristics)"
@@ -73,7 +71,7 @@ check:
         100:
           - "intave internals storelog {player} {check} {vl}"
           - "intave internals sendnotify &c{player}&7/{trust-color}&7 has been removed for attacking suspiciously (reach)"
-          - "intave internals collectivekick {player} &cYou have been kicked, as an account with your ip address was removed from the game"
+          - "intave internals kickip {player} &cYou have been kicked, as an account with your ip address was removed from the game"
           - "kick {player} &cYou have been removed from the game based on data that was collected by the anti-cheat"
 
       hitbox:
@@ -92,7 +90,7 @@ check:
       50: "intave internals sendnotify &c{player}&7/{trust-color}&7 is clicking statistically anomalously (auto-clicker)"
       100:
         - "intave internals sendnotify &c{player}&7/{trust-color}&7 has been removed for clicking statistically anomalously (auto-clicker)"
-        - "intave internals collectivekick {player} &cYou have been kicked, as an account with your ip address was removed from the game"
+        - "intave internals kickip {player} &cYou have been kicked, as an account with your ip address was removed from the game"
         - "kick {player} &cYou have been removed from the game based on data that was collected by the anti-cheat"
 
   clickspeedlimiter:
@@ -102,7 +100,7 @@ check:
       50: "intave internals sendnotify &c{player}&7/{trust-color}&7 is attacking too quickly"
       100:
         - "intave internals sendnotify &c{player}&7/{trust-color}&7 has been removed for attacking too quickly"
-        - "intave internals collectivekick {player} &cYou have been kicked, as an account with your ip address was removed from the game"
+        - "intave internals kickip {player} &cYou have been kicked, as an account with your ip address was removed from the game"
         - "kick {player} &cYou have been removed from the game based on data that was collected by the anti-cheat"
 
   breakspeedlimiter:
@@ -118,7 +116,7 @@ check:
       50: "intave internals sendnotify &c{player}&7/{trust-color}&7 is sending invalid packets"
       100:
         - "intave internals sendnotify &c{player}&7/{trust-color}&7 has been removed for sending invalid packets"
-        - "intave internals collectivekick {player} &cYou have been kicked, as an account with your ip address was removed from the game"
+        - "intave internals kickip {player} &cYou have been kicked, as an account with your ip address was removed from the game"
         - "kick {player} &cYou have been removed from the game based on data that was collected by the anti-cheat"
 
   placementanalysis:
@@ -129,7 +127,7 @@ check:
       100:
         - "intave internals storelog {player} {check} {vl}"
         - "intave internals sendnotify &c{player}&7/{trust-color}&7 has been removed for placing blocks incorrectly"
-        - "intave internals collectivekick {player} &cYou have been kicked, as an account with your ip address was removed from the game"
+        - "intave internals kickip {player} &cYou have been kicked, as an account with your ip address was removed from the game"
         - "kick {player} &cYou have been removed from the game based on data that was collected by the anti-cheat"
 
   inventoryclickanalysis:
@@ -139,7 +137,7 @@ check:
       50: "intave internals sendnotify &c{player}&7/{trust-color}&7 is performing invalid item-operations"
       100:
         - "intave internals sendnotify &c{player}&7/{trust-color}&7 has been removed for clicking suspiciously on items"
-        - "intave internals collectivekick {player} &cYou have been kicked, as an account with your ip address was removed from the game"
+        - "intave internals kickip {player} &cYou have been kicked, as an account with your ip address was removed from the game"
         - "kick {player} &cYou have been removed from the game based on data that was collected by the anti-cheat"
 
 storage:
@@ -151,17 +149,14 @@ storage:
 
 blacklist:
   apply: true
+  message-in-chat: false
+  message: "&cYou are on an anti-cheat blacklist and can't join this server"
 
 proxy:
   enable: false
 
 clientwarning:
   enable: true
-
-filter:
-  health: true
-  vanish: true
-  equipmentdata: false
 
 command:
   hide: true
@@ -188,8 +183,17 @@ fault-kicks:
   invalid-player-action: true
 
 logging:
-  console-log: false
+  # Save logs to a file?
   file-log: true
+
+  # Show trustfactor changes in the console?
+  trustfactor: true
+  # Show client version on join in the console?
+  client-version: true
+  # Show command executions in the console?
+  command-execution: true
+  # Show fault kicks in the console?
+  fault-kicks: true
 
 analytics:
   errorReporting: true

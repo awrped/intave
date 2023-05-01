@@ -17,6 +17,8 @@ import de.jpx3.intave.module.linker.packet.PacketSubscription;
 import de.jpx3.intave.resource.Resource;
 import de.jpx3.intave.resource.Resources;
 import de.jpx3.intave.security.ContextSecrets;
+import de.jpx3.intave.user.User;
+import de.jpx3.intave.user.UserRepository;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -79,6 +81,10 @@ public final class LabyModsHeuristic extends CheckPart<Heuristics> {
       JsonReader jsonReader = new JsonReader(json);
       jsonReader.setLenient(true);
       JsonObject object = new JsonParser().parse(jsonReader).getAsJsonObject();
+
+      User user = UserRepository.userOf(player);
+      user.meta().connection().labyModData = object;
+
       if (object.has("mods")) {
         JsonArray mods = object.getAsJsonArray("mods");
         Map<String, String> modsUsed = new HashMap<>();

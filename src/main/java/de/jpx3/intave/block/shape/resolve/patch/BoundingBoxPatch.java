@@ -17,7 +17,9 @@ abstract class BoundingBoxPatch {
   }
 
   protected BlockShape collisionPatch(World world, Player player, int posX, int posY, int posZ, Material type, int blockState, BlockShape shape) {
-    // should be overriden
+    // this method should be overridden
+    // calls bb collision patch function if not
+
     List<BoundingBox> input = shape.boundingBoxes();
     List<BoundingBox> output = collisionPatch(world, player, posX, posY, posZ, type, blockState, input);
 
@@ -37,7 +39,7 @@ abstract class BoundingBoxPatch {
     return false;
   }
 
-  public boolean appliesTo(Material material) {
+  protected boolean appliesTo(Material material) {
     if (this.materials == null) {
       return false;
     }

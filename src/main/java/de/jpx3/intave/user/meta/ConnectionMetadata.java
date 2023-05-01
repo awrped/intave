@@ -5,6 +5,7 @@ import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.events.PacketContainer;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.gson.JsonObject;
 import de.jpx3.intave.IntaveControl;
 import de.jpx3.intave.annotate.DispatchTarget;
 import de.jpx3.intave.annotate.Relocate;
@@ -21,8 +22,9 @@ import java.util.concurrent.ThreadLocalRandom;
 @Relocate
 public final class ConnectionMetadata {
   private final Player player;
-  private final Map<Short, FeedbackRequest<?>> transactionShortMap = Maps.newConcurrentMap();
   private final Map<Long, FeedbackRequest<?>> transactionGlobalKeyMap = Maps.newConcurrentMap();
+  private final Map<Short, FeedbackRequest<?>> transactionShortMap = Maps.newConcurrentMap();
+  private final Queue<FeedbackRequest<?>> feedbackRequestsPending = new LinkedList<>();
   private final Map<Long, Queue<FeedbackRequest<?>>> transactionOptionalAppendixMap = Maps.newConcurrentMap();
   private final Map<Integer, Entity> entitiesById = Maps.newConcurrentMap();
   private final Set<Integer> entityIds = new HashSet<>();
@@ -43,12 +45,17 @@ public final class ConnectionMetadata {
   @Deprecated
   public boolean markAttackInvalid;
 
+  public int windowClickId;
+
   public enum DecoySide {
     FIRST_IS_DECOY,
     SECOND_IS_DECOY,
   }
 
   //  private final Set<Integer> takenLocalEntityIds = new HashSet<>();
+  public int pendingTransactions;
+
+//  private final Set<Integer> takenLocalEntityIds = new HashSet<>();
   private int localEntityIdCounter = 1;
   public long lastCCCInfoMessageSent = 0;
   public boolean sendAsyncMessage = false;
@@ -67,6 +74,9 @@ public final class ConnectionMetadata {
   public boolean ignorePacketEnqueue;
   public long delayedPackets = 0;
   public long lastDelayRequest = 0;
+  public long blinkDeactivated = 0;
+  public long lastRespawn = 0;
+  public boolean lastBlinkState = false;
 
   // Client Synchronization
   public int latency;
@@ -84,6 +94,9 @@ public final class ConnectionMetadata {
   // Lag identification
   private long lastMovementTimestamps;
   private final List<Long> movementLagSpikeHistory = new ArrayList<>();
+
+  // labymod data
+  public JsonObject labyModData = new JsonObject();
 
   public ConnectionMetadata(Player player) {
     this.player = player;
@@ -137,7 +150,7 @@ public final class ConnectionMetadata {
   public void receivedTransactionAfter(long milliseconds) {
     transactionSum += Math.min(milliseconds, 1000);
     transactionNum++;
-    if (transactionNum > Short.MAX_VALUE / 2) {
+    if (transactionNum > Short.MAX_VALUE / 8) {
       transactionSum /= 2;
       transactionNum /= 2;
     }
@@ -182,6 +195,10 @@ public final class ConnectionMetadata {
 
   public Map<Short, FeedbackRequest<?>> transactionShortKeyMap() {
     return transactionShortMap;
+  }
+
+  public Queue<FeedbackRequest<?>> pendingFeedbackRequests() {
+    return feedbackRequestsPending;
   }
 
   public Map<Long, FeedbackRequest<?>> transactionGlobalKeyMap() {

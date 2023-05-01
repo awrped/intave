@@ -3,6 +3,8 @@ package de.jpx3.intave.user.storage;
 import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteArrayDataOutput;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 public final class PlaytimeStorage implements Storage {
   private static final int STORAGE_SIZE = 10 * Long.BYTES;
 
@@ -10,7 +12,7 @@ public final class PlaytimeStorage implements Storage {
   private long minutesPlayed;
   private long minutesAfk;
   private long firstSight = System.currentTimeMillis();
-  private long _reserved1;
+  private long debugTagBits;
   private long _reserved2;
   private long _reserved3;
   private long _reserved4;
@@ -25,7 +27,7 @@ public final class PlaytimeStorage implements Storage {
     output.writeLong(minutesPlayed);
     output.writeLong(minutesAfk);
     output.writeLong(firstSight);
-    output.writeLong(_reserved1);
+    output.writeLong(debugTagBits);
     output.writeLong(_reserved2);
     output.writeLong(_reserved3);
     output.writeLong(_reserved4);
@@ -44,7 +46,7 @@ public final class PlaytimeStorage implements Storage {
     if (firstSight == 0) {
       firstSight = System.currentTimeMillis();
     }
-    _reserved1 = input.readLong();
+    debugTagBits = input.readLong();
     _reserved2 = input.readLong();
     _reserved3 = input.readLong();
     _reserved4 = input.readLong();
@@ -57,6 +59,24 @@ public final class PlaytimeStorage implements Storage {
     } else if (overflow < 0) {
       throw new IllegalStateException("Byte order underflow");
     }
+  }
+
+  @Override
+  public int id() {
+    return 0;
+  }
+
+  @Override
+  public int version() {
+    return 1;
+  }
+
+  public void setDebugTag() {
+    this.debugTagBits = ThreadLocalRandom.current().nextInt(0, Integer.MAX_VALUE);
+  }
+
+  public int readTag() {
+    return (int) debugTagBits;
   }
 
   public void incrementJoins() {

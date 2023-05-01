@@ -5,6 +5,7 @@ import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.wrappers.EnumWrappers;
 import com.comphenix.protocol.wrappers.PlayerInfoData;
 import com.comphenix.protocol.wrappers.WrappedGameProfile;
+import com.google.common.collect.Lists;
 import de.jpx3.intave.IntaveControl;
 import de.jpx3.intave.module.linker.packet.PacketSubscription;
 import de.jpx3.intave.packet.reader.PacketReaders;
@@ -13,17 +14,15 @@ import de.jpx3.intave.packet.reader.PlayerInfoRemoveReader;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserRepository;
 import de.jpx3.intave.user.meta.ProtocolMetadata;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
 
 import static com.comphenix.protocol.wrappers.EnumWrappers.NativeGameMode.SURVIVAL;
-import static de.jpx3.intave.module.linker.packet.PacketId.Server.PLAYER_INFO;
-import static de.jpx3.intave.module.linker.packet.PacketId.Server.PLAYER_INFO_REMOVE;
+import static de.jpx3.intave.module.linker.packet.PacketId.Server.*;
 
 public final class VanishFilter extends Filter {
   public VanishFilter() {
@@ -88,6 +87,41 @@ public final class VanishFilter extends Filter {
     Collections.shuffle(playerInfos);
 //    lists.write(0, playerInfos);
     reader.release();
+  }
+
+  @PacketSubscription(
+//    engine = Engine.ASYNC_INTERNAL,
+    packetsOut = {
+      TAB_COMPLETE_OUT
+    }
+  )
+  public void receiveTabComplete(PacketEvent event) {
+    Player player = event.getPlayer();
+    User user = UserRepository.userOf(player);
+    ProtocolMetadata protocol = user.meta().protocol();
+    List<UUID> shownPlayers = protocol.shownPlayers;
+
+    PacketContainer packet = event.getPacket();
+    String[] stuff = packet.getStringArrays().readSafely(0);
+    if (stuff != null) {
+      List<String> playerNames = Bukkit.getOnlinePlayers().stream()
+        .map(Player::getName).collect(Collectors.toList());
+      List<String> hiddenPlayers = Lists.newArrayList();
+      for (String name : playerNames) {
+        Player target = Bukkit.getPlayerExact(name);
+        if (target == null) {
+          continue;
+        }
+        if (!shownPlayers.contains(target.getUniqueId())) {
+          hiddenPlayers.add(name);
+        }
+      }
+      List<String> newTabCompletions = Lists.newArrayList();
+      Arrays.stream(stuff).filter(string -> !hiddenPlayers.contains(string)).forEach(newTabCompletions::add);
+      if (newTabCompletions.size() != stuff.length) {
+        packet.getStringArrays().writeSafely(0, newTabCompletions.toArray(new String[0]));
+      }
+    }
   }
 
   @PacketSubscription(

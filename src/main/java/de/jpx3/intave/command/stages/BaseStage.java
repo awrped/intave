@@ -10,6 +10,7 @@ import de.jpx3.intave.command.SubCommand;
 import de.jpx3.intave.module.Modules;
 import de.jpx3.intave.module.actionbar.ActionBarDisplayer;
 import de.jpx3.intave.module.actionbar.DisplayType;
+import de.jpx3.intave.module.nayoro.Nayoro;
 import de.jpx3.intave.player.ProfileLookup;
 import de.jpx3.intave.security.LicenseAccess;
 import de.jpx3.intave.user.MessageChannel;
@@ -35,7 +36,10 @@ import org.bukkit.entity.Player;
 import java.text.DateFormat;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public final class BaseStage extends CommandStage {
@@ -95,11 +99,53 @@ public final class BaseStage extends CommandStage {
     }
   }
 
+  // REMOVE ON LIVE SERVER
+  /*
+  @SubCommand(
+    selectors = "record",
+    usage = "",
+    description = "Record timings"
+  )
+  @Native
+  public void recordCommand(User user, @Optional Player target) {
+    if (IntaveControl.DISABLE_LICENSE_CHECK && !IntaveControl.GOMME_MODE) {
+      User targetUser = target != null ? UserRepository.userOf(target) : user;
+      Nayoro nayoro = Modules.nayoro();
+      if (!nayoro.recordingActiveFor(targetUser)) {
+        nayoro.enableRecordingFor(targetUser);
+        user.player().sendMessage(ChatColor.GREEN + "Recording enabled for " + ChatColor.RED + targetUser.player().getName());
+      } else {
+        nayoro.disableRecordingFor(targetUser);
+        user.player().sendMessage(ChatColor.GREEN + "Recording disabled for " + ChatColor.RED + targetUser.player().getName());
+      }
+    } else {
+      user.player().sendMessage(ChatColor.RED + "This command is not available.");
+    }
+  }
+
+  @SubCommand(
+    selectors = "playback",
+    usage = "",
+    description = "Playback recorded timings"
+  )
+  @Native
+  public void playbackCommand(User user, @Optional Player target) {
+    if (IntaveControl.DISABLE_LICENSE_CHECK && !IntaveControl.GOMME_MODE) {
+      User targetUser = target != null ? UserRepository.userOf(target) : user;
+      user.player().sendMessage(ChatColor.GREEN + "Playback for " + ChatColor.RED + targetUser.player().getName() + ChatColor.GREEN + " started");
+      Nayoro nayoro = Modules.nayoro();
+      nayoro.instantPlayback(targetUser);
+    } else {
+      user.player().sendMessage(ChatColor.RED + "This command is not available.");
+    }
+  }
+  */
+
   @SubCommand(
     selectors = {"cps", "clicks"},
     permission = "intave.command.cps",
     usage = "[<player...>]",
-    description = "Toggle CPS messages"
+    description = "Show a click visualizer"
   )
   public void cpsCommand(User user, @Optional Player selectedPlayer) {
     Player player = user.player();
