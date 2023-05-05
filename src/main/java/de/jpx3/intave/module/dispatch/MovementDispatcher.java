@@ -336,6 +336,7 @@ public final class MovementDispatcher extends Module {
     if (player.isDead() || event.isCancelled()) {
       return;
     }
+
     PacketContainer packet = event.getPacket();
     User user = UserRepository.userOf(player);
     MetadataBundle meta = user.meta();
@@ -392,12 +393,12 @@ public final class MovementDispatcher extends Module {
 
     if (hasMovement || movementData.isInVehicle() || movementData.inRespawnScreen) {
       movementData.lastPositionUpdate = 0;
-    } else if (++movementData.lastPositionUpdate > 20 && FaultKicks.MISSING_POSITION_UPDATE && !user.trustFactor().atLeast(TrustFactor.BYPASS)) {
+    } else if (++movementData.lastPositionUpdate > 20 && FaultKicks.MISSING_POSITION_UPDATE && !user.justJoined() && !user.trustFactor().atLeast(TrustFactor.BYPASS)) {
       user.kick("Missing position update");
     }
 
     // fix only works for 1.8
-    if (movementData.sprinting && movementData.isSneaking() && movementData.lastSneaking && !protocol.combatUpdate() && movementData.acceptSneakFaults && FaultKicks.INVALID_PLAYER_ACTION && !user.trustFactor().atLeast(TrustFactor.BYPASS)) {
+    if (movementData.sprinting && movementData.isSneaking() && movementData.lastSneaking && !protocol.combatUpdate() && movementData.acceptSneakFaults && FaultKicks.INVALID_PLAYER_ACTION && !user.justJoined() && !user.trustFactor().atLeast(TrustFactor.BYPASS)) {
       movementData.acceptSneakFaults = false;
       user.refreshSprintState(unused -> {
         movementData.sprintSneakFaults++;
@@ -1023,7 +1024,6 @@ public final class MovementDispatcher extends Module {
       Direction facing = variant.enumProperty(Direction.class, "facing");
       boolean opening = reader.data() == 1;
       user.tickFeedback(() -> {
-//      Modules.feedback().synchronize(player, (p, n) -> {
         if (movement.shulkerData.containsKey(blockPosition)) {
           ShulkerBox shulkerBox = movement.shulkerData.get(blockPosition);
           if (opening) {
@@ -1075,7 +1075,6 @@ public final class MovementDispatcher extends Module {
 //        player.teleport(player.getLocation().add(vector.toBukkitVector()));
       }
     }
-    reader.release();
   }
 
   @PacketSubscription(

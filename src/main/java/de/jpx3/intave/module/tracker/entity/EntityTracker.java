@@ -19,7 +19,6 @@ import de.jpx3.intave.executor.TaskTracker;
 import de.jpx3.intave.module.Module;
 import de.jpx3.intave.module.Modules;
 import de.jpx3.intave.module.feedback.EmptyFeedbackCallback;
-import de.jpx3.intave.module.feedback.FeedbackCallback;
 import de.jpx3.intave.module.feedback.FeedbackObserver;
 import de.jpx3.intave.module.linker.packet.ListenerPriority;
 import de.jpx3.intave.module.linker.packet.PacketSubscription;
@@ -29,7 +28,6 @@ import de.jpx3.intave.module.nayoro.event.EntityRemoveEvent;
 import de.jpx3.intave.module.nayoro.event.EntitySpawnEvent;
 import de.jpx3.intave.module.nayoro.event.sink.EventSink;
 import de.jpx3.intave.packet.PacketSender;
-import de.jpx3.intave.packet.reader.EntityDestroyReader;
 import de.jpx3.intave.packet.reader.EntityIterable;
 import de.jpx3.intave.packet.reader.EntityMetadataReader;
 import de.jpx3.intave.packet.reader.PacketReaders;
@@ -69,77 +67,32 @@ public final class EntityTracker extends Module {
 
    TODO: maybe remove entities when their live gets below 0 for 20 ticks. Or debug if entities gets really removed in some kind of root command
    */
-  private final IntavePlugin plugin;
   private final EntityTypeResolver entityTypeResolver;
+  private final PeriodicEntityCoverageSelector coverageSelector;
 
-  private final boolean NEW_POSITION_PROCESSING_1_9 = ProtocolLibraryAdapter.serverVersion().isAtLeast(MinecraftVersions.VER1_9_0);
+  private final boolean NEW_POSITION_PROCESSING_1_9 = MinecraftVersions.VER1_9_0.atOrAbove();
 
   public EntityTracker(IntavePlugin plugin) {
     this.plugin = plugin;
     this.entityTypeResolver = new EntityTypeResolver(plugin);
-//    plugin.packetSubscriptionLinker().linkSubscriptionsIn(this);
-//    this.setupSynchronizer();
+    this.coverageSelector = PeriodicEntityCoverageSelector.builder()
+      .withRefreshIntervalInSeconds(1)
+      .withDistanceRequirement(16)
+      .withMaxTracedEntities(4)
+      .withMaxDoubleTracedEntities(1)
+      .withEntityAdditionListener(this::nayoroEntitySpawn)
+      .withEntityRemovalListener(this::nayoroEntityDespawn)
+      .build();
   }
 
   @Override
   public void enable() {
-    //noinspection deprecation
-    int taskId = Bukkit.getScheduler().scheduleAsyncRepeatingTask(plugin, this::reevaluateTracingEntities, 20, 20);
-    TaskTracker.begun(taskId);
+    coverageSelector.enableTask();
   }
 
-  private void reevaluateTracingEntities() {
-    for (Player player : Bukkit.getOnlinePlayers()) {
-      selectEntitiesToTraceFor(player);
-    }
-  }
-
-  private static final int REQUIRED_DISTANCE = 16;
-  private static final int MAX_TRACED_ENTITIES = 4;
-  private static final int MAX_DOUBLE_TRACED_ENTITIES = 1;
-
-  private void selectEntitiesToTraceFor(Player player) {
-    User user = UserRepository.userOf(player);
-    if (!user.hasPlayer()) {
-      return;
-    }
-    ConnectionMetadata synchronizeData = user.meta().connection();
-//    Vector location = new Vector(0, 0, 0);
-    Vector playerLocation = player.getLocation().toVector();
-    List<Entity> validEntities = new ArrayList<>();
-    for (Entity entity : synchronizeData.entities()) {
-      boolean firstSurvive = false;
-      if (entity.typeData() != null) {
-        double distance = entity.distanceTo(playerLocation);
-        if (distance <= REQUIRED_DISTANCE) {
-          validEntities.add(entity);
-          entity.distanceToPlayerCache = distance;
-          entity.doubleVerification = false;
-          firstSurvive = true;
-        }
-      }
-      if (entity.tracingEnabled() && !firstSurvive) {
-        nayoroEntityDespawn(user, entity);
-      }
-      entity.setResponseTracingEnabled(firstSurvive);
-    }
-    validEntities.sort(Comparator.comparingDouble(entity -> entity.distanceToPlayerCache));
-    int count = 0;
-    synchronizeData.tracedEntities().clear();
-    for (Entity entity : validEntities) {
-      boolean trace = count < MAX_TRACED_ENTITIES;
-      if (trace) {
-        synchronizeData.tracedEntities().add(entity);
-      }
-      if (trace && !entity.wasTracedLastCycle()) {
-        nayoroEntitySpawn(user, entity);
-      } else if (!trace && entity.wasTracedLastCycle()) {
-        nayoroEntityDespawn(user, entity);
-      }
-      entity.setResponseTracingEnabled(trace);
-      entity.doubleVerification = trace && count < MAX_DOUBLE_TRACED_ENTITIES;
-      count++;
-    }
+  @Override
+  public void disable() {
+    coverageSelector.disableTask();
   }
 
   @PacketSubscription(
@@ -388,12 +341,10 @@ public final class EntityTracker extends Module {
     },
     ignoreCancelled = false
   )
-  public void receiveEntityDestroy(PacketEvent event) {
-    Player player = event.getPlayer();
-    PacketContainer packet = event.getPacket();
-    EntityIterable reader = PacketReaders.readerOf(packet);
-    reader.forEach(entityId -> enterEntityDestroy(player, entityId));
-    reader.release();
+  public void receiveEntityDestroy(Player player, EntityIterable iterable) {
+    iterable.forEach(entityId ->
+      enterEntityDestroy(player, entityId)
+    );
   }
 
   private void enterEntityDestroy(Player player, int entityID) {
@@ -476,12 +427,6 @@ public final class EntityTracker extends Module {
       return;
     }
     for (Entity value : synchronizeData.entities()) {
-      Map<PacketEvent, Integer> flyingPackets = value.flyingPacketMap;
-      for (PacketEvent packetEvent : flyingPackets.keySet()) {
-        player.sendMessage("Incrementing...");
-        int current = flyingPackets.get(packetEvent);
-        flyingPackets.put(packetEvent, current + 1);
-      }
       int ticksAfterPositionChange = value.position.newPosRotationIncrements;
       value.onUpdate();
       if (value.tracingEnabled() && ticksAfterPositionChange > 0) {
@@ -514,14 +459,13 @@ public final class EntityTracker extends Module {
 
     entity.immediateEntityTeleport(user, packet);
     if (entity.typeData().isLivingEntity() && entity.tracingEnabled()) {
-      FeedbackObserver observer = entity.feedbackTracker();
       EmptyFeedbackCallback task = () -> {
         entity.verifiedPosition = false;
-//        entity.flyingPacketMap.put(event, 0);
         entity.handleEntityTeleport(user, packet);
         entity.clientSynchronized = true;
         nayoroEntityPositionUpdate(player, entity);
       };
+      FeedbackObserver observer = entity.feedbackTracker();
 ////      if (entity.doubleVerification) {
 ////        FeedbackCallback<PacketEvent> verificationTask = (x, theEvent) -> entity.verifiedPosition = true;
 ////        Modules.feedback().tracedDoubleSynchronize(player, event, event, task, verificationTask, feedbackTracker, feedbackTracker);
@@ -530,16 +474,6 @@ public final class EntityTracker extends Module {
       user.tracedTickFeedback(task, observer);
 
 ////      }
-//      FeedbackCallback<PacketEvent> doubleTransactionTask = (p, e) -> {
-//        int flyingPacketSent = entity.flyingPacketMap.remove(event);
-//        // Handle transaction split
-//        if (flyingPacketSent > 0) {
-//          entity.splitAmount = flyingPacketSent;
-//          Bukkit.broadcastMessage("Detected split transaction for " + p.getName() + "!");
-//        }
-//      };
-//      FeedbackObserver feedbackTracker = entity.feedbackTracker();
-//      Modules.feedback().tracedDoubleSynchronize(player, event, event, task, doubleTransactionTask, feedbackTracker, feedbackTracker);
     } else {
       entity.handleEntityTeleport(user, packet);
       entity.clientSynchronized = false;
@@ -575,7 +509,6 @@ public final class EntityTracker extends Module {
   public void receiveEntityMovement(PacketEvent event) {
     Player player = event.getPlayer();
     User user = UserRepository.userOf(player);
-    ConnectionMetadata connectionMeta = user.meta().connection();
     PacketContainer packet = event.getPacket();
     int entityId = packet.getIntegers().read(0);
     /* NOTE: An entity can't be created by the entityID when the entity doesn't
@@ -597,21 +530,10 @@ public final class EntityTracker extends Module {
     if (entity.typeData().isLivingEntity() && entity.tracingEnabled()) {
       EmptyFeedbackCallback task = () -> {
         entity.verifiedPosition = false;
-//        entity.flyingPacketMap.put(event, 0);
         entity.handleEntityMovement(packet);
         nayoroEntityPositionUpdate(player, entity);
       };
-//      FeedbackCallback<PacketEvent> doubleTransactionTask = (player1, event1) -> {
-//        int flyingPacketSent = entity.flyingPacketMap.remove(event);
-//        // Handle transaction split
-//        if (flyingPacketSent > 0) {
-//          entity.splitAmount = flyingPacketSent;
-//          Bukkit.broadcastMessage("Detected split transaction for " + player1.getName() + "!");
-//        }
-//      };
       FeedbackObserver tracker = entity.feedbackTracker();
-//      Modules.feedback().tracedDoubleSynchronize(player, event, event, task, doubleTransactionTask, tracker, tracker);
-//      FeedbackObserver tracker = entity.feedbackTracker();
 ////      if (entity.doubleVerification) {
 ////        FeedbackCallback<PacketEvent> verificationTask = (x, theEvent) -> entity.verifiedPosition = true;
 ////        Modules.feedback().tracedDoubleSynchronize(player, event, event, task, verificationTask, tracker, tracker);
@@ -657,17 +579,10 @@ public final class EntityTracker extends Module {
     Entity.EntityPositionContext position = entity.position;
     Entity.EntityPositionContext lastPosition = entity.lastPosition;
     EntityMoveEvent event = new EntityMoveEvent(
-        entity.entityId(),
-        position.posX,
-        position.posY,
-        position.posZ,
-        lastPosition.posX,
-        lastPosition.posY,
-        lastPosition.posZ,
-        0,
-        0,
-        0,
-        0
+      entity.entityId(),
+      position.posX, position.posY, position.posZ,
+      lastPosition.posX, lastPosition.posY, lastPosition.posZ,
+      0, 0, 0, 0
     );
     sinkCallback.accept(UserRepository.userOf(player), event::accept);
   }

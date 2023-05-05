@@ -14,9 +14,9 @@ import java.util.List;
 public final class PlayerInfoDataConverter {
   private static Constructor<?> constructor;
 
-  private static Class<?> gameProfileClass;
-  private static Class<?> gameModeClass;
-  private static Class<?> chatBaseComponentClass;
+  private static final Class<?> gameProfileClass = MinecraftReflection.getGameProfileClass();
+  private static final Class<?> gameModeClass = EnumWrappers.getGameModeClass();
+  private static final Class<?> chatBaseComponentClass = MinecraftReflection.getIChatBaseComponentClass();
   private static final EquivalentConverter<WrappedGameProfile> gameProfileConverter = BukkitConverters.getWrappedGameProfileConverter();
   private static final EquivalentConverter<EnumWrappers.NativeGameMode> gameModeConverter = EnumWrappers.getGameModeConverter();
   private static final EquivalentConverter<WrappedChatComponent> chatComponentConverter = BukkitConverters.getWrappedChatComponentConverter();
@@ -60,16 +60,19 @@ public final class PlayerInfoDataConverter {
       private StructureModifier<Object> gameProfileModifier;
 
       public synchronized PlayerInfoData getSpecific(Object generic) {
-        if (gameProfileClass == null) {
-          gameProfileClass = MinecraftReflection.getGameProfileClass();
-          gameModeClass = EnumWrappers.getGameModeClass();
-          chatBaseComponentClass = MinecraftReflection.getIChatBaseComponentClass();
+        if (gameProfileModifier == null) {
           gameProfileModifier = new StructureModifier<>(generic.getClass(), null, false);
         }
         StructureModifier<Object> modifier = gameProfileModifier.withTarget(generic);
         StructureModifier<WrappedGameProfile> gameProfiles = modifier.withType(gameProfileClass, gameProfileConverter);
-        WrappedGameProfile gameProfile = gameProfiles.read(0);
+        WrappedGameProfile gameProfile = gameProfiles.readSafely(0);
+        if (gameProfile == null) {
+          throw new RuntimeException("Cannot find game profile.");
+        }
         StructureModifier<Integer> ints = modifier.withType(Integer.TYPE);
+        if (ints.size() < 1) {
+          throw new RuntimeException("Cannot find latency.");
+        }
         int latency = ints.read(0);
         StructureModifier<EnumWrappers.NativeGameMode> gameModes = modifier.withType(gameModeClass, gameModeConverter);
         EnumWrappers.NativeGameMode gameMode = gameModes.read(0);
