@@ -31,7 +31,7 @@ public final class ComponentLoader {
 
   public void prepareComponents() {
     if (Bukkit.getVersion().contains("MC: 1.19")) {
-      essentialComponents.put("ProtocolLib", "https://ci.dmulloy2.net/job/ProtocolLib/lastSuccessfulBuild/artifact/target/ProtocolLib.jar");
+      essentialComponents.put("ProtocolLib", "https://ci.dmulloy2.net/job/ProtocolLib/lastSuccessfulBuild/artifact/build/libs/ProtocolLib.jar");
     } else {
       essentialComponents.put("ProtocolLib", "https://" + IntaveDomains.primaryServiceDomain() + "/resource/ProtocolLib-4-8-0.jar");
     }

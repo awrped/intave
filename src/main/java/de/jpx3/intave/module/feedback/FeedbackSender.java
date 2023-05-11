@@ -1,6 +1,5 @@
 package de.jpx3.intave.module.feedback;
 
-import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
 import com.comphenix.protocol.events.PacketContainer;
@@ -17,17 +16,18 @@ import de.jpx3.intave.user.meta.ConnectionMetadata;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
-import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
 
+import static com.comphenix.protocol.PacketType.Play.Server.PING;
+import static com.comphenix.protocol.PacketType.Play.Server.TRANSACTION;
 import static de.jpx3.intave.module.feedback.FeedbackOptions.*;
 
 public final class FeedbackSender extends Module {
-  public static final short TRANSACTION_MIN_CODE = 0;
-  public static final short TRANSACTION_MAX_CODE = 24000;
+  public static final short MIN_USER_KEY = 0;
+  public static final short MAX_USER_KEY = 24000;
   public static final int PING_MASK = 0xf5550000;
   private static final boolean USE_PING_PONG_PACKETS = MinecraftVersions.VER1_17_0.atOrAbove();
   private static final long OPTIONAL_PENDING_LIMIT = 20;
@@ -160,53 +160,17 @@ public final class FeedbackSender extends Module {
       append = true;//pendingTransactions(userOf(player)) > 0;
     }
     if (append) {
-      appendRequestToContext_LEGACY(player, target, callback);
+      appendRequest(player, target, callback);
       return;
     }
     countTransactionPacket(player);
-    FeedbackRequest<T> request = createRequest_LEGACY(player, target, callback, tracker);
-    performRequest(player, request);
-  }
-
-  public <T> void tracedSingleSynchronize(
-    Player player, FeedbackObserver tracker, int options
-  ) {
-    if (!Bukkit.isPrimaryThread()) {
-      if (FeedbackOptions.matches(SELF_SYNCHRONIZATION, options)) {
-        Synchronizer.synchronize(() -> tracedSingleSynchronize(player, tracker, options));
-      } else {
-        IntaveLogger.logger().error("Can't perform tick-validation off main thread");
-        IntaveLogger.logger().error("Please check if you sent a packet / performed a bukkit player action asynchronously in the following trace:");
-        Thread.dumpStack();
-        tracker.failed();
-      }
-      return;
-    }
-    User user = UserRepository.userOf(player);
-    if (!user.hasPlayer()) {
-      return;
-    }
-    boolean append = false;
-    if (FeedbackOptions.matches(APPEND_ON_OVERFLOW, options)) {
-      boolean tooManyPending = pendingTransactions(userOf(player)) > OPTIONAL_PENDING_LIMIT;
-      boolean sentTooManyRecently = user.meta().connection().transactionPacketCounter > OPTIONAL_SENT_LIMIT;
-      append = tooManyPending || sentTooManyRecently;
-    }
-    if (FeedbackOptions.matches(APPEND, options)) {
-      append = true;//pendingTransactions(userOf(player)) > 0;
-    }
-    if (append) {
-      appendRequestToContext(player, tracker);
-      return;
-    }
-    countTransactionPacket(player);
-    FeedbackRequest<T> request = createRequest(player, tracker);
+    FeedbackRequest<T> request = createRequest(player, target, callback, tracker);
     performRequest(player, request);
   }
 
   private static final Object FALLBACK_OBJECT = new Object();
 
-  private <T> void appendRequestToContext_LEGACY(
+  private <T> void appendRequest(
     Player player, T obj, FeedbackCallback<T> callback
   ) {
     User user = UserRepository.userOf(player);
@@ -224,37 +188,7 @@ public final class FeedbackSender extends Module {
     queue.add(new FeedbackRequest<>(callback, null, obj, (short) -1, -1));
   }
 
-  private <T> void appendRequestToContext(
-    Player player,
-    FeedbackObserver tracker
-  ) {
-    User user = UserRepository.userOf(player);
-    if (!user.hasPlayer()) {
-      return;
-    }
-    ConnectionMetadata synchronizeData = user.meta().connection();
-    Queue<FeedbackRequest<?>> queue = synchronizeData
-      .transactionAppendMap()
-      .computeIfAbsent(synchronizeData.transactionNumCounter, aLong -> new LinkedBlockingDeque<>());
-    queue.add(new FeedbackRequest<>(null, null, null, (short) -1, -1));
-  }
-
-  private /* synchronized (is already always sync) */ <T> FeedbackRequest<T> createRequest(
-    Player player, FeedbackObserver tracker
-  ) {
-    User user = UserRepository.userOf(player);
-    ConnectionMetadata synchronizeData = user.meta().connection();
-    short transactionKey = findAvailableTransactionIdFor(player);
-    long transactionNumCounter = synchronizeData.transactionNumCounter++;
-    FeedbackRequest<T> feedbackEntry = new FeedbackRequest<>(null, tracker, null, transactionKey, transactionNumCounter);
-    synchronizeData.transactionShortKeyMap().put(transactionKey, feedbackEntry);
-    synchronizeData.transactionGlobalKeyMap().put(transactionNumCounter, feedbackEntry);
-    synchronizeData.pendingFeedbackRequests().add(feedbackEntry);
-//    return transactionKey;
-    return feedbackEntry;
-  }
-
-  private /* synchronized (is already always sync) */ <T> FeedbackRequest<T> createRequest_LEGACY(
+  private /*synchronized*/ <T> FeedbackRequest<T> createRequest(
     Player player, T obj, FeedbackCallback<T> callback, FeedbackObserver tracker
   ) {
     User user = UserRepository.userOf(player);
@@ -263,36 +197,36 @@ public final class FeedbackSender extends Module {
       //noinspection unchecked
       obj = (T) FALLBACK_OBJECT;
     }
-    short transactionKey = findAvailableTransactionIdFor(player);
+    short userKey = findUserKey(player);
     long transactionNumCounter = connection.transactionNumCounter++;
-    FeedbackRequest<T> feedbackEntry = new FeedbackRequest<>(callback, tracker, obj, transactionKey, transactionNumCounter);
-    connection.transactionShortKeyMap().put(transactionKey, feedbackEntry);
-    connection.transactionGlobalKeyMap().put(transactionNumCounter, feedbackEntry);
-    connection.pendingFeedbackRequests().add(feedbackEntry);
-    connection.pendingTransactions++;
+    FeedbackRequest<T> feedbackEntry = new FeedbackRequest<>(callback, tracker, obj, userKey, transactionNumCounter);
+    connection.feedbackQueue().add(feedbackEntry);
     return feedbackEntry;
   }
 
-  private static final short ID_START = TRANSACTION_MIN_CODE;//(short) (USE_PING_PONG_PACKETS ? 13 : TRANSACTION_MIN_CODE + ThreadLocalRandom.current().nextInt(0, 1000));
-
-  private /* synchronized (is already always sync) */ short findAvailableTransactionIdFor(Player player) {
+  private /* synchronized */ short findUserKey(Player player) {
     User user = UserRepository.userOf(player);
     ConnectionMetadata connection = user.meta().connection();
-    Map<Short, FeedbackRequest<?>> transactionFeedBackMap = connection.transactionShortKeyMap();
+    FeedbackQueue feedbackQueue = connection.feedbackQueue();
     int attempts = 1000;
-    short counter = TRANSACTION_MIN_CODE;
-    int pending = transactionFeedBackMap.size();
+    short counter = MIN_USER_KEY;
+    int pending = feedbackQueue.size();
     if (pending > 500) {
       counter += pending;
     }
-    while (transactionFeedBackMap.containsKey(counter) && attempts-- > 0) {
+    while (feedbackQueue.hasUserKey(counter) && counter >= 0 && attempts-- > 0) {
       counter++;
     }
     if (attempts <= 0) {
       // should never ever happen, last resort
       attempts = 1000;
-      while (transactionFeedBackMap.containsKey(counter) && attempts-- > 0) {
-        counter = (short) ThreadLocalRandom.current().nextInt(TRANSACTION_MIN_CODE + pending, TRANSACTION_MAX_CODE);
+      while (feedbackQueue.hasUserKey(counter) && counter >= 0 && attempts-- > 0) {
+        counter = (short) ThreadLocalRandom.current().nextInt(MIN_USER_KEY + pending, MAX_USER_KEY);
+      }
+      if (attempts <= 0) {
+        // should only happen when a player is not responding to any feedback requests
+        user.kick("Feedback response overdue");
+        return -1;
       }
     }
     return counter;
@@ -311,6 +245,7 @@ public final class FeedbackSender extends Module {
 
   // for the billions of transaction packets we send, caching is easy and makes sense
   private final PacketContainer[] PACKET_CACHE = new PacketContainer[256];
+  private final PacketContainer[] PACKET_CACHE_NO_PING_MASK = new PacketContainer[256];
 
   private void performRequest(Player receiver, FeedbackRequest<?> request) {
     if (request == null) {
@@ -318,22 +253,21 @@ public final class FeedbackSender extends Module {
     }
     User user = userOf(receiver);
     short id = request.userKey();
-    int index = id - ID_START;
+    int index = id - MIN_USER_KEY;
+    boolean noPingMask = user.meta().protocol().noPingMask();
     PacketContainer packet;
-    PacketContainer[] packetCache = PACKET_CACHE;
+    PacketContainer[] packetCache = noPingMask ? PACKET_CACHE_NO_PING_MASK : PACKET_CACHE;
     packet = index >= packetCache.length ? null : packetCache[index];
     if (packet == null) {
       if (USE_PING_PONG_PACKETS) {
-        packet = protocol.createPacket(PacketType.Play.Server.PING);
+        packet = protocol.createPacket(PING);
         int sentId = id;
-        if (user.meta().protocol().noPingMask()) {
-//          sentId *= -1;
-        } else {
+        if (!noPingMask) {
           sentId = sentId | PING_MASK;
         }
         packet.getIntegers().write(0, sentId);
       } else {
-        packet = protocol.createPacket(PacketType.Play.Server.TRANSACTION);
+        packet = protocol.createPacket(TRANSACTION);
         packet.getIntegers().write(0, 0);
         packet.getShorts().write(0, id);
         packet.getBooleans().write(0, false);
@@ -355,7 +289,7 @@ public final class FeedbackSender extends Module {
   }
 
   private static long pendingTransactions(User user) {
-    return user.meta().connection().pendingTransactions;
+    return user.meta().connection().feedbackQueue().size();
   }
 
   private User userOf(Player player) {

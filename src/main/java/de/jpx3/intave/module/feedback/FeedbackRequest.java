@@ -10,7 +10,7 @@ public final class FeedbackRequest<T> {
   private final T obj;
   private final short userKey;
   private final long key;
-  private final long time;
+  private final long created;
 
   FeedbackRequest(FeedbackCallback<T> callback, FeedbackObserver observer, T obj, short userKey, long key) {
     this.callback = callback;
@@ -18,7 +18,7 @@ public final class FeedbackRequest<T> {
     this.obj = obj;
     this.userKey = userKey;
     this.key = key;
-    this.time = System.currentTimeMillis();
+    this.created = System.currentTimeMillis();
   }
 
   void sent() {
@@ -58,10 +58,10 @@ public final class FeedbackRequest<T> {
   }
 
   public long requested() {
-    return time;
+    return created;
   }
 
   public long passedTime() {
-    return System.currentTimeMillis() - this.time;
+    return System.currentTimeMillis() - this.created;
   }
 }

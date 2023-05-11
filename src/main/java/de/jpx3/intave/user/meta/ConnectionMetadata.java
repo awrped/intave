@@ -10,6 +10,7 @@ import de.jpx3.intave.IntaveControl;
 import de.jpx3.intave.annotate.DispatchTarget;
 import de.jpx3.intave.annotate.Relocate;
 import de.jpx3.intave.module.feedback.DelayedPacket;
+import de.jpx3.intave.module.feedback.FeedbackQueue;
 import de.jpx3.intave.module.feedback.FeedbackRequest;
 import de.jpx3.intave.module.tracker.entity.Entity;
 import de.jpx3.intave.packet.PacketSender;
@@ -22,10 +23,8 @@ import java.util.concurrent.ThreadLocalRandom;
 @Relocate
 public final class ConnectionMetadata {
   private final Player player;
-  private final Map<Long, FeedbackRequest<?>> transactionGlobalKeyMap = Maps.newConcurrentMap();
-  private final Map<Short, FeedbackRequest<?>> transactionShortMap = Maps.newConcurrentMap();
-  private final Queue<FeedbackRequest<?>> feedbackRequestsPending = new LinkedList<>();
-  private final Map<Long, Queue<FeedbackRequest<?>>> transactionOptionalAppendixMap = Maps.newConcurrentMap();
+  private final FeedbackQueue feedbackQueue = new FeedbackQueue();
+  private final Map<Long, Queue<FeedbackRequest<?>>> transactionOptionalAppendMap = Maps.newConcurrentMap();
   private final Map<Integer, Entity> entitiesById = Maps.newConcurrentMap();
   private final Set<Integer> entityIds = new HashSet<>();
   private final List<Entity> entities = Lists.newCopyOnWriteArrayList();
@@ -44,15 +43,13 @@ public final class ConnectionMetadata {
   public final Set<Integer> shouldNotBeAttacked = new HashSet<>();
   @Deprecated
   public boolean markAttackInvalid;
+
   public int windowClickId;
 
   public enum DecoySide {
     FIRST_IS_DECOY,
     SECOND_IS_DECOY,
   }
-
-  //  private final Set<Integer> takenLocalEntityIds = new HashSet<>();
-  public int pendingTransactions;
 
 //  private final Set<Integer> takenLocalEntityIds = new HashSet<>();
   private int localEntityIdCounter = 1;
@@ -81,14 +78,13 @@ public final class ConnectionMetadata {
   public int latency;
   public long lastKeepAliveDifference;
   public int latencyJitter;
-  public short transactionCounter = Short.MIN_VALUE;
   public long transactionNumCounter = 0;
   public long lastReceivedTransactionNum = -1;
   public long lastSynchronization = System.currentTimeMillis();
   public long transactionPacketCounter;
   public long transactionPacketCounterReset;
 
-  public long hardTransactionResponse = 0;
+  public long feedbackFaults = 0;
 
   // Lag identification
   private long lastMovementTimestamps;
@@ -192,20 +188,13 @@ public final class ConnectionMetadata {
 //    return transactionPingCache;
 //  }
 
-  public Map<Short, FeedbackRequest<?>> transactionShortKeyMap() {
-    return transactionShortMap;
-  }
 
-  public Queue<FeedbackRequest<?>> pendingFeedbackRequests() {
-    return feedbackRequestsPending;
-  }
-
-  public Map<Long, FeedbackRequest<?>> transactionGlobalKeyMap() {
-    return transactionGlobalKeyMap;
+  public FeedbackQueue feedbackQueue() {
+    return feedbackQueue;
   }
 
   public Map<Long, Queue<FeedbackRequest<?>>> transactionAppendMap() {
-    return transactionOptionalAppendixMap;
+    return transactionOptionalAppendMap;
   }
 
   public Integer globalEntityIdFromLocal(Integer localEntityId) {

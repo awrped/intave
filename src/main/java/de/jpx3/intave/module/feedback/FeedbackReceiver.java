@@ -17,7 +17,6 @@ import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserRepository;
 import de.jpx3.intave.user.meta.ConnectionMetadata;
 import de.jpx3.intave.user.meta.MetadataBundle;
-import de.jpx3.intave.user.meta.ProtocolMetadata;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -30,8 +29,8 @@ import static de.jpx3.intave.module.feedback.FeedbackSender.*;
 import static de.jpx3.intave.module.linker.packet.PacketId.Client.*;
 
 public final class FeedbackReceiver extends Module {
-  private static final boolean USE_PING_PONG_PACKETS = MinecraftVersions.VER1_17_0.atOrAbove();
-  private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(2);
+  private static final boolean USE_PING_PACKETS = MinecraftVersions.VER1_17_0.atOrAbove();
+  private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(8);
   private static final long TIMEOUT_KICK = TimeUnit.SECONDS.toMillis(40);
   private static final long CHECK_TIMEOUT_KICK = TIMEOUT_KICK / 4;
 
@@ -113,87 +112,65 @@ public final class FeedbackReceiver extends Module {
       return;
     }
     MetadataBundle meta = user.meta();
-    ProtocolMetadata protocol = meta.protocol();
     ConnectionMetadata connection = meta.connection();
-    Map<Long, FeedbackRequest<?>> transactionGlobalKeyMap = connection.transactionGlobalKeyMap();
-    Map<Short, FeedbackRequest<?>> transactionShortKeyMap = connection.transactionShortKeyMap();
-    Queue<FeedbackRequest<?>> feedbackRequests = connection.pendingFeedbackRequests();
+    FeedbackQueue feedbackQueue = connection.feedbackQueue();
     PacketContainer packet = event.getPacket();
-    short transactionIdentifier = identifierFrom(packet, protocol.noPingMask());
-    if (transactionIdentifier == -1) {
+
+    short userKey = userKeyFrom(packet);
+    if (userKey == -1) {
       return;
     }
-    FeedbackRequest<?> transactionResponse = transactionShortKeyMap.remove(transactionIdentifier);
-    if (transactionResponse == null) {
+
+    FeedbackRequest<?> response = feedbackQueue.peek(userKey);
+    if (response == null) {
       return;
     }
-    if (IntaveControl.DEBUG_FEEDBACK_PACKETS) {
-      System.out.println("Received " + transactionIdentifier + "/" +transactionResponse.num() + " from " + player.getName());
-    }
+
     long expected = connection.lastReceivedTransactionNum + 1;
-    long received = transactionResponse.num();
+    long received = response.num();
     if (received != expected) {
-      long from = Math.min(expected, received);
-      long to = Math.max(expected, received);
-      for (long i = from; i < to; i++) {
-        FeedbackRequest<?> request = transactionGlobalKeyMap.remove(i);
-        if (request == null) continue;
-        FeedbackRequest<?> localRequest = transactionShortKeyMap.remove(request.userKey());
-        if (request != localRequest) {
-          // This should never happen
-          throw new IllegalStateException("Transaction key mismatch alpha");
-        }
-        FeedbackRequest<?> expectedRequest = feedbackRequests.poll();
-        if (request != expectedRequest) {
-          // This should never happen
-          throw new IllegalStateException("Transaction key mismatch beta");
-        }
+      for (FeedbackRequest<?> missedRequest : feedbackQueue.pollUpTo(Math.max(expected, received))) {
         if (IntaveControl.DEBUG_FEEDBACK_PACKETS) {
-          System.out.println("Emulating " + localRequest.userKey() + "/" +localRequest.num() + " for " + player.getName());
+          System.out.println("Emulating " + missedRequest.userKey() + "/" +missedRequest.num() + " for " + player.getName());
         }
-        receiveRequest(user, request);
+        receiveRequest(user, missedRequest);
       }
       user.noteFeedbackFault();
     }
 
-    FeedbackRequest<?> poll = feedbackRequests.poll();
-    if (poll != transactionResponse) {
+    if (IntaveControl.DEBUG_FEEDBACK_PACKETS) {
+      System.out.println("Received " + userKey + "/" +response.num() + " from " + player.getName());
+    }
+
+    FeedbackRequest<?> poll = feedbackQueue.poll();
+    if (poll != response) {
       throw new IllegalStateException("Polling from feedback queue did not return the expected request");
     }
 
-//    transactionShortKeyMap.remove(transactionIdentifier);
-    transactionGlobalKeyMap.remove(transactionResponse.num());
-    receiveRequest(user, transactionResponse);
-    long passedTime = transactionResponse.passedTime();
+    receiveRequest(user, response);
+    long passedTime = response.passedTime();
     connection.receivedTransactionAfter(passedTime);
 
-    // to be changed (!)
     Balance.BalanceMeta balanceMeta = (Balance.BalanceMeta) user.checkMetadata(Balance.BalanceMeta.class);
     balanceMeta.timerBalance = Math.max(balanceMeta.timerBalance, balanceMeta.confirmedBalance);
     balanceMeta.nextConfirmedBalance = -passedTime;
 
-    connection.pendingTransactions--;
     LatencyStudy.receivedTransactionAfter(passedTime);
     event.setCancelled(true);
   }
 
-  private short identifierFrom(PacketContainer packet, boolean noPingMask) {
-    if (USE_PING_PONG_PACKETS) {
+  private short userKeyFrom(PacketContainer packet) {
+    if (USE_PING_PACKETS) {
       int inputInteger = packet.getIntegers().readSafely(0);
-      if (noPingMask) {
-        if (inputInteger >= 0) {
-          return -1;
-        }
-        inputInteger = -inputInteger;
-      } else {
-        if ((inputInteger & 0xffff0000) != PING_MASK) {
-          return -1;
-        }
+      boolean hasIntavePingMask = (inputInteger & 0xffff0000) == PING_MASK;
+      boolean hasAnyPingMask = (inputInteger & 0xffff0000) != 0;
+      if (hasAnyPingMask && !hasIntavePingMask) {
+        return -1;
       }
-      return  (short) (inputInteger & 0xffff);
+      return (short) (inputInteger & 0xffff);
     } else {
       short shortInput = packet.getShorts().readSafely(0);
-      if (shortInput > TRANSACTION_MAX_CODE || shortInput < TRANSACTION_MIN_CODE) {
+      if (shortInput > MAX_USER_KEY || shortInput < MIN_USER_KEY) {
         return -1;
       }
       return shortInput;
@@ -209,14 +186,14 @@ public final class FeedbackReceiver extends Module {
     Queue<FeedbackRequest<?>> appendedRequests = appendMap.get(feedbackRequest.num());
     if (appendedRequests != null && !appendedRequests.isEmpty()) {
       for (FeedbackRequest<?> appendedRequest : appendedRequests) {
-        castSafeAcknowledgement(player, appendedRequest);
+        acknowledge(player, appendedRequest);
       }
       appendMap.remove(feedbackRequest.num());
     }
-    castSafeAcknowledgement(player, feedbackRequest);
+    acknowledge(player, feedbackRequest);
   }
 
-  private void castSafeAcknowledgement(Player player, FeedbackRequest<?> feedbackRequest) {
+  private void acknowledge(Player player, FeedbackRequest<?> feedbackRequest) {
     try {
       feedbackRequest.acknowledge(player);
     } catch (Exception e) {
@@ -266,17 +243,8 @@ public final class FeedbackReceiver extends Module {
 
   public long oldestPendingTransaction(User user) {
     ConnectionMetadata connection = user.meta().connection();
-//    Map<Short, FeedbackRequest<?>> transactionFeedBackMap = connection.transactionShortKeyMap();
-//    long duration = System.currentTimeMillis();
-//    for (FeedbackRequest<?> value : transactionFeedBackMap.values()) {
-//      duration = Math.min(duration, value.requested());
-//    }
-    Queue<FeedbackRequest<?>> feedbackRequests = connection.pendingFeedbackRequests();
-    FeedbackRequest<?> peek = feedbackRequests.peek();
-    if (peek == null) {
-      return 0;
-    }
-    return System.currentTimeMillis() - peek.requested();
+    FeedbackRequest<?> peek = connection.feedbackQueue().peek();
+    return peek == null ? 0 : System.currentTimeMillis() - peek.requested();
   }
 
   public User userOf(Player player) {

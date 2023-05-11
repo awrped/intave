@@ -495,7 +495,7 @@ final class PlayerUser implements User {
   @Override
   public void noteFeedbackFault() {
     ConnectionMetadata connectionData = metadata.connection();
-    if (!justJoined() && connectionData.lastReceivedTransactionNum > 100 && connectionData.hardTransactionResponse++ > 3 && FaultKicks.FEEDBACK_FAULTS) {
+    if (!justJoined() && connectionData.lastReceivedTransactionNum > 100 && connectionData.feedbackFaults++ > 3 && FaultKicks.FEEDBACK_FAULTS) {
       if (ConsoleOutput.FAULT_KICKS) {
         IntaveLogger.logger().info(player().getName() + " will be removed for repeated feedback faults");
       }
