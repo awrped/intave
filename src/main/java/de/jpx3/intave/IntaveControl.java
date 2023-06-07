@@ -32,8 +32,8 @@ public final class IntaveControl {
   public static final boolean CLICKPATTERNS_OUTPUT = false;
   public static final boolean DEBUG_GRAYLIST = false;
   public static final boolean DEBUG_BLUELIST = false;
-  public static final boolean USE_DEBUG_LOCATE_RESOURCE = false;
-  public static final boolean USE_DEBUG_TRUSTFACTOR_RESOURCE = false;
+  public static final boolean USE_DEBUG_LOCATE_RESOURCE = true;
+  public static final boolean USE_DEBUG_TRUSTFACTOR_RESOURCE = true;
   public static final boolean DEBUG_OUTPUT_FOR_TESTS = false;
   public static final boolean DEBUG_VARIANT_COMPILATION = false;
   public static final boolean DEBUG_ENTITY_TRACKING = false;
@@ -43,7 +43,7 @@ public final class IntaveControl {
   public static final boolean DEBUG_ITEM_USAGE = false;
   public static final boolean DEBUG_VELOCITY_RECEIVE = false;
   public static final boolean DEBUG_PLACE_AND_BREAK_PERMISSIONS = false;
-  public static final boolean DEBUG_SERVER_VERSION = false;
+  public static final boolean DEBUG_SERVER_VERSION = true;
   public static final boolean REPLACE_JOAP_SETBACK_WITH_CM = true;
 
   public static final boolean USE_EXTERNAL_CONFIGURATION_FILE = true;

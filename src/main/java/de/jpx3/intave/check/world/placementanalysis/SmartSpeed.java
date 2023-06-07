@@ -66,16 +66,16 @@ public class SmartSpeed extends MetaCheckPart<PlacementAnalysis, SmartSpeed.Smar
         if (placementHistory.size() > 100) {
           placementHistory.remove(0);
         }
-        placementHistory.add(reader.nativeBlockPosition());
-
-
-        if (isOneLine(placementHistory)) {
-          double averageTick = placementSpeedHistory.stream().mapToInt(Integer::intValue).average().orElse(0);
-
-          boolean isSneaking = meta.pos
-
-
-        }
+//        placementHistory.add(reader.nativeBlockPosition());
+//
+//
+//        if (isOneLine(placementHistory)) {
+//          double averageTick = placementSpeedHistory.stream().mapToInt(Integer::intValue).average().orElse(0);
+//
+//          boolean isSneaking = meta.pos
+//
+//
+//        }
 
         meta.ticksSinceBlockPlacement = 0;
         meta.placedInThisTick = true;
@@ -289,12 +289,12 @@ public class SmartSpeed extends MetaCheckPart<PlacementAnalysis, SmartSpeed.Smar
 
   private boolean blockAgainstWasPlaced(User user, Block blockAgainst) {
     Vector vector = blockAgainst.getLocation().toVector();
-    List<BlockPosition> lastBlocksPlaced = metaOf(user).placementHistory;
-    for (BlockPosition location : lastBlocksPlaced) {
-      if (location.distanceTo(vector) == 0) {
-        return true;
-      }
-    }
+//    List<BlockPosition> lastBlocksPlaced = metaOf(user).placementHistory;
+//    for (BlockPosition location : lastBlocksPlaced) {
+//      if (location.distanceTo(vector) == 0) {
+//        return true;
+//      }
+//    }
     return false;
   }
 
