@@ -14,8 +14,12 @@ import de.jpx3.intave.access.player.trust.TrustFactor;
 import de.jpx3.intave.adapter.MinecraftVersions;
 import de.jpx3.intave.annotate.Nullable;
 import de.jpx3.intave.annotate.Relocate;
+import de.jpx3.intave.block.access.BlockAccess;
 import de.jpx3.intave.block.access.VolatileBlockAccess;
 import de.jpx3.intave.block.collision.Collision;
+import de.jpx3.intave.block.shape.BlockShape;
+import de.jpx3.intave.block.state.BlockStateCaches;
+import de.jpx3.intave.block.state.ExtendedBlockStateCache;
 import de.jpx3.intave.block.tick.ShulkerBox;
 import de.jpx3.intave.block.type.MaterialSearch;
 import de.jpx3.intave.block.variant.BlockVariant;
@@ -47,6 +51,7 @@ import de.jpx3.intave.player.fake.FakePlayer;
 import de.jpx3.intave.share.BoundingBox;
 import de.jpx3.intave.share.Direction;
 import de.jpx3.intave.share.Motion;
+import de.jpx3.intave.share.NativeVector;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserRepository;
 import de.jpx3.intave.user.meta.*;
@@ -268,10 +273,10 @@ public final class MovementDispatcher extends Module {
   }
 
   @PacketSubscription(
-    priority = ListenerPriority.HIGH,
-    packetsOut = {
-      RESPAWN
-    }
+      priority = ListenerPriority.HIGH,
+      packetsOut = {
+          RESPAWN
+      }
   )
   public void sentRespawn(PacketEvent event) {
     Player player = event.getPlayer();
@@ -305,10 +310,10 @@ public final class MovementDispatcher extends Module {
   }
 
   @PacketSubscription(
-    priority = ListenerPriority.HIGH,
-    packetsOut = {
-      EXPLOSION
-    }
+      priority = ListenerPriority.HIGH,
+      packetsOut = {
+          EXPLOSION
+      }
   )
   public void sentExplosion(PacketEvent event) {
     Player player = event.getPlayer();
@@ -326,10 +331,10 @@ public final class MovementDispatcher extends Module {
   }
 
   @PacketSubscription(
-    priority = ListenerPriority.LOW,
-    packetsIn = {
-      FLYING, LOOK, POSITION, POSITION_LOOK, VEHICLE_MOVE
-    }
+      priority = ListenerPriority.LOW,
+      packetsIn = {
+          FLYING, LOOK, POSITION, POSITION_LOOK, VEHICLE_MOVE
+      }
   )
   public void receiveMovement(PacketEvent event) {
     Player player = event.getPlayer();
@@ -411,9 +416,9 @@ public final class MovementDispatcher extends Module {
 
     // garbage fix for sending POSITION_LOOK packets on newer client versions when rightclicking
     if (
-      protocol.cavesAndCliffsUpdate() && !movementData.awaitTeleport
-        && !movementData.awaitOutgoingTeleport
-        && packet.getType() == PacketType.Play.Client.POSITION_LOOK
+        protocol.cavesAndCliffsUpdate() && !movementData.awaitTeleport
+            && !movementData.awaitOutgoingTeleport
+            && packet.getType() == PacketType.Play.Client.POSITION_LOOK
 //       && movementData.awaitClickMovementSkip
     ) {
       StructureModifier<Double> modifier = packet.getDoubles();
@@ -455,8 +460,8 @@ public final class MovementDispatcher extends Module {
     }
 
     double distance = MathHelper.distanceOf(
-      movementData.verifiedPositionX, movementData.verifiedPositionY, movementData.verifiedPositionZ,
-      movementData.positionX, movementData.positionY, movementData.positionZ
+        movementData.verifiedPositionX, movementData.verifiedPositionY, movementData.verifiedPositionZ,
+        movementData.positionX, movementData.positionY, movementData.positionZ
     );
     if (distance > 50) {
       if (DEBUG_MOVEMENT_IGNORE) {
@@ -468,16 +473,16 @@ public final class MovementDispatcher extends Module {
       String message = "sent unsafe position";
       String details = "moved " + MathHelper.formatDouble(distance, 2) + " blocks";
       Violation violation = Violation.builderFor(Physics.class)
-        .forPlayer(player).withMessage(message).withDetails(details)
-        .withVL(25)
-        .build();
+          .forPlayer(player).withMessage(message).withDetails(details)
+          .withVL(25)
+          .build();
       Modules.violationProcessor().processViolation(violation);
       return;
     }
 
     Entity attachedEntity = movementData.ridingEntity();
     if (attachedEntity != null && !attachedEntity.isEntityAlive()
-      && attachedEntity.hasTypeData() && attachedEntity.typeData().isLivingEntity()
+        && attachedEntity.hasTypeData() && attachedEntity.typeData().isLivingEntity()
     ) {
       movementData.dismountRidingEntity("Riding dead entity");
     }
@@ -497,14 +502,14 @@ public final class MovementDispatcher extends Module {
     }
 
     if (
-      !movementData.isTeleportConfirmationPacket &&
-        movementData.canResetMotion &&
-        movementData.baseMotionX == 0 &&
-        movementData.baseMotionY == 0 &&
-        movementData.baseMotionZ == 0 &&
-        movementData.motionX() == 0 &&
-        movementData.motionY() == 0 &&
-        movementData.motionZ() == 0
+        !movementData.isTeleportConfirmationPacket &&
+            movementData.canResetMotion &&
+            movementData.baseMotionX == 0 &&
+            movementData.baseMotionY == 0 &&
+            movementData.baseMotionZ == 0 &&
+            movementData.motionX() == 0 &&
+            movementData.motionY() == 0 &&
+            movementData.motionZ() == 0
     ) {
       if (DEBUG_MOVEMENT_IGNORE) {
         player.sendMessage("Movement reset ignore");
@@ -568,22 +573,29 @@ public final class MovementDispatcher extends Module {
   }
 
   private void updatePotionEffects(User user) {
+    boolean infiniteEffectsAllowed = user.meta().protocol().protocolVersion() >= 763;
     EffectMetadata potionData = user.meta().potions();
     if (potionData.potionEffectSpeedAmplifier() > 0) {
-      if (--potionData.potionEffectSpeedDuration <= 0) {
-        potionData.potionEffectSpeedAmplifier(0);
+      if (potionData.potionEffectSpeedDuration != -1 || !infiniteEffectsAllowed) {
+        if (--potionData.potionEffectSpeedDuration <= 0) {
+          potionData.potionEffectSpeedAmplifier(0);
+        }
       }
     }
 
     if (potionData.potionEffectSlownessAmplifier() > 0) {
-      if (--potionData.potionEffectSlownessDuration <= 0) {
-        potionData.potionEffectSlownessAmplifier(0);
+      if (potionData.potionEffectSlownessDuration != -1 || !infiniteEffectsAllowed) {
+        if (--potionData.potionEffectSlownessDuration <= 0) {
+          potionData.potionEffectSlownessAmplifier(0);
+        }
       }
     }
 
     if (potionData.potionEffectJumpAmplifier() > 0) {
-      if (--potionData.potionEffectJumpDuration <= 0) {
-        potionData.potionEffectJumpAmplifier(0);
+      if (potionData.potionEffectJumpDuration != -1 || !infiniteEffectsAllowed) {
+        if (--potionData.potionEffectJumpDuration <= 0) {
+          potionData.potionEffectJumpAmplifier(0);
+        }
       }
     }
   }
@@ -610,10 +622,10 @@ public final class MovementDispatcher extends Module {
   }
 
   @PacketSubscription(
-    priority = ListenerPriority.HIGH,
-    packetsIn = {
-      FLYING, LOOK, POSITION, POSITION_LOOK, VEHICLE_MOVE
-    }
+      priority = ListenerPriority.HIGH,
+      packetsIn = {
+          FLYING, LOOK, POSITION, POSITION_LOOK, VEHICLE_MOVE
+      }
   )
   public void receiveFinalMovement(PacketEvent event) {
     Player player = event.getPlayer();
@@ -704,9 +716,6 @@ public final class MovementDispatcher extends Module {
 
     if (movement.pistonMotionToleranceRemaining > 0) {
       movement.pistonMotionToleranceRemaining--;
-      if (movement.pistonMotionToleranceRemaining == 0) {
-        movement.toleratedPistonMotions.clear();
-      }
     }
 
     boolean flyingWithElytra = movement.elytraFlying;//movement.pose() == Pose.FALL_FLYING;
@@ -797,9 +806,9 @@ public final class MovementDispatcher extends Module {
   }
 
   @PacketSubscription(
-    packetsIn = {
-      STEER_VEHICLE
-    }
+      packetsIn = {
+          STEER_VEHICLE
+      }
   )
   public void receiveClientKeys(PacketEvent event) {
     Player player = event.getPlayer();
@@ -820,10 +829,10 @@ public final class MovementDispatcher extends Module {
   }
 
   @PacketSubscription(
-    engine = Engine.ASYNC_INTERNAL,
-    packetsOut = {
-      UPDATE_HEALTH
-    }
+      engine = Engine.ASYNC_INTERNAL,
+      packetsOut = {
+          UPDATE_HEALTH
+      }
   )
   public void catchFoodUpdate(PacketEvent event) {
     Player player = event.getPlayer();
@@ -839,10 +848,10 @@ public final class MovementDispatcher extends Module {
   }
 
   @PacketSubscription(
-    priority = ListenerPriority.LOWEST,
-    packetsOut = {
-      ENTITY_METADATA
-    }
+      priority = ListenerPriority.LOWEST,
+      packetsOut = {
+          ENTITY_METADATA
+      }
   )
   public void receiveElytraUpdate(PacketEvent event) {
     Player player = event.getPlayer();
@@ -857,10 +866,10 @@ public final class MovementDispatcher extends Module {
     List<WrappedWatchableObject> watchableObjects = reader.metadataObjects();
 
     WrappedWatchableObject elytraObject = watchableObjects
-      .stream()
-      .filter(wrappedWatchableObject -> wrappedWatchableObject.getIndex() == 0)
-      .findFirst()
-      .orElse(null);
+        .stream()
+        .filter(wrappedWatchableObject -> wrappedWatchableObject.getIndex() == 0)
+        .findFirst()
+        .orElse(null);
 
     if (elytraObject == null) {
       reader.release();
@@ -912,11 +921,11 @@ public final class MovementDispatcher extends Module {
   }
 
   @PacketSubscription(
-    priority = ListenerPriority.MONITOR,
-    prioritySlot = PrioritySlot.EXTERNAL,
-    packetsOut = {
-      ENTITY_VELOCITY
-    }
+      priority = ListenerPriority.MONITOR,
+      prioritySlot = PrioritySlot.EXTERNAL,
+      packetsOut = {
+          ENTITY_VELOCITY
+      }
   )
   public void sentVelocityPacket(PacketEvent event) {
     Player player = event.getPlayer();
@@ -925,9 +934,9 @@ public final class MovementDispatcher extends Module {
 
     if (packet.getIntegers().readSafely(0) == player.getEntityId()) {
       Vector velocity = new Vector(
-        integers.readSafely(1) / 8000d,
-        integers.readSafely(2) / 8000d,
-        integers.readSafely(3) / 8000d
+          integers.readSafely(1) / 8000d,
+          integers.readSafely(2) / 8000d,
+          integers.readSafely(3) / 8000d
       );
       if (IntaveControl.DEBUG_VELOCITY_RECEIVE) {
         player.sendMessage("§a" + MathHelper.formatMotion(velocity));
@@ -1007,12 +1016,12 @@ public final class MovementDispatcher extends Module {
   private static final Set<Material> PISTON_MATERIALS = MaterialSearch.materialsThatContain("PISTON");
 
   @PacketSubscription(
-    packetsOut = {
-      BLOCK_ACTION
-    }
+      packetsOut = {
+          BLOCK_ACTION
+      }
   )
   public void onBlockAction(
-    User user, BlockActionReader reader
+      User user, BlockActionReader reader
   ) {
     Player player = user.player();
     MovementMetadata movement = user.meta().movement();
@@ -1039,8 +1048,8 @@ public final class MovementDispatcher extends Module {
           movement.shulkerDataHashCodeAccess.putIfAbsent(positionHash, box);
         }
         double distanceToShulker = MathHelper.distanceOf(
-          movement.positionX, movement.positionY, movement.positionZ,
-          blockPosition.getX() + 0.5, blockPosition.getY() + 0.5, blockPosition.getZ() + 0.5
+            movement.positionX, movement.positionY, movement.positionZ,
+            blockPosition.getX() + 0.5, blockPosition.getY() + 0.5, blockPosition.getZ() + 0.5
         );
         if (distanceToShulker <= 4) {
           movement.lowestShulkerY = Math.min(movement.lowestShulkerY, blockPosition.getY());
@@ -1066,25 +1075,68 @@ public final class MovementDispatcher extends Module {
       Boolean extended = variant.propertyOf("extended");
       boolean isExtending = true;//extended == null || !extended;
       if (isExtending) {
-        Motion vector = facing.getDirectionVecAsMotion();
-//        Thread.dumpStack();
-//        Modules.feedback().synchronize(player, nothing -> {
-//          movement.toleratedPistonMotions.add(vector);
-//          movement.pistonMotionToleranceRemaining = 4;
-//        });
-//        player.teleport(player.getLocation().add(vector.toBukkitVector()));
+        Modules.feedback().synchronize(player, nothing -> {
+          // First off, check if the player is even affected by this
+          NativeVector directionVec = facing.getDirectionVec();
+          BoundingBox pistonCollisionArea = new BoundingBox(0, 0, 0, 1.1f, 1.1f, 1.1f);
+          int expectedPistonX = (int) directionVec.xCoord + blockPosition.getX();
+          int expectedPistonY = (int) directionVec.yCoord + blockPosition.getY();
+          int expectedPistonZ = (int) directionVec.zCoord + blockPosition.getZ();
+          BoundingBox expandingBlockArea = pistonCollisionArea.offset(expectedPistonX, expectedPistonY, expectedPistonZ);
+          boolean playerAffected = expandingBlockArea.intersectsWith(user.meta().movement().boundingBox());
+
+          // Only do something if the player is actually affected
+          if (playerAffected) {
+            // Might seem like a high value, doesn't it?
+            // Well this is fine as we constantly check if the player is inside the critical area
+            // where he would get false-mitigated
+            movement.pistonMotionToleranceRemaining = 10;
+            movement.pistonCollisionArea = expandingBlockArea;
+
+            float xOffset = (float) Math.abs(expectedPistonX - user.meta().movement().positionX);
+            float yOffsetBottom = (float) Math.abs((expectedPistonY + 1) - user.meta().movement().boundingBox().minY);
+            float yOffsetTop = (float) Math.abs(expectedPistonY - user.meta().movement().boundingBox().maxY);
+            float zOffset = (float) Math.abs(expectedPistonZ - user.meta().movement().positionZ);
+            switch (facing.axis()) {
+              case X_AXIS: {
+                // Magical hack to get the proper bounding box factor
+                float horizontalBoundingBoxFactor = (float) (user.meta().movement().width() / 2f * directionVec.xCoord);
+                movement.pistonHorizontalAllowance = xOffset + horizontalBoundingBoxFactor + 0.05f;
+                break;
+              }
+              case Z_AXIS: {
+                // Magical hack to get the proper bounding box factor
+                float horizontalBoundingBoxFactor = (float) (user.meta().movement().width() / 2f * directionVec.zCoord);
+                movement.pistonHorizontalAllowance = zOffset + horizontalBoundingBoxFactor + 0.05f;
+                break;
+              }
+              case Y_AXIS: {
+                // Cannot be done with directional vectors unfortunately :(
+                switch (facing) {
+                  case UP:
+                    movement.pistonVerticalAllowance = yOffsetBottom + 0.05f;
+                    break;
+                  case DOWN:
+                    movement.pistonVerticalAllowance = yOffsetTop + 0.05f;
+                    break;
+                }
+                break;
+              }
+            }
+          }
+        });
       }
     }
   }
 
   @PacketSubscription(
-    priority = ListenerPriority.HIGH,
-    packetsIn = {
-      ENTITY_ACTION_IN
-    }
+      priority = ListenerPriority.HIGH,
+      packetsIn = {
+          ENTITY_ACTION_IN
+      }
   )
   public void receiveEntityActionPacket(
-    User user, PlayerActionReader reader, Cancellable cancelable
+      User user, PlayerActionReader reader, Cancellable cancelable
   ) {
     MetadataBundle meta = user.meta();
     MovementMetadata movementData = meta.movement();

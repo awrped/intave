@@ -16,10 +16,14 @@ final class PistonCollisionModifier extends CollisionModifier {
   @Override
   public BlockShape modify(User user, BoundingBox userBox, int posX, int posY, int posZ, BlockShape shape, CollisionOrigin type) {
     MovementMetadata movement = user.meta().movement();
-    Set<Motion> toleratedPistonMotions = movement.toleratedPistonMotions;
-    if (!toleratedPistonMotions.isEmpty() && type == INTERSECTION_CHECK) {
+    // Lets just ignore the piston box if a piston is expanding
+    if (movement.pistonMotionToleranceRemaining > 0 && type == INTERSECTION_CHECK) {
       return BlockShapes.emptyShape();
     }
+//    Set<Motion> toleratedPistonMotions = movement.toleratedPistonMotions;
+//    if (!toleratedPistonMotions.isEmpty() && type == INTERSECTION_CHECK) {
+//      return BlockShapes.emptyShape();
+//    }
     return shape;
   }
 

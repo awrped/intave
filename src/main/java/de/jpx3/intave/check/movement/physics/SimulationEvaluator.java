@@ -24,18 +24,18 @@ public final class SimulationEvaluator {
 
   @SplitMeUp
   public double calculateVerticalViolationLevelIncrease(
-    User user,
-    double predictedY,
-    boolean onLadder,
-    boolean collidedWithBoat
+      User user,
+      double predictedY,
+      boolean onLadder,
+      boolean collidedWithBoat
   ) {
     Player player = user.player();
     MetadataBundle meta = user.meta();
     ProtocolMetadata protocol = meta.protocol();
     MovementMetadata movement = meta.movement();
     double distanceMoved = MathHelper.resolveHorizontalDistance(
-      movement.positionX, movement.positionZ,
-      movement.verifiedPositionX, movement.verifiedPositionZ
+        movement.positionX, movement.positionZ,
+        movement.verifiedPositionX, movement.verifiedPositionZ
     );
     Pose pose = movement.pose();
     double receivedMotionX = movement.motionX();
@@ -78,24 +78,17 @@ public final class SimulationEvaluator {
     }
 
     if (movement.shulkerYToleranceRemaining > 0 && // tick restriction
-      (movement.positionY >= movement.lowestShulkerY - 1 && movement.positionY <= movement.highestShulkerY + 1) && // height restriction
-      receivedMotionY - movement.jumpMotion() < 0.2 && // motion restriction
-      (Math.abs(receivedMotionY) <= 0.5 || ((movement.positionY % 0.05) < 0.0001 && (Math.abs(receivedMotionY - movement.jumpMotion()) < 0.01 || (receivedMotionY <= 0 && receivedMotionY > -.8)))) // various other restrictions
+        (movement.positionY >= movement.lowestShulkerY - 1 && movement.positionY <= movement.highestShulkerY + 1) && // height restriction
+        receivedMotionY - movement.jumpMotion() < 0.2 && // motion restriction
+        (Math.abs(receivedMotionY) <= 0.5 || ((movement.positionY % 0.05) < 0.0001 && (Math.abs(receivedMotionY - movement.jumpMotion()) < 0.01 || (receivedMotionY <= 0 && receivedMotionY > -.8)))) // various other restrictions
     ) {
       verticalLegitimateDeviation = Math.max(verticalLegitimateDeviation, 1);
     }
 
     if (movement.pistonMotionToleranceRemaining > 0) {
-      Set<Motion> toleratedPistonMotions = movement.toleratedPistonMotions;
-
-//      player.sendMessage("tolerated2: " + toleratedPistonMotions);
-      for (Motion toleratedPistonMotion : toleratedPistonMotions) {
-        double toleratedPistonMotionY = toleratedPistonMotion.motionY;
-        double toleratedPistonMotionDistance = Math.abs(toleratedPistonMotionY - receivedMotionY);
-        if (toleratedPistonMotionDistance < 0.02) {
-//          System.out.println("tolerated piston motion: " + toleratedPistonMotion);
-          verticalLegitimateDeviation = Math.max(verticalLegitimateDeviation, toleratedPistonMotionY);
-        }
+      // Check if the player box is inside the piston box
+      if (movement.pistonCollisionArea != null && movement.pistonCollisionArea.intersectsWith(movement.boundingBox())) {
+        verticalLegitimateDeviation = Math.max(verticalLegitimateDeviation, movement.pistonVerticalAllowance);
       }
     }
 
@@ -118,7 +111,7 @@ public final class SimulationEvaluator {
         scuffed = true;
       }
       boolean collides = Collision.present(player, BoundingBox.fromPosition(user, movement, movement.positionX, movement.positionY + 0.0001, movement.positionZ)
-        .expand(movement.motionX(), Math.abs(receivedMotionY + 0.1), movement.motionZ()));
+          .expand(movement.motionX(), Math.abs(receivedMotionY + 0.1), movement.motionZ()));
 //      player.sendMessage(scuffed + " " + movement.isSneaking() + " " + Math.abs(receivedMotionY - crouchingHeightGap) + " " + Math.abs(receivedMotionY - standingHeightGap));
       if (scuffed && collides) {
         differenceY = 0;
@@ -152,11 +145,11 @@ public final class SimulationEvaluator {
     }
 
     boolean criticalWeb = receivedMotionY > -0.01
-      && movement.pastInWeb < 10
-      && !movement.inWater
-      && !movement.inLava()
-      && movement.positionY % 1 > 0.1
-      && movement.pastExternalVelocity != 0;
+        && movement.pastInWeb < 10
+        && !movement.inWater
+        && !movement.inLava()
+        && movement.positionY % 1 > 0.1
+        && movement.pastExternalVelocity != 0;
 
     if (movement.inWeb) {
       verticalLegitimateDeviation = Math.max(verticalLegitimateDeviation, criticalWeb ? 0.000001 : 0.13);
@@ -181,7 +174,7 @@ public final class SimulationEvaluator {
         liquidPositionY = receivedMotionY + 0.3f;
       }
       boolean offsetPositionInLiquid = MovementCharacteristics.isOffsetPositionInLiquid(
-        player, movement.boundingBox(), receivedMotionX, liquidPositionY, receivedMotionZ
+          player, movement.boundingBox(), receivedMotionX, liquidPositionY, receivedMotionZ
       );
       boolean maybeCollidedHorizontally = Collision.nearSolidBlock(player.getWorld(), movement.boundingBox().grow(0.2));
       if (maybeCollidedHorizontally && offsetPositionInLiquid && receivedMotionY < 0.4) {
@@ -190,7 +183,7 @@ public final class SimulationEvaluator {
     }
 
     // Sometimes shit happens
-    if (movement.sneakingTicks <= 1 && (movement.onGround() || movement.lastOnGround()) && movement.motionY() <= movement.jumpMotion() + 0.001) {
+    if (movement.sneakingTicks <= 1) {
       verticalLegitimateDeviation = Math.max(verticalLegitimateDeviation, 0.08f);
     }
 
@@ -242,11 +235,11 @@ public final class SimulationEvaluator {
 
   @SplitMeUp
   public double calculateHorizontalViolationIncrease(
-    User user,
-    double predictedX,
-    double predictedZ,
-    boolean onLadder,
-    boolean collidedWithBoat
+      User user,
+      double predictedX,
+      double predictedZ,
+      boolean onLadder,
+      boolean collidedWithBoat
   ) {
     Player player = user.player();
     MetadataBundle meta = user.meta();
@@ -258,8 +251,8 @@ public final class SimulationEvaluator {
     double motionY = movement.motionY();
     double motionZ = movement.motionZ();
     double distanceMoved = MathHelper.resolveHorizontalDistance(
-      movement.positionX, movement.positionZ,
-      movement.verifiedPositionX, movement.verifiedPositionZ
+        movement.positionX, movement.positionZ,
+        movement.verifiedPositionX, movement.verifiedPositionZ
     );
     double predictedDistanceMoved = Hypot.fast(predictedX, predictedZ);
 
@@ -301,28 +294,9 @@ public final class SimulationEvaluator {
     }
 
     if (movement.pistonMotionToleranceRemaining > 0) {
-      Set<Motion> toleratedPistonMotions = movement.toleratedPistonMotions;
-
-//      Set<Motion> toleratedPistonMotionsWithCrossSections = new HashSet<>();
-//      for (Motion pistonMotion : toleratedPistonMotions) {
-//        toleratedPistonMotionsWithCrossSections.add(pistonMotion);
-//        for (Motion pistonMotion2 : toleratedPistonMotions) {
-//          toleratedPistonMotionsWithCrossSections.add(pistonMotion.copy().add(pistonMotion2));
-//        }
-//      }
-
-//      player.sendMessage("tolerated: " + toleratedPistonMotions);
-      for (Motion toleratedPistonMotion : toleratedPistonMotions) {
-        double toleratedPistonMotionX = toleratedPistonMotion.motionX;
-        double toleratedPistonMotionZ = toleratedPistonMotion.motionZ;
-        double toleratedPistonMotionDistance = MathHelper.resolveHorizontalDistance(
-          toleratedPistonMotionX, toleratedPistonMotionZ,
-          motionX, motionZ
-        );
-        if (toleratedPistonMotionDistance < 0.02) {
-//          System.out.println("tolerated piston motion: " + toleratedPistonMotion);
-          horizontalLegitimateDeviation = Math.max(horizontalLegitimateDeviation, toleratedPistonMotionDistance);
-        }
+      // Check if the player box is inside the piston box
+      if (movement.pistonCollisionArea != null && movement.pistonCollisionArea.intersectsWith(movement.boundingBox())) {
+        horizontalLegitimateDeviation = Math.max(horizontalLegitimateDeviation, movement.pistonHorizontalAllowance);
       }
     }
 
@@ -439,7 +413,7 @@ public final class SimulationEvaluator {
     }
 
     boolean movedTooQuicklyCheckable = (distanceMoved > 0.3 || violationLevelData.physicsInvalidMovementsInRow >= 8)
-      && !flewWithElytra;
+        && !flewWithElytra;
 
     if (movedTooQuickly && movedTooQuicklyCheckable && !movement.physicsUnpredictableVelocityExpected) {
       //noinspection UnnecessaryLocalVariable
@@ -451,7 +425,7 @@ public final class SimulationEvaluator {
     return abuseHorizontally * multiplier;
   }
 
-//  private static final double RIPTIDE_TOLERANCE = 3.005;
+  //  private static final double RIPTIDE_TOLERANCE = 3.005;
   private static final double RIPTIDE_TOLERANCE_2 = 0.05;
   private static final double RIPTIDE_GROUND_TOLERANCE_2 = 2.5;
 

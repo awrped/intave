@@ -30,8 +30,10 @@ public final class MovementCharacteristics {
   @WhyMustIExist
   public static double jumpMotionFor(Player player, float jumpUpwardsMotion) {
     User user = UserRepository.userOf(player);
+    boolean infiniteEffectsAllowed = user.protocolVersion() >= 763;
     EffectMetadata potionData = user.meta().potions();
-    if (potionData.potionEffectJumpDuration > 0) {
+    int potionDuration = potionData.potionEffectJumpDuration;
+    if (potionDuration > 0 || potionDuration == -1 && infiniteEffectsAllowed) {
       int jumpAmplifier = potionData.potionEffectJumpAmplifier();
       jumpUpwardsMotion += (float) ((jumpAmplifier + 1) * 0.1);
     }

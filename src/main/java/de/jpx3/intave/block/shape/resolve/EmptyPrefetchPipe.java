@@ -44,8 +44,6 @@ final class EmptyPrefetchPipe implements ShapeResolverPipeline {
       return true;
     }
     switch (type) {
-      case STONE_BUTTON:
-      case WOOD_BUTTON:
       case AIR:
         return true;
     }

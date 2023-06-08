@@ -28,7 +28,9 @@ final class DrillResolver {
 
     String drillClassName, acClassName = "";
 
-    if (MinecraftVersions.VER1_17_1.atOrAbove()) {
+    if (MinecraftVersions.VER1_20.atOrAbove()) {
+      drillClassName = "de.jpx3.intave.block.shape.resolve.drill.v20ShapeDrill";
+    } else if (MinecraftVersions.VER1_17_1.atOrAbove()) {
       drillClassName = "de.jpx3.intave.block.shape.resolve.drill.v17b1ShapeDrill";
     } else if (MinecraftVersions.VER1_14_0.atOrAbove()) {
       drillClassName = "de.jpx3.intave.block.shape.resolve.drill.v14ShapeDrill";

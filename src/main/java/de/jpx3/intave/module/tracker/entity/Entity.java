@@ -1,7 +1,6 @@
 package de.jpx3.intave.module.tracker.entity;
 
 import com.comphenix.protocol.events.PacketContainer;
-import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.reflect.StructureModifier;
 import de.jpx3.intave.access.IntaveInternalException;
 import de.jpx3.intave.adapter.MinecraftVersions;
@@ -17,12 +16,8 @@ import de.jpx3.intave.user.User;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.MalformedParameterizedTypeException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Entity {
@@ -80,8 +75,6 @@ public class Entity {
    */
   public double distanceToPlayerCache;
   private boolean temporaryCopy;
-  public Map<PacketEvent, Integer> flyingPacketMap = new ConcurrentHashMap<>();
-  public int splitAmount;
 
   private final PendingCountingFeedbackObserver feedbackTracker;
 

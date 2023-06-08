@@ -2,6 +2,7 @@ package de.jpx3.intave.block.fluid;
 
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.access.IntaveInternalException;
+import de.jpx3.intave.adapter.MinecraftVersions;
 import de.jpx3.intave.klass.rewrite.PatchyLoadingInjector;
 import de.jpx3.intave.share.BoundingBox;
 import de.jpx3.intave.share.ClientMathHelper;
@@ -16,7 +17,9 @@ public final class Fluids {
   public static void setup() {
     String className;
 
-    if (VER1_18_2.atOrAbove()) {
+    if (VER1_20.atOrAbove()) {
+      className = "de.jpx3.intave.block.fluid.v20FluidResolver";
+    } else if (VER1_18_2.atOrAbove()) {
       className = "de.jpx3.intave.block.fluid.v18b2FluidResolver";
     } else if (VER1_16_0.atOrAbove()) {
       className = "de.jpx3.intave.block.fluid.v16FluidResolver";
