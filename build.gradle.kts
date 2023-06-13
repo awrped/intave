@@ -147,6 +147,7 @@ run {
 //  registerServerTask("1.19.3", 17)
   registerServerTask("1.19.4", 17)
   registerServerTask("1.20", 17)
+  registerServerTask("1.20.1", 17)
 }
 
 fun registerServerTask(serverVersion: String, javaVersion: Int) {

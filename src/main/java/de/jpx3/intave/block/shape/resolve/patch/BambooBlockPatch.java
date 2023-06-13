@@ -26,7 +26,7 @@ final class BambooBlockPatch extends BoundingBoxPatch {
       double offsetX = ((double) ((float) xOffsetKey / 15.0F) - 0.5D) * 0.5D;
       double offsetZ = ((double) ((float) zOffsetKey / 15.0F) - 0.5D) * 0.5D;
       double offsetY = 0.0;
-      box = CACHE[xOffsetKey][zOffsetKey] = LEAF.offset(offsetX, offsetY, offsetZ);
+      box = CACHE[xOffsetKey][zOffsetKey] = LEAF.originOffset(offsetX, offsetY, offsetZ);
     }
     return box;
   }

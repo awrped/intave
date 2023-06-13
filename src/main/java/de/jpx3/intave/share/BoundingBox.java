@@ -273,6 +273,12 @@ public final class BoundingBox extends MemoryTraced implements BlockShape {
     return new BoundingBox(this.minX + x, this.minY + y, this.minZ + z, this.maxX + x, this.maxY + y, this.maxZ + z);
   }
 
+  public BoundingBox originOffset(double x, double y, double z) {
+    BoundingBox boundingBox = new BoundingBox(this.minX + x, this.minY + y, this.minZ + z, this.maxX + x, this.maxY + y, this.maxZ + z);
+    boundingBox.makeOriginBox();
+    return boundingBox;
+  }
+
   @Override
   public double allowedOffset(Direction.Axis axis, BoundingBox other, double offset) {
     // always collide if axis is selected
@@ -383,7 +389,7 @@ public final class BoundingBox extends MemoryTraced implements BlockShape {
 
   // width and height
   public String toString() {
-    return (maxX - minX) + "," + (maxY - minY) + "," + (maxZ - minZ);
+    return String.format("size{%s,%s,%s}@mid{%s,%s,%s}", maxX - minX, maxY - minY, maxZ - minZ, minX + (maxX - minX) / 2d, minY + (maxY - minY) / 2d, minZ + (maxZ - minZ) / 2d);
   }
 
   /**
