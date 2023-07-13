@@ -526,7 +526,7 @@ class BaseSimulator extends Simulator {
     if (clientData.trailsAndTailsUpdate()) {
       BoundingBox boundingBox = environment.boundingBox();
       BoundingBox secondBoundingBox = new BoundingBox(
-        boundingBox.minX, boundingBox.minY - 0.000001, boundingBox.minZ,
+        boundingBox.minX, boundingBox.minY - 1.0E-6D, boundingBox.minZ,
         boundingBox.maxX, boundingBox.maxY, boundingBox.maxZ
       );
       block = findSupportingBlock(user, environment, secondBoundingBox);
@@ -663,6 +663,17 @@ class BaseSimulator extends Simulator {
       }
 
     }
+
+    // If we found a block we should check if we need to use the block below
+    if (block != null) {
+      // We can ignore what minecraft does in the code usually (A stupid below < 1.0E-5 and below >= 0.5 check)
+      // Entity#getOnPos(float)
+      boolean requiresBlockBelow = !block.name().contains("FENCE") && !block.name().contains("WALL");
+      if (requiresBlockBelow) {
+        block = VolatileBlockAccess.typeAccess(user, world, blockX, blockY - 0.5, blockZ);
+      }
+    }
+
     return block;
   }
 
@@ -681,9 +692,9 @@ class BaseSimulator extends Simulator {
     int blockX, int blockY, int blockZ,
     double entityX, double entityY, double entityZ
   ) {
-    double d0 = blockX + 0.5 - entityX;
-    double d1 = blockY + 0.5 - entityY;
-    double d2 = blockZ + 0.5 - entityZ;
+    double d0 = (double) blockX + 0.5D - entityX;
+    double d1 = (double) blockY + 0.5D - entityY;
+    double d2 = (double) blockZ + 0.5D - entityZ;
     return d0 * d0 + d1 * d1 + d2 * d2;
   }
 
