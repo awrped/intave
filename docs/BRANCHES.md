@@ -2,17 +2,18 @@
 
 We have three main branches: **master**, **staging** and **dev**. <br>
 
-**master** is the main branch and is always production-ready. <br>
-**staging** is the branch where we merge all the features that are ready to be tested. <br>
-**dev** is the branch where we merge all the features that are in development. <br>
+**master** is the main branch, all changes are pushed in here. <br>
+**beta** is code that is ready for testing in production. <br>
+**stable** is code that is production ready and stable. <br>
 
 ## Feature branches
 
 When you are working on a new feature, you should create a new branch from **dev**. <br>
 The name of the branch should be:
 
-feature/`<feature-name>` for new features into dev<br>
-hotfix/`<hotfix-name>` for hotfixes merged directly into master<br>
+feature/`<feature-name>` for new features, merged into master<br>
+refactor/`<refactor-clas>` for new features, merged into master<br>
+hotfix/`<hotfix-name>` for hotfixes merged into master<br>
 
 For trivial features, directly commit into dev.
 
