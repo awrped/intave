@@ -115,15 +115,15 @@ bukkit {
  * Intave Gradle Tasks
  */
 
-tasks.register("buildProduction") {
-  group = simpleName
+tasks.register("production") {
+  group = "deploy"
   dependsOn(tasks.build)
   buildConfigFieldSafe("boolean", "PRODUCTION", "true")
   dumpBuildConfig()
 }
 
-tasks.register("buildGomme") {
-  group = simpleName
+tasks.register("gomme") {
+  group = "deploy"
   dependsOn(tasks.build)
   buildConfigFieldSafe("boolean", "GOMME", "true")
   dumpBuildConfig()
@@ -193,6 +193,7 @@ fun registerTestTask(serverVersion: String, javaVersion: Int) {
         languageVersion.set(JavaLanguageVersion.of(javaVersion))
       }
     )
+    println(args)
   }
 }
 

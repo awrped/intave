@@ -12,6 +12,8 @@ import de.jpx3.intave.annotate.Relocate;
 import de.jpx3.intave.block.access.BlockInteractionAccess;
 import de.jpx3.intave.block.access.VolatileBlockAccess;
 import de.jpx3.intave.block.collision.Collision;
+import de.jpx3.intave.block.fluid.Fluid;
+import de.jpx3.intave.block.fluid.Fluids;
 import de.jpx3.intave.block.physics.MaterialMagic;
 import de.jpx3.intave.block.state.ExtendedBlockStateCache;
 import de.jpx3.intave.block.type.BlockTypeAccess;
