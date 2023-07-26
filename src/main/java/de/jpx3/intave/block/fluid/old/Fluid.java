@@ -1,6 +1,6 @@
-package de.jpx3.intave.block.fluid;
+package de.jpx3.intave.block.fluid.old;
 
-import static de.jpx3.intave.block.fluid.FluidTag.*;
+import static de.jpx3.intave.block.fluid.old.FluidTag.*;
 
 public final class Fluid {
   private static final Fluid EMPTY_FLUID = new Fluid(FluidTag.EMPTY, true, 0);
@@ -69,5 +69,24 @@ public final class Fluid {
     index |= (fluidTag == WATER ? 0 : 1);
     index |= (source || height == 1 ? 0 : (int) (height * 9)) << 1;
     return index;
+  }
+
+  @Override
+  public String toString() {
+    switch (fluidTag) {
+      case EMPTY:
+        return "EMPTY";
+      case WATER:
+        if (source) {
+          return "WATER_SOURCE";
+        }
+        return "WATER_" + height;
+      case LAVA:
+        if (source) {
+          return "LAVA_SOURCE";
+        }
+        return "LAVA_" + height;
+    }
+    return "UNKNOWN";
   }
 }

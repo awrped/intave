@@ -1,6 +1,5 @@
 package de.jpx3.intave;
 
-import com.comphenix.protocol.utility.MinecraftVersion;
 import de.jpx3.intave.access.IntaveAccess;
 import de.jpx3.intave.access.IntaveInternalException;
 import de.jpx3.intave.accessbackend.IntaveAccessService;
@@ -16,7 +15,8 @@ import de.jpx3.intave.block.access.BlockInteractionAccess;
 import de.jpx3.intave.block.access.BlockWrapper;
 import de.jpx3.intave.block.access.VolatileBlockAccess;
 import de.jpx3.intave.block.collision.modifier.CollisionModifiers;
-import de.jpx3.intave.block.fluid.Fluids;
+import de.jpx3.intave.block.fluid.next.Liquids;
+import de.jpx3.intave.block.fluid.old.Fluids;
 import de.jpx3.intave.block.physics.BlockPhysics;
 import de.jpx3.intave.block.physics.BlockProperties;
 import de.jpx3.intave.block.shape.resolve.patch.BoundingBoxPatcher;
@@ -52,7 +52,6 @@ import de.jpx3.intave.metric.ServerHealth;
 import de.jpx3.intave.module.BootSegment;
 import de.jpx3.intave.module.Modules;
 import de.jpx3.intave.module.linker.bukkit.BukkitEventSubscriptionLinker;
-import de.jpx3.intave.module.linker.packet.PacketSubscriptionLinker;
 import de.jpx3.intave.module.tracker.entity.Entity;
 import de.jpx3.intave.packet.reader.PacketReaders;
 import de.jpx3.intave.player.FaultKicks;
@@ -82,14 +81,11 @@ import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bytedeco.javacpp.Loader;
-import org.bytedeco.openblas.global.openblas;
-import org.bytedeco.openblas.global.openblas_nolapack;
-import smile.base.mlp.*;
-import smile.data.DataFrame;
-import smile.regression.MLP;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.URL;
 import java.net.URLConnection;
@@ -667,6 +663,9 @@ public final class IntavePlugin extends JavaPlugin {
       WrapperConverter.setup();
       Raytracing.setup();
       Fluids.setup();
+
+      Liquids.setup();
+
       VolatileBlockAccess.setup();
       BlockAccess.setup();
       BlockInteractionAccess.setup();

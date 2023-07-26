@@ -2,8 +2,8 @@ package de.jpx3.intave.check.movement.physics;
 
 import de.jpx3.intave.block.access.VolatileBlockAccess;
 import de.jpx3.intave.block.collision.Collision;
-import de.jpx3.intave.block.fluid.Fluid;
-import de.jpx3.intave.block.fluid.Fluids;
+import de.jpx3.intave.block.fluid.old.Fluid;
+import de.jpx3.intave.block.fluid.old.Fluids;
 import de.jpx3.intave.block.physics.BlockProperties;
 import de.jpx3.intave.executor.Synchronizer;
 import de.jpx3.intave.math.SinusCache;

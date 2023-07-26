@@ -1,60 +1,54 @@
-package de.jpx3.intave.block.fluid;
+package de.jpx3.intave.block.fluid.old;
 
 import de.jpx3.intave.block.access.VolatileBlockAccess;
-import de.jpx3.intave.block.variant.BlockVariant;
 import de.jpx3.intave.block.variant.BlockVariantRegister;
+import de.jpx3.intave.klass.rewrite.PatchyAutoTranslation;
 import de.jpx3.intave.share.NativeVector;
 import de.jpx3.intave.user.User;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.IBlockData;
 import org.bukkit.Material;
 
 import java.util.*;
 import java.util.function.Function;
 
 public final class DynamicFluidResolver extends FluidResolver {
+  private static final Set<Material> fluids = EnumSet.noneOf(Material.class);
   private static final Map<Material, Set<Integer>> waterloggedVariants = new EnumMap<>(Material.class);
   private static final Map<Material, Function<Integer, Float>> levelToHeight = new EnumMap<>(Material.class);
 
   static {
     for (Material value : Material.values()) {
       if (value.isBlock()) {
-        BlockVariant variant = BlockVariantRegister.uncachedVariantOf(value, 0);
-        Object waterlogged = variant.propertyOf("waterlogged");
-
-        // waterlogged probe
-        Set<Integer> variants;
-        Map<Integer, Integer> variantToHeight = new HashMap<>();
-        if (waterlogged != null) {
-          variants = new HashSet<>();
-//          variants.add(variant.variantIndex());
-
-          for (Integer variantId : BlockVariantRegister.variantIdsOf(value)) {
-            BlockVariant anyVariant = BlockVariantRegister.uncachedVariantOf(value, variantId);
-            Object anyWaterlogged = anyVariant.propertyOf("waterlogged");
-            Object level = anyVariant.propertyOf("level");
-            if (anyWaterlogged == Boolean.TRUE) {
-              variants.add(variantId);
-            }
-            if (level != null) {
-              variantToHeight.put(variantId, (Integer) level);
-              System.out.println("level: " + level + " variant: " + variantId);
-            }
+        Set<Integer> variantSet = BlockVariantRegister.variantIdsOf(value);
+        Map<Integer, Float> variantToHeight = new HashMap<>();
+        for (Integer variantIndex : variantSet) {
+          // aka IBlockData
+          Object rawVariant = BlockVariantRegister.rawVariantOf(value, variantIndex);
+          Fluid fluid = compileFrom(rawVariant);
+          if (fluid.isEmpty()) {
+            continue;
           }
-
-        } else {
-          variants = Collections.emptySet();
+          fluids.add(value);
+          waterloggedVariants.computeIfAbsent(value, k -> new HashSet<>()).add(variantIndex);
+          variantToHeight.put(variantIndex, fluid.height());
         }
-        waterloggedVariants.put(value, variants);
-        if (variantToHeight.isEmpty()) {
-          levelToHeight.put(value, ((Function<Integer, Integer>)variantToHeight::get)
-            .andThen(integer -> integer == null ? 0 : integer)
-            .andThen(integer -> integer / 9.0f)
-          );
+        if (!variantToHeight.isEmpty()) {
+          levelToHeight.put(value, variantIndex -> variantToHeight.getOrDefault(variantIndex, 0F));
         }
       }
     }
 //    System.out.println(waterloggedVariants);
 //    Integer id = waterloggedVariants.get(Material.getMaterial("WARPED_HANGING_SIGN")).iterator().next();
 //    BlockVariantRegister.uncachedVariantOf(Material.getMaterial("WARPED_HANGING_SIGN"), id).dumpStates();
+  }
+
+  @PatchyAutoTranslation
+  private static Fluid compileFrom(Object nativeVariant) {
+    IBlockData variant = (IBlockData) nativeVariant;
+    Block block = variant.getBlock();
+//    block.c_(variant);
+    return Fluid.empty();
   }
 
   @Override

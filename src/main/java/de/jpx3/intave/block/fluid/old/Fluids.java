@@ -1,10 +1,11 @@
-package de.jpx3.intave.block.fluid;
+package de.jpx3.intave.block.fluid.old;
 
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.access.IntaveInternalException;
 import de.jpx3.intave.klass.rewrite.PatchyLoadingInjector;
 import de.jpx3.intave.share.BoundingBox;
 import de.jpx3.intave.share.ClientMath;
+import de.jpx3.intave.share.Position;
 import de.jpx3.intave.user.User;
 import org.bukkit.Location;
 
@@ -17,17 +18,17 @@ public final class Fluids {
     String className;
 
     if (VER1_20.atOrAbove()) {
-      className = "de.jpx3.intave.block.fluid.v20FluidResolver";
+      className = "de.jpx3.intave.block.fluid.old.v20FluidResolver";
     } else if (VER1_18_2.atOrAbove()) {
-      className = "de.jpx3.intave.block.fluid.v18b2FluidResolver";
+      className = "de.jpx3.intave.block.fluid.old.v18b2FluidResolver";
     } else if (VER1_16_0.atOrAbove()) {
-      className = "de.jpx3.intave.block.fluid.v16FluidResolver";
+      className = "de.jpx3.intave.block.fluid.old.v16FluidResolver";
     } else if (VER1_14_0.atOrAbove()) {
-      className = "de.jpx3.intave.block.fluid.v14FluidResolver";
+      className = "de.jpx3.intave.block.fluid.old.v14FluidResolver";
     } else if (VER1_13_0.atOrAbove()) {
-      className = "de.jpx3.intave.block.fluid.v13FluidResolver";
+      className = "de.jpx3.intave.block.fluid.old.v13FluidResolver";
     } else {
-      className = "de.jpx3.intave.block.fluid.v12FluidResolver";
+      className = "de.jpx3.intave.block.fluid.old.v12FluidResolver";
     }
     PatchyLoadingInjector.loadUnloadedClassPatched(IntavePlugin.class.getClassLoader(), className);
     try {
@@ -56,5 +57,13 @@ public final class Fluids {
 
   public static boolean fluidStateEmpty(User user, double x, double y, double z) {
     return engine != null && fluidAt(user, x, y, z).isEmpty();
+  }
+
+  public static boolean fluidStateEmpty(User user, Location location) {
+    return fluidStateEmpty(user, location.getX(), location.getY(), location.getZ());
+  }
+
+  public static boolean fluidStateEmpty(User user, Position position) {
+    return fluidStateEmpty(user, position.getX(), position.getY(), position.getZ());
   }
 }

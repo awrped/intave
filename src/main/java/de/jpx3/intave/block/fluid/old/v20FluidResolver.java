@@ -1,9 +1,10 @@
-package de.jpx3.intave.block.fluid;
+package de.jpx3.intave.block.fluid.old;
 
 import de.jpx3.intave.klass.Lookup;
 import de.jpx3.intave.klass.locate.MethodSearchBySignature;
 import de.jpx3.intave.klass.rewrite.PatchyAutoTranslation;
 import de.jpx3.intave.klass.rewrite.PatchyTranslateParameters;
+import de.jpx3.intave.library.asm.Type;
 import de.jpx3.intave.share.NativeVector;
 import de.jpx3.intave.share.link.WrapperConverter;
 import de.jpx3.intave.user.User;
@@ -11,11 +12,15 @@ import de.jpx3.intave.user.meta.MovementMetadata;
 import net.minecraft.core.BlockPosition;
 import net.minecraft.world.level.IBlockAccess;
 import net.minecraft.world.level.World;
+import net.minecraft.world.level.chunk.IChunkProvider;
+import net.minecraft.world.level.chunk.LightChunk;
 
 import java.lang.invoke.MethodHandle;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 @PatchyAutoTranslation
-final class v18b2FluidResolver extends FluidResolver {
+final class v20FluidResolver extends FluidResolver {
   private static Object TAG_KEY_WATER = null;
   private static Object TAG_KEY_LAVA = null;
 
@@ -39,10 +44,7 @@ final class v18b2FluidResolver extends FluidResolver {
   protected Fluid fluidAt(User user, int x, int y, int z) {
     MovementMetadata movementData = user.meta().movement();
     World world = (World) movementData.nmsWorld();
-    if (world == null) {
-      return Fluid.empty();
-    }
-    IBlockAccess blockAccess = world.getChunkProvider().c(x >> 4, z >> 4);
+    IBlockAccess blockAccess = findChunk(world.getChunkProvider(), x >> 4, z >> 4);
     if (blockAccess == null) {
       return Fluid.empty();
     }
@@ -79,11 +81,21 @@ final class v18b2FluidResolver extends FluidResolver {
   protected NativeVector flowVectorAt(User user, int x, int y, int z) {
     MovementMetadata movementData = user.meta().movement();
     World world = (World) movementData.nmsWorld();
-    IBlockAccess blockAccess = world.getChunkProvider().c(x >> 4, z >> 4);
+    IBlockAccess blockAccess = findChunk(world.getChunkProvider(), x >> 4, z >> 4);
     if (blockAccess == null) {
       return NativeVector.ZERO;
     }
     BlockPosition blockPosition = new BlockPosition(x, y, z);
     return WrapperConverter.vectorFromVec3D(blockAccess.getFluid(blockPosition).c(blockAccess, blockPosition));
+  }
+
+  private LightChunk findChunk(IChunkProvider server, int x, int z) {
+    Class<?> chunk = Lookup.serverClass("LightChunk");
+    Method providerMethod = Lookup.serverMethod("ChunkProviderServer", "c", new Type[]{Type.INT_TYPE, Type.INT_TYPE}, Type.getType(chunk));
+    try {
+      return (LightChunk) providerMethod.invoke(server, x, z);
+    } catch (IllegalAccessException | InvocationTargetException ignored) {
+    }
+    return null;
   }
 }

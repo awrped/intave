@@ -7,8 +7,8 @@ import de.jpx3.intave.annotate.Relocate;
 import de.jpx3.intave.annotate.refactoring.IdoNotBelongHere;
 import de.jpx3.intave.block.access.VolatileBlockAccess;
 import de.jpx3.intave.block.collision.modifier.PowderSnowCollisionModifier;
-import de.jpx3.intave.block.fluid.Fluids;
-import de.jpx3.intave.block.fluid.LegacyWaterflow;
+import de.jpx3.intave.block.fluid.old.Fluids;
+import de.jpx3.intave.block.fluid.old.LegacyWaterflow;
 import de.jpx3.intave.block.physics.BlockPhysics;
 import de.jpx3.intave.block.physics.BlockProperties;
 import de.jpx3.intave.block.physics.MaterialMagic;
@@ -36,7 +36,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
 import java.util.Collection;
-import java.util.Map;
 import java.util.Map;
 
 import static de.jpx3.intave.share.ClientMath.clamp_double;

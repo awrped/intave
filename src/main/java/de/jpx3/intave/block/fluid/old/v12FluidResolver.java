@@ -1,4 +1,4 @@
-package de.jpx3.intave.block.fluid;
+package de.jpx3.intave.block.fluid.old;
 
 import de.jpx3.intave.block.access.VolatileBlockAccess;
 import de.jpx3.intave.block.physics.MaterialMagic;

@@ -1,4 +1,4 @@
-package de.jpx3.intave.block.fluid;
+package de.jpx3.intave.block.fluid.old;
 
 import de.jpx3.intave.annotate.KeepEnumInternalNames;
 
