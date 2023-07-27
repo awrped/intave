@@ -94,7 +94,10 @@ public final class MaterialMagic {
   }
 
   public static boolean isLiquidOrSeaBlock(Material material) {
-    return isLiquid(material) || material == TALL_SEAGRASS;
+    if (material == null) {
+      return false;
+    }
+    return isLiquid(material) || material == TALL_SEAGRASS || material == SEA_GRASS || material == KELP_PLANT;
   }
 
   public static boolean isLava(Material material) {

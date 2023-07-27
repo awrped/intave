@@ -40,7 +40,7 @@ public abstract class FluidResolver {
       for (int y = minY; y < maxY; ++y) {
         for (int z = minZ; z < maxZ; ++z) {
           Material blockClientSide = VolatileBlockAccess.typeAccess(user, world, x, y, z);
-          if (MaterialMagic.isLiquid(blockClientSide)) {
+          if (MaterialMagic.isLiquidOrSeaBlock(blockClientSide)) {
             Fluid fluid = fluidAt(user, x, y, z);
             if (fluid.isOfWater()) {
               double d1 = (float) y + fluid.height();
