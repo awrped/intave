@@ -10,7 +10,6 @@ import de.jpx3.intave.math.MathHelper;
 import de.jpx3.intave.module.Modules;
 import de.jpx3.intave.module.linker.bukkit.BukkitEventSubscription;
 import de.jpx3.intave.module.linker.packet.PacketSubscription;
-import de.jpx3.intave.module.mitigate.AttackNerfStrategy;
 import de.jpx3.intave.module.violation.Violation;
 import de.jpx3.intave.module.violation.ViolationContext;
 import de.jpx3.intave.user.User;
@@ -28,12 +27,9 @@ import org.bukkit.event.entity.EntityShootBowEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.util.Vector;
 
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
-import static de.jpx3.intave.access.player.trust.TrustFactor.ORANGE;
-import static de.jpx3.intave.access.player.trust.TrustFactor.RED;
 import static de.jpx3.intave.math.MathHelper.formatDouble;
 import static de.jpx3.intave.module.linker.packet.PacketId.Server.POSITION;
 import static de.jpx3.intave.module.linker.packet.PacketId.Server.RESPAWN;
@@ -58,7 +54,7 @@ public final class Balance extends MetaCheckPart<Timer, Balance.BalanceMeta> {
   public void respawnTolerance(PacketEvent event) {
     Player player = event.getPlayer();
     metaOf(player).lastRespawn = System.currentTimeMillis();
-    metaOf(player).timerBalance -= 50.0;
+    metaOf(player).timerBalance -= TimeUnit.MILLISECONDS.toNanos(50);
   }
 
   @PacketSubscription(
@@ -70,8 +66,8 @@ public final class Balance extends MetaCheckPart<Timer, Balance.BalanceMeta> {
     User user = userOf(event.getPlayer());
 //    double leniency = user.meta().violationLevel().isInActiveTeleportBundle ? 10 : 60;
     BalanceMeta timerData = metaOf(user);
-    timerData.timerBalance -= 50;
-    timerData.lastFlyingPacket = System.currentTimeMillis();
+    timerData.timerBalance -= TimeUnit.MILLISECONDS.toNanos(50);
+    timerData.lastFlyingPacket = System.nanoTime();
   }
 
   @DispatchTarget
@@ -83,10 +79,11 @@ public final class Balance extends MetaCheckPart<Timer, Balance.BalanceMeta> {
     User user = userOf(player);
     MetadataBundle meta = user.meta();
     BalanceMeta timerData = metaOf(user);
-    long time = System.currentTimeMillis();
+
+    long time = System.nanoTime();
     long delta = time - timerData.lastFlyingPacket;
-    timerData.lastFlyingPacket = System.currentTimeMillis();
-    timerData.timerBalance += 50 - delta;
+    timerData.lastFlyingPacket = System.nanoTime();
+    timerData.timerBalance += TimeUnit.MILLISECONDS.toNanos(50) - delta;
     int allowedLagInMilliseconds = trustFactorSetting("buffer-size", player);
     if (highToleranceMode || meta.abilities().probablyFlying()) {
       // disable any limits for high tolerance mode and flying
@@ -95,69 +92,25 @@ public final class Balance extends MetaCheckPart<Timer, Balance.BalanceMeta> {
     if (System.currentTimeMillis() - timerData.lastRespawn < 6000) {
       allowedLagInMilliseconds = Math.max(allowedLagInMilliseconds, 8000);
     }
-//    if (System.currentTimeMillis() - timerData.lastLagSpike < 1000 && !highToleranceMode) {
-//      allowedLagInMilliseconds = Math.max(allowedLagInMilliseconds / 2, 500);
-//    }
-    timerData.timerBalance = MathHelper.minmax(-allowedLagInMilliseconds, timerData.timerBalance, 1000);
+    timerData.timerBalance = MathHelper.minmax(TimeUnit.MILLISECONDS.toNanos(-allowedLagInMilliseconds), timerData.timerBalance, TimeUnit.MILLISECONDS.toNanos(1000));
     if (timerData.nextConfirmedBalance != -1) {
       timerData.confirmedBalance = timerData.nextConfirmedBalance;
       timerData.nextConfirmedBalance = -1;
     }
     // transactions!
-//    if (timerData.timerBalance < -250 && System.currentTimeMillis() - timerData.lastLagSpike > 500) {
-//      timerData.timerBalance += timerData.timerBalance < -400 ? 45 : 15;
-//    }
     statisticApply(user, CheckStatistics::increaseTotal);
-    boolean lowToleranceMode = parentCheck().lowToleranceMode() &&/*violationLevelOf(user) > 10 && */user.trustFactor().atOrBelow(ORANGE) /*&& System.currentTimeMillis() - timerData.lastTimerFlag < 2000*/;
-    int overflowLimit = lowToleranceMode ? 40 : 120;
-
-//    List<Double> safeTimerBalanceHistory = timerData.safeTimerBalanceHistory;
-//    List<Double> timerBalanceHistory = timerData.timerBalanceHistory;
-
+    long overflowLimit = TimeUnit.MILLISECONDS.toNanos(25);
     MovementMetadata movementData = user.meta().movement();
-//    boolean flyingPackets = user.meta().protocol().flyingPacketStream();
-//    boolean moving = Hypot.fast(movementData.motionX(), movementData.motionZ()) + Math.abs(movementData.motionY()) >= 0.1 && movementData.pastFlyingPacketAccurate() > 8;
-//    boolean checkAllowed = moving || flyingPackets;
-//    if (checkAllowed) {
-//      safeTimerBalanceHistory.add(Math.min(timerData.timerBalance, timerData.confirmedBalance));
-//      timerBalanceHistory.add(timerData.timerBalance);
-//    }
-//    if (safeTimerBalanceHistory.size() > 20) {
-//      safeTimerBalanceHistory.remove(0);
-//    }
-//    if (timerBalanceHistory.size() > 40) {
-//      timerBalanceHistory.remove(0);
-//    }
-//    int safeMean = mean(safeTimerBalanceHistory);
-//    int mean = mean(timerBalanceHistory);
-//    double absoluteBalance = Math.abs(timerData.timerBalance);
-//    double safeAbsoluteMean = Math.abs(safeMean);
-//    double absoluteMean = Math.abs(mean);
-//    double safeDiff = safeAbsoluteMean - absoluteBalance;
-//    double diff = absoluteMean - absoluteBalance;
-//    boolean safeVl = checkAllowed && safeDiff < -50;
-//    double vl = checkAllowed ? ((diff < -20) ? ((diff < -50) ? 5 : 3) : -0.5) : -0.5;
-//    boolean combatMicroLag = parentCheck().lowToleranceMode();
-//    if (safeVl || vl < 0) {
-//      timerData.balanceUnderflowVL += vl;
-//    }
-//    timerData.balanceUnderflowVL = MathHelper.minmax(-50, timerData.balanceUnderflowVL, 30);
-//    boolean hasRedTrustfactor = !user.trustFactor().atLeast(TrustFactor.ORANGE);
-//    if (timerData.balanceUnderflowVL > 15 && combatMicroLag && IntaveControl.GOMME_MODE && hasRedTrustfactor) {
-//      connection.lastAttackQueueRequest = System.currentTimeMillis();
-//    }
-    boolean hasSuspiciousBalance = timerData.timerBalance < -150 && Math.abs(delta) > 100 && timerData.timerBalance + delta > -150;
-    if (antiStutter && user.latency() < 150 && hasSuspiciousBalance && !user.justJoined() && user.meta().protocol().flyingPacketsAreSent() && user.trustFactor().atOrBelow(RED)) {
-      user.nerfOnce(AttackNerfStrategy.DMG_HIGH, "76");
-//      user.player().sendMessage(ChatColor.RED + "Stutter detected");
-//      player.sendMessage(timerData.timerBalance + "/" + overflowLimit + " @" + user.latency() + "ms");
-    }
 
-//    player.sendMessage("vl: " + timerData.balanceUnderflowVL);
-//    player.sendMessage("§c" + timerData.timerBalance + "§7 ~§c" + mean + "§7 -> §c" + formatDouble(timerData.balanceUnderflowVL, 2));
-//    player.setLevel((int) timerData.timerBalance);
+    player.setLevel((int) TimeUnit.NANOSECONDS.toMicros(timerData.timerBalance));
+
     if (timerData.timerBalance > overflowLimit && !user.meta().movement().isInVehicle()) {
-      String balanceAsString = formatDouble(timerData.timerBalance / 50, 2);
+//      System.out.println(timerData.timerBalance + " > " + overflowLimit);
+      double value = TimeUnit.NANOSECONDS.toMillis(timerData.timerBalance) / 50d;
+      if (value < 0.01) {
+        value = 0.01;
+      }
+      String balanceAsString = formatDouble(value, 2);
       statisticApply(user, CheckStatistics::increaseFails);
       Violation violation = Violation.builderFor(Timer.class).forPlayer(player)
         .withMessage("moved too frequently").withDetails(balanceAsString + " ticks ahead")
@@ -170,11 +123,13 @@ public final class Balance extends MetaCheckPart<Timer, Balance.BalanceMeta> {
         Modules.mitigate().movement().emulationSetBack(player, setback, 3, 2, false);
       }
       timerData.lastTimerFlag = System.currentTimeMillis();
-      timerData.timerBalance -= !violationContext.shouldCounterThreat() ? 25 : 10;
+      timerData.timerBalance -= TimeUnit.MILLISECONDS.toNanos(violationContext.shouldCounterThreat() ? 5 : 10);
     } else {
       statisticApply(user, CheckStatistics::increasePasses);
       if (timerData.timerBalance > 0) {
-        timerData.timerBalance -= 2;
+        // 1% timer = 50ms * 0.01 = 0.5ms
+        // 0.5ms allowed per tick
+        timerData.timerBalance -= 500_000L;
       }
       if (System.currentTimeMillis() - timerData.lastTimerFlag > 10000) {
         decrementer.decrement(user, 0.01);
@@ -265,16 +220,11 @@ public final class Balance extends MetaCheckPart<Timer, Balance.BalanceMeta> {
 //  }
 
   public static class BalanceMeta extends CheckCustomMetadata {
-    public double timerBalance;
-    public List<Double> safeTimerBalanceHistory = new LinkedList<>();
-    public List<Double> timerBalanceHistory = new LinkedList<>();
+    public long timerBalance = Long.MIN_VALUE / 2; // give initial breathing room
     public long lastFlyingPacket;
     public long lastTimerFlag;
-    public long lastLagSpike;
     public long lastRespawn;
-    public long nextConfirmedBalance;
-    public long confirmedBalance;
-    public double balanceUnderflowVL;
-    public boolean currentUnderflow;
+    public long nextConfirmedBalance = -1;
+    public long confirmedBalance = Integer.MAX_VALUE;
   }
 }

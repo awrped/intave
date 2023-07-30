@@ -149,11 +149,20 @@ public final class FeedbackReceiver extends Module {
 
     receiveRequest(user, response);
     long passedTime = response.passedTime();
+    long passedTimeNs = response.passedTimeAs(TimeUnit.NANOSECONDS);
     connection.receivedTransactionAfter(passedTime);
 
     Balance.BalanceMeta balanceMeta = (Balance.BalanceMeta) user.checkMetadata(Balance.BalanceMeta.class);
-    balanceMeta.timerBalance = Math.max(balanceMeta.timerBalance, balanceMeta.confirmedBalance);
-    balanceMeta.nextConfirmedBalance = -passedTime;
+
+    if (balanceMeta.confirmedBalance != Integer.MAX_VALUE) {
+      balanceMeta.timerBalance = Math.max(balanceMeta.timerBalance, balanceMeta.confirmedBalance);
+      balanceMeta.confirmedBalance = Integer.MAX_VALUE;
+    }
+
+    long nextConfirmedBalance = -passedTimeNs;
+    connection.nextFeedbackSubscribers.add(() -> {
+      balanceMeta.nextConfirmedBalance = nextConfirmedBalance - TimeUnit.MILLISECONDS.toNanos(1);
+    });
 
     LatencyStudy.receivedTransactionAfter(passedTime);
     event.setCancelled(true);
@@ -179,10 +188,18 @@ public final class FeedbackReceiver extends Module {
 
   private void receiveRequest(User user, FeedbackRequest<?> feedbackRequest) {
     Player player = user.player();
-    ConnectionMetadata synchronizeData = user.meta().connection();
-    synchronizeData.lastSynchronization = feedbackRequest.requested();
-    synchronizeData.lastReceivedTransactionNum = feedbackRequest.num();
-    Map<Long, Queue<FeedbackRequest<?>>> appendMap = synchronizeData.transactionAppendMap();
+    ConnectionMetadata connection = user.meta().connection();
+    if (connection.movementPassedForNFS) {
+      for (Runnable nextFeedbackSubscriber : connection.nextFeedbackSubscribers) {
+        nextFeedbackSubscriber.run();
+      }
+      connection.nextFeedbackSubscribers.clear();
+      connection.movementPassedForNFS = false;
+    }
+
+    connection.lastSynchronization = feedbackRequest.requested();
+    connection.lastReceivedTransactionNum = feedbackRequest.num();
+    Map<Long, Queue<FeedbackRequest<?>>> appendMap = connection.transactionAppendMap();
     Queue<FeedbackRequest<?>> appendedRequests = appendMap.get(feedbackRequest.num());
     if (appendedRequests != null && !appendedRequests.isEmpty()) {
       for (FeedbackRequest<?> appendedRequest : appendedRequests) {

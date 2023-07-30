@@ -205,7 +205,7 @@ public final class FeedbackSender extends Module {
     }
     short userKey = findUserKey(player);
     long transactionNumCounter = connection.transactionNumCounter++;
-    FeedbackRequest<T> feedbackEntry = new FeedbackRequest<>(callback, tracker, obj, userKey, transactionNumCounter);
+    FeedbackRequest<T> feedbackEntry = new FeedbackRequest<T>(callback, tracker, obj, userKey, transactionNumCounter);
     connection.feedbackQueue().add(feedbackEntry);
     return feedbackEntry;
   }

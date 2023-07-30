@@ -515,6 +515,8 @@ public final class MovementDispatcher extends Module {
       return;
     }
 
+    connectionData.movementPassedForNFS = true;
+
     if (!movementData.isTeleportConfirmationPacket) {
       interactionRaytraceCheck.receiveMovement(event);
 
