@@ -79,9 +79,14 @@ public final class ComponentLoader {
     try (InputStream in = website.openStream()) {
       download(in, componentPluginFile.toPath());
       plugin.logger().info(ChatColor.GREEN + "Downloaded " + componentName);
-      Plugin compPlug = plugin.getServer().getPluginManager().loadPlugin(componentPluginFile);
-      compPlug.onLoad();
-      plugin.getServer().getPluginManager().enablePlugin(compPlug);
+      Plugin componentPlugin = this.plugin.getServer().getPluginManager().loadPlugin(componentPluginFile);
+      try {
+        componentPlugin.onLoad();
+      } catch (Throwable throwable) {
+        // ProtocolLib Moment
+      }
+
+      this.plugin.getServer().getPluginManager().enablePlugin(componentPlugin);
     }
   }
 

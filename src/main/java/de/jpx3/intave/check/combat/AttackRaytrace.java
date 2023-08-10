@@ -549,7 +549,8 @@ public final class AttackRaytrace extends MetaCheck<AttackRaytrace.AttackRaytrac
    * @since 14.5.8
    */
   private Raytrace fireRaytraceFor(
-    User user, Entity entity, float expansion, boolean currentPosition) {
+    User user, Entity entity, float expansion, boolean currentPosition
+  ) {
     MetadataBundle meta = user.meta();
     MovementMetadata movementData = meta.movement();
     ProtocolMetadata clientData = meta.protocol();
