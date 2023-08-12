@@ -113,7 +113,7 @@ public final class Resources {
     File initialFile = cacheFileLocationOf(nameFrom(url, identifier, expires));
     Resource cache = withFileSpread(initialFile, Resources::resourceFromFileWithLock, 8).encrypted();
     Resource access = resourceFromWeb(url);
-    Resource resourceCache = new ResourceCache(cache, access, expires).retryReads(3);
+    Resource resourceCache = new ResourceCache(cache, access, expires).retryReads(2);
     ResourceRegistry.registerResource(identifier, resourceCache);
     return resourceCache;
   }
@@ -148,7 +148,7 @@ public final class Resources {
     File initialFile = cacheFileLocationOf(nameFrom(urls[0], identifier, expires));
     Resource cache = withFileSpread(initialFile, Resources::resourceFromFileWithLock, 8).encrypted();
     Resource access = resourceFromOneOf(urls);
-    Resource resourceCache = new ResourceCache(cache, access, expires).retryReads(3);
+    Resource resourceCache = new ResourceCache(cache, access, expires).retryReads(2);
     ResourceRegistry.registerResource(identifier, resourceCache);
     return resourceCache;
   }

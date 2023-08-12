@@ -4,11 +4,13 @@ import com.google.common.collect.Sets;
 import de.jpx3.intave.IntaveLogger;
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.adapter.MinecraftVersions;
+import de.jpx3.intave.annotate.DoNotFlowObfuscate;
 import de.jpx3.intave.klass.Lookup;
 import de.jpx3.intave.klass.rewrite.PatchyLoadingInjector;
 import de.jpx3.intave.module.Module;
 import de.jpx3.intave.module.linker.bukkit.BukkitEventSubscription;
 import de.jpx3.intave.world.chunk.ChunkProviderServerAccess;
+import it.unimi.dsi.fastutil.longs.LongSet;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.event.world.WorldInitEvent;
@@ -17,6 +19,7 @@ import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.Iterator;
 
+@DoNotFlowObfuscate
 public final class ChunkAccessPatcher extends Module {
   private static final boolean ENABLED = !MinecraftVersions.VER1_14_0.atOrAbove();
 
@@ -36,6 +39,8 @@ public final class ChunkAccessPatcher extends Module {
   public void worldInit(WorldInitEvent event) {
     patchWorld(event.getWorld());
   }
+
+  private static boolean failedDSIFirstPatch = false;
 
   public void patchWorld(World world) {
     if (!ENABLED) {
@@ -60,7 +65,9 @@ public final class ChunkAccessPatcher extends Module {
       } catch (Exception exception) {
         iterator = Collections.emptyIterator();
       }
+//      IntaveLogger.logger().info("Name is " + unloadQueueFieldClassName);
       if (unloadQueueFieldClassName.contains("dsi.fastutil.longs")) {
+//        IntaveLogger.logger().info("Patching unload queue of world " + world.getName() + " with " + unloadQueueFieldClassName);
         if (unloadQueueFieldClassName.endsWith("LongArraySet")) { // TacoSpigot - SynchronizedLongHashSet
           patchName = "s(dsi/ls)";
           SynchronizedLongArraySet newQueue = new SynchronizedLongArraySet();
@@ -68,16 +75,32 @@ public final class ChunkAccessPatcher extends Module {
           iterator.forEachRemaining(newQueue::add);
         } else { // NachoSpigot - SynchronizedDSILongHashSet
           patchName = "s(dsi/lhs)";
-          SynchronizedDSILongHashSet newQueue = new SynchronizedDSILongHashSet();
-          unloadQueueField.set(chunkProviderServer, newQueue);
-          iterator.forEachRemaining(newQueue::add);
+
+          try {
+            if (failedDSIFirstPatch) {
+              throw new Exception("Failed before");
+            }
+            SynchronizedDSILongHashSet newQueue = new SynchronizedDSILongHashSet();
+            unloadQueueField.set(chunkProviderServer, newQueue);
+            iterator.forEachRemaining(newQueue::add);
+          } catch (Throwable ignored) {
+            if (!failedDSIFirstPatch) {
+              IntaveLogger.logger().info("Using alternative patch for unload queue for " + unloadQueueFieldClassName);
+              failedDSIFirstPatch = true;
+            }
+            LongSet queue = (LongSet) unloadQueue;
+            DSILongSetWrapper wrapper = new DSILongSetWrapper(queue);
+            unloadQueueField.set(chunkProviderServer, wrapper);
+          }
         }
       } else if (unloadQueueFieldClassName.endsWith("util.LongHashSet")) { // newer minecraft versions
+//        IntaveLogger.logger().info("Patching unload queue of world " + world.getName() + " with " + unloadQueueFieldClassName);
         patchName = "s(ut/lhs)";
         SynchronizedBukkitLongHashSet newQueue = new SynchronizedBukkitLongHashSet();
         unloadQueueField.set(chunkProviderServer, newQueue);
         iterator.forEachRemaining(newQueue::add);
       } else { // older minecraft versions
+//        IntaveLogger.logger().info("Patching unload queue of world " + world.getName() + " with " + unloadQueueFieldClassName);
         patchName = "s(java/hs)";
         SynchronizedSet<Long> newQueue = new SynchronizedSet<>(Sets.newHashSet());
         unloadQueueField.set(chunkProviderServer, newQueue);

@@ -1,5 +1,6 @@
 package de.jpx3.intave.module.nayoro.event;
 
+import de.jpx3.intave.math.MathHelper;
 import de.jpx3.intave.module.nayoro.Environment;
 import de.jpx3.intave.module.nayoro.event.sink.EventSink;
 
@@ -38,5 +39,9 @@ public final class SlotSwitchEvent extends Event {
   @Override
   public void accept(EventSink sink) {
     sink.visit(this);
+  }
+
+  public static SlotSwitchEvent create(int slot, String material, int amount) {
+    return new SlotSwitchEvent(slot, material, MathHelper.minmax(0, amount, 64));
   }
 }

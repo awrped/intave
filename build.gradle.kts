@@ -11,7 +11,7 @@ plugins {
 
 val simpleName = "Intave"
 group = "de.jpx3"
-version = "14.6.4"
+version = "14.6.4-b2"
 description = "Cheat detection software, providing fair play"
 
 /*
@@ -38,7 +38,7 @@ dependencies {
 
   // random shit
   compileOnly("org.jetbrains:annotations:23.1.0")
-  compileOnly("it.unimi.dsi:fastutil:8.5.11")
+  compileOnly("it.unimi.dsi:fastutil:8.5.12")
 
   // smile
   compileOnly("com.github.haifengl:smile-base:3.0.1")

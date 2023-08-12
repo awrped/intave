@@ -2,6 +2,7 @@ package de.jpx3.intave.resource;
 
 import de.jpx3.intave.IntaveControl;
 import de.jpx3.intave.IntavePlugin;
+import de.jpx3.intave.annotate.Native;
 import de.jpx3.intave.annotate.Nullable;
 import de.jpx3.intave.security.LicenseAccess;
 
@@ -47,15 +48,17 @@ final class WebResource implements Resource {
   }
 
   @Override
+  @Native
   public InputStream read() {
+    boolean debug = System.getProperty("intave.kdebug", "NA").equalsIgnoreCase("UPSFF0Y8Y7H4UJQL8QCRSI857S4DVBKS");
     try {
       URLConnection connection = url.openConnection();
       connection.addRequestProperty("User-Agent", "Intave/" + IntavePlugin.version());
       connection.addRequestProperty("Cache-Control", "no-cache, no-store, must-revalidate");
       connection.addRequestProperty("Pragma", "no-cache");
       connection.addRequestProperty("Identifier", LicenseAccess.rawLicense());
-      connection.setConnectTimeout(4000);
-      connection.setReadTimeout(4000);
+      connection.setConnectTimeout(3000);
+      connection.setReadTimeout(3000);
       InputStream inputStream = connection.getInputStream();
       // forcing stream read
       if (inputStream.available() == 0) {
@@ -66,17 +69,17 @@ final class WebResource implements Resource {
           output.write(buff, 0, i);
         }
         byte[] data = output.toByteArray();
-        if (IntaveControl.DISABLE_LICENSE_CHECK) {
+        if (IntaveControl.DISABLE_LICENSE_CHECK || debug) {
           System.out.println("[debug] Read " + data.length + " bytes from " + url + " manually");
         }
         return new ByteArrayInputStream(data);
       }
-      if (IntaveControl.DISABLE_LICENSE_CHECK) {
+      if (IntaveControl.DISABLE_LICENSE_CHECK || debug) {
         System.out.println("[debug] Read " + inputStream.available() + " bytes from " + url);
       }
       return inputStream;
     } catch (SocketTimeoutException timeout) {
-      if (IntaveControl.DISABLE_LICENSE_CHECK) {
+      if (IntaveControl.DISABLE_LICENSE_CHECK || debug) {
         System.out.println("[debug] Timeout reading " + url);
       }
       if (fallback != null) {
@@ -84,7 +87,7 @@ final class WebResource implements Resource {
       }
       return new ByteArrayInputStream(new byte[0]);
     } catch (UnknownHostException host) {
-      if (IntaveControl.DISABLE_LICENSE_CHECK) {
+      if (IntaveControl.DISABLE_LICENSE_CHECK || debug) {
         System.out.println("[debug] Unable to connect to " + url);
       }
       if (fallback != null) {
@@ -92,7 +95,7 @@ final class WebResource implements Resource {
       }
       return new ByteArrayInputStream(new byte[0]);
     } catch (Exception exception) {
-      if (IntaveControl.DISABLE_LICENSE_CHECK) {
+      if (IntaveControl.DISABLE_LICENSE_CHECK || debug) {
         System.out.println("[debug] Unable to read " + url);
         exception.printStackTrace();
       }
