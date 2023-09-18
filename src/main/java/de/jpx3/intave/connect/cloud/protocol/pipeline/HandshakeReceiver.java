@@ -1,9 +1,7 @@
 package de.jpx3.intave.connect.cloud.protocol.pipeline;
 
 import de.jpx3.intave.connect.cloud.Session;
-import de.jpx3.intave.connect.cloud.protocol.Packet;
-import de.jpx3.intave.connect.cloud.protocol.PacketRegistry;
-import de.jpx3.intave.connect.cloud.protocol.Token;
+import de.jpx3.intave.connect.cloud.protocol.*;
 import de.jpx3.intave.connect.cloud.protocol.listener.Clientbound;
 import de.jpx3.intave.connect.cloud.protocol.packets.ClientboundHelloPacket;
 import de.jpx3.intave.connect.cloud.protocol.packets.ServerboundConfirmEncryptionPacket;
@@ -11,11 +9,13 @@ import de.jpx3.intave.connect.cloud.protocol.packets.ServerboundHelloPacket;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 
-import java.io.File;
-import java.net.URISyntaxException;
-import java.security.Security;
+import javax.crypto.*;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+import java.security.*;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.stream.Collectors;
 
 import static de.jpx3.intave.connect.cloud.protocol.Direction.CLIENTBOUND;
@@ -30,10 +30,11 @@ public final class HandshakeReceiver extends ChannelInboundHandlerAdapter implem
 
   @Override
   public void channelActive(ChannelHandlerContext ctx) {
+    Shard shard = session.shard();
     ServerboundHelloPacket serverHelloPacket = ServerboundHelloPacket.builder()
-      .token(session.shard() == null ? new Token(new byte[0], 0) : session.shard().token())
+      .token(shard == null ? new Token(new byte[0], 0) : shard.token())
       .supportedEncryptionAlgorithms(Security.getAlgorithms("Cipher").stream().filter(s -> s.startsWith("AES")).collect(Collectors.toList()))
-      .supportedEncryptionKeySizes(Collections.singletonList(256))
+      .supportedEncryptionKeySizes(Collections.singletonList(128))
       .supportedCompressionAlgorithms(Collections.singletonList("GZIP"))
       .supportedHMACAlgorithms(new ArrayList<>(Security.getAlgorithms("Mac")))
       .clientboundProtocol(PacketRegistry.packetSpecsFor(CLIENTBOUND))
@@ -52,19 +53,77 @@ public final class HandshakeReceiver extends ChannelInboundHandlerAdapter implem
     }
     //noinspection unchecked
     ((Packet<Clientbound>) packet).accept(this);
-    ctx.writeAndFlush(new ServerboundConfirmEncryptionPacket()).addListener(future -> {
-      session.setProcessor(new StandardPacketReceiver(session));
+    ctx.writeAndFlush(buildConfirmEncryptionPacket()).addListener(future -> {
+      String algorithm = session.encryptionScheme();
+      // use AES with key from packet
+      Cipher downDecryptCipher = Cipher.getInstance(algorithm);
+      Cipher upEncryptCipher = Cipher.getInstance(algorithm);
+
+      byte[] iv = session.verifyBytes();
+      downDecryptCipher.init(Cipher.DECRYPT_MODE, session.primaryKey(), new IvParameterSpec(iv));
+      upEncryptCipher.init(Cipher.ENCRYPT_MODE, session.primaryKey(), new IvParameterSpec(iv));
+      session.setEncryption(downDecryptCipher, upEncryptCipher);
+
+      session.setProcessor(new StandardClientRetriever(session));
     });
   }
 
   @Override
   public void onClientHello(ClientboundHelloPacket packet) {
-//    PacketRegistry.enterIdAssignment(CLIENTBOUND, packet.clientboundPackets());
-//    PacketRegistry.enterIdAssignment(SERVERBOUND, packet.serverboundPackets());
+    ProtocolSpecification protocol = session.protocol();
+    protocol.overrideAvailablePackets(CLIENTBOUND, new HashSet<>(packet.clientboundPackets()));
+    protocol.overrideAvailablePackets(SERVERBOUND, new HashSet<>(packet.serverboundPackets()));
+    protocol.overridePacketIds(CLIENTBOUND, packet.clientboundPackets());
+    protocol.overridePacketIds(SERVERBOUND, packet.serverboundPackets());
+
+    String encryption = packet.encryptionAlgorithm();
+    session.setEncryptionScheme(encryption);
+    if (encryption.contains("/")) {
+      encryption = encryption.substring(0, encryption.indexOf("/"));
+    }
+    session.setEncryptionAlgorithm(encryption);
+    System.out.println("Using " + session.encryptionAlgorithm() + " as " + session.encryptionScheme());
+
+    session.setServerPublicKey(packet.publicKey());
+    try {
+      Key generatedKey = generateKey(session.encryptionAlgorithm(), 128);
+      session.setPrimaryKey(generatedKey);
+    } catch (NoSuchAlgorithmException e) {
+      e.printStackTrace();
+      session.close();
+    }
+    session.setVerifyBytes(packet.verifyToken());
+  }
+
+  private ServerboundConfirmEncryptionPacket buildConfirmEncryptionPacket() {
+    byte[] sharedSecretEncrypted = encryptRSAChunked(session.primaryKey().getEncoded());
+    byte[] verifyBytesEncrypted = encryptRSAChunked(session.verifyBytes());
+    return new ServerboundConfirmEncryptionPacket(sharedSecretEncrypted, verifyBytesEncrypted);
+  }
+
+  private byte[] encryptRSAChunked(byte[] bytes) {
+    try {
+      Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+      cipher.init(Cipher.ENCRYPT_MODE, session.serverPublicKey());
+      return cipher.doFinal(bytes);
+    } catch (Exception e) {
+      session.close();
+      throw new RuntimeException(e);
+    }
+  }
+
+  private static Key generateKey(String cipher, int keySize) throws NoSuchAlgorithmException {
+    if (cipher.contains("/")) {
+      cipher = cipher.substring(0, cipher.indexOf("/"));
+    }
+    KeyGenerator keyGenerator = KeyGenerator.getInstance(cipher);
+    keyGenerator.init(keySize);
+    return keyGenerator.generateKey();
   }
 
   @Override
   public void exceptionCaught(ChannelHandlerContext channelHandlerContext, Throwable throwable) throws Exception {
+    channelHandlerContext.fireExceptionCaught(throwable);
     throwable.printStackTrace();
     channelHandlerContext.close();
   }

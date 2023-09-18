@@ -1,11 +1,14 @@
 package de.jpx3.intave.connect.cloud.protocol;
 
 import com.google.common.collect.Maps;
+import de.jpx3.intave.connect.cloud.protocol.listener.Clientbound;
+import de.jpx3.intave.connect.cloud.protocol.listener.Serverbound;
 import de.jpx3.intave.connect.cloud.protocol.packets.*;
 
 import java.util.*;
 
 public final class PacketRegistry {
+  private static final Map<Direction, Map<Class<? extends Packet<?>>, String>> nameByPacket = Maps.newHashMap();
   private static final Map<Direction, Map<String, Class<? extends Packet<?>>>> packetsByName = Maps.newEnumMap(Direction.class);
   private static final Map<Direction, Map<String, PacketSpecification>> specifications = Maps.newEnumMap(Direction.class);
 
@@ -16,6 +19,7 @@ public final class PacketRegistry {
     registerClientbound(ClientboundHelloPacket.class);
     registerClientbound(ClientboundSetTrustfactorPacket.class);
     registerClientbound(ClientboundViolationPacket.class);
+    registerClientbound(ClientboundKeepAlivePacket.class);
 
     registerServerbound(ServerboundConfirmEncryptionPacket.class);
     registerServerbound(ServerboundHelloPacket.class);
@@ -23,6 +27,7 @@ public final class PacketRegistry {
     registerServerbound(ServerboundRequestStoragePacket.class);
     registerServerbound(ServerboundRequestTrustfactorPacket.class);
     registerServerbound(ServerboundUploadStoragePacket.class);
+    registerServerbound(ServerboundKeepAlivePacket.class);
   }
   
   private static void registerClientbound(Class<? extends Packet<?>> packetClass) {
@@ -37,6 +42,8 @@ public final class PacketRegistry {
     try {
       Packet<?> packet = packetClass.newInstance();
       String packetName = packet.name();
+      nameByPacket.computeIfAbsent(direction, x -> new HashMap<>())
+        .put(packetClass, packetName);
       packetsByName.computeIfAbsent(direction, x -> new HashMap<>())
         .put(packetName, packetClass);
       specifications.computeIfAbsent(direction, x -> new HashMap<>())
@@ -54,15 +61,25 @@ public final class PacketRegistry {
     }
   }
 
+  public static String clientboundName(Class<? extends Packet<Clientbound>> packetClass) {
+    return nameByPacket.get(Direction.CLIENTBOUND).get(packetClass);
+  }
+
+  public static String serverboundName(Class<? extends Packet<Serverbound>> packetClass) {
+    return nameByPacket.get(Direction.SERVERBOUND).get(packetClass);
+  }
+
   public static Set<String> packetNamesOf(Direction direction) {
     return new HashSet<>(packetsByName.get(direction).keySet());
   }
 
   public static Packet<?> fromAssignedId(ProtocolSpecification protocol, Direction direction, int id) {
+    Map<Integer, String> idToName = protocol.packetIdsOf(direction);
     try {
-      String packetName = protocol.packetIdsOf(direction).get(id);
+      String packetName = idToName.get(id);
       return fromName(direction, packetName);
     } catch (Exception exception) {
+      System.out.println("Failed to find packet id " + id + " direction " + direction + " (avail: " + idToName+")");
       throw new RuntimeException(exception);
     }
   }

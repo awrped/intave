@@ -1,5 +1,8 @@
 package de.jpx3.intave.connect.cloud;
 
+import de.jpx3.intave.IntaveAccessor;
+import de.jpx3.intave.IntavePlugin;
+import de.jpx3.intave.access.IntaveAccess;
 import de.jpx3.intave.access.player.trust.TrustFactor;
 import de.jpx3.intave.annotate.HighOrderService;
 import de.jpx3.intave.cleanup.ShutdownTasks;
@@ -11,12 +14,15 @@ import de.jpx3.intave.connect.cloud.protocol.listener.Serverbound;
 import de.jpx3.intave.connect.cloud.protocol.packets.ServerboundRequestStoragePacket;
 import de.jpx3.intave.connect.cloud.protocol.packets.ServerboundRequestTrustfactorPacket;
 import de.jpx3.intave.connect.cloud.protocol.packets.ServerboundUploadStoragePacket;
+import de.jpx3.intave.connect.cloud.request.CloudStorageGateaway;
+import de.jpx3.intave.connect.cloud.request.CloudTrustfactorResolver;
 import de.jpx3.intave.connect.cloud.request.Request;
+import de.jpx3.intave.executor.TaskTracker;
 import de.jpx3.intave.resource.Resource;
 import de.jpx3.intave.resource.Resources;
+import org.bukkit.Bukkit;
 
 import java.nio.ByteBuffer;
-import java.security.Key;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -31,19 +37,40 @@ public final class Cloud {
   private final List<Session> sessions = new ArrayList<>();
   private final Map<UUID, Request<TrustFactor>> trustfactorRequests = new HashMap<>();
   private final Map<UUID, Request<ByteBuffer>> storageRequests = new HashMap<>();
+  private int taskId;
 
   public void init() {
+    setupKeepAliveTick();
   }
 
   public void connect() throws Exception {
     Session masterSession = new Session(shardCache.masterShard(), this);
-    masterSession.init();
+    masterSession.init(success -> {
+      if (success) {
+        setTrustAndStorage();
+      }
+    });
     sessions.add(masterSession);
     ShutdownTasks.add(this::disable);
   }
 
+  private void setupKeepAliveTick() {
+    taskId = Bukkit.getScheduler().scheduleAsyncRepeatingTask(
+      IntavePlugin.singletonInstance(), this::keepAliveTick, 20 * 5, 20 * 5
+    );
+    TaskTracker.begun(taskId);
+  }
+
+  private void setTrustAndStorage() {
+    IntaveAccess unsafe = IntaveAccessor.unsafeAccess();
+    unsafe.setTrustFactorResolver(new CloudTrustfactorResolver(this));
+    unsafe.setStorageGateway(new CloudStorageGateaway(this));
+  }
+
   private void disable() {
     sessions.forEach(Session::close);
+    Bukkit.getScheduler().cancelTask(taskId);
+    TaskTracker.stopped(taskId);
   }
 
   public void setMasterShard(
@@ -60,9 +87,15 @@ public final class Cloud {
   private void sendPacket(Packet<Serverbound> packet) {
     for (Session session : sessions) {
       if (session.canSend(packet)) {
-        session.sendPacket(packet);
+        session.send(packet);
         break;
       }
+    }
+  }
+
+  private void keepAliveTick() {
+    for (Session session : sessions) {
+      session.keepAliveTick();
     }
   }
 
@@ -76,6 +109,14 @@ public final class Cloud {
     sendPacket(new ServerboundRequestTrustfactorPacket(Identity.from(id)));
   }
 
+  public void serveTrustfactorRequest(Identity identity, TrustFactor trustFactor) {
+    Request<TrustFactor> request = trustfactorRequests.remove(identity.id());
+    if (request != null) {
+      System.out.println("Trustfactor Request Acknowledged, is " + trustFactor);
+      request.publish(trustFactor);
+    }
+  }
+
   public void storageRequest(UUID id, Consumer<ByteBuffer> callback) {
     Request<ByteBuffer> request = storageRequests.get(id);
     if (request == null) {
@@ -84,6 +125,13 @@ public final class Cloud {
     }
     request.subscribe(callback);
     sendPacket(new ServerboundRequestStoragePacket(Identity.from(id)));
+  }
+
+  public void serveStorageRequest(Identity identity, ByteBuffer buffer) {
+    Request<ByteBuffer> request = storageRequests.remove(identity.id());
+    if (request != null) {
+      request.publish(buffer);
+    }
   }
 
   public void saveStorage(UUID id, ByteBuffer buffer) {

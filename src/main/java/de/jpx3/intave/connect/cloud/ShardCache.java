@@ -53,7 +53,6 @@ public final class ShardCache {
     return shards.get("master").token();
   }
 
-
   public Stream<String> compiledLines() {
     return shards.values().stream().map(shard -> {
       StringBuilder builder = new StringBuilder();

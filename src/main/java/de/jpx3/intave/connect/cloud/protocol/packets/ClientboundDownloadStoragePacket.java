@@ -65,4 +65,12 @@ public final class ClientboundDownloadStoragePacket extends BinaryPacket<Clientb
       e.printStackTrace();
     }
   }
+
+  public Identity id() {
+    return id;
+  }
+
+  public ByteBuffer data() {
+    return data;
+  }
 }

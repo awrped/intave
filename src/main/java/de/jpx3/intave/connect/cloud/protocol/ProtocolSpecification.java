@@ -3,13 +3,15 @@ package de.jpx3.intave.connect.cloud.protocol;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public final class ProtocolSpecification {
   private final Map<Direction, Set<String>> packetsNames = Maps.newEnumMap(Direction.class);
-  private final Map<Direction, List<String>> packetsIds = Maps.newEnumMap(Direction.class);
+  private final Map<Direction, Map<Integer, String>> packetIdsToName = Maps.newEnumMap(Direction.class);
+  private final Map<Direction, Map<String, Integer>> packetNamesToId = Maps.newEnumMap(Direction.class);
   private final Map<Direction, Boolean> idsKnown = Maps.newEnumMap(Direction.class);
 
   public ProtocolSpecification() {
@@ -29,13 +31,20 @@ public final class ProtocolSpecification {
     packetsNames.put(direction, packetNames);
   }
 
-  public void overridePacketIds(Direction direction, List<String> packetClasses) {
-    packetsIds.put(direction, packetClasses);
+  public void overridePacketIds(Direction direction, List<String> packetNames) {
+    Map<Integer, String> idToName = new HashMap<>();
+    Map<String, Integer> nameToId = new HashMap<>();
+    for (int i = 0; i < packetNames.size(); i++) {
+      idToName.put(i, packetNames.get(i));
+      nameToId.put(packetNames.get(i), i);
+    }
+    packetIdsToName.put(direction, idToName);
+    packetNamesToId.put(direction, nameToId);
     idsKnown.put(direction, true);
   }
 
-  public List<String> packetIdsOf(Direction direction) {
-    return packetsIds.get(direction);
+  public Map<Integer, String> packetIdsOf(Direction direction) {
+    return packetIdsToName.get(direction);
   }
 
   public boolean packetIdsKnownFor(Direction direction) {
@@ -46,7 +55,7 @@ public final class ProtocolSpecification {
     return packetsNames.get(direction).contains(name);
   }
 
-  public int packetId(Direction direction, Class<? extends Packet> packetClass) {
-    return packetsIds.get(direction).indexOf(packetClass);
+  public int packetId(Direction direction, String name) {
+    return packetNamesToId.get(direction).get(name);
   }
 }

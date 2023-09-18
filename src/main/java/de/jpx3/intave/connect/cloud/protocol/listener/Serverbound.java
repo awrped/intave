@@ -7,7 +7,7 @@ import de.jpx3.intave.connect.cloud.protocol.packets.ServerboundRequestStoragePa
 
 public interface Serverbound extends PacketListener {
   @Override
-  default void onAny(Packet<?> packet) {
+  default void onUncaught(Packet<?> packet) {
     if (packet instanceof ServerboundConfirmEncryptionPacket) {
       onConfirmEncryption((ServerboundConfirmEncryptionPacket)packet);
     } else if (packet instanceof ServerboundRequestStoragePacket) {

@@ -16,7 +16,7 @@ public abstract class Packet<E extends PacketListener> implements Serializable {
   }
 
   public void accept(E listener) {
-    listener.onAny(this);
+    listener.onSelect(this);
   }
 
   public Direction direction() {

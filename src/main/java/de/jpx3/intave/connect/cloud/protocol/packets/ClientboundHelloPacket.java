@@ -76,13 +76,14 @@ public final class ClientboundHelloPacket extends BinaryPacket<Clientbound> {
       hmacAlgorithm = buffer.readUTF();
       int size = buffer.readInt();
       byte[] publicKey = new byte[size];
+      buffer.readFully(publicKey, 0, size);
       // get the public key of key exchange algorithm
+      KeyFactory keyFactory = KeyFactory.getInstance("RSA");
       X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicKey);
-      KeyFactory keyFactory = KeyFactory.getInstance(encryptionAlgorithm);
       this.publicKey = keyFactory.generatePublic(keySpec);
       size = buffer.readInt();
       verifyToken = new byte[size];
-      buffer.readFully(verifyToken);
+      buffer.readFully(verifyToken, 0, size);
     } catch (Exception e) {
       e.printStackTrace();
     }

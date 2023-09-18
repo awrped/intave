@@ -25,8 +25,9 @@ public final class PacketCodec extends ByteToMessageCodec<Packet<?>> {
   @Override
   protected void encode(ChannelHandlerContext channelHandlerContext, Packet<?> packet, ByteBuf byteBuf) {
     if (protocol.packetIdsKnownFor(sending)) {
-      int id = protocol.packetId(sending, packet.getClass());
+      int id = protocol.packetId(sending, packet.name());
       if (id == -1) {
+        System.out.println("Unknown id for " + packet.name());
         // do nothing
         return;
       }

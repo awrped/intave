@@ -56,4 +56,12 @@ public final class ClientboundSetTrustfactorPacket extends JsonPacket<Clientboun
       e.printStackTrace();
     }
   }
+
+  public Identity id() {
+    return id;
+  }
+
+  public TrustFactor trustFactor() {
+    return trustFactor;
+  }
 }

@@ -254,6 +254,7 @@ public final class IntavePlugin extends JavaPlugin {
       trustFactorService = new TrustFactorService(this);
       blackListService = new PlayerListService(this);
       cloud = new Cloud();
+      cloud.init();
 
       Thread.sleep(5);
 

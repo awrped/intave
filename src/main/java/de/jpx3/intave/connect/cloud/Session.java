@@ -1,10 +1,12 @@
 package de.jpx3.intave.connect.cloud;
 
-import de.jpx3.intave.connect.cloud.protocol.Packet;
-import de.jpx3.intave.connect.cloud.protocol.ProtocolSpecification;
-import de.jpx3.intave.connect.cloud.protocol.Shard;
+import de.jpx3.intave.access.player.trust.TrustFactor;
+import de.jpx3.intave.connect.cloud.protocol.*;
 import de.jpx3.intave.connect.cloud.protocol.listener.Clientbound;
 import de.jpx3.intave.connect.cloud.protocol.listener.Serverbound;
+import de.jpx3.intave.connect.cloud.protocol.packets.ServerboundKeepAlivePacket;
+import de.jpx3.intave.connect.cloud.protocol.pipeline.Decryption;
+import de.jpx3.intave.connect.cloud.protocol.pipeline.Encryption;
 import de.jpx3.intave.connect.cloud.protocol.pipeline.HandshakeReceiver;
 import de.jpx3.intave.connect.cloud.protocol.pipeline.PacketCodec;
 import io.netty.bootstrap.Bootstrap;
@@ -14,9 +16,15 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 
+import javax.crypto.Cipher;
+import java.nio.ByteBuffer;
 import java.security.Key;
+import java.security.PublicKey;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Queue;
+import java.util.function.Consumer;
 
 import static de.jpx3.intave.connect.cloud.protocol.Direction.CLIENTBOUND;
 import static de.jpx3.intave.connect.cloud.protocol.Direction.SERVERBOUND;
@@ -26,11 +34,16 @@ public final class Session {
   private Shard shard;
   private Cloud cloud;
   private Channel channel;
-  private final ProtocolSpecification protocol = new ProtocolSpecification();
+  private ProtocolSpecification protocol = new ProtocolSpecification();
   private final Queue<Packet<Serverbound>> pendingOutgoing = new ArrayDeque<>();
   private final Queue<Packet<Clientbound>> pendingIncoming = new ArrayDeque<>();
+  private final List<Consumer<Session>> shutdownSubscribers = new ArrayList<>();
 
-//  private Key rsaKey;
+  private PublicKey serverPublicKey;
+  private String encryptionAlgorithm;
+  private String encryptionScheme;
+  private Key primaryKey;
+  private byte[] verifyBytes;
 //  private Key aesKey;
 
   public Session(Shard shard, Cloud cloud) {
@@ -38,7 +51,7 @@ public final class Session {
     this.cloud = cloud;
   }
 
-  public void init() {
+  public void init(Consumer<Boolean> onFinal) {
     EventLoopGroup group = new NioEventLoopGroup();
     Bootstrap bootstrap = new Bootstrap()
       .group(group)
@@ -47,7 +60,7 @@ public final class Session {
         @Override
         protected void initChannel(SocketChannel ch) throws Exception {
           ch.pipeline()
-            .addLast("timeout", new ReadTimeoutHandler(30))
+            .addLast("timeout", new ReadTimeoutHandler(120))
 //            .addLast("decompression", new Decompression(256))
 //            .addLast("compression", new Compression(256))
             .addLast("codec", new PacketCodec(protocol, CLIENTBOUND))
@@ -58,35 +71,64 @@ public final class Session {
 
     try {
       // todo replace with actual cloud address
-      boolean connected = bootstrap.connect("localhost", 2024).addListener(future -> {
+      boolean connected = bootstrap.connect("localhost", 2024).await().addListener(future -> {
         if (!future.isSuccess()) {
           future.cause().printStackTrace();
           return;
         }
         channel = ((ChannelFuture) future).channel();
         channel.closeFuture().addListener(future2 -> {
-          System.out.println("Connection closed");
+          System.out.println("Connection closed forcefully");
+          shutdownSubscribers.forEach(subscriber -> subscriber.accept(this));
           group.shutdownGracefully();
         });
+        onFinal.accept(true);
       }).await(10, SECONDS);
       if (!connected) {
         System.out.println("Failed to connect to cloud service");
       }
     } catch (Exception e) {
       e.printStackTrace();
+      onFinal.accept(false);
     }
-
   }
 
-  public void sendPacket(Packet<Serverbound> packet) {
+  public void keepAliveTick() {
+    if (canSend(ServerboundKeepAlivePacket.class)) {
+      send(new ServerboundKeepAlivePacket());
+    }
+  }
+
+  public void reset() {
+    shard = null;
+    cloud = null;
+    channel = null;
+    protocol = new ProtocolSpecification();
+    pendingIncoming.clear();
+    pendingOutgoing.clear();
+//    shutdownSubscribers.clear();
+  }
+
+  public void send(Packet<Serverbound> packet) {
     if (channel == null || !channel.isActive()) {
       pendingOutgoing.add(packet);
       return;
     }
     while (!pendingOutgoing.isEmpty()) {
-      channel.writeAndFlush(pendingOutgoing.poll());
+      Packet<Serverbound> pending = pendingOutgoing.poll();
+      System.out.println("[Intave/Cloud] Sent queued " + pending.name());
+      channel.writeAndFlush(pending);
     }
+    System.out.println("[Intave/Cloud] Sent " + packet.name());
     channel.writeAndFlush(packet);
+  }
+
+  public void serveTrustfactorRequest(Identity id, TrustFactor trustFactor) {
+    cloud.serveTrustfactorRequest(id, trustFactor);
+  }
+
+  public void serveStorageRequest(Identity id, ByteBuffer buffer) {
+    cloud.serveStorageRequest(id, buffer);
   }
 
   public void receivePacketLater(Packet<Clientbound> packet) {
@@ -95,6 +137,27 @@ public final class Session {
 
   public Queue<Packet<Clientbound>> pendingIncoming() {
     return pendingIncoming;
+  }
+
+  public synchronized void setEncryption(
+    Cipher downwardDecryption,
+    Cipher upwardEncryption
+  ) {
+    ChannelPipeline pipeline = channel.pipeline();
+    ChannelHandler current = pipeline.get("encryption");
+
+    Encryption encryption = new Encryption(upwardEncryption);
+    Decryption decryption = new Decryption(downwardDecryption);
+
+    if (current == null) {
+      pipeline.addAfter("timeout", "encryption", encryption);
+      pipeline.addAfter("timeout","decryption", decryption);
+    } else {
+      pipeline.replace("encryption", "encryption", encryption);
+      pipeline.replace("decryption", "decryption", decryption);
+    }
+
+    System.out.println("[Intave/Cloud] Encryption set");
   }
 
   public void setProcessor(ChannelHandler handler) {
@@ -114,6 +177,60 @@ public final class Session {
   }
 
   public boolean canSend(Packet<Serverbound> packet) {
-    return protocol.packetAvailable(SERVERBOUND, packet.name());
+    return channel != null && channel.isActive() &&
+      protocol.packetAvailable(SERVERBOUND, packet.name());
+  }
+
+  public boolean canSend(Class<? extends Packet<Serverbound>> packetClass) {
+    return channel != null && channel.isActive() &&
+      protocol.packetAvailable(SERVERBOUND, PacketRegistry.serverboundName(packetClass));
+  }
+
+  public void subscribeToShutdown(Consumer<Session> consumer) {
+    shutdownSubscribers.add(consumer);
+  }
+
+  public ProtocolSpecification protocol() {
+    return protocol;
+  }
+
+  public PublicKey serverPublicKey() {
+    return serverPublicKey;
+  }
+
+  public void setServerPublicKey(PublicKey serverPublicKey) {
+    this.serverPublicKey = serverPublicKey;
+  }
+
+  public String encryptionAlgorithm() {
+    return encryptionAlgorithm;
+  }
+
+  public void setEncryptionAlgorithm(String encryptionAlgorithm) {
+    this.encryptionAlgorithm = encryptionAlgorithm;
+  }
+
+  public String encryptionScheme() {
+    return encryptionScheme;
+  }
+
+  public void setEncryptionScheme(String encryptionScheme) {
+    this.encryptionScheme = encryptionScheme;
+  }
+
+  public Key primaryKey() {
+    return primaryKey;
+  }
+
+  public void setPrimaryKey(Key aesKey) {
+    this.primaryKey = aesKey;
+  }
+
+  public byte[] verifyBytes() {
+    return verifyBytes;
+  }
+
+  public void setVerifyBytes(byte[] verifyBytes) {
+    this.verifyBytes = verifyBytes;
   }
 }
