@@ -87,6 +87,7 @@ public final class MovementMetadata implements SimulationEnvironment {
   public float rotationYaw, rotationPitch;
   public float lastRotationYaw, lastRotationPitch;
   public long recordedMoves;
+  public long invalidVehiclePositionTicks = 0;
   // Timestamps
   public long lastSneakingTimestamps, lastJump, lastMovement, lastRotation;
   public Vector emulationVelocity;
@@ -516,7 +517,9 @@ public final class MovementMetadata implements SimulationEnvironment {
       int slot = slotSwitchData.slot();
       ItemStack item = slotSwitchData.item();
 
-      boolean handActive = ItemProperties.canItemBeUsed(player, item) && inventory.handActive();
+      boolean primaryItemUsable = ItemProperties.canItemBeUsed(player, item);
+      boolean offhandItemUsage = ItemProperties.canItemBeUsed(player, inventory.offhandItem());
+      boolean handActive = (primaryItemUsable || offhandItemUsage) && inventory.handActive();
       if (handActive) {
         inventory.activateHand();
       } else {
@@ -1374,6 +1377,7 @@ public final class MovementMetadata implements SimulationEnvironment {
 
   public void setVehicle(Entity ridingEntity) {
     this.attachVehicleTicks = 0;
+    this.invalidVehiclePositionTicks = 0;
     this.attachMoveDistance = ridingEntity.distanceTo(lastPosition());
     this.vehicle = ridingEntity;
 
