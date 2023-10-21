@@ -205,7 +205,7 @@ public final class MovementMetadata implements SimulationEnvironment {
   private Pose pose = Pose.STANDING;
   private Simulator simulator = Simulators.PLAYER;
   @Nullable
-  private Position mainSupportingBlockPos = null;
+  public Position mainSupportingBlockPos = null;
   private boolean mainSupportingBlockPosLocking = false;
   private Material frictionMaterial = Material.AIR, previousFrictionMaterial = Material.AIR;
   private Material collideMaterial = Material.AIR, previousCollideMaterial = Material.AIR;

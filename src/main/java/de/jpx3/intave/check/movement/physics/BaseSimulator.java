@@ -439,8 +439,12 @@ class BaseSimulator extends Simulator {
 
     // Update supporting block if on-ground
     MovementMetadata movementData = user.meta().movement();
-    if (movementData.onGround && user.meta().protocol().trailsAndTailsUpdate()) {
-      movementData.checkSupportingBlock(motion);
+    if (user.meta().protocol().trailsAndTailsUpdate()) {
+      if (movementData.onGround) {
+        movementData.checkSupportingBlock(motion);
+      } else {
+        movementData.mainSupportingBlockPos = null;
+      }
       movementData.compileSpecialBlocks();
     }
     simulateMovementOfCollidedBlocks(user, environment, motion, boundingBox);
