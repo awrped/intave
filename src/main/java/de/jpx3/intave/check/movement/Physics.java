@@ -439,7 +439,7 @@ public final class Physics extends Check {
     }
 
     double violationLevelIncrease = horizontalViolationIncrease + verticalViolationIncrease;
-    if (movementData.simulator() == Simulators.HORSE && !IntaveControl.GOMME_MODE) {
+    if (movementData.simulator() == Simulators.HORSE) {
       violationLevelIncrease = 0;
     }
     if (distance > 1e-3) {

@@ -162,7 +162,7 @@ public final class EntityTracker extends Module {
       Entity finalTarget = target;
       user.tickFeedback(() -> {
         if (movementData.isInVehicle()) {
-          movementData.dismountRidingEntity("Override");
+          movementData.dismountRidingEntity("Override", false);
         }
         if (finalTarget != null && !(finalTarget instanceof Entity.Destroyed)) {
           movementData.setVehicle(finalTarget);

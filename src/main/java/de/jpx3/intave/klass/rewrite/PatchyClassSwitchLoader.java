@@ -20,7 +20,7 @@ public final class PatchyClassSwitchLoader<T> {
   }
 
   public boolean available() {
-    return (requiredVersion == null || MinecraftVersion.atOrAbove(requiredVersion)) &&
+    return (requiredVersion == null || requiredVersion.atOrAbove()) &&
       (maximumVersion == null || maximumVersion.compareTo(MinecraftVersion.getCurrentVersion()) <= 0);
   }
 

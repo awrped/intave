@@ -30,8 +30,8 @@ import de.jpx3.intave.module.feedback.Superposition;
 import de.jpx3.intave.module.tracker.entity.Entity;
 import de.jpx3.intave.player.Effects;
 import de.jpx3.intave.player.ItemProperties;
-import de.jpx3.intave.share.*;
 import de.jpx3.intave.share.Rotation;
+import de.jpx3.intave.share.*;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserRepository;
 import org.bukkit.*;
@@ -1412,6 +1412,10 @@ public final class MovementMetadata implements SimulationEnvironment {
   }
 
   public void dismountRidingEntity(String reason) {
+    dismountRidingEntity(reason, true);
+  }
+
+  public void dismountRidingEntity(String reason, boolean positionReset) {
     if (!isInVehicle()) {
       return;
     }
@@ -1421,10 +1425,12 @@ public final class MovementMetadata implements SimulationEnvironment {
       Thread.dumpStack();
     }
     setVerifiedLocation(player.getLocation(), "Entity dismount location");
-    Synchronizer.synchronize(() -> {
-      // player.getLocation() is assumed to be correct
-      player.teleport(player.getLocation());
-    });
+    if (positionReset) {
+      Synchronizer.synchronize(() -> {
+        // player.getLocation() is assumed to be correct
+        player.teleport(player.getLocation());
+      });
+    }
     this.vehicle = null;
   }
 
