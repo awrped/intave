@@ -333,7 +333,7 @@ public final class InteractionRaytrace extends MetaCheck<InteractionRaytrace.Int
     Location playerLocationmdf = playerLocation.clone();
     playerLocationmdf.setYaw(movementData.lastRotationYaw);
     for (Interaction interaction : interactionList) {
-      processInteraction(interaction, playerLocation, playerLocationmdf);
+      processInteraction(interaction, playerLocation.clone(), playerLocationmdf.clone());
     }
     interactionList.clear();
     return true;
@@ -502,7 +502,7 @@ public final class InteractionRaytrace extends MetaCheck<InteractionRaytrace.Int
       }
     }
 
-    // if first raytrace failed..
+    // if first raytrace failed
     if (raytraceFailed) {
       // ..try again with mouse delay fix toggled differently
       MovingObjectPosition secondRaytraceResult = estimateMouseDelayFix ? raycastResult : raycastResultmdf;

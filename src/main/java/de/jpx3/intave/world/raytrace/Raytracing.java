@@ -11,13 +11,14 @@ import de.jpx3.intave.share.NativeVector;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserRepository;
 import de.jpx3.intave.user.meta.MetadataBundle;
+import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 
 public final class Raytracing {
-  private static Raytracer raytracer;
+  private static Raytracer raytracer, backup;
   private static final boolean[] PESSIMISTIC_BOOLEAN_ORDER = new boolean[]{false, true};
 
   public static void setup() {
@@ -33,7 +34,8 @@ public final class Raytracing {
     }
     PatchyLoadingInjector.loadUnloadedClassPatched(Raytracing.class.getClassLoader(), className);
     raytracer = instanceOf(className);
-//    raytracer = new UniversalRaytracer();
+    backup = new UnivRaytracer();
+//    raytracer = new UnivRaytracer();
   }
 
   private static <T> T instanceOf(String className) {
@@ -63,30 +65,30 @@ public final class Raytracing {
    * @return
    */
   public static Raytrace doubleMDFBlockConstraintEntityRaytrace(
-      Player player, Entity entity, boolean alternativePositionY,
-      double lastPositionX, double lastPositionY, double lastPositionZ,
-      float lastRotationYaw,
-      float rotationYaw, float rotationPitch,
-      double expandHitbox, boolean withoutMouseDelayFix) {
+    Player player, Entity entity, boolean alternativePositionY,
+    double lastPositionX, double lastPositionY, double lastPositionZ,
+    float lastRotationYaw,
+    float rotationYaw, float rotationPitch,
+    double expandHitbox, boolean withoutMouseDelayFix) {
     double blockReachDistance = Raytracing.reachDistanceOf(player);
 //    float rotationYaw = movementData.rotationYaw % 360;
 
     // mouse delay fix
     Raytrace distanceOfResult = blockConstraintEntityRaytrace(
-        player,
-        entity, alternativePositionY,
-        lastPositionX, lastPositionY, lastPositionZ,
-        rotationYaw, rotationPitch,
-        expandHitbox
+      player,
+      entity, alternativePositionY,
+      lastPositionX, lastPositionY, lastPositionZ,
+      rotationYaw, rotationPitch,
+      expandHitbox
     );
     if (withoutMouseDelayFix && distanceOfResult.reach() > blockReachDistance && rotationYaw != lastRotationYaw) {
       // normal
       distanceOfResult = blockConstraintEntityRaytrace(
-          player,
-          entity, alternativePositionY,
-          lastPositionX, lastPositionY, lastPositionZ,
-          lastRotationYaw, rotationPitch,
-          expandHitbox
+        player,
+        entity, alternativePositionY,
+        lastPositionX, lastPositionY, lastPositionZ,
+        lastRotationYaw, rotationPitch,
+        expandHitbox
       );
     }
 
@@ -97,20 +99,20 @@ public final class Raytracing {
    * @param expandBoundingBox should be "0.1f" for a default hitbox
    */
   public static Raytrace blockConstraintEntityRaytrace(
-      Player player, Entity entity,
-      boolean useAlternativePositionY,
-      double prevPosX, double prevPosY, double prevPosZ,
-      float prevYaw, float pitch,
-      double expandBoundingBox
+    Player player, Entity entity,
+    boolean useAlternativePositionY,
+    double prevPosX, double prevPosY, double prevPosZ,
+    float prevYaw, float pitch,
+    double expandBoundingBox
   ) {
     return entityRaytrace(
-        player,
-        entity.boundingBox(),
-        useAlternativePositionY ? (entity.alternativePosition.posY - entity.position.posY) : 0,
-        prevPosX, prevPosY, prevPosZ,
-        prevYaw, pitch,
-        expandBoundingBox,
-        EntityRaytraceBlockConstraint.ACCEPT_BLOCKS
+      player,
+      entity.boundingBox(),
+      useAlternativePositionY ? (entity.alternativePosition.posY - entity.position.posY) : 0,
+      prevPosX, prevPosY, prevPosZ,
+      prevYaw, pitch,
+      expandBoundingBox,
+      EntityRaytraceBlockConstraint.ACCEPT_BLOCKS
     );
   }
 
@@ -118,20 +120,20 @@ public final class Raytracing {
    * @param expandBoundingBox should be "0.1f" for a default hitbox
    */
   public static Raytrace blockIgnoringEntityRaytrace(
-      Player player, Entity entity,
-      boolean useAlternativePositionY,
-      double prevPosX, double prevPosY, double prevPosZ,
-      float prevYaw, float pitch,
-      double expandBoundingBox
+    Player player, Entity entity,
+    boolean useAlternativePositionY,
+    double prevPosX, double prevPosY, double prevPosZ,
+    float prevYaw, float pitch,
+    double expandBoundingBox
   ) {
     return entityRaytrace(
-        player,
-        entity.boundingBox(),
-        useAlternativePositionY ? (entity.alternativePosition.posY - entity.position.posY) : 0,
-        prevPosX, prevPosY, prevPosZ,
-        prevYaw, pitch,
-        expandBoundingBox,
-        EntityRaytraceBlockConstraint.IGNORE_BLOCKS
+      player,
+      entity.boundingBox(),
+      useAlternativePositionY ? (entity.alternativePosition.posY - entity.position.posY) : 0,
+      prevPosX, prevPosY, prevPosZ,
+      prevYaw, pitch,
+      expandBoundingBox,
+      EntityRaytraceBlockConstraint.IGNORE_BLOCKS
     );
   }
 
@@ -162,9 +164,9 @@ public final class Raytracing {
         break;
       NativeVector interpolatedLookVec = wrappedVectorForRotation(pitch, prevYaw, fastMath);
       NativeVector lookVector = eyeVector.addVector(
-          interpolatedLookVec.xCoord * blockReachDistance,
-          interpolatedLookVec.yCoord * blockReachDistance,
-          interpolatedLookVec.zCoord * blockReachDistance
+        interpolatedLookVec.xCoord * blockReachDistance,
+        interpolatedLookVec.yCoord * blockReachDistance,
+        interpolatedLookVec.zCoord * blockReachDistance
       );
       BoundingBox hitBox = entityBoundingBox.grow(boundingBoxExpansion, boundingBoxExpansion, boundingBoxExpansion);
       if (alternativeYDifference != 0) {
@@ -225,7 +227,10 @@ public final class Raytracing {
   public static MovingObjectPosition blockShrinkRayTrace(World world, Player player, NativeVector eyeVector, NativeVector targetVector) {
     try {
       Timings.SERVICE_RAYTRACER_BLOCK.start();
-      return raytracer.raytrace(world, player, eyeVector, targetVector);
+      MovingObjectPosition raytrace = raytracer.raytrace(world, player, eyeVector, targetVector);
+//      player.sendMessage(eyeVector + " -> " + targetVector + " = " + raytrace.getBlockPos());\
+//      player.playEffect(raytrace.getBlockPos().toLocation(world), org.bukkit.Effect.CLICK1, 0);
+      return raytrace;
     } finally {
       Timings.SERVICE_RAYTRACER_BLOCK.stop();
     }
@@ -247,7 +252,38 @@ public final class Raytracing {
   public static MovingObjectPosition blockRayTrace(World world, Player player, NativeVector eyeVector, NativeVector targetVector) {
     try {
       Timings.SERVICE_RAYTRACER_BLOCK.start();
-      return raytracer.raytrace(world, player, eyeVector, targetVector);
+      MovingObjectPosition raytrace = raytracer.raytrace(world, player, eyeVector, targetVector);
+//      player.sendMessage(eyeVector + " -> " + targetVector + " = " + raytrace.getBlockPos());
+//      player.playEffect(raytrace.getBlockPos().toLocation(world), org.bukkit.Effect.CLICK1, 0);
+
+      // show particle
+      /*
+      if (raytrace != null) {
+        player.playEffect(raytrace.hitVec.toLocation(world), Effect.HAPPY_VILLAGER, 0);
+      } else {
+        player.playEffect(targetVector.toLocation(world), Effect.HAPPY_VILLAGER, 0);
+      }*/
+
+      MovingObjectPosition backup = Raytracing.backup.raytrace(world, player, eyeVector, targetVector);
+
+      /*
+      if (backup != null) {
+        player.playEffect(backup.hitVec.toLocation(world), Effect.HAPPY_VILLAGER, 0);
+      } else {
+        player.playEffect(targetVector.toLocation(world), Effect.HAPPY_VILLAGER, 0);
+      }*/
+
+      if (raytrace == null || backup == null) {
+//        player.sendMessage(ChatColor.RED + "Raytrace: " + raytrace + " Backup: " + backup);
+      } else if (raytrace.hitVec.distanceTo(backup.hitVec) > 0.01) {
+        player.sendMessage(ChatColor.RED + "Difference: " + raytrace.hitVec.distanceTo(backup.hitVec));
+      } else if (raytrace.sideHit != backup.sideHit) {
+        player.sendMessage(ChatColor.RED + "Side: " + raytrace.sideHit + " " + backup.sideHit);
+      } else if (raytrace.getBlockPos() != null && backup.getBlockPos() != null && !raytrace.getBlockPos().equals(backup.getBlockPos())) {
+//        player.sendMessage(ChatColor.RED + "Block: " + raytrace.getBlockPos() + " " + backup.getBlockPos());
+      }
+
+      return raytrace;
     } finally {
       Timings.SERVICE_RAYTRACER_BLOCK.stop();
     }

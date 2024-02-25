@@ -24,6 +24,10 @@ public final class Position extends Vector implements Serializable {
     return new Position(x, y, z);
   }
 
+  public static Position of(Vector vector) {
+    return new Position(vector.getX(), vector.getY(), vector.getZ());
+  }
+
   public boolean hasNaNCoordinate() {
     return Double.isNaN(x) || Double.isNaN(y) || Double.isNaN(z);
   }
