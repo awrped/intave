@@ -22,10 +22,11 @@ public final class SettingsTracker extends Module {
     Player player = event.getPlayer();
     User user = userOf(player);
     PacketContainer packet = event.getPacket();
+    ProtocolMetadata clientData = user.meta().protocol();
     if (MinecraftVersions.VER1_20_2.atOrAbove()) {
+      clientData.setLocale("en_US");
       return;
     }
-    ProtocolMetadata clientData = user.meta().protocol();
     String locale = packet.getStrings().read(0);
     clientData.setLocale(locale);
   }
