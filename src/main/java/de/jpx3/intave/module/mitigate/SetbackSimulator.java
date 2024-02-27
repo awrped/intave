@@ -253,7 +253,7 @@ public final class SetbackSimulator extends Module {
       user.tickFeedback(
         () -> violationLevelData.disableActiveTeleportBundleNextTick = true
       );
-      teleport(player, futurePosition);
+      teleport(player, motion.getY(), futurePosition);
 //      violationLevelData.isInActiveTeleportBundle = false;
 
       Vector futureMotion = motionProceed(motion, user, boundingBox, true);
@@ -288,7 +288,7 @@ public final class SetbackSimulator extends Module {
         futurePosition = futurePosition.add(pushVector);
       }
 
-      teleport(player, futurePosition);
+      teleport(player, motion.getY(), futurePosition);
 
       if (IntaveControl.DEBUG_EMULATION) {
         String s = ChatColor.DARK_PURPLE + "[E/] " + MathHelper.formatMotion(motion) + (boundingBoxIntersection ? " (block-push)" : "") + " at " + MathHelper.formatPosition(futurePosition) + " (" + ticks + " ticks remaining)";
@@ -443,7 +443,7 @@ public final class SetbackSimulator extends Module {
     return ClientMath.clamp_double(axis, -4.0, 4.0);
   }
 
-  private void teleport(Player player, Location teleportLocation) {
+  private void teleport(Player player, double motionY, Location teleportLocation) {
     User user = UserRepository.userOf(player);
     MovementMetadata movementData = user.meta().movement();
 
@@ -454,7 +454,7 @@ public final class SetbackSimulator extends Module {
     if (closeInventoryOnDetection && user.meta().inventory().inventoryOpen()) {
       player.closeInventory();
     }
-    rotationlessTeleport(player, teleportLocation, movementData.rotationYaw, movementData.rotationPitch);
+    rotationlessTeleport(player, teleportLocation, motionY, movementData.rotationYaw, movementData.rotationPitch);
     updateMovementStatus(user);
   }
 
@@ -468,7 +468,7 @@ public final class SetbackSimulator extends Module {
     }
   }
 
-  private synchronized void rotationlessTeleport(Player player, Location to, float nativeYaw, float nativePitch) {
+  private synchronized void rotationlessTeleport(Player player, Location to, double motionY, float nativeYaw, float nativePitch) {
     PlayerTeleportEvent event = constructTeleportEvent(player, to);
     plugin.eventLinker().fireEvent(event);
     if (player.isDead() || player.getHealth() <= 0 || player.getPassenger() != null || !player.isOnline() || !UserRepository.hasUser(player)) {
@@ -486,7 +486,7 @@ public final class SetbackSimulator extends Module {
           throw new IntaveBootFailureException("Setback location cannot be null");
         }
         if (Math.abs(nativeYaw) > 360f) {
-          teleportMethodContainer.teleport(player, dest, nativeYaw % 360f, nativePitch, false);
+          teleportMethodContainer.teleport(player, dest, motionY, nativeYaw % 360f, nativePitch, false);
         } else {
           Field yawField = Lookup.serverField("Entity", "yaw");
           Field pitchField = Lookup.serverField("Entity", "pitch");
@@ -494,7 +494,7 @@ public final class SetbackSimulator extends Module {
           float pitch = (float) pitchField.get(playerHandle);
           yawField.set(playerHandle, 0f);
           pitchField.set(playerHandle, 0f);
-          teleportMethodContainer.teleport(player, dest, 0, 0, true);
+          teleportMethodContainer.teleport(player, dest, motionY, 0, 0, true);
           yawField.set(playerHandle, yaw);
           pitchField.set(playerHandle, pitch);
         }

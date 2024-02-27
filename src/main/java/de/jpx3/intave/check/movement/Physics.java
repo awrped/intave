@@ -684,8 +684,8 @@ public final class Physics extends Check {
           boolean flagAnywayss = freeOfColliders && ((isMidAir && violationLevelAfter > 60) || (verticalViolationIncrease >= 100 && predictedY < 0 && violationLevelAfter >= 100));
           boolean velocityFlag = velocityDetected && violationLevelAfter > 30 && (verticalViolationIncrease >= 100 || horizontalViolationIncrease >= 100);
           setback =
-            (distanceMoved > (violationLevelAfter > 80 ? 0.5 : 0.7) || violationLevelAfter > 200 || user.justJoined() || flagAnywayss || velocityFlag)
-            && deepPitchViolationOverflow && (highPitchAggressiveViolationOverflow || violationLevelAfter > 200);
+            (distanceMoved > (violationLevelAfter > 80 ? 0.5 : 0.7) || violationLevelAfter > 200 || flagAnywayss || velocityFlag)
+            && deepPitchViolationOverflow && (highPitchAggressiveViolationOverflow || violationLevelAfter > 200 || user.justJoined());
           manualOverrideDistance = 1;
           break;
         case SILENT:
@@ -1049,10 +1049,10 @@ public final class Physics extends Check {
     if (movementData.artificialFallDistance > 3.0F) {
       float fallDistance = movementData.artificialFallDistance;
       movementData.seenFallDamage = 0;
-      movementData.inWaterSinceFallDamagePostCheck = false;
-      Synchronizer.synchronizeDelayed(() -> user.tickFeedback(() -> {
-        Synchronizer.synchronize(() -> postCheckFalldamage(user, movementData, fallDistance));
-      }), 2);
+//      movementData.inWaterSinceFallDamagePostCheck = false;
+//      Synchronizer.synchronizeDelayed(() -> user.tickFeedback(() -> {
+//        Synchronizer.synchronize(() -> postCheckFalldamage(user, movementData, fallDistance));
+//      }), 2);
       movementData.artificialFallDistance = 0F;
     }
   }

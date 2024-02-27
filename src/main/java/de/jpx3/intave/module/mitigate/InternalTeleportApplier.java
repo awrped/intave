@@ -35,12 +35,13 @@ final class InternalTeleportApplier {
     }
   }
 
-  void teleport(Player player, Location dest, float yaw, float pitch, boolean rotationFlags) {
+  void teleport(Player player, Location dest, double motionY, float yaw, float pitch, boolean rotationFlags) {
     try {
       User user = UserRepository.userOf(player);
       if (!user.hasPlayer()) {
         return;
       }
+      float fallDistance = player.getFallDistance();
       Object playerConnection = user.playerConnection();
       Set<?> rFlags = rotationFlags ? TeleportFlag.noRotationChange() : Collections.emptySet();
       double posX = dest.getX();
@@ -51,6 +52,11 @@ final class InternalTeleportApplier {
       } else {
         internalTeleportMethod.invoke(playerConnection, posX, posY, posZ, yaw, pitch, rFlags);
       }
+      if (motionY > 0) {
+        motionY = 0;
+      }
+//      player.sendMessage("Added fall distance: " + (-motionY));
+      player.setFallDistance((float) (fallDistance + -motionY));
     } catch (InvocationTargetException | IllegalAccessException exception) {
       exception.printStackTrace();
     }
