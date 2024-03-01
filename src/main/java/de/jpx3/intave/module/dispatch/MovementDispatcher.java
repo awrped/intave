@@ -639,7 +639,8 @@ public final class MovementDispatcher extends Module {
 
     if (!vehicleMove && !movement.awaitTeleport && !movement.awaitOutgoingTeleport && !movement.invalidMovement && !movement.dropPostTickMotionProcessing) {
       if (claimsToBeOnGround != movement.onGround) {
-        if (movement.artificialFallDistance > 0.1 && !movement.onGround && claimsToBeOnGround) {
+        double requiredFallDistance = Collision.present(player, user.meta().movement().boundingBox().grow(0.1, 0.1, 0.1)) ? 0.5 : 0.1;
+        if (movement.artificialFallDistance > requiredFallDistance && !movement.onGround && claimsToBeOnGround) {
           Violation violation = Violation.builderFor(Physics.class)
             .forPlayer(player)
             .withMessage("claimed to be on ground midair")

@@ -451,99 +451,93 @@ public final class InteractionRaytrace extends MetaCheck<InteractionRaytrace.Int
     InteractionMeta interactionMeta = metaOf(player);
     boolean usableItemInHand = ItemProperties.canItemBeUsed(player, interaction.itemInHand())
       && !ItemProperties.isPotion(interaction.itemTypeInHand());
+    Location targetLocation = interaction.targetBlock().toLocation(world);
 
     if (interaction.digType() == START_DESTROY_BLOCK) {
       interactionMeta.remainingBlockStart--;
     }
-
     if (!interaction.hasTargetBlock()) {
       interactionEmulator.emulate(interaction);
       return;
     }
 
-    MovingObjectPosition raycastResult;
-    MovingObjectPosition raycastResultmdf;
-    try {
-      raycastResult = Raytracing.blockRayTrace(player, playerLocation);
-      raycastResultmdf = Raytracing.blockRayTrace(player, playerLocationmdf);
-    } catch (Exception exception) {
-      exception.printStackTrace();
-      if (interaction.targetBlock().toLocation(world).distance(player.getLocation()) < 6) {
-        forwardInteractionToServer(interaction, null, interaction.targetBlock().toLocation(world), interaction.targetBlock().toLocation(world), false, false, false);
-      }
-      return;
-    }
-    boolean failedFacingCheck = false;
+    List<RaytraceEvaluation> evaluations = new CopyOnWriteArrayList<>();
+    double[] possibleXDisplacements = new double[] { 0, 0.005, -0.005, 0.01, -0.01, 0.03, -0.03, 0.06, -0.06 };
+    double[] possibleZDisplacements = new double[] { 0, 0.005, -0.005, 0.01, -0.01, 0.03, -0.03, 0.06, -0.06 };
+    int numChecks = possibleXDisplacements.length * possibleZDisplacements.length;
+
     boolean estimateMouseDelayFix = interactionMeta.estimateMouseDelayFix;
-    // first raytrace check
-    MovingObjectPosition firstRaytraceResult = estimateMouseDelayFix ? raycastResultmdf : raycastResult;
-    boolean hitMiss = (firstRaytraceResult == null || firstRaytraceResult.hitVec == NativeVector.ZERO);
-    BlockPosition raycastVector = hitMiss ? BlockPosition.ORIGIN : firstRaytraceResult.getBlockPos();
-    Location raycastLocation = raycastVector.toLocation(world);
-    Location targetLocation = interaction.targetBlock().toLocation(world);
-    boolean raytraceFailed = hitMiss ||
-      positionMismatch(interaction, raycastLocation, targetLocation) ||
-      wrongBlockFace(interaction, firstRaytraceResult);
-
-    if (raytraceFailed) {
-      if (IntaveControl.DEBUG_INTERACTION_DISCREET && IntaveControl.INTERACTION_DEBUG_NAMES.contains(interaction.player().getName())) {
-        System.out.println("[Intave/DID] PROC/" + interaction.type() + "/RAYTRACE_A_FAILED " + interaction.itemTypeInHand() + " " + interaction.digType() + " (" + hitMiss + "||" + (positionMismatch(interaction, raycastLocation, targetLocation)? raycastLocation + "|" + targetLocation : "false") + "||" + wrongBlockFace(interaction, firstRaytraceResult) + "["+interaction.targetDirectionIndex()+"-"+(firstRaytraceResult == null ? "null" : firstRaytraceResult.sideHit.getIndex())+"])");
+    boolean ratelimited = false;
+    int index = 0;
+    do {
+      double xDisplacement = possibleXDisplacements[index / possibleZDisplacements.length];
+      double zDisplacement = possibleZDisplacements[index % possibleZDisplacements.length];
+      Location shiftedPlayerLocation = playerLocation.clone();
+      Location shiftedPlayerLocationmdf = playerLocationmdf.clone();
+      if (xDisplacement != 0 || zDisplacement != 0) {
+        shiftedPlayerLocation.add(xDisplacement, 0, zDisplacement);
+        shiftedPlayerLocationmdf.add(xDisplacement, 0, zDisplacement);
       }
-    }
-
-    if (firstRaytraceResult != null && interaction.hasFacing()) {
-      float f = (float) (firstRaytraceResult.hitVec.xCoord - targetLocation.getX());
-      float f1 = (float) (firstRaytraceResult.hitVec.yCoord - targetLocation.getY());
-      float f2 = (float) (firstRaytraceResult.hitVec.zCoord - targetLocation.getZ());
-      if (Math.abs(compressAndDecompress(f) - interaction.facingX()) > 0.01 ||
-        Math.abs(compressAndDecompress(f1) - interaction.facingY()) > 0.01 ||
-        Math.abs(compressAndDecompress(f2) - interaction.facingZ()) > 0.01) {
-        failedFacingCheck = true;
-      }
-    }
-
-    // if first raytrace failed..
-    if (raytraceFailed) {
-      // ..try again with mouse delay fix toggled differently
-      MovingObjectPosition secondRaytraceResult = estimateMouseDelayFix ? raycastResult : raycastResultmdf;
-      boolean hitMiss2 = secondRaytraceResult == null || secondRaytraceResult.hitVec == NativeVector.ZERO;
-      BlockPosition raycastVector2 = hitMiss2 ? BlockPosition.ORIGIN : secondRaytraceResult.getBlockPos();
-      Location raycastLocation2 = raycastVector2.toLocation(world);
-      raytraceFailed = hitMiss2 ||
-        positionMismatch(interaction, raycastLocation2, targetLocation) ||
-        wrongBlockFace(interaction, secondRaytraceResult);
-
-      if (raytraceFailed) {
-        if (IntaveControl.DEBUG_INTERACTION_DISCREET && IntaveControl.INTERACTION_DEBUG_NAMES.contains(interaction.player().getName())) {
-          System.out.println("[Intave/DID] PROC/" + interaction.type() + "/RAYTRACE_B_FAILED " + interaction.itemTypeInHand() + " " + interaction.digType() + " (" + hitMiss2 + "||" + (raycastLocation2.distance(targetLocation) > 0) + "||" + wrongBlockFace(interaction, secondRaytraceResult) + ")");
+      RaytraceEvaluation evaluation = singleRaytrace(user, interaction, estimateMouseDelayFix ? shiftedPlayerLocationmdf : shiftedPlayerLocation);
+      if (evaluation == null) {
+        // critical error, ignore detection
+        if (interaction.targetBlock().toLocation(world).distance(player.getLocation()) < 6) {
+          forwardInteractionToServer(interaction, null, interaction.targetBlock().toLocation(world), interaction.targetBlock().toLocation(world), false, false, false);
         }
+        return;
       }
+      evaluations.add(evaluation);
+      if (evaluation.isInvalid()) {
+        // try again with mouse delay fix toggled differently
+        estimateMouseDelayFix = !estimateMouseDelayFix;
+        evaluation = singleRaytrace(user, interaction, estimateMouseDelayFix ? shiftedPlayerLocationmdf : shiftedPlayerLocation);
+        if (evaluation == null) {
+          // critical error, ignore the detection
+          if (interaction.targetBlock().toLocation(world).distance(player.getLocation()) < 6) {
+            forwardInteractionToServer(interaction, null, interaction.targetBlock().toLocation(world), interaction.targetBlock().toLocation(world), false, false, false);
+          }
+          return;
+        }
+        evaluations.add(evaluation);
+        if (evaluation.isValid()) {
+          interactionMeta.estimateMouseDelayFix = estimateMouseDelayFix;
+          break;
+        }
+      } else {
+        break;
+      }
+      index++;
+      // Limit the amount of shifted locations granted when they are used excessively
+      if (index > 8 && interactionMeta.speculativePositionsUsed > 8) {
+        ratelimited = true;
+        break;
+      }
+      if (index > 16 && interactionMeta.speculativePositionsUsed > 4) {
+        ratelimited = true;
+        break;
+      }
+    } while (index < numChecks);
 
-      if (secondRaytraceResult != null && interaction.hasFacing() && failedFacingCheck) {
-        float f = (float) (secondRaytraceResult.hitVec.xCoord - targetLocation.getX());
-        float f1 = (float) (secondRaytraceResult.hitVec.yCoord - targetLocation.getY());
-        float f2 = (float) (secondRaytraceResult.hitVec.zCoord - targetLocation.getZ());
-        failedFacingCheck = Math.abs(compressAndDecompress(f) - interaction.facingX()) > 0.01 ||
-          Math.abs(compressAndDecompress(f1) - interaction.facingY()) > 0.01 ||
-          Math.abs(compressAndDecompress(f2) - interaction.facingZ()) > 0.01;
+    if (index > 1) {
+      // used a shifted location
+      interactionMeta.speculativePositionsUsed += ratelimited || index == numChecks ? 0.005 : 1;
+      if (System.currentTimeMillis() - interactionMeta.lastSpeculativePositionReset > 60_000) {
+        interactionMeta.speculativePositionsUsed /= 2;
+        interactionMeta.lastSpeculativePositionReset = System.currentTimeMillis();
       }
-      interactionMeta.estimateMouseDelayFix = raytraceFailed == interactionMeta.estimateMouseDelayFix;
-
-      if (!raytraceFailed) {
-        interaction.setRaytraceResult(secondRaytraceResult);
-      }
-    } else {
-      interaction.setRaytraceResult(firstRaytraceResult);
     }
 
-    if (failedFacingCheck && !user.meta().abilities().inGameModeIncludePending(CREATIVE)) {
+    RaytraceEvaluation bestRaytrace = evaluations.stream().filter(e -> !e.isInvalid()).findFirst().orElse(/* find random, is never empty and result is never null */ evaluations.get(0));
+
+    // this is bogus
+    if (bestRaytrace.isValid() && bestRaytrace.facingCheckFailed() && !user.meta().abilities().inGameModeIncludePending(CREATIVE)) {
       violationMetadata.facingFailedCounter++;
     } else {
       violationMetadata.facingFailedCounter = 0;
     }
 
     boolean flag, mustCancelPacket;
-    if (!raytraceFailed) {
+    if (bestRaytrace.isValid()) {
       if (IntaveControl.DEBUG_INTERACTION_DISCREET && IntaveControl.INTERACTION_DEBUG_NAMES.contains(interaction.player().getName())) {
         System.out.println("[Intave/DID] PROC/" + interaction.type() + "/RAYTRACE_SUCCESS " + interaction.itemTypeInHand() + " " + interaction.digType());
       }
@@ -554,11 +548,11 @@ public final class InteractionRaytrace extends MetaCheck<InteractionRaytrace.Int
 //      mustCancelPacket = emulationFailed;
     } else {
       // raytrace failed
-      MovingObjectPosition movingObjectPosition = estimateMouseDelayFix ? raycastResultmdf : raycastResult;
+      MovingObjectPosition movingObjectPosition = bestRaytrace.raycastResult();
       Location location = estimateMouseDelayFix ? playerLocationmdf : playerLocation;
       boolean atLeastLookingAtBlock = movingObjectPosition != null && atLeastLookingAtBlock(user, location, targetLocation, movingObjectPosition);
       boolean doNotFlagType = interaction.digType() == ABORT_DESTROY_BLOCK || interaction.type() == EMPTY_INTERACT;
-      flag = enabled() && !doNotFlagType && performFlag(interaction, raycastResult, targetLocation, raycastLocation, hitMiss, atLeastLookingAtBlock);
+      flag = enabled() && !doNotFlagType && performFlag(interaction, movingObjectPosition, targetLocation, bestRaytrace.raycastLocation(), bestRaytrace.hitMiss(), atLeastLookingAtBlock, index);
       mustCancelPacket = false;
       // As the interaction was not canceled for consumables, we have to do it now as the raytrace failed
       if (usableItemInHand && interaction.type() == InteractionType.INTERACT) {
@@ -569,12 +563,108 @@ public final class InteractionRaytrace extends MetaCheck<InteractionRaytrace.Int
       }
     }
     if (interaction.shouldSendPacket()/*!usableItemInHand || interaction.type() != InteractionType.INTERACT*/) {
-      forwardInteractionToServer(interaction, raycastResult, targetLocation, raycastLocation, hitMiss, flag, mustCancelPacket);
+      forwardInteractionToServer(interaction, bestRaytrace.raycastResult(), targetLocation, bestRaytrace.raycastLocation(), bestRaytrace.hitMiss(), flag, mustCancelPacket);
     } else if (flag) {
       if (IntaveControl.DEBUG_INTERACTION) {
         player.sendMessage("Failed interaction with usableItemInHand item, but not forwarding");
       }
     }
+  }
+
+
+  public class RaytraceEvaluation {
+    private final Interaction origin;
+    private final MovingObjectPosition raycastResult;
+    private final boolean airHit;
+    private final Location raycastLocation;
+    private final Location targetLocation;
+
+    public RaytraceEvaluation(
+      Interaction origin,
+      MovingObjectPosition raycastResult,
+      boolean airHit,
+      Location raycastLocation,
+      Location targetLocation
+    ) {
+      this.origin = origin;
+      this.raycastResult = raycastResult;
+      this.airHit = airHit;
+      this.raycastLocation = raycastLocation;
+      this.targetLocation = targetLocation;
+    }
+
+    public Interaction origin() {
+      return origin;
+    }
+
+    public MovingObjectPosition raycastResult() {
+      return raycastResult;
+    }
+
+    public boolean airHit() {
+      return airHit;
+    }
+
+    public Location raycastLocation() {
+      return raycastLocation;
+    }
+
+    public Location targetLocation() {
+      return targetLocation;
+    }
+
+    public boolean facingCheckFailed() {
+      if (raycastResult != null && origin.hasFacing()) {
+        float f = (float) (raycastResult.hitVec.xCoord - targetLocation.getX());
+        float f1 = (float) (raycastResult.hitVec.yCoord - targetLocation.getY());
+        float f2 = (float) (raycastResult.hitVec.zCoord - targetLocation.getZ());
+        return Math.abs(compressAndDecompress(f) - origin.facingX()) > 0.01 ||
+          Math.abs(compressAndDecompress(f1) - origin.facingY()) > 0.01 ||
+          Math.abs(compressAndDecompress(f2) - origin.facingZ()) > 0.01;
+      }
+      return false;
+    }
+
+    public boolean hitMiss() {
+      return raycastResult == null || raycastResult.hitVec == NativeVector.ZERO;
+    }
+
+    public boolean wrongBlockFace() {
+      return InteractionRaytrace.this.wrongBlockFace(origin, raycastResult);
+    }
+
+    public boolean positionMismatch() {
+      return InteractionRaytrace.this.positionMismatch(origin, raycastLocation, targetLocation);
+    }
+
+    public boolean isValid() {
+      return !isInvalid();
+    }
+
+    private Boolean invalidCache = null;
+
+    public boolean isInvalid() {
+      if (invalidCache != null) {
+        return invalidCache;
+      }
+      return invalidCache = (hitMiss() || positionMismatch() || wrongBlockFace());
+    }
+  }
+
+  public RaytraceEvaluation singleRaytrace(User user, Interaction interaction, Location playerLocation) {
+    World world = interaction.world();
+    Player player = interaction.player();
+    MovingObjectPosition raycastResult;
+    try {
+      raycastResult = Raytracing.blockRayTrace(player, playerLocation);
+    } catch (Exception exception) {
+      return null;
+    }
+    boolean hitMiss = (raycastResult == null || raycastResult.hitVec == NativeVector.ZERO);
+    BlockPosition raycastVector = hitMiss ? BlockPosition.ORIGIN : raycastResult.getBlockPos();
+    Location raycastLocation = raycastVector.toLocation(world);
+    Location targetLocation = interaction.targetBlock().toLocation(world);
+    return new RaytraceEvaluation(interaction, raycastResult, hitMiss, raycastLocation, targetLocation);
   }
 
   private boolean positionMismatch(
@@ -704,7 +794,8 @@ public final class InteractionRaytrace extends MetaCheck<InteractionRaytrace.Int
     Location targetLocation,
     Location raycastLocation,
     boolean hitMiss,
-    boolean lookingAtBlock
+    boolean lookingAtBlock,
+    int searches
   ) {
     Player player = interaction.player();
     User user = userOf(player);
@@ -787,6 +878,7 @@ public final class InteractionRaytrace extends MetaCheck<InteractionRaytrace.Int
     if (user.meta().movement().awaitTeleport) {
       mustFlag = true;
     }
+//    details += ", " + searches + " searches";
     Violation violation = Violation.builderFor(InteractionRaytrace.class)
       .forPlayer(player).withMessage(message).withDetails(details).withVL(vl)
       .build();
@@ -980,5 +1072,7 @@ public final class InteractionRaytrace extends MetaCheck<InteractionRaytrace.Int
     public boolean estimateMouseDelayFix = false;
     public boolean isBreakingBlock = false;
     public long remainingBlockStart = 0;
+    public double speculativePositionsUsed = 0;
+    public long lastSpeculativePositionReset = 0;
   }
 }

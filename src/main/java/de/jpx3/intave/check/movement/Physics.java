@@ -104,13 +104,23 @@ public final class Physics extends Check {
     this.highToleranceMode = settings.boolBy("high-tolerance", false);
     if (settings.has("on-detection")) {
       this.resetItemUsage = settings.boolBy("on-detection.reset-item-usage", true);
-      String inventoryCloseMode = settings.stringBy("on-detection.close-inventory", "true");
+      String inventoryCloseMode;
+      try {
+        inventoryCloseMode = settings.stringBy("on-detection.close-inventory", "true");
+      } catch (Exception exception) {
+        inventoryCloseMode = settings.boolBy("on-detection.close-inventory", true) ? "true" : "false";
+      }
       this.closeInventory = inventoryCloseMode.equalsIgnoreCase("true") || inventoryCloseMode.equalsIgnoreCase("silent");
       this.closeInventorySilentMode = inventoryCloseMode.equalsIgnoreCase("silent");
       this.refreshNearbyBlocks = settings.boolBy("on-detection.refresh-nearby-blocks", true);
     } else {
       this.resetItemUsage = settings.boolBy("reset-item-usage", true);
-      String inventoryCloseMode = settings.stringBy("close-inventory", "true");
+      String inventoryCloseMode;
+      try {
+        inventoryCloseMode = settings.stringBy("inventory-close-mode", "true");
+      } catch (Exception exception) {
+        inventoryCloseMode = settings.boolBy("inventory-close-mode", true) ? "true" : "false";
+      }
       this.closeInventory = inventoryCloseMode.equalsIgnoreCase("true") || inventoryCloseMode.equalsIgnoreCase("silent");
       this.closeInventorySilentMode = inventoryCloseMode.equalsIgnoreCase("silent");
       this.refreshNearbyBlocks = settings.boolBy("refresh-nearby-blocks-on-detection", true);
