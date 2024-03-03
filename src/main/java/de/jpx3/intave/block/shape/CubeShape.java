@@ -83,8 +83,6 @@ final class CubeShape extends MemoryTraced implements BlockShape {
     Position zMin = raytraceZ(origin, target, 0);
     Position zMax = raytraceZ(origin, target, 1);
 
-    System.out.println("   x[" + xMin + ", " + xMax + "]; y[" + yMin + ", " + yMax + "]; z[" + zMin + ", " + zMax + "]");
-
     if (!xIntersectsWith(xMax)) {
       xMax = null;
     }
@@ -106,8 +104,6 @@ final class CubeShape extends MemoryTraced implements BlockShape {
     if (!zIntersectsWith(zMin)) {
       zMin = null;
     }
-
-    System.out.println("   x[" + xMin + ", " + xMax + "]; y[" + yMin + ", " + yMax + "]; z[" + zMin + ", " + zMax + "]");
 
     Position closest = null;
     if (xMin != null/* && (closest == null || origin.distanceSquared(xMin) < origin.distanceSquared(closest))*/) {

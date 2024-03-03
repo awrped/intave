@@ -163,9 +163,8 @@ public final class v8Raytracer implements Raytracer {
   private Object movingObjectPosition(WorldServer world, Block block, BlockPosition blockPosition, Vec3D lookVector, Vec3D targetVector) {
     try {
       // inner block raytrace
-      net.minecraft.server.v1_8_R3.MovingObjectPosition res = block.a(world, blockPosition, lookVector, targetVector);
-      System.out.println("v8 | inner block raytrace at " + blockPosition + " -> " + res);
-      return res;
+      //      System.out.println("v8 | inner block raytrace at " + blockPosition + " -> " + res);
+      return block.a(world, blockPosition, lookVector, targetVector);
     } catch (Exception | Error exception) {
       return Blocks.STONE.a(world, blockPosition, lookVector, targetVector);
     }
