@@ -116,7 +116,7 @@ public final class IntavePlugin extends JavaPlugin {
   private static boolean offlineMode = false, successfullyBooted = false;
 
   static {
-    // stage 1
+    // stage 1 (unused)
   }
 
   private IntaveLogger logger;
