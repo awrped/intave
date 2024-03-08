@@ -140,10 +140,8 @@ public class PlayerTime extends MetaCheckPart<Timer, PlayerTime.PlayerTimeMeta> 
     long diff = checkMeta.time - System.nanoTime();
 //    ChatColor color = diff > 10_000_000 ? ChatColor.RED : ChatColor.GRAY;
 //    player.sendMessage(color + "" + ((double)diff / 1_000_000L) + "ms ");
-    player.setLevel(Math.max(0, (int) (diff / 1_000_000L) + 100000));
+//    player.setLevel(Math.max(0, (int) (diff / 1_000_000L) + 100000));
     statisticApply(user, CheckStatistics::increaseTotal);
-
-
 
 //    if (diff < -blinkLimitTicks * 50_000_000L) {
 //      player.sendMessage("diff: " + diff);

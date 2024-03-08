@@ -916,7 +916,7 @@ public final class Physics extends Check {
 //      debug += " sprint " + (movementData.sprinting) + "/" + (movementData.hasSprintSpeed);
 //      debug += " (sneak " + movementData.sneaking + "/"+movementData.actualSneaking()+")";
 //      debug += " (size:" + movementData.width + "," + movementData.height + ")";
-      debug += " hand=" + (meta.inventory().handActive());
+//      debug += " hand=" + (meta.inventory().handActive());
 //      debug += inventoryData.heldItem().getType().name();
 //      debug += " flying:" + movementData.pastFlyingPacketAccurate;
 //      debug += " gliding:" + shortenBoolean(movementData.elytraFlying);

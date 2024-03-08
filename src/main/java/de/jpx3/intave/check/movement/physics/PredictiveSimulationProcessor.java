@@ -86,7 +86,7 @@ public final class PredictiveSimulationProcessor implements SimulationProcessor 
   }
 
   private static final double REQUIRED_ACCURACY_FOR_QUICK_PROC_EXIT = 0.002;
-  private static final double REQUIRED_ACCURACY_FOR_FLYING_PROC_EXIT = 0.02;
+  private static final double REQUIRED_ACCURACY_FOR_FLYING_PROC_EXIT = 0.008;
 
   private Simulation performKeySearchSimulation(User user, Simulator simulator) {
     MovementMetadata movementData = user.meta().movement();
@@ -218,7 +218,7 @@ public final class PredictiveSimulationProcessor implements SimulationProcessor 
     configuration = configuration.withReducing(movementData.reduceTicks);
     // block omnisprint
     if (sprinting && configuration.forward() != 1) {
-      configuration = configuration.withoutSprinting();
+      configuration = configuration.withoutKeypress();
     } else if (sprinting) {
       if (movementData.isSneaking() && !configuration.isJumping()) {
         configuration = configuration.withoutSprinting();
@@ -434,8 +434,9 @@ public final class PredictiveSimulationProcessor implements SimulationProcessor 
             }
             IterativeStudy.USE_ITEM_ITERATOR.run();
             boolean reducingRequired = !protocol.combatUpdate();
-            for (int reduceIndex = 0; reduceIndex <= movementData.reduceTicks ; reduceIndex++) {
-              if (reducingRequired && reduceIndex != movementData.reduceTicks) {
+            for (int reduceIndex = 0; reduceIndex <= movementData.reduceTicks; reduceIndex++) {
+              // should theoretically be movementData.pastVelocity != 0, maybe change in the future?
+              if (reducingRequired && reduceIndex != movementData.reduceTicks && movementData.pastVelocity > 3) {
                 continue;
               }
               IterativeStudy.ATTACK_REDUCE_ITERATOR.run();
