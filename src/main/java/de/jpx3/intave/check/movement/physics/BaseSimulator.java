@@ -89,6 +89,20 @@ class BaseSimulator extends Simulator {
       motion.motionX *= 0.6;
       motion.motionZ *= 0.6;
     }
+    if (reduceTicks > 0) {
+      // perform motion clamping (reducing inaccuracy prefetched)
+      double resetMotion = environment.resetMotion();
+      if (Math.abs(motion.motionX) < resetMotion) {
+        motion.motionX = 0.0;
+      }
+      if (Math.abs(motion.motionY) < resetMotion) {
+        motion.motionY = 0.0;
+      }
+      if (Math.abs(motion.motionZ) < resetMotion) {
+        motion.motionZ = 0.0;
+      }
+    }
+
     if (jumped) {
       boolean allowJumpInLiquid = false;
       if (protocol.waterUpdate() && inWater && environment.onGround()) {
