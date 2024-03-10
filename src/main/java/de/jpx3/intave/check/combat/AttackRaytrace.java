@@ -258,21 +258,21 @@ public final class AttackRaytrace extends MetaCheck<AttackRaytrace.AttackRaytrac
     double actualDistance = attackedEntity.serverClientPositionOffset();
     boolean distanceOverLimit = actualDistance > trustfactorBaseDistanceLimit;
 
-    if (distanceOverLimit && isPlayer) {
-      boolean needsToBeBlocked = user.trustFactor().atOrBelow(TrustFactor.RED);
-
-      Violation violation = Violation.builderFor(AttackRaytrace.class)
-        .forPlayer(player).withCustomThreshold("timeout")
-        .withVL(0.5)
-        .withMessage("attacked high-risk player position")
-        .withDetails("client/server offset is " + formatDouble(actualDistance, 2) + " blocks")
-        .appendFlags(DISPLAY_IN_ALL_VERBOSE_MODES)
-        .build();
-      Modules.violationProcessor().processViolation(violation);
-      if (needsToBeBlocked) {
-        entityHasTimedOut = true;
-      }
-    }
+//    if (distanceOverLimit && isPlayer) {
+//      boolean needsToBeBlocked = user.trustFactor().atOrBelow(TrustFactor.RED);
+//
+//      Violation violation = Violation.builderFor(AttackRaytrace.class)
+//        .forPlayer(player).withCustomThreshold("timeout")
+//        .withVL(0.5)
+//        .withMessage("attacked high-risk player position")
+//        .withDetails("client/server offset is " + formatDouble(actualDistance, 2) + " blocks")
+//        .appendFlags(DISPLAY_IN_ALL_VERBOSE_MODES)
+//        .build();
+//      Modules.violationProcessor().processViolation(violation);
+//      if (needsToBeBlocked) {
+//        entityHasTimedOut = true;
+//      }
+//    }
 
     // protection 3: short transaction ping based limit
     double multiplier = 0.95;// - ((violations.backtrackVL / 30) * 0.1);

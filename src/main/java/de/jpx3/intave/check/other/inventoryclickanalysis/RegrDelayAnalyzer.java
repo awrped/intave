@@ -25,6 +25,7 @@ import java.util.List;
 import static de.jpx3.intave.math.MathHelper.formatDouble;
 import static de.jpx3.intave.module.linker.packet.PacketId.Client.CLOSE_WINDOW;
 import static de.jpx3.intave.module.linker.packet.PacketId.Client.WINDOW_CLICK;
+import static de.jpx3.intave.module.violation.Violation.ViolationFlags.DISPLAY_IN_ALL_VERBOSE_MODES;
 
 public class RegrDelayAnalyzer extends MetaCheckPart<InventoryClickAnalysis, RegrDelayAnalyzer.ClickDelayMeta> {
   public RegrDelayAnalyzer(InventoryClickAnalysis parentCheck) {
@@ -97,56 +98,88 @@ public class RegrDelayAnalyzer extends MetaCheckPart<InventoryClickAnalysis, Reg
     if (meta.clickHistory.size() > 30) {
       List<double[]> clickHistory = meta.clickHistory;
       double sum = 0;
-      for (int i = 0; i < clickHistory.size(); i++) {
-        sum += clickHistory.get(i)[0] / clickHistory.get(i)[1];
+      for (double[] doubles : clickHistory) {
+        sum += doubles[0] / doubles[1];
       }
       double averageSpeed = sum / clickHistory.size();
-      double slope = slopeOfClicks(user);
+      double[] slope = slopeOfClicks(user);
+      double pearson = pearsonCorrelation(user);
 
 //      player.sendMessage("CI | "+(meta.firstClickTimestamp-meta.lastWindowOpenTimestamp)+"ms fc | " + MathHelper.formatDouble(averageSpeed, 2) + " s/s avg" + " | " + formatDouble(slope, 2) + " distance/time correlation");
 
-      if (slope < 0.2) {
+      if (slope[0] < 0.2 || pearson < 0.2) {
         Violation violation = Violation.builderFor(InventoryClickAnalysis.class)
           .forPlayer(player)
 //          .withVL(slope < 0.05 ? 50 : 10)
-          .withVL(1)
+          .withVL(10)
           .withMessage("seems indifferent to distance taking items")
-          .withDetails(formatDouble(slope, 2) + " distance/time correlation")
+          .appendFlags(DISPLAY_IN_ALL_VERBOSE_MODES)
+          .withDetails(formatDouble(slope[0], 2) + " d/t, " + formatDouble(pearson, 2) + " pear")
           .build();
         ViolationProcessor violationProcessor = Modules.violationProcessor();
         violationProcessor.processViolation(violation);
+//        System.out.println("seems indifferent to distance taking items" + formatDouble(slope[0], 2) + " d/t, " + formatDouble(pearson, 2) + " pear");
+      }
+
+      if (slope[1] < 0.05) {
+        // taking items too quickly
+        Violation violation = Violation.builderFor(InventoryClickAnalysis.class)
+          .forPlayer(player)
+//          .withVL(MathHelper.minmax(15, averageSpeed * 0.75, 50))
+          .withVL(10)
+          .appendFlags(DISPLAY_IN_ALL_VERBOSE_MODES)
+          .withMessage("is taking items too quickly")
+          .withDetails("linear d/t baseline at " + formatDouble(slope[1], 2) + " slots/sec")
+          .build();
+        ViolationProcessor violationProcessor = Modules.violationProcessor();
+        violationProcessor.processViolation(violation);
+//        System.out.println("is taking items too quickly" + "linear d/t baseline at " + formatDouble(slope[1], 2) + " slots/sec");
+      }
+
+      if (pearson > 0.5) {
+        Violation violation = Violation.builderFor(InventoryClickAnalysis.class)
+          .forPlayer(player)
+//          .withVL(MathHelper.minmax(15, averageSpeed * 0.75, 50))
+          .withVL(5)
+          .appendFlags(DISPLAY_IN_ALL_VERBOSE_MODES)
+          .withMessage("seems to be taking items in a pattern")
+          .withDetails(formatDouble(pearson, 2) + " pear")
+          .build();
+        ViolationProcessor violationProcessor = Modules.violationProcessor();
+        violationProcessor.processViolation(violation);
+//        System.out.println("seems to be taking items in a pattern" + formatDouble(pearson, 2) + " pear");
       }
 
       if (averageSpeed > 20) {
         Violation violation = Violation.builderFor(InventoryClickAnalysis.class)
           .forPlayer(player)
 //          .withVL(MathHelper.minmax(15, averageSpeed * 0.75, 50))
-          .withVL(1)
+          .withVL(5)
+          .appendFlags(DISPLAY_IN_ALL_VERBOSE_MODES)
           .withMessage("is taking items too quickly")
           .withDetails("at " +formatDouble(averageSpeed, 2) + " slots/sec")
           .build();
         ViolationProcessor violationProcessor = Modules.violationProcessor();
         violationProcessor.processViolation(violation);
+//        System.out.println("is taking items too quickly" + "at " +formatDouble(averageSpeed, 2) + " slots/sec");
       }
+
 //      try (CSVExport csvExport = new CSVExport("click_history", "Distance", "Time")) {
 //        for (double[] entry : clickHistory) {
 //          csvExport.write(entry[0], entry[1]);
 //        }
 //      }
-      meta.clickHistory.clear();
+      // clear 50% of the history
+      meta.clickHistory = meta.clickHistory.subList((int) (meta.clickHistory.size() * (2d/3d)), meta.clickHistory.size());
     }
-
-
-//    player.sendMessage("CI | "+(meta.firstClickTimestamp-meta.lastWindowOpenTimestamp)+"ms fc | " + MathHelper.formatDouble(averageSpeed, 2) + " s/s avg");
-
     meta.firstClickTimestamp = 0;
   }
 
-  private double slopeOfClicks(User user) {
+  private double[] slopeOfClicks(User user) {
     ClickDelayMeta meta = metaOf(user);
     List<double[]> clickHistory = meta.clickHistory;
     if (clickHistory.isEmpty()) {
-      return 1;
+      return new double[]{0, 0};
     }
     Matrix A = new Matrix(clickHistory.size(), 2);
     Matrix b = new Matrix(clickHistory.size(), 1);
@@ -156,7 +189,29 @@ public class RegrDelayAnalyzer extends MetaCheckPart<InventoryClickAnalysis, Reg
       b.set(i, 0, clickHistory.get(i)[1]);
     }
     Matrix x = A.pinv().multiply(b);
-    return x.get(0, 0);
+    return new double[]{x.get(0, 0), x.get(1, 0)};
+  }
+
+  private double pearsonCorrelation(User user) {
+    ClickDelayMeta meta = metaOf(user);
+    List<double[]> clickHistory = meta.clickHistory;
+    if (clickHistory.isEmpty()) {
+      return 0;
+    }
+    double sumX = 0;
+    double sumY = 0;
+    double sumXY = 0;
+    double sumX2 = 0;
+    double sumY2 = 0;
+    for (double[] entry : clickHistory) {
+      sumX += entry[0];
+      sumY += entry[1];
+      sumXY += entry[0] * entry[1];
+      sumX2 += Math.pow(entry[0], 2);
+      sumY2 += Math.pow(entry[1], 2);
+    }
+    double n = clickHistory.size();
+    return (n * sumXY - sumX * sumY) / (Math.sqrt((n * sumX2 - Math.pow(sumX, 2)) * (n * sumY2 - Math.pow(sumY, 2))));
   }
 
   private double gaussMismatch(User user) {
