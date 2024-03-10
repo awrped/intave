@@ -1,16 +1,22 @@
 package de.jpx3.intave.check.combat.clickpatterns;
 
 import de.jpx3.intave.check.combat.ClickPatterns;
+import de.jpx3.intave.module.linker.packet.PacketSubscription;
 import de.jpx3.intave.user.User;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static de.jpx3.intave.module.linker.packet.PacketId.Client.ARM_ANIMATION;
 
 public final class Bursts extends TickAlignedHistoryBlueprint<Bursts.BurstMeta> {
   public Bursts(ClickPatterns parentCheck) {
     super(parentCheck, BurstMeta.class);
   }
 
+  @PacketSubscription(
+    packetsIn = ARM_ANIMATION
+  )
   @Override
   public void analyzeClicks(User user, BurstMeta meta) {
     int consecutiveClicks = 0;
