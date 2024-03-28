@@ -48,7 +48,6 @@ import static de.jpx3.intave.module.linker.packet.ListenerPriority.NORMAL;
 import static de.jpx3.intave.module.linker.packet.PacketId.Client.*;
 import static de.jpx3.intave.module.violation.Violation.ViolationFlags.DISPLAY_IN_ALL_VERBOSE_MODES;
 import static de.jpx3.intave.module.violation.Violation.ViolationFlags.DONT_PROCESS_VIOSTAT;
-import static de.jpx3.intave.user.meta.ProtocolMetadata.VER_1_9;
 
 @Relocate
 public final class AttackRaytrace extends MetaCheck<AttackRaytrace.AttackRaytraceMeta> {
@@ -205,6 +204,7 @@ public final class AttackRaytrace extends MetaCheck<AttackRaytrace.AttackRaytrac
         boolean unsafeSynchronization = movement.dropPostTickMotionProcessing && protocol.protocolVersion() >= 755;
         boolean entityOutOfSync = (!protocol.flyingPacketsAreSent() && movement.receivedFlyingPacketIn(2))
           || !attackedEntity.clientSynchronized || unsafeSynchronization;
+
         // As entity attack redirections are processed inside this, we don't need to do anything extra to block hits besides
         // just not raytracing
         if (hasNotTimedOut) {
@@ -307,6 +307,7 @@ public final class AttackRaytrace extends MetaCheck<AttackRaytrace.AttackRaytrac
       }
     }
 
+    // protection 4: long-term protection
     List<LatencyInfo> suspiciousLatencies = feedbackAnalysis.suspiciousLatencies(user);
     if (!suspiciousLatencies.isEmpty() /*&& ticksOverLimit >= 0*/) {
       Comparator<LatencyInfo> comp = Comparator.comparing(LatencyInfo::latency);
@@ -338,7 +339,7 @@ public final class AttackRaytrace extends MetaCheck<AttackRaytrace.AttackRaytrac
 
           ViolationContext violationContext = Modules.violationProcessor().processViolation(violation);
           double after = violationContext.violationLevelAfter();
-          if (after > 20 /*&& !IntaveControl.GOMME_MODE*/) {
+          if (after > 30 /*&& !IntaveControl.GOMME_MODE*/) {
             entityHasTimedOut = true;
             violationLevel.lastBacktrackHitCancelRequest = System.currentTimeMillis();
             user.nerf(AttackNerfStrategy.DMG_HIGH, "67");
@@ -349,8 +350,7 @@ public final class AttackRaytrace extends MetaCheck<AttackRaytrace.AttackRaytrac
       suspiciousLatencies.clear();
     }
 
-    if (ticksOverLimit >= -1 &&
-      System.currentTimeMillis() - violationLevel.lastBacktrackHitCancelRequest < 5_000) {
+    if (System.currentTimeMillis() - violationLevel.lastBacktrackHitCancelRequest < 5_000 && ticksOverLimit >= -1) {
       entityHasTimedOut = true;
     }
 
@@ -388,7 +388,7 @@ public final class AttackRaytrace extends MetaCheck<AttackRaytrace.AttackRaytrac
    */
   private void processAttackRaytraceBruteforceFor(User user, Entity entity, Attack attack) {
     MetadataBundle meta = user.meta();
-    Raytrace lowestRaytrace = fireRaytraceFor(user, entity, 0.13f, false);
+    Raytrace lowestRaytrace = fireRaytraceFor(user, entity, 0.25f, false);
     double blockReachDistance = Raytracing.reachDistanceOf(meta);
     // Iteratively find out reach if ray-trace wasn't valid
     if (lowestRaytrace.reach() > blockReachDistance) {
@@ -397,7 +397,7 @@ public final class AttackRaytrace extends MetaCheck<AttackRaytrace.AttackRaytrac
 //      Position emptyPosition = new Position(0, 0, 0);
       lowestRaytrace = new Raytrace(lowestRaytrace.from(), lowestRaytrace.to(), reach);
     }
-    processResult(user, lowestRaytrace, entity, attack, 0.13f, true);
+    processResult(user, lowestRaytrace, entity, attack, 0.25f, true);
   }
 
   /**
@@ -423,10 +423,10 @@ public final class AttackRaytrace extends MetaCheck<AttackRaytrace.AttackRaytrac
       return minReach;
     }
     // Flying packets missing on 1.19+
-    if (movement.receivedFlyingPacketIn(1) && user.protocolVersion() >= VER_1_9) {
+//    if (movement.receivedFlyingPacketIn(1) && user.protocolVersion() >= VER_1_9) {
       double reach = findLowestPossibleReachIterative(user, entity, true);
       minReach = Math.min(minReach, reach);
-    }
+//    }
     return minReach;
   }
 
@@ -503,7 +503,7 @@ public final class AttackRaytrace extends MetaCheck<AttackRaytrace.AttackRaytrac
    *
    * @param user      The user to process the raytrace for
    * @param raytrace  The raytrace
-   * @param attacked  The attacked entity
+   * @param"attacked  The attacked entity
    * @param attack    The attack to be processed
    * @param expansion The hit-box expansion used while raytracing
    * @param estimated Whether the raytrace was estimated or not (will not give vl if it is)

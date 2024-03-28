@@ -677,34 +677,38 @@ public final class Physics extends Check {
 //      if (violationLevelData.physicsInsignificantBufferVL > 2) {
 //        details += ", it:" + formatDouble(violationLevelData.physicsInsignificantBufferVL, 1);
 //      }
-      details += ", offset: " + formatDouble(violationLevelData.physicsOffset, 2);
+//      details += ", offset: " + formatDouble(violationLevelData.physicsOffset, 2);
 
       if (velocityDetected) {
-        details += " & strict";
+        details += ", strict";
       }
 
-      if (IntaveControl.DISABLE_LICENSE_CHECK) {
-        if (!verticalTags.isEmpty()) {
-          details += ", V" + verticalTags.stream().map(EvaluationTag::toString).map(String::toLowerCase).distinct().collect(Collectors.joining(","));
-        }
-        if (!horizontalTags.isEmpty()) {
-          details += ", H" + horizontalTags.stream().map(EvaluationTag::toString).map(String::toLowerCase).distinct().collect(Collectors.joining(","));
-        }
-      }
+//      if (IntaveControl.DISABLE_LICENSE_CHECK) {
+//        if (!verticalTags.isEmpty()) {
+//          details += ", V" + verticalTags.stream().map(EvaluationTag::toString).map(String::toLowerCase).distinct().collect(Collectors.joining(","));
+//        }
+//        if (!horizontalTags.isEmpty()) {
+//          details += ", H" + horizontalTags.stream().map(EvaluationTag::toString).map(String::toLowerCase).distinct().collect(Collectors.joining(","));
+//        }
+//      }
 
-      Map<String, String> granularDebugs = new HashMap<>();
+      Map<String, String> granularDebugs = new LinkedHashMap<>();
       granularDebugs.put("received", received);
       granularDebugs.put("expected", expected);
       granularDebugs.put("distance", formatDouble(distance, 3));
       granularDebugs.put("pose", movementData.pose().name());
+      granularDebugs.put("vehicle", movementData.isInVehicle() ? (movementData.isInRidingVehicle() ? "riding" : "passive") : "none");
       granularDebugs.put("insig", formatDouble(violationLevelData.physicsInsignificantBufferVL, 1));
-
+      granularDebugs.put("acc/off", formatDouble(violationLevelData.physicsOffset, 2));
+      granularDebugs.put("v/tags", verticalTags.stream().map(EvaluationTag::toString).map(String::toUpperCase).distinct().collect(Collectors.joining(",")));
+      granularDebugs.put("h/tags", horizontalTags.stream().map(EvaluationTag::toString).map(String::toUpperCase).distinct().collect(Collectors.joining(",")));
 
       double vl = violationLevelIncrease / (violationLevelData.physicsVL >= 100 && !highToleranceMode() ? 20 : 50);
       Violation violation = Violation.builderFor(Physics.class)
         .forPlayer(player)
         .withMessage(message)
         .withDetails(details)
+        .withGranulars(granularDebugs)
         .withVL(vl)
         .build();
       ViolationContext violationContext = Modules.violationProcessor().processViolation(violation);

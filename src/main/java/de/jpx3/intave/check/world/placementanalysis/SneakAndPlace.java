@@ -149,7 +149,7 @@ public final class SneakAndPlace extends MetaCheckPart<PlacementAnalysis, SneakA
         Violation violation = Violation.builderFor(PlacementAnalysis.class)
             .forPlayer(player).withDefaultThreshold()
             .withMessage(COMMON_FLAG_MESSAGE)
-            .withDetails("sneaking seems to be automated")
+            .withDetails("sneaking seems to be automated (sneak)")
             .appendFlags(DISPLAY_IN_ALL_VERBOSE_MODES)
             .withDefaultThreshold().withVL(Math.min(meta.violationLevel / 1.5, 5)).build();
         Modules.violationProcessor().processViolation(violation);

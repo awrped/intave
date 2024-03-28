@@ -25,6 +25,10 @@ import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserRepository;
 import de.jpx3.intave.user.meta.ViolationMetadata;
 import de.jpx3.intave.user.storage.ViolationStorage;
+import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.HoverEvent;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -354,7 +358,7 @@ public final class ViolationProcessor extends Module {
     for (Player receiver : receivers/*Bukkit.getOnlinePlayers()*/) {
       User user = UserRepository.userOf(receiver);
       if (user.receives(NOTIFY_MESSAGE_CHANNEL)) {
-        synchronizedMessage(receiver, notifyMessage);
+        synchronizedMessage(receiver, notifyMessage, Collections.emptyMap());
       }
     }
   }
@@ -369,6 +373,7 @@ public final class ViolationProcessor extends Module {
     PlaceholderContext violationPlaceholder = violationContext.violation().placeholder();
     PlaceholderContext violationContextPlaceholder = violationContext.placeholder(DetailScope.FULL);
 
+    Map<String, String> granular = violationContext.violation().granular();
     String message = MessageFormatter.resolveVerboseMessage(
       target, violationPlaceholder.merge(violationContextPlaceholder)
     );
@@ -379,17 +384,43 @@ public final class ViolationProcessor extends Module {
       }
       Predicate<Player> constraint = receiverUser.channelPlayerConstraint(VERBOSE_MESSAGE_CHANNEL);
       if (constraint == null || constraint.test(target)) {
-        synchronizedMessage(receiver, message);
+        synchronizedMessage(receiver, message, granular);
       }
     }
   }
 
-  private void synchronizedMessage(Player player, String message) {
+  private void synchronizedMessage(Player player, String message, Map<String, String> granularInfos) {
     if (Bukkit.isPrimaryThread()) {
-      player.sendMessage(message);
+      // Send spigot message with hoverable text
+      TextComponent textComponent = new TextComponent(message);
+      if (!granularInfos.isEmpty()) {
+        textComponent.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, formatGranularInfos(granularInfos)));
+      }
+      player.spigot().sendMessage(textComponent);
     } else {
-      Synchronizer.synchronize(() -> player.sendMessage(message));
+      Synchronizer.synchronize(() -> synchronizedMessage(player, message, granularInfos));
     }
+  }
+
+  private BaseComponent[] formatGranularInfos(Map<String, String> granularInfos) {
+    List<BaseComponent> components = new ArrayList<>();
+    for (Map.Entry<String, String> entry : granularInfos.entrySet()) {
+      TextComponent keyComponent = new TextComponent(entry.getKey().toUpperCase());
+      keyComponent.setColor(ChatColor.RED);
+      TextComponent valueComponent = new TextComponent(entry.getValue());
+      valueComponent.setColor(ChatColor.GRAY);
+      TextComponent spaceComponent = new TextComponent(": ");
+      spaceComponent.setColor(ChatColor.GRAY);
+      components.add(keyComponent);
+      components.add(spaceComponent);
+      components.add(valueComponent);
+      components.add(new TextComponent("\n"));
+    }
+    // remove last newline
+    if (!components.isEmpty()) {
+      components.remove(components.size() - 1);
+    }
+    return components.toArray(new BaseComponent[0]);
   }
 
   private Map<String, Map<String, Double>> violationMapOf(Player player) {

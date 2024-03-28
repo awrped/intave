@@ -366,9 +366,9 @@ public final class MovementDispatcher extends Module {
       double positionX = modifier.read(0);
       double positionY = modifier.read(1);
       double positionZ = modifier.read(2);
-      double motionX = positionX - movementData.verifiedPositionX;
-      double motionY = positionY - movementData.verifiedPositionY;
-      double motionZ = positionZ - movementData.verifiedPositionZ;
+      double motionX = positionX - movementData.lastPositionX;
+      double motionY = positionY - movementData.lastPositionY;
+      double motionZ = positionZ - movementData.lastPositionZ;
       double distance = MathHelper.hypot3d(motionX, motionY, motionZ);
 
       if (distance < 0.00001) {
@@ -650,7 +650,9 @@ public final class MovementDispatcher extends Module {
             .appendFlags(DISPLAY_IN_ALL_VERBOSE_MODES)
             .build();
           Modules.violationProcessor().processViolation(violation);
-          packet.getBooleans().write(0, false);
+        }
+        if (movement.artificialFallDistance > requiredFallDistance || Math.abs(movement.motionY()) > 0.01) {
+          packet.getBooleans().write(0, movement.onGround);
         }
       }
     }

@@ -32,6 +32,8 @@ public final class ShapeResolver {
     // drill failure subroutine
     if (!VER1_13_0.atOrAbove()) {
       resolver = new DrillRescuePipe(resolver);
+      // legacy outline patch
+      resolver = new LegacyOutlinePatchPipe(resolver);
     }
     if (VER1_13_0.atOrAbove()) {
       // cache
