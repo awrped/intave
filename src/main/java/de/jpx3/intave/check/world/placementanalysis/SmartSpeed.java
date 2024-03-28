@@ -6,7 +6,6 @@ import com.comphenix.protocol.events.PacketEvent;
 import de.jpx3.intave.annotate.Reserved;
 import de.jpx3.intave.check.MetaCheckPart;
 import de.jpx3.intave.check.world.PlacementAnalysis;
-import de.jpx3.intave.executor.Synchronizer;
 import de.jpx3.intave.math.MathHelper;
 import de.jpx3.intave.module.linker.packet.ListenerPriority;
 import de.jpx3.intave.module.linker.packet.PacketSubscription;
@@ -20,7 +19,6 @@ import de.jpx3.intave.share.Rotation;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.meta.CheckCustomMetadata;
 import de.jpx3.intave.user.meta.MovementMetadata;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
@@ -126,9 +124,9 @@ public class SmartSpeed extends MetaCheckPart<PlacementAnalysis, SmartSpeed.Smar
 //        boolean finalHighRotationSinceLastPlacement = highRotationSinceLastPlacement;
         float finalRotationSinceLastPlacement = rotationSinceLastPlacement;
         float finalLowestPitch = highestPitch;
-        Synchronizer.synchronize(() -> {
-          player.sendMessage((under && near ? ChatColor.GRAY : ChatColor.DARK_GRAY) + MathHelper.formatDouble(finalSpeedAverageOfLastTwo, 2) + "b/t, rot:" + finalRotationSinceLastPlacement + ", pitch:"+ finalLowestPitch);
-        });
+//        Synchronizer.synchronize(() -> {
+//          player.sendMessage((under && near ? ChatColor.GRAY : ChatColor.DARK_GRAY) + MathHelper.formatDouble(finalSpeedAverageOfLastTwo, 2) + "b/t, rot:" + finalRotationSinceLastPlacement + ", pitch:"+ finalLowestPitch);
+//        });
 
         meta.ticksSinceBlockPlacement = 0;
         meta.lastPlacementTick = meta.tickCount;

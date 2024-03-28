@@ -8,14 +8,12 @@ import de.jpx3.intave.user.UserLocal;
 import de.jpx3.intave.user.UserRepository;
 import de.jpx3.intave.user.meta.CheckCustomMetadata;
 import de.jpx3.intave.user.storage.FeedbackAnalysisStorage;
+import de.jpx3.intave.user.storage.LatencyStorage;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static de.jpx3.intave.module.feedback.FeedbackAnalysis.FeedbackCategory.*;
 import static de.jpx3.intave.module.feedback.FeedbackOptions.*;
@@ -32,6 +30,9 @@ public final class FeedbackAnalysis extends Module {
           meta.latencyAnalysisMap.get(values()[i]).set(theStorage.accumulatedLatencies()[i], theStorage.counts()[i]);
         }
       }
+      LatencyStorage latencyStorage = user.storageOf(LatencyStorage.class);
+      user.meta().violationLevel().backtrackVL = latencyStorage.backtrackVL;
+      meta.fullLatencyAnalysis.importFrom(new float[] {latencyStorage.mean, latencyStorage.variance, latencyStorage.amount});
     });
   }
 
@@ -48,6 +49,11 @@ public final class FeedbackAnalysis extends Module {
         theStorage.accumulatedLatencies()[i] = meta.latencyAnalysisMap.get(values[i]).accumulatedLatency;
         theStorage.counts()[i] = meta.latencyAnalysisMap.get(values[i]).count;
       }
+      LatencyStorage latencyStorage = user.storageOf(LatencyStorage.class);
+      latencyStorage.mean = (float) meta.fullLatencyAnalysis.mean();
+      latencyStorage.variance = (float) meta.fullLatencyAnalysis.stdDev();
+      latencyStorage.amount = (float) meta.fullLatencyAnalysis.size;
+      latencyStorage.backtrackVL = (int) user.meta().violationLevel().backtrackVL;
     });
   }
 
@@ -266,7 +272,7 @@ public final class FeedbackAnalysis extends Module {
     private long size = 0;
 
     public boolean addLatency(long latency) {
-      if (latency > MAX_LATENCY) {
+      if (latency > MAX_LATENCY || latency < 0) {
         return false;
       }
       latencyOccurrences[(int) asDiscrete(latency)]++;
@@ -307,6 +313,10 @@ public final class FeedbackAnalysis extends Module {
       return (long) Math.sqrt(sum / size);
     }
 
+    public long variance() {
+      return (long) Math.pow(stdDev(), 2);
+    }
+
     public double biasedStdDev(double requiredDistance) {
       return biasedStdDev(mean(), requiredDistance);
     }
@@ -342,6 +352,25 @@ public final class FeedbackAnalysis extends Module {
         return 100;
       }
       return Math.exp(-Math.pow(latency - mean, 2) / (2 * Math.pow(stdDev, 2))) / (stdDev * Math.sqrt(2 * Math.PI));
+    }
+
+    public void clear() {
+      Arrays.fill(latencyOccurrences, 0);
+      size = 0;
+    }
+
+    public void importFrom(float[] triple) {
+      if (triple.length != 3) {
+        throw new IllegalArgumentException("triple must have length 3");
+      }
+      clear();
+      float mean = triple[0];
+      float variance = triple[1];
+      size = (long) triple[2];
+      Random random = new Random();
+      for (int i = 0; i < Math.min(1000, size); i++) {
+        addLatency((long) (random.nextGaussian() * variance + mean));
+      }
     }
   }
 

@@ -50,6 +50,9 @@ dependencies {
   compileOnly("org.bytedeco:openblas-platform:0.3.23-1.5.9")
   compileOnly("org.bytedeco:javacpp:1.5.9")
   compileOnly("org.bytedeco:javacpp-presets:1.5.9")
+
+  // java-image-scaling
+  compileOnly("com.mortennobel:java-image-scaling:0.8.6")
 }
 
 /*

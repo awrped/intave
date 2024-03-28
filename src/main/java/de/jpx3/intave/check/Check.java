@@ -101,7 +101,14 @@ public abstract class Check implements EventProcessor {
     if (checkPart.parentCheck() != this) {
       throw new IntaveInternalException("Partial check lacks valid reference to parent check");
     }
+    if (checkPart instanceof PlayerCheckPart) {
+      throw new IntaveInternalException("Use appendPlayerCheckPart for PlayerCheckPart instances");
+    }
     checkParts.add(checkPart);
+  }
+
+  protected final <T extends PlayerCheckPart<?>> void appendPlayerCheckPart(Class<T> delegateClass) {
+    appendCheckPart(new PlayerCheckPartDelegate(this, delegateClass));
   }
 
   protected final void appendCheckParts(CheckPart<?>... checkParts) {

@@ -51,6 +51,14 @@ public final class Position extends Vector implements Serializable {
     return Math.sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
   }
 
+  public Position add(double x, double y, double z) {
+    return new Position(this.x + x, this.y + y, this.z + z);
+  }
+
+  public Position add(Vector vector) {
+    return add(vector.getX(), vector.getY(), vector.getZ());
+  }
+
   @Override
   public String toString() {
     return  formatDouble(x, 1) + ", " + formatDouble(y,1) + ", " + formatDouble(z,1);
@@ -67,5 +75,11 @@ public final class Position extends Vector implements Serializable {
 
   public NativeVector toNativeVec() {
     return new NativeVector(x, y, z);
+  }
+
+  public Rotation rotationTo(Position otherPoint) {
+    float yaw = (float) Math.toDegrees(Math.atan2(otherPoint.z - z, otherPoint.x - x));
+    float pitch = -(float) Math.toDegrees(Math.atan2(otherPoint.y - y, Math.sqrt(Math.pow(otherPoint.x - x, 2) + Math.pow(otherPoint.z - z, 2))));
+    return new Rotation(yaw, pitch);
   }
 }

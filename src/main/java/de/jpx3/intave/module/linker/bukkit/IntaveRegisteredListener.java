@@ -3,6 +3,7 @@ package de.jpx3.intave.module.linker.bukkit;
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.diagnostic.timings.Timing;
 import de.jpx3.intave.diagnostic.timings.Timings;
+import de.jpx3.intave.module.linker.SubscriptionInstanceProvider;
 import org.bukkit.Bukkit;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
@@ -13,23 +14,23 @@ import org.bukkit.plugin.RegisteredListener;
 public final class IntaveRegisteredListener extends RegisteredListener {
   private final IntavePlugin plugin;
   private final EventExecutor eventExecutor;
-  private final BukkitEventSubscriber listener;
+  private final SubscriptionInstanceProvider<? super Event, ?, ? extends BukkitEventSubscriber> listenerProvider;
   private final Class<? extends Event> eventClass;
   private Timing timing;
   private boolean checkIfCancelled;
 
   public IntaveRegisteredListener(
     IntavePlugin plugin,
-    BukkitEventSubscriber listener,
+    SubscriptionInstanceProvider<? super Event, ?, ? extends BukkitEventSubscriber> listenerProvider,
     EventExecutor eventExecutor,
     Class<? extends Event> eventClass,
     BukkitEventSubscription eventHandler
   ) {
-    super(listener, null, eventHandler.priority(), plugin, true/*eventHandler.ignoreCancelled()*/);
+    super(listenerProvider.fallback(), null, eventHandler.priority(), plugin, true/*eventHandler.ignoreCancelled()*/);
     this.plugin = plugin;
     this.eventExecutor = eventExecutor;
     this.eventClass = eventClass;
-    this.listener = listener;
+    this.listenerProvider = listenerProvider;
   }
 
   public void initialize() {
@@ -51,11 +52,14 @@ public final class IntaveRegisteredListener extends RegisteredListener {
       }
       timing.start();
     }
-    try {
-      eventExecutor.execute(listener, event);
-    } catch (RuntimeException exception) {
-      exception.printStackTrace();
-    }
+    listenerProvider.apply(event, listener -> {
+      try {
+        eventExecutor.execute(listener, event);
+      } catch (RuntimeException | EventException exception) {
+        exception.printStackTrace();
+      }
+    });
+
     if (!asynchronous) {
       Timings.EXE_SERVER.stop();
       timing.stop();

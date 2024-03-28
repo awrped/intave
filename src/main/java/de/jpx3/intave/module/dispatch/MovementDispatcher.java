@@ -375,17 +375,13 @@ public final class MovementDispatcher extends Module {
         movementData.dropPostTickMotionProcessing = true;
         Float yaw = packet.getFloat().read(0);
         Float pitch = packet.getFloat().read(1);
-//        movementData.lastRotationYaw = movementData.rotationYaw;
-//        movementData.lastRotationPitch = movementData.rotationPitch;
-        movementData.rotationYaw = yaw;
-        movementData.rotationPitch = pitch;
+//        movementData.rotationYaw = yaw;
+//        movementData.rotationPitch = pitch;
 
         if (DEBUG_MOVEMENT_IGNORE) {
           double yawDifference = MathHelper.noAbsDistanceInDegrees(movementData.lastRotationYaw, yaw);
           double pitchDifference = MathHelper.noAbsDistanceInDegrees(movementData.lastRotationPitch, pitch);
-//          Synchronizer.synchronize(() -> {
-//            player.sendMessage("Click movement ignore distance: " + distance + " yaw: " + yawDifference + " pitch: " + pitchDifference);
-//          });
+
           System.out.println("[Intave] Click movement ignore distance: " + distance + " yaw: " + yawDifference + " pitch: " + pitchDifference);
           IntavePlugin.singletonInstance().logTransmittor().addPlayerLog(player, "(DEBUG/MOVEMENTIGNORE) Click movement ignore distance: " + distance + " yaw: " + yawDifference + " pitch: " + pitchDifference);
         }

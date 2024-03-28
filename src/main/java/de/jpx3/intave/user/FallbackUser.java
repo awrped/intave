@@ -34,6 +34,7 @@ import org.bukkit.entity.Player;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 @Relocate
@@ -118,6 +119,11 @@ final class FallbackUser implements User {
     } catch (Exception exception) {
       throw new IllegalStateException(exception);
     }
+  }
+
+  @Override
+  public CheckCustomMetadata checkMetadata(Class<? extends CheckCustomMetadata> classTarget, Function<? super User, ? extends CheckCustomMetadata> generator) {
+    return generator.apply(this);
   }
 
   @Override

@@ -137,12 +137,12 @@ public final class Snap extends MetaCheckPart<PlacementAnalysis, Snap.SnapMeta> 
         .withDefaultThreshold()
         .withMessage(COMMON_FLAG_MESSAGE)
         .withDetails(asWord(meta.degree) + "-tick block-aligned snap")
-        .withVL(5)
+        .withVL(20)
         .build();
       ViolationContext violationContext = Modules.violationProcessor().processViolation(violation);
-      if (violationContext.shouldCounterThreat()) {
-        place.setCancelled(true);
-      }
+//      if (violationContext.shouldCounterThreat()) {
+//        place.setCancelled(true);
+//      }
       return;
     }
 

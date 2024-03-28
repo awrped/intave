@@ -60,10 +60,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.util.Vector;
 
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static de.jpx3.intave.diagnostic.message.MessageCategory.SIMFLT;
@@ -695,6 +692,14 @@ public final class Physics extends Check {
         }
       }
 
+      Map<String, String> granularDebugs = new HashMap<>();
+      granularDebugs.put("received", received);
+      granularDebugs.put("expected", expected);
+      granularDebugs.put("distance", formatDouble(distance, 3));
+      granularDebugs.put("pose", movementData.pose().name());
+      granularDebugs.put("insig", formatDouble(violationLevelData.physicsInsignificantBufferVL, 1));
+
+
       double vl = violationLevelIncrease / (violationLevelData.physicsVL >= 100 && !highToleranceMode() ? 20 : 50);
       Violation violation = Violation.builderFor(Physics.class)
         .forPlayer(player)
@@ -789,10 +794,6 @@ public final class Physics extends Check {
       // Apply manual setback override when the deviation is greater than a certain amount of blocks
       if (distance > manualOverrideDistance) {
         setback = true;
-      }
-
-      if (violationLevelData.physicsOffset > latantDistance + 0.01) {
-        violationLevelData.physicsOffset -= 0.125;
       }
 
       if (user.trustFactor().atLeast(TrustFactor.BYPASS)) {

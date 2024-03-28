@@ -15,6 +15,7 @@ public final class Timer extends Check {
   private final boolean reverseLag;
   private final boolean lowTolerance;
   private final int blinkLimit;
+  private final int timerTolerance;
   private final boolean detectPulseBlink;
   private final PlayerTime playerTime;
 
@@ -31,6 +32,7 @@ public final class Timer extends Check {
     reverseLag = settings.boolBy("reverse-lag", false);
 
     blinkLimit = settings.intBy("blink-limit", (lowTolerance ? 100 : -1));
+    timerTolerance = settings.intBy("tolerance", 1);
     detectPulseBlink = settings.boolBy("block-pulse-blink", lowTolerance);
 
     this.playerTime = new PlayerTime(this);
@@ -67,12 +69,12 @@ public final class Timer extends Check {
     return reverseLag;
   }
 
-  public boolean lowTolerance() {
-    return lowTolerance;
-  }
-
   public int blinkLimit() {
     return blinkLimit;
+  }
+
+  public int timerTolerance() {
+    return timerTolerance;
   }
 
   public boolean detectPulseBlink() {

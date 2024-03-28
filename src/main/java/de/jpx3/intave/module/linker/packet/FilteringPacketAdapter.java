@@ -7,6 +7,7 @@ import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.access.UnsupportedFallbackOperationException;
 import de.jpx3.intave.diagnostic.timings.Timing;
 import de.jpx3.intave.diagnostic.timings.Timings;
+import de.jpx3.intave.module.linker.SubscriptionInstanceProvider;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserRepository;
 
@@ -25,14 +26,14 @@ public final class FilteringPacketAdapter extends WeakReferencePacketAdapter imp
 
   private final String methodName;
   private final ListenerPriority priority;
-  private final PacketEventSubscriber subscriber;
+  private final SubscriptionInstanceProvider<User, ?, PacketEventSubscriber> subscriber;
   private final PacketSubscriptionMethodExecutor executor;
   private final Map<PacketType, Timing> localTimings = new ConcurrentHashMap<>();
   private final boolean ignoreCancelled;
 
   public FilteringPacketAdapter(
     IntavePlugin plugin,
-    PacketEventSubscriber subscriber,
+    SubscriptionInstanceProvider<User, ?, PacketEventSubscriber> subscriber,
     ListenerPriority priority, PacketType[] packetTypes,
     String methodName, PacketSubscriptionMethodExecutor executor,
     boolean ignoreCancelled) {
@@ -57,7 +58,11 @@ public final class FilteringPacketAdapter extends WeakReferencePacketAdapter imp
       if (user.shouldIgnoreNextInboundPacket()) {
         return;
       }
-      executor.invoke(subscriber, event);
+      try {
+        subscriber.apply(user, usr -> executor.invoke(usr, event));
+      } catch (Throwable t) {
+        t.printStackTrace();
+      }
     } catch (UnsupportedFallbackOperationException ignored) {
       // ignored
     } catch (RuntimeException exception) {
@@ -80,7 +85,7 @@ public final class FilteringPacketAdapter extends WeakReferencePacketAdapter imp
       if (user.shouldIgnoreNextOutboundPacket()) {
         return;
       }
-      executor.invoke(subscriber, event);
+      subscriber.apply(user, usr -> executor.invoke(usr, event));
     } catch (UnsupportedFallbackOperationException ignored) {
       // ignored
     } catch (RuntimeException exception) {
@@ -103,7 +108,7 @@ public final class FilteringPacketAdapter extends WeakReferencePacketAdapter imp
   }
 
   public PacketEventSubscriber subscriber() {
-    return subscriber;
+    return subscriber.fallback();
   }
 
   public ListenerPriority priority() {

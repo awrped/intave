@@ -28,6 +28,7 @@ public final class Violation {
   private final String threshold;
   private final double addedViolationPoints;
   private final Map<String, String> placeholders;
+  private final Map<String, String> granularKeyValuePairs;
   private final int optionFlags;
 
   private Violation(
@@ -37,7 +38,9 @@ public final class Violation {
     String details,
     String threshold,
     double addedViolationPoints,
-    Map<String, String> placeholders, int optionFlags
+    Map<String, String> placeholders,
+    Map<String, String> granularKeyValuePairs,
+    int optionFlags
   ) {
     this.checkClass = checkClass;
     this.id = id;
@@ -46,6 +49,7 @@ public final class Violation {
     this.threshold = threshold;
     this.addedViolationPoints = addedViolationPoints;
     this.placeholders = placeholders;
+    this.granularKeyValuePairs = granularKeyValuePairs;
     this.optionFlags = optionFlags;
   }
 
@@ -116,6 +120,7 @@ public final class Violation {
     private String threshold;
     private double addedViolationPoints;
     private Map<String, String> placeholders;
+    private Map<String, String> granularKeyValuePairs = new HashMap<>();
     private int optionFlags = 0;
 
     private boolean constructed;
@@ -154,6 +159,16 @@ public final class Violation {
         this.placeholders = new HashMap<>();
       }
       placeholders.put(name, replacement);
+      return this;
+    }
+
+    public Builder withGranularPair(String key, String value) {
+      granularKeyValuePairs.put(key, value);
+      return this;
+    }
+
+    public Builder withGranularPairs(Map<String, String> keyValuePairs) {
+      granularKeyValuePairs.putAll(keyValuePairs);
       return this;
     }
 
@@ -196,7 +211,10 @@ public final class Violation {
       if (threshold == null) {
         withDefaultThreshold();
       }
-      return new Violation(checkClass, playerid, baseMessage, details, threshold, addedViolationPoints, placeholders, optionFlags);
+      return new Violation(
+        checkClass, playerid, baseMessage, details, threshold,
+        addedViolationPoints, placeholders, granularKeyValuePairs, optionFlags
+      );
     }
   }
 

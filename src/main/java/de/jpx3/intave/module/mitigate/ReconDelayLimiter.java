@@ -4,9 +4,11 @@ import de.jpx3.intave.module.Module;
 import de.jpx3.intave.module.linker.bukkit.BukkitEventSubscription;
 import de.jpx3.intave.module.violation.placeholder.Placeholders;
 import de.jpx3.intave.module.violation.placeholder.PlayerContext;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
+import org.bukkit.entity.Player;
+import org.bukkit.event.player.PlayerLoginEvent;
 
 import java.net.InetAddress;
 import java.util.Map;
@@ -32,19 +34,29 @@ public final class ReconDelayLimiter extends Module {
   }
 
   @BukkitEventSubscription
-  public void on(AsyncPlayerPreLoginEvent login) {
-    long ipDelayLeft = System.currentTimeMillis() - lastKicked.getOrDefault(login.getUniqueId(), 0L);
+  public void on(PlayerLoginEvent login) {
+    Player player = login.getPlayer();
+    long ipDelayLeft = System.currentTimeMillis() - lastKicked.getOrDefault(player.getUniqueId(), 0L);
     long accDelayLeft = System.currentTimeMillis() - lastKickedIp.getOrDefault(login.getAddress(), 0L);
-
     if (ipDelayLeft < delay || accDelayLeft < delay) {
+      if (player.isBanned()) {
+        if (refresh) {
+          ban(login.getAddress(), player.getUniqueId(), "rejoin");
+        }
+        return;
+      }
+      // allow player to join if no other players are online
+      if (Bukkit.getOnlinePlayers().isEmpty()) {
+        return;
+      }
       String message = rawMessage;
-      PlayerContext playerContext = new PlayerContext(login.getName(), login.getUniqueId(), login.getAddress());
+      PlayerContext playerContext = new PlayerContext(player.getName(), player.getUniqueId(), login.getAddress());
       message = Placeholders.replacePlaceholders(message, Placeholders.PLUGIN_CONTEXT, playerContext);
       message = ChatColor.translateAlternateColorCodes('&', message);
       login.setKickMessage(message);
-      login.setLoginResult(AsyncPlayerPreLoginEvent.Result.KICK_WHITELIST);
+      login.disallow(PlayerLoginEvent.Result.KICK_WHITELIST, message);
       if (refresh) {
-        ban(login.getAddress(), login.getUniqueId(), "rejoin");
+        ban(login.getAddress(), player.getUniqueId(), "rejoin");
       }
     }
   }

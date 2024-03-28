@@ -3,7 +3,10 @@ package de.jpx3.intave.connect;
 import de.jpx3.intave.IntaveControl;
 import de.jpx3.intave.resource.Resource;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;

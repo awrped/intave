@@ -24,6 +24,8 @@ public final class ViolationMetadata {
   public int detectionCounter;
   public long detectionCounterReset;
 
+  public long lastBlockPlaceDenyRequest;
+
   public int facingFailedCounter = 0;
 
   public Map<String, Map<String, Double>> violationLevel = Maps.newConcurrentMap();

@@ -21,8 +21,19 @@ ban-commands:
 #   FALSE POSITIVES? -> REPORT THEM
 physics-mm: CAREFUL
 
+# How many ticks should a player be allowed to exist ahead of the server tick?
+timer-tolerance: 1
+
 # Rejoin delay after issued kick (in seconds)
 rejoin-delay: 3600
+
+# Cloud privacy control
+#   HIGHEST_PRIVACY - only the most critical data is sent (player UUID and usage data)
+#   BEST_DETECTION  - also share IP address for long-term cross-account analysis & detection
+#
+# BEST_DETECTION requires you to update your server's privacy policy or let players know
+#                the first time they join, as it is considered personal data under GDPR.
+privacy: HIGHEST_PRIVACY
 
 verbose: "{prefix} &c{player}&7/{trust-color}&7 {message} {details} (+{vladded} -> {vl})"
 notify: "{prefix} &c&lInfo&8: &7{text}"

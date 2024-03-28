@@ -171,7 +171,6 @@ public final class Speed extends MetaCheckPart<PlacementAnalysis, Speed.Placemen
     boolean lockedOnX = false,
       lockedOnZ = false;
     boolean first = true;
-
     int yTolerance = 2;
     for (Location block : blocks) {
       if (!first) {

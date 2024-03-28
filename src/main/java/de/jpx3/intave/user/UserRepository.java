@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 
 public final class UserRepository {
   private static final Map<UUID, User> repository = MemoryWatchdog.watch("users", new ConcurrentHashMap<>());
@@ -75,6 +76,10 @@ public final class UserRepository {
     }
     User user = repository.get(uuid);
     return user != null ? user : fallbackUser;
+  }
+
+  public static void applyOnAll(Consumer<? super User> consumer) {
+    repository.values().forEach(consumer);
   }
 
   public static void die() {

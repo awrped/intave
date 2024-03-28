@@ -12,6 +12,7 @@ public final class Storages {
     storage.append(AccountDataStorage.class);
     storage.append(FeedbackAnalysisStorage.class);
     storage.append(ViolationBufferStorage.class);
+    storage.append(LatencyStorage.class);
     return storage;
   }
 }

@@ -5,6 +5,8 @@ import de.jpx3.intave.user.meta.CheckCustomMetadata;
 import de.jpx3.intave.user.meta.MetadataBundle;
 import org.bukkit.entity.Player;
 
+import java.util.function.Function;
+
 /**
  * An extension of the default {@link CheckPart} class, providing a {@link User}-specific metadata holder.
  * This approach was chosen as a trade-off between the one-check-instance-per-user policy
@@ -46,10 +48,26 @@ import org.bukkit.entity.Player;
  */
 public abstract class MetaCheckPart<P extends Check, M extends CheckCustomMetadata> extends CheckPart<P> {
   private final Class<? extends M> metaClass;
+  private final Function<? super User, ? extends M> metaGenerator;
 
   protected MetaCheckPart(P parentCheck, Class<? extends M> metaClass) {
     super(parentCheck);
     this.metaClass = metaClass;
+    this.metaGenerator = this::defaultMetaGenerator;
+  }
+
+  protected MetaCheckPart(P parentCheck, Class<? extends M> metaClass, Function<? super User, ? extends M> metaGenerator) {
+    super(parentCheck);
+    this.metaClass = metaClass;
+    this.metaGenerator = metaGenerator;
+  }
+
+  private M defaultMetaGenerator(User user) {
+    try {
+      return metaClass.getConstructor().newInstance();
+    } catch (ReflectiveOperationException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   /**
@@ -73,6 +91,6 @@ public abstract class MetaCheckPart<P extends Check, M extends CheckCustomMetada
    */
   public M metaOf(User user) {
     //noinspection unchecked
-    return (M) user.checkMetadata(metaClass);
+    return (M) user.checkMetadata(metaClass, metaGenerator);
   }
 }

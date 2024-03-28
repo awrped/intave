@@ -2,6 +2,7 @@
 
 +Variables
 physics-mm -> check.physics.mitigation
+timer-tolerance -> check.timer.tolerance
 rejoin-delay -> rejoin.delay
 prefix -> layout.prefix
 verbose -> layout.verbose

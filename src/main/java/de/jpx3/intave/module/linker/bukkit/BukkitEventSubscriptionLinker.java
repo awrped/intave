@@ -8,6 +8,8 @@ import de.jpx3.intave.annotate.Relocate;
 import de.jpx3.intave.klass.create.IRXClassFactory;
 import de.jpx3.intave.library.asm.Type;
 import de.jpx3.intave.module.Module;
+import de.jpx3.intave.module.linker.OneForAll;
+import de.jpx3.intave.module.linker.SubscriptionInstanceProvider;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventException;
 import org.bukkit.event.HandlerList;
@@ -44,8 +46,20 @@ public final class BukkitEventSubscriptionLinker extends Module {
 
   public void registerEventsIn(BukkitEventSubscriber listener) {
     long start = System.nanoTime();
-    processLinking(listener).forEach((key, value) -> eventListenersOf(key).registerAll(value));
+    processLinking(resolveFrom(listener))
+      .forEach((key, value) -> eventListenersOf(key).registerAll(value));
     totalLoad += System.nanoTime() - start;
+  }
+
+  private SubscriptionInstanceProvider<? super Event, ?, ? extends BukkitEventSubscriber> resolveFrom(
+    BukkitEventSubscriber listener
+  ) {
+    if (listener instanceof PlayerBukkitEventSubscriber) {
+      PlayerBukkitEventSubscriber playerListener = (PlayerBukkitEventSubscriber) listener;
+      return new OneBukkitEventForOne<>(playerListener::bukkitSubscriberFor);
+    } else {
+      return new OneForAll<>(listener);
+    }
   }
 
   public void unregisterEventsIn(BukkitEventSubscriber listener) {
@@ -64,8 +78,10 @@ public final class BukkitEventSubscriptionLinker extends Module {
     }
   }
 
-  private Map<Class<? extends Event>, Set<RegisteredListener>> processLinking(BukkitEventSubscriber listener) {
-    Class<? extends BukkitEventSubscriber> listenerClass = listener.getClass();
+  private Map<Class<? extends Event>, Set<RegisteredListener>> processLinking(
+    SubscriptionInstanceProvider<? super Event, ?, ? extends BukkitEventSubscriber> listener
+  ) {
+    Class<? extends BukkitEventSubscriber> listenerClass = listener.subscriberClass();
     List<Method> methods = ImmutableList.copyOf(listenerClass.getDeclaredMethods());
     Map<Class<? extends Event>, Set<RegisteredListener>> ret = Maps.newConcurrentMap();
 

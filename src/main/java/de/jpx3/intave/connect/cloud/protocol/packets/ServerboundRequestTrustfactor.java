@@ -2,9 +2,9 @@ package de.jpx3.intave.connect.cloud.protocol.packets;
 
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
-import de.jpx3.intave.connect.cloud.protocol.listener.Serverbound;
 import de.jpx3.intave.connect.cloud.protocol.Identity;
 import de.jpx3.intave.connect.cloud.protocol.JsonPacket;
+import de.jpx3.intave.connect.cloud.protocol.listener.Serverbound;
 
 import static de.jpx3.intave.connect.cloud.protocol.Direction.SERVERBOUND;
 

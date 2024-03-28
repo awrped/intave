@@ -69,7 +69,6 @@ public final class RotationSpeed extends MetaCheckPart<PlacementAnalysis, Rotati
       return;
     }
 
-//    Block belowPlaced = place.getBlockPlaced().getRelative(BlockFace.DOWN);
     if (place.getBlock().getY() < player.getLocation().getBlockY() /*&& belowPlaced.getType() == Material.AIR*/ && blockAgainstWasPlaced(user, place.getBlockAgainst())) {
       List<Float> rotationHistory = meta.rotationHistory;
       double rotationSum = 0.0;
@@ -92,11 +91,12 @@ public final class RotationSpeed extends MetaCheckPart<PlacementAnalysis, Rotati
         Violation violation = Violation.builderFor(PlacementAnalysis.class)
           .forPlayer(player).withDefaultThreshold()
           .withMessage(COMMON_FLAG_MESSAGE)
-          .withDetails("high rotation activity while placing blocks") // + " (" + ((int) rotationSum) + " degrees)
+          .withDetails("high rotation activity while placing blocks")
           .appendFlags(DISPLAY_IN_ALL_VERBOSE_MODES)
           .withDefaultThreshold().withVL(10).build();
         Modules.violationProcessor().processViolation(violation);
         meta.denyPlacementRequest = System.currentTimeMillis();
+        user.meta().violationLevel().lastBlockPlaceDenyRequest = System.currentTimeMillis();
         place.setCancelled(true);
       }
     }

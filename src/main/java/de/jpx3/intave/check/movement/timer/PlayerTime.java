@@ -45,13 +45,14 @@ public class PlayerTime extends MetaCheckPart<Timer, PlayerTime.PlayerTimeMeta> 
   private final Map<UUID, Long> playerJoinTimeCache = GarbageCollector.watch(new HashMap<>());
   private final CheckViolationLevelDecrementer decrementer;
   private final int blinkLimitTicks;
+  private final int toleranceTicks;
 
   public PlayerTime(Timer parentCheck) {
     super(parentCheck, PlayerTimeMeta.class);
     decrementer = parentCheck.decrementer();
     blinkLimitTicks = parentCheck.blinkLimit();
+    toleranceTicks = parentCheck.timerTolerance();
   }
-
 
   @PacketSubscription(
     priority = ListenerPriority.HIGHEST,
@@ -132,7 +133,7 @@ public class PlayerTime extends MetaCheckPart<Timer, PlayerTime.PlayerTimeMeta> 
     // Exclude players in certain states such as creative, spectator or teleport
     // We also have to check if the player received the initial join packet due to proxies doing weird things
     if (!checkMeta.gameJoinReceived || movementData.lastTeleport == 0
-      || abilityData.inGameModeIncludePending(AbilityTracker.GameMode.CREATIVE) || abilityData.ignoringMovementPackets()) {
+      || abilityData.inGameModeIncludePending(AbilityTracker.GameMode.CREATIVE) || abilityData.ignoringMovementPackets() || user.meta().movement().isInVehicle()) {
       return;
     }
     checkMeta.time += 49_950_000; // allow constant 0.05ms clock error = give 1s every 2000s (33min)
@@ -147,7 +148,7 @@ public class PlayerTime extends MetaCheckPart<Timer, PlayerTime.PlayerTimeMeta> 
 //      player.sendMessage("diff: " + diff);
 //    }
 
-    int limit = System.currentTimeMillis() - movementData.lastMovement > 30_000 ? 150_000_000 : 50_000_000;
+    int limit = System.currentTimeMillis() - movementData.lastMovement > 30_000 ? 150_000_000 : toleranceTicks * 50_000_000;
     if ((diff > limit) && !user.meta().movement().isInVehicle()) {
       double displayValue = diff / (50 * 1_000_000f);
       if (displayValue < 0.01) {

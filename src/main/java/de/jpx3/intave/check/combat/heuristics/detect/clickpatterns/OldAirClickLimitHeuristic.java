@@ -18,7 +18,6 @@ import de.jpx3.intave.executor.Synchronizer;
 import de.jpx3.intave.klass.Lookup;
 import de.jpx3.intave.module.linker.packet.ListenerPriority;
 import de.jpx3.intave.module.linker.packet.PacketSubscription;
-import de.jpx3.intave.module.mitigate.AttackNerfStrategy;
 import de.jpx3.intave.packet.converter.BlockPositionConverter;
 import de.jpx3.intave.share.MovingObjectPosition;
 import de.jpx3.intave.share.NativeVector;

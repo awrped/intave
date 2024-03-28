@@ -12,6 +12,9 @@ import de.jpx3.intave.annotate.DoNotFlowObfuscate;
 import de.jpx3.intave.klass.create.IRXClassFactory;
 import de.jpx3.intave.library.asm.Type;
 import de.jpx3.intave.module.Module;
+import de.jpx3.intave.module.linker.OneForAll;
+import de.jpx3.intave.module.linker.OneForOne;
+import de.jpx3.intave.module.linker.SubscriptionInstanceProvider;
 import de.jpx3.intave.module.linker.packet.tinyprotocol.InjectionService;
 import de.jpx3.intave.packet.reader.PacketReader;
 import de.jpx3.intave.packet.reader.PacketReaders;
@@ -72,16 +75,18 @@ public final class PacketSubscriptionLinker extends Module {
   }
 
   public void linkSubscriptionsIn(PacketEventSubscriber subscriber) {
-    for (Method method : subscriber.getClass().getMethods()) {
+    SubscriptionInstanceProvider<User, ?, PacketEventSubscriber> instanceProvider = resolveFrom(subscriber);
+    for (Method method : instanceProvider.subscriberClass().getMethods()) {
       if (methodRequestsSubscription(method)) {
-        linkSubscription(subscriber, method);
+        linkSubscription(instanceProvider, method);
       }
     }
   }
 
   public void removeSubscriptionsOf(PacketEventSubscriber subscriber) {
+    Class<? extends PacketEventSubscriber> subscriberClass = subscriber.getClass();
     for (SCOWAList<FilteringPacketAdapter> value : internalPacketListenerMappings.values()) {
-      value.removeIf(localPacketAdapter -> localPacketAdapter.subscriber() == subscriber);
+      value.removeIf(localPacketAdapter -> localPacketAdapter.subscriber() != null && localPacketAdapter.subscriber().getClass().equals(subscriberClass));
     }
   }
 
@@ -142,21 +147,30 @@ public final class PacketSubscriptionLinker extends Module {
     return !Modifier.isStatic(modifiers) && Modifier.isPublic(modifiers);
   }
 
-  private void linkSubscription(PacketEventSubscriber subscriber, Method method) {
+  private void linkSubscription(SubscriptionInstanceProvider<User, ?, PacketEventSubscriber> instanceProvider, Method method) {
     PacketSubscription metadata = method.getAnnotation(PacketSubscription.class);
-    PacketSubscriptionMethodExecutor executor = assembleSubscriptionMethodCaller(subscriber, method, metadata.identifier());
+    PacketSubscriptionMethodExecutor executor = assembleSubscriptionMethodCaller(instanceProvider.subscriberClass(), method, metadata.identifier());
     String methodName = method.getName();
     ListenerPriority priority = metadata.priority();
     PacketType[] packetTypes = translatePacketTypes(metadata.packetsIn(), metadata.packetsOut());
     boolean ignoreCancelled = metadata.ignoreCancelled();
     if (metadata.engine() == Engine.ASYNC_INTERNAL) {
-      performCustomLinkage(subscriber, priority, packetTypes, ignoreCancelled, methodName, executor);
+      performCustomLinkage(instanceProvider, priority, packetTypes, ignoreCancelled, methodName, executor);
     } else {
       if (metadata.prioritySlot() == PrioritySlot.INTERNAL) {
-        performInternalLinkage(subscriber, priority, packetTypes, ignoreCancelled, methodName, executor);
+        performInternalLinkage(instanceProvider, priority, packetTypes, ignoreCancelled, methodName, executor);
       } else {
-        performExternalLinkage(subscriber, priority, packetTypes, ignoreCancelled, methodName, executor);
+        performExternalLinkage(instanceProvider, priority, packetTypes, ignoreCancelled, methodName, executor);
       }
+    }
+  }
+
+  private SubscriptionInstanceProvider<User, ?, PacketEventSubscriber> resolveFrom(PacketEventSubscriber subscriber) {
+    if (subscriber instanceof PlayerPacketEventSubscriber) {
+      PlayerPacketEventSubscriber playerListener = (PlayerPacketEventSubscriber) subscriber;
+      return new OneForOne<>(playerListener::packetSubscriberFor);
+    } else {
+      return new OneForAll<>(subscriber);
     }
   }
 
@@ -261,13 +275,13 @@ public final class PacketSubscriptionLinker extends Module {
   private static final ThreadLocal<Map<Integer, Boolean>> argumentLocks = ThreadLocal.withInitial(HashMap::new);
 
   private PacketSubscriptionMethodExecutor assembleSubscriptionMethodCaller(
-    PacketEventSubscriber target,
+    Class<? extends PacketEventSubscriber> targetClass,
     Method calledMethod,
     String identifier
   ) {
     if (calledMethod.getParameterCount() == 1 && calledMethod.getParameterTypes()[0] == PacketEvent.class) {
       String packetSubscriberSuperClassPath = canonicalRepresentation(className(PacketEventSubscriber.class));
-      String packetSubscriberClassPath = canonicalRepresentation(className(target.getClass()));
+      String packetSubscriberClassPath = canonicalRepresentation(className(targetClass));
       String packetEventClassPath = canonicalRepresentation(className(PacketEvent.class));
       Class<PacketSubscriptionMethodExecutor> executorClass = IRXClassFactory.assembleCallerClass(
         PacketSubscriptionLinker.class.getClassLoader(),
@@ -419,7 +433,7 @@ public final class PacketSubscriptionLinker extends Module {
   }
 
   private void performCustomLinkage(
-    PacketEventSubscriber subscriber,
+    SubscriptionInstanceProvider<User, ?, PacketEventSubscriber> subscriber,
     ListenerPriority priority, PacketType[] translatePacketTypes,
     boolean ignoreCancelled,
     String methodName, PacketSubscriptionMethodExecutor executor
@@ -436,7 +450,7 @@ public final class PacketSubscriptionLinker extends Module {
   }
 
   private void performInternalLinkage(
-    PacketEventSubscriber subscriber,
+    SubscriptionInstanceProvider<User, ?, PacketEventSubscriber> subscriber,
     ListenerPriority priority, PacketType[] translatePacketTypes,
     boolean ignoreCancelled,
     String methodName, PacketSubscriptionMethodExecutor executor
@@ -448,7 +462,7 @@ public final class PacketSubscriptionLinker extends Module {
   }
 
   private void performExternalLinkage(
-    PacketEventSubscriber subscriber,
+    SubscriptionInstanceProvider<User, ?, PacketEventSubscriber> subscriber,
     ListenerPriority priority, PacketType[] translatePacketTypes,
     boolean ignoreCancelled,
     String methodName, PacketSubscriptionMethodExecutor executor

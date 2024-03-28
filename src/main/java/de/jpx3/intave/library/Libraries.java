@@ -35,6 +35,8 @@ public final class Libraries {
     for (String smileProject : smileProjects) {
       loadLibrary(fromMavenGradle("com.github.haifengl", smileProject, "3.0.1"));
     }
+
+    loadLibrary(fromMavenGradle("com.mortennobel", "java-image-scaling", "0.8.6"));
   }
 
   public static void loadLibrary(Library library) {

@@ -107,10 +107,9 @@ public class RegrDelayAnalyzer extends MetaCheckPart<InventoryClickAnalysis, Reg
 
 //      player.sendMessage("CI | "+(meta.firstClickTimestamp-meta.lastWindowOpenTimestamp)+"ms fc | " + MathHelper.formatDouble(averageSpeed, 2) + " s/s avg" + " | " + formatDouble(slope, 2) + " distance/time correlation");
 
-      if (slope[0] < 0.2 || pearson < 0.2) {
+      if (slope[0] < 0.1 || pearson < 0.1) {
         Violation violation = Violation.builderFor(InventoryClickAnalysis.class)
           .forPlayer(player)
-//          .withVL(slope < 0.05 ? 50 : 10)
           .withVL(10)
           .withMessage("seems indifferent to distance taking items")
           .appendFlags(DISPLAY_IN_ALL_VERBOSE_MODES)
@@ -136,19 +135,19 @@ public class RegrDelayAnalyzer extends MetaCheckPart<InventoryClickAnalysis, Reg
 //        System.out.println("is taking items too quickly" + "linear d/t baseline at " + formatDouble(slope[1], 2) + " slots/sec");
       }
 
-      if (pearson > 0.5) {
-        Violation violation = Violation.builderFor(InventoryClickAnalysis.class)
-          .forPlayer(player)
-//          .withVL(MathHelper.minmax(15, averageSpeed * 0.75, 50))
-          .withVL(5)
-          .appendFlags(DISPLAY_IN_ALL_VERBOSE_MODES)
-          .withMessage("seems to be taking items in a pattern")
-          .withDetails(formatDouble(pearson, 2) + " pear")
-          .build();
-        ViolationProcessor violationProcessor = Modules.violationProcessor();
-        violationProcessor.processViolation(violation);
-//        System.out.println("seems to be taking items in a pattern" + formatDouble(pearson, 2) + " pear");
-      }
+//      if (pearson > 0.5) {
+//        Violation violation = Violation.builderFor(InventoryClickAnalysis.class)
+//          .forPlayer(player)
+////          .withVL(MathHelper.minmax(15, averageSpeed * 0.75, 50))
+//          .withVL(5)
+//          .appendFlags(DISPLAY_IN_ALL_VERBOSE_MODES)
+//          .withMessage("seems to be taking items in a pattern")
+//          .withDetails(formatDouble(pearson, 2) + " pear")
+//          .build();
+//        ViolationProcessor violationProcessor = Modules.violationProcessor();
+//        violationProcessor.processViolation(violation);
+////        System.out.println("seems to be taking items in a pattern" + formatDouble(pearson, 2) + " pear");
+//      }
 
       if (averageSpeed > 20) {
         Violation violation = Violation.builderFor(InventoryClickAnalysis.class)

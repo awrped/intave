@@ -49,6 +49,9 @@ check:
     # Very effective against blink in combat
     reverse-blink: true
 
+    # How many ticks should a player be allowed to exist ahead of the server tick?
+    tolerance: 1
+
     # The maximum ticks a player is allowed to exist behind server tick, aka. "blink", -1 to disable
     # 200 = Allow 10 second lag
     blink-limit: -1

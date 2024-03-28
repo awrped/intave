@@ -121,6 +121,11 @@ final class TestUser implements User {
   }
 
   @Override
+  public CheckCustomMetadata checkMetadata(Class<? extends CheckCustomMetadata> classTarget, Function<? super User, ? extends CheckCustomMetadata> generator) {
+    return metadataPool.computeIfAbsent(classTarget, initializeMe -> generator.apply(this));
+  }
+
+  @Override
   public CustomClientSupportConfig customClientSupport() {
     return null;
   }

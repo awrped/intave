@@ -4,6 +4,7 @@ import com.comphenix.protocol.events.PacketEvent;
 import de.jpx3.intave.access.UnsupportedFallbackOperationException;
 import de.jpx3.intave.access.player.trust.TrustFactor;
 import de.jpx3.intave.access.player.trust.TrustFactorResolver;
+import de.jpx3.intave.annotate.Nullable;
 import de.jpx3.intave.block.fluid.FluidFlow;
 import de.jpx3.intave.block.state.BlockStateCache;
 import de.jpx3.intave.block.state.ExtendedBlockStateCache;
@@ -34,6 +35,7 @@ import org.bukkit.entity.Player;
 
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
@@ -199,7 +201,29 @@ public interface User {
    * @see MetaCheck
    * @see MetaCheckPart
    */
-  CheckCustomMetadata checkMetadata(Class<? extends CheckCustomMetadata> classTarget);
+  default CheckCustomMetadata checkMetadata(Class<? extends CheckCustomMetadata> classTarget) {
+    return checkMetadata(classTarget, user -> newMetadata(classTarget));
+  }
+
+  default CheckCustomMetadata newMetadata(Class<? extends CheckCustomMetadata> initializeMe) {
+    try {
+      return initializeMe.newInstance();
+    } catch (RuntimeException exception) {
+      throw exception;
+    } catch (Exception exception) {
+      throw new IllegalStateException(exception);
+    }
+  }
+
+  /**
+   * Generate-if-absent and retrieve custom check metadata
+   *
+   * @param classTarget the metadata class
+   * @return custom check metadata
+   * @see MetaCheck
+   * @see MetaCheckPart
+   */
+  CheckCustomMetadata checkMetadata(Class<? extends CheckCustomMetadata> classTarget, @Nullable Function<? super User, ? extends CheckCustomMetadata> generator);
 
   /**
    * Retrieve custom client settings

@@ -61,6 +61,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import static de.jpx3.intave.module.feedback.FeedbackOptions.SELF_SYNCHRONIZATION;
@@ -213,18 +214,11 @@ final class PlayerUser implements User {
   }
 
   @Override
-  public CheckCustomMetadata checkMetadata(Class<? extends CheckCustomMetadata> metaClass) {
-    return metadataPool.computeIfAbsent(metaClass, this::newMetadata);
-  }
-
-  private CheckCustomMetadata newMetadata(Class<? extends CheckCustomMetadata> initializeMe) {
-    try {
-      return initializeMe.newInstance();
-    } catch (RuntimeException exception) {
-      throw exception;
-    } catch (Exception exception) {
-      throw new IllegalStateException(exception);
-    }
+  public CheckCustomMetadata checkMetadata(
+    Class<? extends CheckCustomMetadata> metaClass,
+    Function<? super User, ? extends CheckCustomMetadata> generator
+  ) {
+    return metadataPool.computeIfAbsent(metaClass, key -> generator.apply(this));
   }
 
   @Override
