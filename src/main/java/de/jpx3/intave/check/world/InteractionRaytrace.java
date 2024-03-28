@@ -292,7 +292,7 @@ public final class InteractionRaytrace extends MetaCheck<InteractionRaytrace.Int
 
     InteractionType type = breakBlock ? InteractionType.BREAK : InteractionType.START_BREAK;
     if (IntaveControl.DEBUG_INTERACTION) {
-      player.sendMessage(type + "@"+user.blockStates().typeAt(blockPosition.getX(), blockPosition.getY(), blockPosition.getZ()) + "/"+blockDamage+" " + heldItemType + " " + playerDigType);
+      player.sendMessage(type + "@"+user.blockCache().typeAt(blockPosition.getX(), blockPosition.getY(), blockPosition.getZ()) + "/"+blockDamage+" " + heldItemType + " " + playerDigType);
     }
 
     Interaction interaction = new Interaction(

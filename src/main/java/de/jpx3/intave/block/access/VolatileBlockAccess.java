@@ -228,7 +228,7 @@ public final class VolatileBlockAccess {
   }
 
   public static BlockShape collisionShapeAccess(User user, Location location) {
-    return user.blockStates().collisionShapeAt(location.getBlockX(), location.getBlockY(), location.getBlockZ());
+    return user.blockCache().collisionShapeAt(location.getBlockX(), location.getBlockY(), location.getBlockZ());
   }
 
   public static BlockShape collisionShapeAccess(User user, BlockPosition position) {
@@ -236,7 +236,7 @@ public final class VolatileBlockAccess {
   }
 
   public static BlockShape collisionShapeAccess(User user, double x, double y, double z) {
-    return user.blockStates().collisionShapeAt(floor(x), floor(y), floor(z));
+    return user.blockCache().collisionShapeAt(floor(x), floor(y), floor(z));
   }
 
   public static BlockShape collisionShapeAccess(User user, Position position) {

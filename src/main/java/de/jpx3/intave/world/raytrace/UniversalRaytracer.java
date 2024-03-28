@@ -144,7 +144,7 @@ public class UniversalRaytracer implements Raytracer {
   }
 
   private BlockShape shapeAt(Player player, int x, int y, int z) {
-    return UserRepository.userOf(player).blockStates().outlineShapeAt(x, y, z);
+    return UserRepository.userOf(player).blockCache().outlineShapeAt(x, y, z);
   }
 
   private BlockShape shapeAt(Player player, Position position) {
