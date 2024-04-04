@@ -73,7 +73,8 @@ public final class SharpRotation extends MetaCheckPart<PlacementAnalysis, SharpR
         Violation violation = Violation.builderFor(PlacementAnalysis.class)
           .forPlayer(player).withMessage(COMMON_FLAG_MESSAGE).withDetails(details)
           .appendFlags(DISPLAY_IN_ALL_VERBOSE_MODES)
-          .withDefaultThreshold().withVL(meta.sharpRotations > 10 ? 10 : 0).build();
+          .withCustomThreshold(PlacementAnalysis.legacyConfigurationLayout() ? "thresholds" : "cloud-thresholds.on-premise")
+          .withVL(meta.sharpRotations > 10 ? 10 : 0).build();
         Modules.violationProcessor().processViolation(violation);
         place.setCancelled(true);
       }

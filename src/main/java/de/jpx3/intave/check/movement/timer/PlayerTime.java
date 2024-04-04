@@ -206,6 +206,10 @@ public class PlayerTime extends MetaCheckPart<Timer, PlayerTime.PlayerTimeMeta> 
       int attackCancelThreshold = trustFactorSetting("act", player);
       int attackCancelLength = trustFactorSetting("acl", player);
       cancelOnPacketOverflow(player, event, attackCancelThreshold, attackCancelLength);
+
+      if ((System.currentTimeMillis() - metaOf(userOf(player)).lastTimerFlag) < 600) {
+        event.setCancelled(true);
+      }
     }
   }
 

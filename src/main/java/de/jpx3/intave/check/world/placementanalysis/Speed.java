@@ -129,7 +129,8 @@ public final class Speed extends MetaCheckPart<PlacementAnalysis, Speed.Placemen
             .withMessage(COMMON_FLAG_MESSAGE)
             .withDetails(((int) average / 50) + " t/b, limit at " + ((int) minAverage / 50) + " t/b")
             .appendFlags(DISPLAY_IN_ALL_VERBOSE_MODES)
-            .withDefaultThreshold().withVL(average > 400 ? 3 : average < 300 ? 5 : 4).build();
+            .withCustomThreshold(PlacementAnalysis.legacyConfigurationLayout() ? "thresholds" : "cloud-thresholds.on-premise")
+            .withVL(average > 400 ? 3 : average < 300 ? 5 : 4).build();
 
           ViolationContext violationContext = Modules.violationProcessor().processViolation(violation);
           if (violationContext.violationLevelAfter() > 20) {

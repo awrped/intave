@@ -1,11 +1,14 @@
 package de.jpx3.intave.check.world;
 
+import de.jpx3.intave.IntaveLogger;
 import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.annotate.DoNotFlowObfuscate;
 import de.jpx3.intave.annotate.Native;
 import de.jpx3.intave.check.Check;
 import de.jpx3.intave.check.world.placementanalysis.*;
 import de.jpx3.intave.user.User;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.YamlConfiguration;
 
 import static de.jpx3.intave.IntaveControl.DISABLE_LICENSE_CHECK;
 import static de.jpx3.intave.IntaveControl.GOMME_MODE;
@@ -51,6 +54,23 @@ public final class PlacementAnalysis extends Check {
 
     appendPlayerCheckPart(AngleSnap.class);
     appendPlayerCheckPart(RotationFlick.class);
+  }
+
+  private static Boolean legacyConfigLayCache = null;
+
+  public static boolean legacyConfigurationLayout() {
+    if (legacyConfigLayCache != null) {
+      return legacyConfigLayCache;
+    }
+    YamlConfiguration settings = IntavePlugin.singletonInstance().settings();
+    ConfigurationSection section = settings.getConfigurationSection("check.placementanalysis.cloud-thresholds.on-premise");
+    if (section != null) {
+      IntaveLogger.logger().info("Using new placementanalysis format");
+      return legacyConfigLayCache = false;
+    } else {
+      IntaveLogger.logger().info("Still using old placementanalysis config format");
+      return legacyConfigLayCache = true;
+    }
   }
 
   public void applyPlacementAnalysisDamageCancel(User user, String checkId) {

@@ -455,7 +455,7 @@ public final class PredictiveSimulationProcessor implements SimulationProcessor 
             IterativeStudy.USE_ITEM_ITERATOR.run();
             boolean canExpectCorrectReduce = !protocol.combatUpdate() && movementData.pastVelocity > 1 && movementData.motion().horizontalLength() > 0.2;
             boolean enforceCorrectReduction = movementData.forceCorrectReduce && canExpectCorrectReduce;
-            for (int reduceIndex = 0; reduceIndex <= movementData.reduceTicks; reduceIndex++) {
+            for (int reduceIndex = 0; reduceIndex <= Math.min(movementData.reduceTicks, 3); reduceIndex++) {
               if (enforceCorrectReduction && reduceIndex != movementData.reduceTicks) {
                 continue;
               }
@@ -472,9 +472,6 @@ public final class PredictiveSimulationProcessor implements SimulationProcessor 
                   continue;
                 }
                 if (sprinting && movementData.isSneaking() && !jumped) {
-                  continue;
-                }
-                if (reduceIndex > 0 && !sprinting) {
                   continue;
                 }
                 IterativeStudy.JUMP_ITERATOR.run();

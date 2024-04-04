@@ -94,7 +94,8 @@ public final class BlockRotation extends MetaCheckPart<PlacementAnalysis, BlockR
         Violation violation = Violation.builderFor(PlacementAnalysis.class)
           .forPlayer(player).withMessage(COMMON_FLAG_MESSAGE).withDetails(details)
           .appendFlags(DISPLAY_IN_ALL_VERBOSE_MODES)
-          .withDefaultThreshold().withVL(10).build();
+          .withCustomThreshold(PlacementAnalysis.legacyConfigurationLayout() ? "thresholds" : "cloud-thresholds.on-premise")
+          .withVL(10).build();
         Modules.violationProcessor().processViolation(violation);
       }
     } else if (meta.vl > 0) {

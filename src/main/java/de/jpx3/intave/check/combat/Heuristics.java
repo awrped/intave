@@ -42,6 +42,8 @@ import de.jpx3.intave.user.meta.ProtocolMetadata;
 import de.jpx3.intave.user.storage.HeuristicsStorage;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
@@ -307,23 +309,39 @@ public final class Heuristics extends MetaCheck<Heuristics.HeuristicMeta> {
       } else {
         identifier = resolveIdentifier(activeAnomalies);
       }
-      String threshold = "confidence-thresholds." + overallActiveConfidence.output();
+      String threshold;
+      if (legacyConfigurationLayout()) {
+        threshold = "confidence-thresholds." + overallActiveConfidence.output();
+      } else {
+        threshold = "cloud-thresholds.on-premise";
+      }
+
       String message = "is fighting suspiciously";
-      String confidenceName = overallActiveConfidence.confidenceName();
-      String confidenceSymbol = overallActiveConfidence.output();
-      String confidence = confidenceName + " (" + confidenceSymbol + ")";
-      String typeName = findDominantTypeIn(activeAnomalies).typeName();
-      String details = "on-premise " + identifier + " at " + confidenceSymbol;
+      String details = "on-premise " + identifier;
 
       Violation violation = Violation.builderFor(Heuristics.class)
         .forPlayer(player).withMessage(message).withDetails(details)
         .withCustomThreshold(threshold).withVL(25)
         .withPlaceholder("identifier", identifier)
-        .withPlaceholder("confidence", confidence)
-        .withPlaceholder("confidence-name", confidenceName)
-        .withPlaceholder("confidence-symbol", confidenceSymbol)
         .build();
       Modules.violationProcessor().processViolation(violation);
+    }
+  }
+
+  private static Boolean legacyConfigLayCache = null;
+
+  public static boolean legacyConfigurationLayout() {
+    if (legacyConfigLayCache != null) {
+      return legacyConfigLayCache;
+    }
+    YamlConfiguration settings = IntavePlugin.singletonInstance().settings();
+    ConfigurationSection section = settings.getConfigurationSection("check.heuristics.cloud-thresholds.on-premise");
+    if (section != null) {
+      IntaveLogger.logger().info("Using new heuristics format");
+      return legacyConfigLayCache = false;
+    } else {
+      IntaveLogger.logger().info("Still using old heuristics config format");
+      return legacyConfigLayCache = true;
     }
   }
 

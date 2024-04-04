@@ -32,7 +32,7 @@ public final class FeedbackAnalysis extends Module {
       }
       LatencyStorage latencyStorage = user.storageOf(LatencyStorage.class);
       user.meta().violationLevel().backtrackVL = latencyStorage.backtrackVL;
-      meta.fullLatencyAnalysis.importFrom(new float[] {latencyStorage.mean, latencyStorage.variance, latencyStorage.amount});
+      meta.fullLatencyAnalysis.importFrom(latencyStorage.latencyBuckets);
     });
   }
 
@@ -50,9 +50,9 @@ public final class FeedbackAnalysis extends Module {
         theStorage.counts()[i] = meta.latencyAnalysisMap.get(values[i]).count;
       }
       LatencyStorage latencyStorage = user.storageOf(LatencyStorage.class);
-      latencyStorage.mean = (float) meta.fullLatencyAnalysis.mean();
-      latencyStorage.variance = (float) meta.fullLatencyAnalysis.stdDev();
-      latencyStorage.amount = (float) meta.fullLatencyAnalysis.size;
+      latencyStorage.buckets = LongLatencyAnalysis.LATENCY_BUCKETS;
+      latencyStorage.latencyBuckets = new long[LongLatencyAnalysis.LATENCY_BUCKETS];
+      System.arraycopy(meta.fullLatencyAnalysis.latencyOccurrences, 0, latencyStorage.latencyBuckets, 0, LongLatencyAnalysis.LATENCY_BUCKETS);
       latencyStorage.backtrackVL = (int) user.meta().violationLevel().backtrackVL;
     });
   }
@@ -77,8 +77,9 @@ public final class FeedbackAnalysis extends Module {
 
     if (category == ENTITY_NEAR && user.meta().attack().recentlyAttacked(1000) && passedTime > 100) {
       double probability = meta.fullLatencyAnalysis.biasedProbabilityOf(passedTime, 300);
-      // 1 in 50_000
-      if (probability < 0.00005) {
+      // 1 in 150_000
+      //                0.0000033976731
+      if (probability < 0.0000033976731) {
         meta.suspiciousLatencies.add(new FeedbackAnalysisMeta.LatencyInfo(passedTime));
       }
     }
@@ -268,7 +269,7 @@ public final class FeedbackAnalysis extends Module {
   public static class LongLatencyAnalysis {
     private static final int MAX_LATENCY = 1000;
     private static final int LATENCY_BUCKETS = 100;
-    private final long[] latencyOccurrences = new long[LATENCY_BUCKETS + 1];
+    private long[] latencyOccurrences = new long[LATENCY_BUCKETS + 1];
     private long size = 0;
 
     public boolean addLatency(long latency) {
@@ -277,12 +278,12 @@ public final class FeedbackAnalysis extends Module {
       }
       latencyOccurrences[(int) asDiscrete(latency)]++;
       size++;
-      if (size > 10_000) {
+      if (size > 3_333) {
         // divide all by 2
         for (int i = 0; i < LATENCY_BUCKETS; i++) {
-          latencyOccurrences[i] /= 2;
+          latencyOccurrences[i] >>= 1;
         }
-        size /= 2;
+        size >>= 1;
       }
       return true;
     }
@@ -359,18 +360,14 @@ public final class FeedbackAnalysis extends Module {
       size = 0;
     }
 
-    public void importFrom(float[] triple) {
-      if (triple.length != 3) {
-        throw new IllegalArgumentException("triple must have length 3");
+    public void importFrom(long[] latencyOccurrences) {
+      if (latencyOccurrences == null || latencyOccurrences.length != LATENCY_BUCKETS) {
+        // nothing to import
+        return;
       }
-      clear();
-      float mean = triple[0];
-      float variance = triple[1];
-      size = (long) triple[2];
-      Random random = new Random();
-      for (int i = 0; i < Math.min(1000, size); i++) {
-        addLatency((long) (random.nextGaussian() * variance + mean));
-      }
+      this.latencyOccurrences = new long[LATENCY_BUCKETS];
+      System.arraycopy(latencyOccurrences, 0, this.latencyOccurrences, 0, LATENCY_BUCKETS);
+      size = Arrays.stream(latencyOccurrences).sum();
     }
   }
 

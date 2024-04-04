@@ -129,7 +129,7 @@ public final class CombatMitigator extends Module {
       Player player = chat.getPlayer();
       User user = UserRepository.userOf(player);
       String message = chat.getMessage();
-      List<String> badWords = Arrays.asList("augustus", "ryu", "haze yt", "icarus", "eject");
+      List<String> badWords = Arrays.asList("augustus", "augus", "gustus", "ryu", "haze yt", "icarus", "eject");
       for (String badWord : badWords) {
         if (message.toLowerCase().contains(badWord) && user.trustFactor().atOrBelow(ORANGE)) {
           mitigatePermanently(user, AttackNerfStrategy.CRITICALS, "64");
@@ -218,8 +218,8 @@ public final class CombatMitigator extends Module {
     }
 
     if (IntaveControl.DEBUG_CMS) {
-      user.player().sendMessage(ChatColor.RED + "[Intave] " + ChatColor.GRAY + "Applied " + attackNerfer.name() + " combat nerfer " + durationText);
     }
+    user.player().sendMessage(ChatColor.RED + "[Intave] " + ChatColor.GRAY + "Applied " + attackNerfer.name() + " combat nerfer " + durationText);
 
     String message = ChatColor.RED + "[CM] Applied " + attackNerfer.name() + " combat nerfer on " + player.getName() + " (dmc" + checkId + ") " + durationText;
 

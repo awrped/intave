@@ -22,7 +22,8 @@ public final class ClientboundCombatModifier extends JsonPacket<Clientbound> {
   public void serialize(JsonWriter writer) {
     try {
       writer.beginObject();
-      writer.name("id").value(id.toString());
+      writer.name("id");
+      id.serialize(writer);
       writer.name("modifier").value(modifier);
       writer.name("duration").value(duration);
       writer.endObject();
@@ -57,5 +58,17 @@ public final class ClientboundCombatModifier extends JsonPacket<Clientbound> {
     } catch (Exception e) {
       e.printStackTrace();
     }
+  }
+
+  public Identity identity() {
+    return id;
+  }
+
+  public String modifier() {
+    return modifier;
+  }
+
+  public int duration() {
+    return duration;
   }
 }

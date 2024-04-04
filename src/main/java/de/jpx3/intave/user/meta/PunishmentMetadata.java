@@ -24,7 +24,7 @@ import static org.bukkit.event.entity.EntityDamageEvent.DamageModifier.*;
 
 @Relocate
 public final class PunishmentMetadata {
-  public static final long DAMAGE_CANCEL_LIGHT_DURATION = 40_000;
+  public static final long DAMAGE_CANCEL_LIGHT_DURATION = 80_000;
   private static final long DAMAGE_CANCEL_MEDIUM_DURATION = 40_000;
   private static final long DAMAGE_CANCEL_HEAVY_DURATION = 5_000;
   private static final long BLOCKING_DAMAGE_CANCEL_DURATION = 15_000;
@@ -67,11 +67,13 @@ public final class PunishmentMetadata {
         if (target.meta().protocol().combatUpdate()) {
           return;
         }
-        double attackDamage = DamageModify.attackDamageOf((Player) event.getDamager());
-        ItemStack heldItem = UserRepository.userOf((Player) event.getDamager()).meta().inventory().heldItem();
-        attackDamage += DamageModify.sharpnessDamageOf(heldItem);
-        event.setDamage(BASE, Math.min(attackDamage, event.getDamage(BASE)));
-        DamageModify.refreshModifiers(event);
+        if (ThreadLocalRandom.current().nextDouble() > 0.5) {
+          double attackDamage = DamageModify.attackDamageOf((Player) event.getDamager());
+          ItemStack heldItem = UserRepository.userOf((Player) event.getDamager()).meta().inventory().heldItem();
+          attackDamage += DamageModify.sharpnessDamageOf(heldItem);
+          event.setDamage(BASE, Math.min(attackDamage, event.getDamage(BASE)));
+          DamageModify.refreshModifiers(event);
+        }
       }),
       new AttackNerfer(
         AttackNerfStrategy.DMG_HIGH, DAMAGE_CANCEL_HEAVY_DURATION,
@@ -83,14 +85,19 @@ public final class PunishmentMetadata {
       new AttackNerfer(
         AttackNerfStrategy.DMG_MEDIUM, DAMAGE_CANCEL_MEDIUM_DURATION,
         event -> {
-          event.setDamage(BASE, event.getDamage(BASE) * 0.7);
+          boolean similarArmor = armorSimilarity(player, event.getEntity()) > 0.75;
+          double modifier = Math.abs(ThreadLocalRandom.current().nextGaussian() * (similarArmor ? 0.05 : 0.175)) + 0.8;
+          if (modifier > 1) {
+            modifier = 1;
+          }
+          event.setDamage(BASE, event.getDamage(BASE) * modifier);
           DamageModify.refreshModifiers(event);
         }
       ),
       new AttackNerfer(
         AttackNerfStrategy.DMG_LIGHT, DAMAGE_CANCEL_LIGHT_DURATION,
         event -> {
-          event.setDamage(BASE, event.getDamage(BASE) * 0.9);
+          event.setDamage(BASE, event.getDamage(BASE) * (armorSimilarity(player, event.getEntity()) > 0.75 ? 1 : 0.95));
           DamageModify.refreshModifiers(event);
         }
       ),
@@ -184,6 +191,30 @@ public final class PunishmentMetadata {
 //    int increase = 2;
 //    HurttimeModifier.applyHurtTimeChangeTo(player, (int) (ENTITY_HURT_TIME_CHANGE_DURATION / 50), increase);
 //  }
+
+  private double armorSimilarity(Entity alpha, Entity beta) {
+    if (!(alpha instanceof Player) || !(beta instanceof Player)) {
+      return 0;
+    }
+    ItemStack[] armorContents = ((Player) alpha).getEquipment().getArmorContents();
+    ItemStack[] armorContents2 = ((Player) beta).getEquipment().getArmorContents();
+    double similarity = 0;
+    for (int i = 0; i < armorContents.length; i++) {
+      ItemStack item = armorContents[i];
+      ItemStack item2 = armorContents2[i];
+      if (item == null || item2 == null) {
+        if (item == item2) {
+          similarity++;
+        }
+        continue;
+      }
+      if (item.getType() == item2.getType()) {
+        similarity++;
+      }
+    }
+
+    return similarity / 4;
+  }
 
   public List<AttackNerfer> allNerfers() {
     return attackNerfers;

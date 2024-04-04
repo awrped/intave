@@ -26,6 +26,7 @@ import de.jpx3.intave.check.movement.Timer;
 import de.jpx3.intave.check.movement.physics.Pose;
 import de.jpx3.intave.check.world.InteractionRaytrace;
 import de.jpx3.intave.executor.Synchronizer;
+import de.jpx3.intave.math.Hypot;
 import de.jpx3.intave.math.MathHelper;
 import de.jpx3.intave.module.Module;
 import de.jpx3.intave.module.Modules;
@@ -445,11 +446,20 @@ public final class MovementDispatcher extends Module {
       movementData.dismountRidingEntity("Riding dead entity");
     }
 
+    double distanceMoved = Hypot.fast(movementData.motionX(), movementData.motionZ());
+    if (inventoryData.activatedItemThisTick && inventoryData.deactivatedItemThisTick && distanceMoved > 0.1) {
+      // flush
+      inventoryData.releaseItemNextTick = true;
+    }
+
     if (inventoryData.releaseItemNextTick) {
       releaseItem(user);
       inventoryData.releaseItemNextTick = false;
       inventoryData.releaseItemType = Material.AIR;
     }
+
+    inventoryData.activatedItemThisTick = false;
+    inventoryData.deactivatedItemThisTick = false;
 
     if (violationLevelData.isInActiveTeleportBundle) {
       if (DEBUG_MOVEMENT_IGNORE) {
@@ -1182,8 +1192,8 @@ public final class MovementDispatcher extends Module {
 //        Synchronizer.synchronize(() -> {
 //          user.player().sendMessage("Item Usage Tick");
 //        });
-        System.out.println("[Intave] Item Usage Tick");
-        IntavePlugin.singletonInstance().logTransmittor().addPlayerLog(user.player(), "(DEBUG/MOVEMENTIGNORE) Item Usage Tick");
+//        System.out.println("[Intave] Item Usage Tick");
+//        IntavePlugin.singletonInstance().logTransmittor().addPlayerLog(user.player(), "(DEBUG/MOVEMENTIGNORE) Item Usage Tick");
       }
     }
   }

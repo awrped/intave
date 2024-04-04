@@ -64,6 +64,7 @@ public final class PacketOrder extends MetaCheckPart<PlacementAnalysis, PacketOr
             Violation violation = Violation.builderFor(PlacementAnalysis.class)
               .forPlayer(player)
               .withMessage(COMMON_FLAG_MESSAGE)
+              .withCustomThreshold(PlacementAnalysis.legacyConfigurationLayout() ? "thresholds" : "cloud-thresholds.on-premise")
               .withVL(2)
               .build();
             ViolationContext violationContext = Modules.violationProcessor().processViolation(violation);

@@ -1042,7 +1042,10 @@ public final class InteractionRaytrace extends MetaCheck<InteractionRaytrace.Int
     granulars.put("expected_direction", interaction.targetDirection().name());
     granulars.put("actual_block", MathHelper.formatPosition(raycastLocation));
     granulars.put("actual_direction", raycastResult == null ? "null" : raycastResult.sideHit.name());
-//    details += ", " + searches + " rays";
+
+
+    //    details += ", " + searches + " rays";
+
     Violation violation = Violation.builderFor(InteractionRaytrace.class)
       .forPlayer(player).withMessage(message).withDetails(details).withVL(vl)
       .withGranulars(granulars)

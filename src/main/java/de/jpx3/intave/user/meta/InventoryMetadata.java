@@ -33,6 +33,8 @@ public final class InventoryMetadata {
   public long lastBlockArrowRequest;
   public long lastFoodConsumptionBlockRequest;
   public boolean releaseItemNextTick = false;
+  public boolean activatedItemThisTick = false;
+  public boolean deactivatedItemThisTick = false;
   public Material releaseItemType = Material.AIR;
   public volatile SlotSwitchData slotSwitchData;
   public int pastSlotSwitch;
@@ -123,6 +125,7 @@ public final class InventoryMetadata {
       }
       this.pastItemUsageTransition = 0;
       this.handActiveTicks = 0;
+      this.activatedItemThisTick = true;
 
       if (IntaveControl.DEBUG_ITEM_USAGE) {
         Material activeItem = this.activeItemType;
@@ -158,8 +161,9 @@ public final class InventoryMetadata {
       this.handActive = false;
       this.pastItemUsageTransition = 0;
       this.handActiveTicks = 0;
+      this.deactivatedItemThisTick = true;
+      Material activeItem = this.activeItemType;
       if (IntaveControl.DEBUG_ITEM_USAGE) {
-        Material activeItem = this.activeItemType;
         Synchronizer.synchronize(() -> {
           player.sendMessage("Item usage ended: " + activeItem);
         });

@@ -289,22 +289,25 @@ public final class AttackRaytrace extends MetaCheck<AttackRaytrace.AttackRaytrac
       double general = feedbackAnalysis.generalLatency(user);
       double combat = feedbackAnalysis.entityNearLatency(user);
 
-      Violation violation = Violation.builderFor(AttackRaytrace.class)
-        .forPlayer(player).withCustomThreshold("timeout")
-        .withVL(2)
-        .withMessage("has different combat/idle latency")
-        .withDetails(((int)general) + "ms to " + ((int)combat) + "ms combat")
-        .appendFlags(DISPLAY_IN_ALL_VERBOSE_MODES)
-        .build();
-      ViolationContext violationContext = Modules.violationProcessor().processViolation(violation);
-      double after = violationContext.violationLevelAfter();
-      if (after > 30) {
-        entityHasTimedOut = true;
-        user.nerf(AttackNerfStrategy.DMG_HIGH, "67");
-      }
-      if (IntaveControl.GOMME_MODE) {
+      if (Math.abs(general - combat) > 50) {
+        Violation violation = Violation.builderFor(AttackRaytrace.class)
+          .forPlayer(player).withCustomThreshold("timeout")
+          .withVL(2)
+          .withMessage("has different combat/idle latency")
+          .withDetails(((int)general) + "ms to " + ((int)combat) + "ms combat")
+          .appendFlags(DISPLAY_IN_ALL_VERBOSE_MODES)
+          .build();
+        ViolationContext violationContext = Modules.violationProcessor().processViolation(violation);
+        double after = violationContext.violationLevelAfter();
+        if (after > 30) {
+          entityHasTimedOut = true;
+          user.nerf(AttackNerfStrategy.DMG_HIGH, "67");
+        }
+        if (IntaveControl.GOMME_MODE) {
 //        System.out.println("TIMEOUT_X: " + player.getName() + " attacked " + attackedEntity.entityName() + " with " + pendingFeedbacks + " pending feedbacks (" + distanceOverLimit + " | " + maximumPendingFeedbackPackets + ")");
+        }
       }
+
     }
 
     // protection 4: long-term protection
@@ -323,7 +326,7 @@ public final class AttackRaytrace extends MetaCheck<AttackRaytrace.AttackRaytrac
         double zScore = (highest - mean) / stdDev;
 //        double latencyProbability = feedbackAnalysis.latencyProbability(user, highest);
 //        player.sendMessage(violationLevel.backtrackVL + " | " + formatDouble(latencyProbability * 100, 8) + "%");
-        violationLevel.backtrackVL = Math.min(violationLevel.backtrackVL + 1, 13);
+        violationLevel.backtrackVL = Math.min(violationLevel.backtrackVL + (zScore > 4.5 ? 1 : 0.5), 13);
         if (violationLevel.backtrackVL > 3) {
           // Message: attacked expired position of <entity>
           // Details: Latency ~ N(μ, σ²) shows attack outlier probability of <probability>%
@@ -333,6 +336,8 @@ public final class AttackRaytrace extends MetaCheck<AttackRaytrace.AttackRaytrac
             .withMessage("delayed " + entityName.toLowerCase(Locale.ROOT) + " movement packets")
 //            .withDetails("N("+((int)highest)+" | " + ((int)mean) + ", " + ((int)stdDev) + ") = " + formatDouble(latencyProbability * 100, 9) + "%")
 //            .withDetails(((int) highest) + "ms unlikely: " + formatDouble(latencyProbability * 100, 9) + "%")
+            .addGranular("EXPR", "N("+((int)highest)+" | " + ((int)mean) + ", " + ((int)stdDev) + ")")
+            .addGranular("PROB", formatDouble(feedbackAnalysis.latencyProbability(user, highest) * 100, 12))
             .withDetails(((int) highest) + ", "+((int) mean) + ", " + ((int) stdDev) + " = " + formatDouble(zScore, 2))
             .appendFlags(DISPLAY_IN_ALL_VERBOSE_MODES)
             .build();
@@ -343,6 +348,12 @@ public final class AttackRaytrace extends MetaCheck<AttackRaytrace.AttackRaytrac
             entityHasTimedOut = true;
             violationLevel.lastBacktrackHitCancelRequest = System.currentTimeMillis();
             user.nerf(AttackNerfStrategy.DMG_HIGH, "67");
+          }
+          if (after > 80) {
+            violationLevel.lastBacktrackHitCancelRequest = System.currentTimeMillis();
+            user.nerf(AttackNerfStrategy.DMG_MEDIUM, "67");
+            user.nerf(AttackNerfStrategy.CRITICALS, "67");
+            user.nerf(AttackNerfStrategy.CANCEL, "67");
           }
           violationLevel.lastBacktrackVLChange = System.currentTimeMillis();
         }

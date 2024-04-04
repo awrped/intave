@@ -33,6 +33,19 @@ final class LadderBlockPatch extends BlockShapePatch {
     }
   }
 
+  @Override
+  protected BlockShape outlinePatch(World world, Player player, int posX, int posY, int posZ, Material type, int blockState, BlockShape shape) {
+    User user = UserRepository.userOf(player);
+    BlockVariant variant = BlockVariantRegister.variantOf(type, blockState);
+    Direction direction = variant.enumProperty(Direction.class, "facing");
+    boolean modern = user.meta().protocol().combatUpdate();
+    if (modern) {
+      return MODERN_PATCH_REDUNDANT ? shape : modernPath(direction);
+    } else {
+      return legacyPatch(direction);
+    }
+  }
+
   private BlockShape modernPath(Direction direction) {
     switch (direction) {
       case NORTH:

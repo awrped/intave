@@ -53,7 +53,6 @@ public final class ClickSpeedLimiter extends MetaCheck<ClickSpeedLimiter.ClickSp
         meta.attackCountArray[meta.attackArrayIndex]++;
       } else {
         meta.attacksDuringFlyingPackets.add(System.currentTimeMillis());
-//        meta.attacksThisTick++;
       }
     }
 

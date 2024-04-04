@@ -1,6 +1,7 @@
 package de.jpx3.intave.connect.cloud.protocol.pipeline;
 
 import de.jpx3.intave.IntaveLogger;
+import de.jpx3.intave.check.combat.Heuristics;
 import de.jpx3.intave.connect.cloud.Session;
 import de.jpx3.intave.connect.cloud.protocol.*;
 import de.jpx3.intave.connect.cloud.protocol.listener.Clientbound;
@@ -34,12 +35,16 @@ public final class HandshakeReceiver extends ChannelInboundHandlerAdapter implem
   @Override
   public void channelActive(ChannelHandlerContext ctx) {
     Shard shard = session.shard();
+    ArrayList<String> hmacs = new ArrayList<>(Security.getAlgorithms("Mac2"));
+    if (!Heuristics.legacyConfigurationLayout()) {
+      hmacs.add("HeuristicsV2");
+    }
     ServerboundHello serverHelloPacket = ServerboundHello.builder()
       .token(shard == null ? new Token(new byte[0], 0) : shard.token())
       .supportedEncryptionAlgorithms(Security.getAlgorithms("Cipher").stream().filter(s -> s.startsWith("AES")).collect(Collectors.toList()))
       .supportedEncryptionKeySizes(Collections.singletonList(128))
       .supportedCompressionAlgorithms(Collections.singletonList("GZIP"))
-      .supportedHMACAlgorithms(new ArrayList<>(Security.getAlgorithms("Mac2")))
+      .supportedHMACAlgorithms(hmacs)
       .clientboundProtocol(PacketRegistry.packetSpecsFor(CLIENTBOUND))
       .serverboundProtocol(PacketRegistry.packetSpecsFor(SERVERBOUND))
       .build();

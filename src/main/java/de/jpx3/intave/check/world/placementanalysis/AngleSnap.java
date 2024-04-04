@@ -65,7 +65,8 @@ public class AngleSnap extends PlayerCheckPart<PlacementAnalysis> {
             .withMessage(COMMON_FLAG_MESSAGE)
             .withDetails((int)rotationSum + "deg snap to 45deg angle over " + maxHistory + " ticks")
             .appendFlags(DISPLAY_IN_ALL_VERBOSE_MODES)
-            .withDefaultThreshold().withVL(outputVL).build();
+            .withCustomThreshold(PlacementAnalysis.legacyConfigurationLayout() ? "thresholds" : "cloud-thresholds.on-premise")
+            .withVL(outputVL).build();
           Modules.violationProcessor().processViolation(violation);
         }
         rotationHistory.clear();

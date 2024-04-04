@@ -34,10 +34,10 @@ public final class SneakAndPlace extends MetaCheckPart<PlacementAnalysis, SneakA
   }
 
   @PacketSubscription(
-      priority = ListenerPriority.HIGH,
-      packetsIn = {
-          FLYING, LOOK, POSITION, POSITION_LOOK
-      }
+    priority = ListenerPriority.HIGH,
+    packetsIn = {
+      FLYING, LOOK, POSITION, POSITION_LOOK
+    }
   )
   public void clientTickUpdate(PacketEvent event) {
     Player player = event.getPlayer();
@@ -83,10 +83,10 @@ public final class SneakAndPlace extends MetaCheckPart<PlacementAnalysis, SneakA
   }
 
   @PacketSubscription(
-      priority = ListenerPriority.HIGH,
-      packetsIn = {
-          BLOCK_PLACE
-      }
+    priority = ListenerPriority.HIGH,
+    packetsIn = {
+      BLOCK_PLACE
+    }
   )
   public void receivePlacementPacket(PacketEvent event) {
     PacketContainer packet = event.getPacket();
@@ -110,10 +110,10 @@ public final class SneakAndPlace extends MetaCheckPart<PlacementAnalysis, SneakA
   }
 
   @PacketSubscription(
-      priority = ListenerPriority.HIGH,
-      packetsIn = {
-          ENTITY_ACTION_IN
-      }
+    priority = ListenerPriority.HIGH,
+    packetsIn = {
+      ENTITY_ACTION_IN
+    }
   )
   public void receiveEntityActionPacket(PacketEvent event) {
     Player player = event.getPlayer();
@@ -147,11 +147,12 @@ public final class SneakAndPlace extends MetaCheckPart<PlacementAnalysis, SneakA
     if (place.getBlock().getY() < player.getLocation().getBlockY() && isOneLine(meta.lastBlocksPlaced) && blockAgainstWasPlaced(user, place.getBlockAgainst())) {
       if (meta.violationLevel > 5) {
         Violation violation = Violation.builderFor(PlacementAnalysis.class)
-            .forPlayer(player).withDefaultThreshold()
-            .withMessage(COMMON_FLAG_MESSAGE)
-            .withDetails("sneaking seems to be automated (sneak)")
-            .appendFlags(DISPLAY_IN_ALL_VERBOSE_MODES)
-            .withDefaultThreshold().withVL(Math.min(meta.violationLevel / 1.5, 5)).build();
+          .forPlayer(player).withDefaultThreshold()
+          .withMessage(COMMON_FLAG_MESSAGE)
+          .withDetails("sneaking seems to be automated (sneak)")
+          .appendFlags(DISPLAY_IN_ALL_VERBOSE_MODES)
+          .withCustomThreshold(PlacementAnalysis.legacyConfigurationLayout() ? "thresholds" : "cloud-thresholds.on-premise")
+          .withVL(Math.min(meta.violationLevel / 1.5, 5)).build();
         Modules.violationProcessor().processViolation(violation);
       }
     } else {
@@ -168,10 +169,10 @@ public final class SneakAndPlace extends MetaCheckPart<PlacementAnalysis, SneakA
 
   private boolean isOneLine(List<? extends Vector> blocks) {
     int lastBlockX = 0,
-        lastBlockY = 0,
-        lastBlockZ = 0;
+      lastBlockY = 0,
+      lastBlockZ = 0;
     boolean lockedOnX = false,
-        lockedOnZ = false;
+      lockedOnZ = false;
     boolean first = true;
     int yTolerance = 2;
     for (Vector block : blocks) {

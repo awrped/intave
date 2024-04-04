@@ -98,7 +98,8 @@ public final class Snap extends MetaCheckPart<PlacementAnalysis, Snap.SnapMeta> 
       if (Math.abs(meta.yawMotion(1) - meta.yawMotion(2)) < 5 && Math.abs(meta.yawMotion(1) - meta.yawMotion(2)) < 5) {
         if (absYawDiff(meta.yawAt(1), meta.yawAt(3)) < 3 && absPitchDiff(meta.pitchAt(1), meta.pitchAt(3)) < 3) {
           Violation violation = Violation.builderFor(PlacementAnalysis.class)
-            .forPlayer(player).withDefaultThreshold()
+            .forPlayer(player)
+            .withCustomThreshold(PlacementAnalysis.legacyConfigurationLayout() ? "thresholds" : "cloud-thresholds.on-premise")
             .withMessage(COMMON_FLAG_MESSAGE).withDetails("back snap")
             .appendFlags(DISPLAY_IN_ALL_VERBOSE_MODES)
             .withVL(0).build();
