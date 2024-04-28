@@ -129,6 +129,9 @@ public final class StorageLoader extends Module {
     }
     UUID id = player.getUniqueId();
     ByteBuffer buffer = StorageIOProcessor.outputFrom(storage);
+    if (buffer.array().length > 40_000) {
+      return;
+    }
     BackgroundExecutors.execute(() ->
       storageGateway.saveStorage(id, buffer));
   }

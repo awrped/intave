@@ -38,6 +38,7 @@ import de.jpx3.intave.module.linker.packet.PacketSubscription;
 import de.jpx3.intave.module.linker.packet.PrioritySlot;
 import de.jpx3.intave.module.mitigate.AttackNerfStrategy;
 import de.jpx3.intave.module.tracker.entity.Entity;
+import de.jpx3.intave.module.tracker.player.PacketLogging;
 import de.jpx3.intave.module.violation.Violation;
 import de.jpx3.intave.packet.PacketSender;
 import de.jpx3.intave.packet.reader.*;
@@ -277,8 +278,11 @@ public final class MovementDispatcher extends Module {
     }
   )
   public void receiveMovement(PacketEvent event) {
+    PacketLogging logging = Modules.tracker().packetLogging();
+
     Player player = event.getPlayer();
     if (player.isDead() || event.isCancelled()) {
+      logging.logSystemMessage(UserRepository.userOf(player), () -> "MOVEMENT IGNORED: Player is dead or event is cancelled");
       return;
     }
 
@@ -307,6 +311,7 @@ public final class MovementDispatcher extends Module {
       movementData.applyGroundInformationToPacket(packet);
       movementData.rotationYaw = packet.getFloat().read(0);
       movementData.rotationPitch = packet.getFloat().read(1);
+      logging.logSystemMessage(user, () -> "MOVEMENT IGNORED: Vehicle rotation only");
       return;
     }
 
@@ -324,7 +329,8 @@ public final class MovementDispatcher extends Module {
     if (hasMovement) {
       StructureModifier<Double> modifier = packet.getDoubles();
       for (int i = 0; i < 3; i++) {
-        if (modifier.read(i) == null || Double.isInfinite(modifier.read(i)) && FaultKicks.POSITION_FAULTS) {
+        Double read = modifier.read(i);
+        if ((read == null || Double.isInfinite(read) || Double.isNaN(read)) && FaultKicks.POSITION_FAULTS) {
           user.kick("Intolerable position fault");
           return;
         }
@@ -334,7 +340,8 @@ public final class MovementDispatcher extends Module {
     if (hasRotation) {
       StructureModifier<Float> modifier = packet.getFloat();
       for (int i = 0; i < 2; i++) {
-        if (modifier.read(i) == null || Double.isInfinite(modifier.read(i)) && FaultKicks.POSITION_FAULTS) {
+        Float read = modifier.read(i);
+        if ((read == null || Double.isInfinite(read) || Double.isNaN(read)) && FaultKicks.POSITION_FAULTS) {
           user.kick("Intolerable position fault");
           return;
         }
@@ -387,6 +394,7 @@ public final class MovementDispatcher extends Module {
           System.out.println("[Intave] Click movement ignore distance: " + distance + " yaw: " + yawDifference + " pitch: " + pitchDifference);
           IntavePlugin.singletonInstance().logTransmittor().addPlayerLog(player, "(DEBUG/MOVEMENTIGNORE) Click movement ignore distance: " + distance + " yaw: " + yawDifference + " pitch: " + pitchDifference);
         }
+        logging.logSystemMessage(user, () -> "MOVEMENT IGNORED: Click movement ignore distance: " + distance);
 
         if (!MinecraftVersions.VER1_9_0.atOrAbove()) {
           event.setCancelled(true);
@@ -414,6 +422,7 @@ public final class MovementDispatcher extends Module {
       }
       event.setCancelled(true);
       movementData.dropPostTickMotionProcessing = true;
+      logging.logSystemMessage(user, () -> "MOVEMENT IGNORED: Teleport movement ignore " + movementData.awaitTeleport + " " + movementData.awaitOutgoingTeleport);
       return;
     }
 
@@ -428,6 +437,7 @@ public final class MovementDispatcher extends Module {
         System.out.println("[Intave] Distance movement ignore: " + distance);
         IntavePlugin.singletonInstance().logTransmittor().addPlayerLog(player, "(DEBUG/MOVEMENTIGNORE) Distance movement ignore: " + distance);
       }
+      logging.logSystemMessage(user, () -> "MOVEMENT REJECTED: Distance over limit: " + distance);
       event.setCancelled(true);
       Vector vector = new Vector(movementData.baseMotionX, movementData.baseMotionY, movementData.baseMotionZ);
       Modules.mitigate().movement().emulationSetBack(player, vector, 10, false);
@@ -474,6 +484,7 @@ public final class MovementDispatcher extends Module {
         System.out.println("[Intave] Teleport bundle movement ignore");
         IntavePlugin.singletonInstance().logTransmittor().addPlayerLog(player, "(DEBUG/MOVEMENTIGNORE) Teleport bundle movement ignore");
       }
+      logging.logSystemMessage(user, () -> "MOVEMENT IGNORED: Teleport bundle movement ignore");
       event.setCancelled(true);
       return;
     }
@@ -492,6 +503,7 @@ public final class MovementDispatcher extends Module {
         System.out.println("[Intave] Movement reset ignore");
         IntavePlugin.singletonInstance().logTransmittor().addPlayerLog(player, "(DEBUG/MOVEMENTIGNORE) Movement reset ignore");
       }
+      logging.logSystemMessage(user, () -> "MOVEMENT IGNORED: Movement reset ignore");
       movementData.canResetMotion = false;
       return;
     }
@@ -499,8 +511,6 @@ public final class MovementDispatcher extends Module {
     if (!connectionData.nextFeedbackSubscribers.isEmpty()) {
       connectionData.movementPassedForNFS = true;
     }
-
-//    System.out.println("Received movement");
 
     if (!movementData.isTeleportConfirmationPacket) {
       timerCheck.receiveMovement(event);
@@ -512,6 +522,7 @@ public final class MovementDispatcher extends Module {
       if (hasMovement || hasRotation) {
         physicsCheck.receiveMovement(user, hasMovement, hasRotation);
       } else {
+        logging.logSystemMessage(user, () -> "MOVEMENT IGNORED: No movement or rotation");
         physicsCheck.updateOnGroundIfFlying(user);
       }
 
@@ -554,8 +565,10 @@ public final class MovementDispatcher extends Module {
 
     // flag & setback -> remove packet
     if (movementData.invalidMovement && violationLevelData.isInActiveTeleportBundle) {
+      if (!movementData.awaitOutgoingTeleport) {
+        movementData.outgoingTeleportCountdown = 5;
+      }
       movementData.awaitOutgoingTeleport = true; // awaiting next teleport
-      movementData.outgoingTeleportCountdown = 5;
       event.setCancelled(true);
     }
   }

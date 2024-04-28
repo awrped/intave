@@ -449,7 +449,7 @@ public final class PredictiveSimulationProcessor implements SimulationProcessor 
             if (requireUseItem && !useItemState) {
               continue;
             }
-            if (sprinting && useItemState) {
+            if (sprinting && useItemState && !protocol.combatUpdate()) {
               continue;
             }
             IterativeStudy.USE_ITEM_ITERATOR.run();
@@ -459,7 +459,7 @@ public final class PredictiveSimulationProcessor implements SimulationProcessor 
               if (enforceCorrectReduction && reduceIndex != movementData.reduceTicks) {
                 continue;
               }
-              if (!sprinting && reduceIndex > 0) {
+              if (!sprinting && reduceIndex > 0 && !protocol.combatUpdate()) {
                 continue;
               }
               IterativeStudy.ATTACK_REDUCE_ITERATOR.run();

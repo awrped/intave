@@ -3,6 +3,7 @@ package de.jpx3.intave.check.movement;
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.events.PacketContainer;
+import com.comphenix.protocol.utility.MinecraftVersion;
 import com.comphenix.protocol.wrappers.WrappedBlockData;
 import de.jpx3.intave.IntaveControl;
 import de.jpx3.intave.IntavePlugin;
@@ -38,9 +39,11 @@ import de.jpx3.intave.module.feedback.Superposition;
 import de.jpx3.intave.module.linker.bukkit.BukkitEventSubscription;
 import de.jpx3.intave.module.mitigate.AttackNerfStrategy;
 import de.jpx3.intave.module.tracker.entity.Entity;
+import de.jpx3.intave.module.tracker.player.PacketLogging;
 import de.jpx3.intave.module.violation.Violation;
 import de.jpx3.intave.module.violation.ViolationContext;
 import de.jpx3.intave.packet.PacketSender;
+import de.jpx3.intave.player.FaultKicks;
 import de.jpx3.intave.player.collider.Colliders;
 import de.jpx3.intave.player.collider.complex.ColliderResult;
 import de.jpx3.intave.player.collider.simple.SimpleColliderResult;
@@ -664,20 +667,22 @@ public final class Physics extends Check {
     }
 
     boolean setback = false;
-
     double latantDistance = 0.7;
     boolean offsetRequirement = violationLevelData.physicsOffset > latantDistance && distance > 0.001;
+
+    PacketLogging logging = Modules.tracker().packetLogging();
+    double finalVerticalViolationIncrease = verticalViolationIncrease;
+    double finalHorizontalViolationIncrease = horizontalViolationIncrease;
+    logging.logSystemMessage(user, () -> "MOVEMENT PROCESS: " + receivedMotionX + " " + receivedMotionY + " " + receivedMotionZ + " vl" + violationLevelData.physicsVL + " acc/off" +  violationLevelData.physicsOffset + " d" + distance + " h/v:" + finalHorizontalViolationIncrease +"/" + finalVerticalViolationIncrease + " spec" + spectator + " fly" + flying  + " " + verticalTags + " " + horizontalTags);
+
+    // santiy checks
+    performMovementSanityChecks(user, receivedMotionX, receivedMotionY, receivedMotionZ);
+
     if (offsetRequirement && !spectator && violationLevelData.physicsVL > 50 && violationLevelIncrease > 0) {
-//      violationLevelData.physicsOffset -= 0.001;
       String received = formatPosition(receivedMotionX, receivedMotionY, receivedMotionZ);
       String expected = formatPosition(predictedX, predictedY, predictedZ);
       String message = "moved incorrectly";
       String details = received + " actual: " + expected;
-
-//      if (violationLevelData.physicsInsignificantBufferVL > 2) {
-//        details += ", it:" + formatDouble(violationLevelData.physicsInsignificantBufferVL, 1);
-//      }
-//      details += ", offset: " + formatDouble(violationLevelData.physicsOffset, 2);
 
       if (velocityDetected) {
         details += ", strict";
@@ -688,15 +693,6 @@ public final class Physics extends Check {
         details += " reduce force";
       }
 
-//      if (IntaveControl.DISABLE_LICENSE_CHECK) {
-//        if (!verticalTags.isEmpty()) {
-//          details += ", V" + verticalTags.stream().map(EvaluationTag::toString).map(String::toLowerCase).distinct().collect(Collectors.joining(","));
-//        }
-//        if (!horizontalTags.isEmpty()) {
-//          details += ", H" + horizontalTags.stream().map(EvaluationTag::toString).map(String::toLowerCase).distinct().collect(Collectors.joining(","));
-//        }
-//      }
-
       Map<String, String> granularDebugs = new LinkedHashMap<>();
       granularDebugs.put("received", received);
       granularDebugs.put("expected", expected);
@@ -705,6 +701,7 @@ public final class Physics extends Check {
       granularDebugs.put("vehicle", movementData.isInVehicle() ? (movementData.isInRidingVehicle() ? "riding" : "passive") : "none");
       granularDebugs.put("insig", formatDouble(violationLevelData.physicsInsignificantBufferVL, 1));
       granularDebugs.put("acc/off", formatDouble(violationLevelData.physicsOffset, 2));
+      granularDebugs.put("s/c v:", MinecraftVersion.getCurrentVersion().getVersion() + " / " + user.protocolVersion());
       granularDebugs.put("v/tags", verticalTags.stream().map(EvaluationTag::toString).map(String::toUpperCase).distinct().collect(Collectors.joining(",")));
       granularDebugs.put("h/tags", horizontalTags.stream().map(EvaluationTag::toString).map(String::toUpperCase).distinct().collect(Collectors.joining(",")));
 
@@ -1195,6 +1192,32 @@ public final class Physics extends Check {
 //        fallDamageApplier.dealFallDamage(player, 8);
         movementData.dealCustomFallDamage = false;
       });
+    }
+  }
+
+  private void performMovementSanityChecks(User user, double receivedMotionX, double receivedMotionY, double receivedMotionZ) {
+    MovementMetadata movementData = user.meta().movement();
+    ViolationMetadata violationMetadata = user.meta().violationLevel();
+
+    if ((Double.isNaN(violationMetadata.physicsOffset) || Double.isInfinite(violationMetadata.physicsOffset)) && FaultKicks.POSITION_FAULTS) {
+      user.kick("Intolerable position fault (sanity check #3)");
+    }
+
+    if ((Double.isNaN(violationMetadata.physicsVL) || Double.isInfinite(violationMetadata.physicsVL)) && FaultKicks.POSITION_FAULTS) {
+      user.kick("Intolerable position fault (sanity check #4)");
+    }
+
+    // check received motion NaN/Infinite
+    if ((Double.isNaN(receivedMotionX) || Double.isInfinite(receivedMotionX)) && FaultKicks.POSITION_FAULTS) {
+      user.kick("Intolerable position fault (sanity check #5)");
+    }
+
+    if ((Double.isNaN(receivedMotionY) || Double.isInfinite(receivedMotionY)) && FaultKicks.POSITION_FAULTS) {
+      user.kick("Intolerable position fault (sanity check #6)");
+    }
+
+    if ((Double.isNaN(receivedMotionZ) || Double.isInfinite(receivedMotionZ)) && FaultKicks.POSITION_FAULTS) {
+      user.kick("Intolerable position fault (sanity check #7)");
     }
   }
 

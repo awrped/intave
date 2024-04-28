@@ -32,8 +32,11 @@ public class ShortTermViolationRecovery extends Module {
         String checkName = check.name().toLowerCase();
         Map<String, Double> thresholdsMap = stvs.violationsFor(checkName);
         for (Map.Entry<String, Double> entry : thresholdsMap.entrySet()) {
-          violationLevels.computeIfAbsent(checkName, k -> new HashMap<>())
-            .compute(entry.getKey(), (k, v) -> v == null ? entry.getValue() : Math.max(v, entry.getValue()));
+          boolean leftToExecute = hasCommandsLeftToExecute(checkName, entry.getKey(), entry.getValue().intValue());
+          if (leftToExecute) {
+            violationLevels.computeIfAbsent(checkName, k -> new HashMap<>())
+              .compute(entry.getKey(), (k, v) -> v == null ? entry.getValue() : Math.max(v, entry.getValue()));
+          }
         }
       }
     });
@@ -53,8 +56,7 @@ public class ShortTermViolationRecovery extends Module {
       Map<String, Map<String, Double>> violationLevels = user.meta().violationLevel().violationLevel;
       violationLevels.forEach((checkName, thresholdsMap) -> {
         thresholdsMap.forEach((threshold, value) -> {
-          boolean leftToExecute = hasCommandsLeftToExecute(checkName, threshold, value.intValue());
-          if (leftToExecute) {
+          if (value > 5) {
             stvs.setViolation(checkName, threshold, value);
           }
         });

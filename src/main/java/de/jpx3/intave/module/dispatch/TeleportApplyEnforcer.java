@@ -37,7 +37,7 @@ import static com.comphenix.protocol.wrappers.EnumWrappers.PlayerDigType.DROP_IT
 import static de.jpx3.intave.module.linker.packet.PacketId.Client.BLOCK_DIG;
 import static de.jpx3.intave.module.linker.packet.PacketId.Client.TELEPORT_ACCEPT;
 import static de.jpx3.intave.module.linker.packet.PacketId.Server.POSITION;
-import static org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.NETHER_PORTAL;
+import static org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.UNKNOWN;
 
 public final class TeleportApplyEnforcer implements PacketEventSubscriber {
   private static final boolean NEW_TELEPORTATION = MinecraftVersions.VER1_9_0.atOrAbove();
@@ -93,6 +93,8 @@ public final class TeleportApplyEnforcer implements PacketEventSubscriber {
     if (relativeX || relativeY || relativeZ) {
       Vector teleportOffset = new Vector(positionX, positionY, positionZ);
       if (teleportOffset.length() == 0) {
+        movementData.awaitTeleport = true;
+        movementData.awaitOutgoingTeleport = false;
         return;
       }
     }
@@ -170,7 +172,7 @@ public final class TeleportApplyEnforcer implements PacketEventSubscriber {
     movementData.awaitOutgoingTeleport = false;
     movementData.expectTeleportWithRotation = expectRotation;
     movementData.teleportResendCountdown = 20;
-    movementData.outgoingTeleportCountdown = 5;
+//    movementData.outgoingTeleportCountdown = 5;
     movementData.isTeleportConfirmationPacket = false;
   }
 
@@ -267,7 +269,7 @@ public final class TeleportApplyEnforcer implements PacketEventSubscriber {
 
           location.setYaw(movementData.rotationYaw());
           location.setPitch(movementData.rotationPitch());
-          player.teleport(location, NETHER_PORTAL);
+          player.teleport(location, UNKNOWN);
 
           if (user.receives(MessageChannel.DEBUG_TELEPORT)) {
             player.sendMessage(IntavePlugin.prefix() + "Teleport to " + player.getLocation().getBlockX() + " " + player.getLocation().getBlockY() + " " + player.getLocation().getBlockZ() + " " + " since " + ChatColor.RED + " you are not responding to teleport requests");
@@ -276,13 +278,14 @@ public final class TeleportApplyEnforcer implements PacketEventSubscriber {
       }
     }
     if (movementData.awaitOutgoingTeleport && movementData.outgoingTeleportCountdown-- < 0) {
+      movementData.outgoingTeleportCountdown = 5;
       if (IntaveControl.DEBUG_TELEPORT_LOCKS) {
         IntaveLogger.logger().printLine("[Intave] Resent outgoing teleport with shift to " + player.getName());
       }
       Synchronizer.synchronize(() -> {
         Location teleportLocation = movementData.teleportLocation;
         if (teleportLocation == null) {
-          return;
+          teleportLocation = player.getLocation();
         }
         Location location = teleportLocation.clone();
         if (System.currentTimeMillis() - movementData.lastRescueAttempt > 5000 && !MaterialMagic.blocksMovement(VolatileBlockAccess.typeAccess(user, location.clone().add(0, 1,0)))) {
@@ -296,7 +299,7 @@ public final class TeleportApplyEnforcer implements PacketEventSubscriber {
         }
         location.setYaw(movementData.rotationYaw());
         location.setPitch(movementData.rotationPitch());
-        player.teleport(location, NETHER_PORTAL);
+        player.teleport(location, UNKNOWN);
 
         if (user.receives(MessageChannel.DEBUG_TELEPORT)) {
           player.sendMessage(IntavePlugin.prefix() + "Teleport to " + player.getLocation().getBlockX() + " " + player.getLocation().getBlockY() + " " + player.getLocation().getBlockZ() + " " + " to " + ChatColor.RED + " since you are not responding to outgoing teleport requests");

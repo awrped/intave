@@ -195,7 +195,7 @@ cloud:
     cloud-logs: true
 
 storage:
-  # Set to ignore the "intave internals storelog" command and auto-store suggested violations instead
+  # Set to ignore the "intave internals storelog"    and auto-store suggested violations instead
   auto-logs: false
 
   # Set to let Intave find a suitable trustfactor when you don't specify one

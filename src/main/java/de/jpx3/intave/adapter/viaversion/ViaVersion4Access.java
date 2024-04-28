@@ -69,7 +69,7 @@ public final class ViaVersion4Access implements ViaVersionAccess {
 
   @Override
   public boolean available(String version) {
-    return version.startsWith("4") && !version.startsWith("4.9");
+    return version.startsWith("4") && !version.startsWith("4.9") && !version.startsWith("4.1");
   }
 
   @Override

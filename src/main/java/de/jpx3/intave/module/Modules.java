@@ -15,6 +15,7 @@ import de.jpx3.intave.module.mitigate.ReconDelayLimiter;
 import de.jpx3.intave.module.mitigate.SetbackSimulator;
 import de.jpx3.intave.module.nayoro.Nayoro;
 import de.jpx3.intave.module.player.StorageLoader;
+import de.jpx3.intave.module.tracker.player.PacketLogging;
 import de.jpx3.intave.module.violation.ViolationProcessor;
 
 public final class Modules {
@@ -109,7 +110,9 @@ public final class Modules {
   }
 
   public static class TrackerCategory {
-
+    public PacketLogging packetLogging() {
+      return find(PacketLogging.class);
+    }
   }
 
   public static class DispatchCategory {

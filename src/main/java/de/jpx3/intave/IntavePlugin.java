@@ -814,7 +814,11 @@ public final class IntavePlugin extends JavaPlugin {
     // stage 10
     Modules.proceedBoot(BootSegment.STAGE_10);
 
-    ViaVersionAdapter.patchConfiguration();
+    try {
+      ViaVersionAdapter.patchConfiguration();
+    } catch (Exception exception) {
+      exception.printStackTrace();
+    }
 
     GarbageCollector.setup();
     BackgroundExecutors.executeWhenever(this::clearIntegrityGarbage);
@@ -864,11 +868,11 @@ public final class IntavePlugin extends JavaPlugin {
     logger.info("Intave booted successfully");
 
     String network = LicenseAccess.network();
-    if (/*"Intavede".equalsIgnoreCase(network) ||*/ "dexlandru".equalsIgnoreCase(network)) {
-      IntaveLogger.logger().info("Enabling Intave debug mode");
-      DEBUG_TELEPORT_LOCKS = true;
-      DEBUG_MOVEMENT_IGNORE = true;
-    }
+//    if (/*"Intavede".equalsIgnoreCase(network) ||*/ "dexlandru".equalsIgnoreCase(network)) {
+//      IntaveLogger.logger().info("Enabling Intave debug mode");
+//      DEBUG_TELEPORT_LOCKS = true;
+//      DEBUG_MOVEMENT_IGNORE = true;
+//    }
 
     Synchronizer.synchronize(() -> {
       // stage 11

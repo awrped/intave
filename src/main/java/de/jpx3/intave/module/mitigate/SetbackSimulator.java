@@ -519,7 +519,7 @@ public final class SetbackSimulator extends Module {
   }
 
   private PlayerTeleportEvent constructTeleportEvent(Player player, Location to) {
-    return new PlayerTeleportEvent(player, player.getLocation().clone(), to.clone(), NETHER_PORTAL) {
+    return new PlayerTeleportEvent(player, player.getLocation().clone(), to.clone(), UNKNOWN) {
       @Override
       public void setCancelled(boolean cancel) {
         if (IntaveControl.DEBUG_INTAVE_TELEPORT_EVENT_CANCELS && cancel) {
