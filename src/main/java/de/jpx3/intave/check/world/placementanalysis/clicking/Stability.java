@@ -82,16 +82,19 @@ public final class Stability extends MetaCheckPart<PlacementAnalysis, Stability.
                             .withMessage(COMMON_FLAG_MESSAGE)
                             .withDetails("clicking stability")
                             .appendFlags(DISPLAY_IN_ALL_VERBOSE_MODES)
-                            .withCustomThreshold(PlacementAnalysis.legacyConfigurationLayout() ? "thresholds" : "cloud-thresholds.on-premise")
-                            .withVL(1).build();
+                            .withCustomThreshold("Experimental")
+                            // .withCustomThreshold(PlacementAnalysis.legacyConfigurationLayout() ? "thresholds" : "cloud-thresholds.on-premise")
+                            .withVL(0.1).build();
                     Modules.violationProcessor().processViolation(violation);
 
+                    /*
                     if (meta.vl > 3) {
                         user.nerf(AttackNerfStrategy.GARBAGE_HITS, "45");
                         user.nerf(AttackNerfStrategy.BURN_LONGER, "45");
                         meta.vl -= 0.2;
                         meta.vl *= 0.98;
                     }
+                     */
                 }
             } else if (meta.vl > 0) {
                 meta.vl -= 0.2;
