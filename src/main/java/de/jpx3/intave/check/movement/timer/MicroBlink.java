@@ -8,11 +8,13 @@ import de.jpx3.intave.math.Histogram;
 import de.jpx3.intave.math.MathHelper;
 import de.jpx3.intave.module.Modules;
 import de.jpx3.intave.module.linker.packet.PacketSubscription;
+import de.jpx3.intave.module.mitigate.AttackNerfStrategy;
 import de.jpx3.intave.module.violation.Violation;
 import de.jpx3.intave.packet.reader.EntityUseReader;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.meta.CheckCustomMetadata;
 import de.jpx3.intave.user.meta.MovementMetadata;
+import org.bukkit.Bukkit;
 import org.bukkit.event.Cancellable;
 
 import static com.comphenix.protocol.wrappers.EnumWrappers.EntityUseAction.ATTACK;
@@ -50,25 +52,22 @@ public class MicroBlink extends MetaCheckPart<Timer, MicroBlink.MicroBlinkMeta> 
       double probability = timeHistogram.normalProbability(timeDifference);
 
       long pastAttack = System.currentTimeMillis() - meta.lastAttack;
-      if (probability < 0.000001 && timeDifference > 75 && timeDifference < 500 && pastAttack < 5000 && movement.lastTeleport > 5) {
-        if (++meta.violationLevel > 3) {
+      if (probability < 0.000001 && timeDifference > 150 && timeDifference < 400 && pastAttack < 1250 && movement.lastTeleport > 5) {
+        if (++meta.violationLevel > 5) {
           Violation violation = Violation.builderFor(Timer.class)
             .forPlayer(user.player())
             .withCustomThreshold("microblink")
             .withMessage("seems to be purposefully micro-lagging in combat")
             .withDetails(MathHelper.formatDouble(probability * 100, 6) + "% likelihood of " + timeDifference + "ms")
-            .withVL(meta.violationLevel - 3)
+            .withVL(meta.violationLevel - 5)
             .build();
           Modules.violationProcessor().processViolation(violation);
-//          if (meta.violationLevel >= 5) {
-//            user.nerf(AttackNerfStrategy.DMG_MEDIUM, "microblink");
-//          }
           if (meta.violationLevel > 10) {
             meta.violationLevel = 10;
           }
         }
       } else {
-        meta.violationLevel = Math.max(0, meta.violationLevel - 0.005);
+        meta.violationLevel = Math.max(0, meta.violationLevel - 0.007);
       }
     }
 

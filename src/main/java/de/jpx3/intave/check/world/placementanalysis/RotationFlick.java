@@ -148,12 +148,6 @@ public class RotationFlick extends PlayerCheckPart<PlacementAnalysis> {
           user.nerfPermanently(AttackNerfStrategy.RECEIVE_MORE_KNOCKBACK, "mpa");
           user.nerfPermanently(AttackNerfStrategy.APPLY_LESS_KNOCKBACK, "mpa");
         }
-
-        if (vl > 250) {
-          //dmc35
-          user.nerf(AttackNerfStrategy.GARBAGE_HITS, "35");
-          user.nerfPermanently(AttackNerfStrategy.DMG_HIGH, "35");
-        }
       }
 //      player.sendMessage(ChatColor.RED + "Rotation flick " + movement.rotationYaw + " " + movement.rotationPitch + " +-" + pitchDiff + " " + verticalLineLength + " " + average + " " + rotationSum + " -> " + vl);
     } else if (vl > 0) {
