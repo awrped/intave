@@ -48,8 +48,8 @@ public final class PacketReaders {
     setup(MOUNT, MountEntityReader::new);
     setup(MULTI_BLOCK_CHANGE, MultiBlockChangeReader::new);
     setup(NAMED_ENTITY_SPAWN, EntityReader::new);
-    setup(OPEN_WINDOW, OpenWindowReader::new);
-    setup(OPEN_WINDOW_HORSE, OpenWindowReader::new);
+    setup(OPEN_WINDOW, WindowOpenReader::new);
+    setup(OPEN_WINDOW_HORSE, WindowOpenReader::new);
     setup(CLOSE_WINDOW, WindowCloseReader::new);
     setup(PLAYER_INFO, PlayerInfoReader::new);
     setup(PLAYER_INFO_REMOVE, PlayerInfoRemoveReader::new);
