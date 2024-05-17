@@ -1,6 +1,7 @@
 package de.jpx3.intave.check.movement.physics;
 
 import com.google.common.collect.ImmutableMap;
+import de.jpx3.intave.annotate.KeepEnumInternalNames;
 import de.jpx3.intave.entity.size.HitboxSize;
 import de.jpx3.intave.share.BoundingBox;
 import de.jpx3.intave.user.User;
@@ -11,6 +12,7 @@ import java.util.Map;
 import static de.jpx3.intave.user.meta.ProtocolMetadata.VER_1_13;
 import static de.jpx3.intave.user.meta.ProtocolMetadata.VER_1_9;
 
+@KeepEnumInternalNames
 public enum Pose {
   STANDING,
   FALL_FLYING,
