@@ -912,7 +912,7 @@ public final class Physics extends Check {
         debug += ChatColor.ITALIC + " " + simulation.details() + chatColor;
       }
       if (movementData.fireworkRocketsTicks < 100) {
-        debug += ChatColor.ITALIC + " frt:" + movementData.fireworkRocketsTicks + chatColor;
+        debug += ChatColor.ITALIC + " frt:" + movementData.fireworkRocketsTicks + " frp: " + movementData.fireworkRocketsPower + chatColor;
       }
       if (movementData.shulkerXToleranceRemaining + movementData.shulkerYToleranceRemaining + movementData.shulkerZToleranceRemaining > 0) {
         debug += ChatColor.ITALIC + " slk:" + movementData.shulkerXToleranceRemaining + "," + movementData.shulkerYToleranceRemaining + "," + movementData.shulkerZToleranceRemaining + chatColor;

@@ -85,7 +85,7 @@ public final class SimulationEvaluator {
       verticalLegitimateDeviation = Math.max(verticalLegitimateDeviation, 1);
       tags.add(EvaluationTag.FIREWORK);
     } else if (movement.fireworkRocketsTicks < 30 * movement.fireworkRocketsPower) {
-      verticalLegitimateDeviation = Math.max(verticalLegitimateDeviation, 0.5);
+      verticalLegitimateDeviation = Math.max(verticalLegitimateDeviation, 0.75);
       tags.add(EvaluationTag.FIREWORK);
     }
 
