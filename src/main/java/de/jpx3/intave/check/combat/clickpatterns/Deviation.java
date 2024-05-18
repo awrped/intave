@@ -77,12 +77,12 @@ public final class Deviation extends MetaCheckPart<ClickPatterns, Deviation.Devi
                             player,
                             "low deviation",
                             "sd:" + formatDouble(std, 3) + " t:" + formatDouble(length / 1000d, 2),
-                            meta.vl > 0 ? 10 : 0
+                            meta.vl > 0 ? 20 : 0
                     );
                 }
             } else if (meta.vl > 0) {
-                meta.vl -= 0.2;
-                meta.vl *= 0.98;
+                meta.vl -= 0.1;
+                meta.vl *= 0.9;
             }
             meta.deviations.clear();
         }

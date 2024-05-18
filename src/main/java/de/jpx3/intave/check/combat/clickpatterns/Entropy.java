@@ -20,7 +20,7 @@ import static de.jpx3.intave.module.linker.packet.PacketId.Client.ARM_ANIMATION;
 @Relocate
 public final class Entropy extends MetaCheckPart<ClickPatterns, Entropy.EntropyMeta> {
     private static final int BUFFER_TIMEOUT = 4000;
-    private static final int BUFFER_LENGTH = 50;
+    private static final int BUFFER_LENGTH = 100;
 
     public Entropy(ClickPatterns parentCheck) {
         super(parentCheck, EntropyMeta.class);
@@ -59,10 +59,10 @@ public final class Entropy extends MetaCheckPart<ClickPatterns, Entropy.EntropyM
             // Necessary for the statistically low variance check
             meta.entropySamples.add((long) entropy);
 
-            if (entropy <= 1 && entropy >= 0.4 && length < 4000) {
+            if (entropy <= 1 && entropy >= 0.35 && length < 4000) {
                 int vlAdd = 2;
                 meta.vl += vlAdd;
-                if (meta.vl > 2) {
+                if (meta.vl > 1) {
                     parentCheck().makeDetection(
                             player,
                             "low entropy",
@@ -84,10 +84,10 @@ public final class Entropy extends MetaCheckPart<ClickPatterns, Entropy.EntropyM
 
             long length = System.currentTimeMillis() - meta.started;
 
-            if (std < 0.2 && length < 4000) {
+            if (std < 0.3 && length < 4000) {
                 int vlAdd = 2;
                 meta.vl += vlAdd;
-                if (meta.vl > 4) {
+                if (meta.vl > 3) {
                     parentCheck().makeDetection(
                             player,
                             "balanced entropy",

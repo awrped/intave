@@ -68,14 +68,14 @@ public final class Repetitive extends MetaCheckPart<ClickPatterns, Repetitive.Re
             attacks.clear();
         }
 
-        if (meta.pattern.size() >= 30) {
-            if (hasRepetitivePattern(meta.pattern, 0.01)) {
-                if (++meta.vl > 2) {
+        if (meta.pattern.size() >= 50) {
+            if (hasRepetitivePattern(meta.pattern, 0.005)) {
+                if (++meta.vl > 3) {
                     parentCheck().makeDetection(
                             player,
                             "repetitive",
                             "std:" + formatDouble(meta.pattern.getLast(), 3),
-                            meta.vl > 0 ? 5 : 0
+                            meta.vl > 0 ? 10 : 0
                     );
                 }
             } else if (meta.vl > 0) {

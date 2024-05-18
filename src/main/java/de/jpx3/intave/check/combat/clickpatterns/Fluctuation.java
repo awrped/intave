@@ -51,9 +51,15 @@ public final class Fluctuation extends MetaCheckPart<ClickPatterns, Fluctuation.
         Queue<Long> attacks = meta.attacks;
 
         // A high swing difference would kill the timestamp variance, so we will just clear it here
-        if (swingDifference > 8000) {
+        if (swingDifference > 10000) {
             meta.spikeTimestamps.clear();
             meta.dropTimestamps.clear();
+        }
+
+        // It's possible to false flag this check in common fights when a player is just attacking every 1 second
+        // To get a more accurate check, we are going to ignore the next click if the difference is >3000
+        if (swingDifference > 3000) {
+            return;
         }
 
         // When the check is disabled, there is no need to check
@@ -96,7 +102,7 @@ public final class Fluctuation extends MetaCheckPart<ClickPatterns, Fluctuation.
                             player,
                             "balanced randomization",
                             "std:" + formatDouble(std, 3),
-                            meta.vl > 0 ? 5 : 0
+                            meta.vl > 0 ? 10 : 0
                     );
                 }
             } else if (meta.vl > 0) {
@@ -115,7 +121,7 @@ public final class Fluctuation extends MetaCheckPart<ClickPatterns, Fluctuation.
                             player,
                             "balanced randomization",
                             "std:" + formatDouble(std, 3),
-                            meta.vl > 0 ? 5 : 0
+                            meta.vl > 0 ? 10 : 0
                     );
                 }
             } else if (meta.vl > 0) {

@@ -67,8 +67,8 @@ public final class Stability extends MetaCheckPart<PlacementAnalysis, Stability.
             placements.clear();
         }
 
-        // After we got 4 deviation samples, we are going to check the deviation of these samples, if it's too low, the player is performing a long-term consistency
-        if (meta.deviations.size() >= 4) {
+        // After we got 5 deviation samples, we are going to check the deviation of these samples, if it's too low, the player is performing a long-term consistency
+        if (meta.deviations.size() >= 5) {
             double std = standardDeviation(meta.deviations);
 
             long length = System.currentTimeMillis() - meta.started;
@@ -82,15 +82,14 @@ public final class Stability extends MetaCheckPart<PlacementAnalysis, Stability.
                             .withMessage(COMMON_FLAG_MESSAGE)
                             .withDetails("clicking stability")
                             .appendFlags(DISPLAY_IN_ALL_VERBOSE_MODES)
-                            .withCustomThreshold("Experimental")
-                            // .withCustomThreshold(PlacementAnalysis.legacyConfigurationLayout() ? "thresholds" : "cloud-thresholds.on-premise")
-                            .withVL(0.1).build();
+                            .withCustomThreshold(PlacementAnalysis.legacyConfigurationLayout() ? "thresholds" : "cloud-thresholds.on-premise")
+                            .withVL(2.5).build();
                     Modules.violationProcessor().processViolation(violation);
 
-                    if (meta.vl > 4) {
+                    if (meta.vl > 6) {
                         //dmc45
-                        user.nerf(AttackNerfStrategy.GARBAGE_HITS, "45");
-                        user.nerf(AttackNerfStrategy.BURN_LONGER, "45");
+                        user.nerf(AttackNerfStrategy.APPLY_LESS_KNOCKBACK, "45");
+                        user.nerf(AttackNerfStrategy.CRITICALS, "45");
                         meta.vl -= 0.2;
                         meta.vl *= 0.98;
                     }
