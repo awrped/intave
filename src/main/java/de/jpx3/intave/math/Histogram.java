@@ -2,6 +2,7 @@ package de.jpx3.intave.math;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Predicate;
 
 public class Histogram {
   private final double start;
@@ -61,6 +62,10 @@ public class Histogram {
     return Arrays.asList(lines);
   }
 
+  public int[] bins() {
+    return bins;
+  }
+
   public void forceAdd(double value) {
     add(Math.max(start, Math.min(end, value)));
   }
@@ -75,6 +80,18 @@ public class Histogram {
     return sum / count;
   }
 
+  public double mean(Predicate<? super Double> binFilter) {
+    double sum = 0;
+    double count = 0;
+    for (int i = 0; i < bins.length; i++) {
+      if (binFilter.test(start + i * step)) {
+        sum += bins[i] * (start + i * step);
+        count += bins[i];
+      }
+    }
+    return sum / count;
+  }
+
   public double variance() {
     double mean = mean();
     double sum = 0;
@@ -82,6 +99,19 @@ public class Histogram {
     for (int i = 0; i < bins.length; i++) {
       sum += bins[i] * Math.pow((start + i * step) - mean, 2);
       count += bins[i];
+    }
+    return sum / count;
+  }
+
+  public double variance(Predicate<? super Double> binFilter) {
+    double mean = mean(binFilter);
+    double sum = 0;
+    double count = 0;
+    for (int i = 0; i < bins.length; i++) {
+      if (binFilter.test(start + i * step)) {
+        sum += bins[i] * Math.pow((start + i * step) - mean, 2);
+        count += bins[i];
+      }
     }
     return sum / count;
   }
@@ -105,6 +135,45 @@ public class Histogram {
     double sum = 0;
     for (int i = (int)Math.floor((start - this.start) / step); i < (int)Math.ceil((end - this.start) / step); i++) {
       sum += bins[i];
+    }
+    return sum / total;
+  }
+
+  public double mseUniform(Predicate<? super Double> binFilter) {
+    double meanBinCount = 0;
+    double count = 0;
+    for (int i = 0; i < bins.length; i++) {
+      if (binFilter.test(start + i * step)) {
+        meanBinCount += bins[i];
+        count++;
+      }
+    }
+    meanBinCount /= count;
+    double sum = 0;
+    for (int i = 0; i < bins.length; i++) {
+      if (binFilter.test(start + i * step)) {
+        sum += Math.pow(bins[i] - meanBinCount, 2);
+      }
+    }
+    return Math.sqrt(sum);
+  }
+
+  public double mseNormal() {
+    double mean = mean();
+    double sum = 0;
+    for (int i = 0; i < bins.length; i++) {
+      sum += Math.pow((start + i * step) - mean, 2) * bins[i] / Math.sqrt(2 * Math.PI * variance());
+    }
+    return sum / total;
+  }
+
+  public double mseNormal(Predicate<? super Double> binFilter) {
+    double mean = mean(binFilter);
+    double sum = 0;
+    for (int i = 0; i < bins.length; i++) {
+      if (binFilter.test(start + i * step)) {
+        sum += Math.pow((start + i * step) - mean, 2) * bins[i] / Math.sqrt(2 * Math.PI * variance());
+      }
     }
     return sum / total;
   }

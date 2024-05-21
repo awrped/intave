@@ -103,7 +103,7 @@ public final class PunishmentMetadata {
         AttackNerfStrategy.DMG_MEDIUM, DAMAGE_CANCEL_MEDIUM_DURATION,
         event -> {
           boolean similarArmor = armorSimilarity(player, event.getEntity()) > 0.75;
-          double modifier = Math.abs(ThreadLocalRandom.current().nextGaussian() * (similarArmor ? 0.05 : 0.175)) + 0.8;
+          double modifier = Math.abs(ThreadLocalRandom.current().nextGaussian() * (similarArmor ? 0.05 : 0.175)) + 0.77;
           if (modifier > 1) {
             modifier = 1;
           }
@@ -114,7 +114,7 @@ public final class PunishmentMetadata {
       new AttackNerfer(
         AttackNerfStrategy.DMG_LIGHT, DAMAGE_CANCEL_LIGHT_DURATION,
         event -> {
-          event.setDamage(BASE, event.getDamage(BASE) * (armorSimilarity(player, event.getEntity()) > 0.75 ? 1 : 0.95));
+          event.setDamage(BASE, event.getDamage(BASE) * (armorSimilarity(player, event.getEntity()) > 0.75 ? 1 : 0.83));
           DamageModify.refreshModifiers(event);
         }
       ),

@@ -194,9 +194,13 @@ public final class PacketDelayer extends Module {
         enqueuedPackets.offerLast(packetContainer.getHandle());
         event.setCancelled(true);
       } else {
+        int limit = enqueuedPacketAmount;
         // send all packets in the queue by poll
-        while (!enqueuedPackets.isEmpty()) {
+        while (!enqueuedPackets.isEmpty() && limit-- > 0) {
           Object packet = enqueuedPackets.pollFirst();
+          if (packet == null) {
+            break;
+          }
           connection.ignorePacketEnqueue = true;
           sendPacket(player, packet);
           connection.ignorePacketEnqueue = false;

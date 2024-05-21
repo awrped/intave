@@ -7,6 +7,7 @@ import de.jpx3.intave.check.combat.heuristics.Anomaly;
 import de.jpx3.intave.check.combat.heuristics.Confidence;
 import de.jpx3.intave.module.linker.packet.ListenerPriority;
 import de.jpx3.intave.module.linker.packet.PacketSubscription;
+import de.jpx3.intave.module.mitigate.AttackNerfStrategy;
 import de.jpx3.intave.packet.converter.PlayerAction;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.meta.CheckCustomMetadata;
@@ -64,6 +65,10 @@ public final class DoubleEntityActionHeuristic extends MetaCheckPart<Heuristics,
     }
 
     if (message != null && meta.ticksSinceJoin > 10) {
+      if (meta.vl++ > 5) {
+        user.nerf(AttackNerfStrategy.DMG_HIGH, "DEA");
+        meta.vl = Math.max(0, meta.vl * 0.9);
+      }
       message += " " + protocolMetadata.protocolVersion();
       // Be careful before setting a confidence because it false flags when reloading the server
       Anomaly anomaly = Anomaly.anomalyOf("190",
@@ -72,6 +77,8 @@ public final class DoubleEntityActionHeuristic extends MetaCheckPart<Heuristics,
         message, Anomaly.AnomalyOption.DELAY_16s
       );
       parentCheck().saveAnomaly(player, anomaly);
+    } else if (meta.vl > 0) {
+      meta.vl -= 0.1;
     }
   }
 
@@ -92,5 +99,6 @@ public final class DoubleEntityActionHeuristic extends MetaCheckPart<Heuristics,
     private Boolean isSprinting = null;
     private Boolean isSneaking = null;
     int ticksSinceJoin = 0;
+    double vl = 0;
   }
 }

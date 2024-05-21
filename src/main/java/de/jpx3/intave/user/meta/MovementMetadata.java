@@ -90,7 +90,7 @@ public final class MovementMetadata implements SimulationEnvironment {
     hasSprintSpeed, sneaking, lastSneaking;
   public int sprintSneakFaults;
   public boolean acceptSneakFaults = true;
-  public int ticksSneaking;
+  public int ticksSneaking, ticksSprinting;
   public float rotationYaw, rotationPitch;
   public float lastRotationYaw, lastRotationPitch;
   public long recordedMoves;

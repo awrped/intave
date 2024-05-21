@@ -1,5 +1,6 @@
 package de.jpx3.intave.module.nayoro;
 
+import de.jpx3.intave.annotate.KeepEnumInternalNames;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
@@ -182,10 +183,17 @@ public class Inventory {
     }
 
     public static ItemCategory of(ItemStack item) {
+      if (item == null) {
+        return ItemCategory.OTHER;
+      }
       if (isBlock(item)) {
         return ItemCategory.BLOCK;
       } else if (isArmor(item)) {
         EquipmentSlot slot = EquipmentSlot.of(item.getType());
+        if (slot == null) {
+          System.out.println("Unknown slot for " + item.getType().name());
+          return ItemCategory.OTHER;
+        }
         return slot.category();
       } else if (isSword(item)) {
         return ItemCategory.SWORD;
@@ -302,6 +310,7 @@ public class Inventory {
     return new double[]{itemCategory.attackDamage(slot), sharpness > 0 ? 0 : (1f+ sharpness * 0.5f)};
   }
 
+  @KeepEnumInternalNames
   public enum ArmorMaterial {
     LEATHER(5, new int[]{1, 2, 3, 1}, 15, 0.0f),
     CHAIN(15, new int[]{1, 4, 5, 2}, 12, 0.0f),
@@ -349,6 +358,7 @@ public class Inventory {
     }
   }
 
+  @KeepEnumInternalNames
   public enum EquipmentSlot {
     HELMET(3, ItemCategory.HELMET),
     CHESTPLATE(2, ItemCategory.CHESTPLATE),

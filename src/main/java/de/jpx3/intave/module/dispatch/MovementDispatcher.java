@@ -651,6 +651,7 @@ public final class MovementDispatcher extends Module {
     User user = UserRepository.userOf(player);
 
     MetadataBundle meta = user.meta();
+    AttackMetadata attack = meta.attack();
     MovementMetadata movement = meta.movement();
     AbilityMetadata abilityData = meta.abilities();
     InventoryMetadata inventoryData = meta.inventory();
@@ -791,6 +792,12 @@ public final class MovementDispatcher extends Module {
     } else {
       movement.ticksSneaking = 0;
     }
+    if (movement.isSprinting()) {
+      movement.ticksSprinting++;
+    } else {
+      movement.ticksSprinting = 0;
+    }
+    attack.attackPastTicks++;
     movement.pastBlockPlacement++;
     inventoryData.pastSlotSwitch++;
     inventoryData.pastHotBarSlotChange++;
@@ -1268,14 +1275,15 @@ public final class MovementDispatcher extends Module {
         if (allowSprinting(user)) {
           movementData.setSprinting(true);
           if (IntaveControl.DEBUG_PLAYER_ACTIONS) {
-            user.player().sendMessage(ChatColor.WHITE + "Start sprinting");
+            user.player().sendMessage(ChatColor.WHITE + "Start sprinting " + meta.attack().attackPastTicks);
           }
         }
         break;
       case STOP_SPRINTING:
+        int ticksSprinting = movementData.ticksSprinting;
         movementData.setSprinting(false);
         if (IntaveControl.DEBUG_PLAYER_ACTIONS) {
-          user.player().sendMessage(ChatColor.BLACK + "Stop sprinting");
+          user.player().sendMessage(ChatColor.BLACK + "Stop sprinting after " + ticksSprinting + " " + meta.attack().attackPastTicks);
         }
         break;
       case PRESS_SHIFT_KEY:
@@ -1300,7 +1308,7 @@ public final class MovementDispatcher extends Module {
       case STOP_SNEAKING:
         movementData.sneaking = false;
         if (IntaveControl.DEBUG_PLAYER_ACTIONS) {
-          user.player().sendMessage(ChatColor.RED + "Stop sneaking");
+          user.player().sendMessage(ChatColor.RED + "Stop sneaking after " + movementData.ticksSneaking);
         }
 //        player.sendMessage("Sneaking: " + movementData.isSneaking());
 //        movementData.setPose(Pose.STANDING);

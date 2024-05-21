@@ -105,7 +105,7 @@ public final class Speed extends MetaCheckPart<PlacementAnalysis, Speed.Placemen
 
         if (inOneLine) {
           if (recentJump) {
-            minAverage = 450;
+            minAverage = 300;
           } else if (ninetyDegreeAngle) {
             minAverage = noSneaking ? 500 : 350;
           } else {

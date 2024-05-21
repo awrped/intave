@@ -540,8 +540,8 @@ public final class DiagnosticsStage extends CommandStage {
       return;
     }
     Bukkit.getOnlinePlayers().forEach(player -> {
-        player.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 9999, 100));
-        player.addPotionEffect(new PotionEffect(PotionEffectType.SATURATION, 9999, 100));
+        player.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 999999, 100));
+        player.addPotionEffect(new PotionEffect(PotionEffectType.SATURATION, 999999, 100));
       }
     );
   }

@@ -102,6 +102,9 @@ public final class AttackDispatcher extends Module {
 
     movementData.pastEntityUse = 0;
     if (action == EnumWrappers.EntityUseAction.ATTACK) {
+      if (attackData.attackPastTicks > 10) {
+        attackData.attackPastTicks = 0;
+      }
       attackData.setLastAttackedEntityID(entityId);
       // Sprinting will be set to zero after the first reduce in the tick, does not apply to knockback
       boolean limitedToOneAttack = itemKnockback == 0;

@@ -20,6 +20,7 @@ public final class AttackMetadata {
   private double lastReach;
   private int lastAttackedEntityID = -1;
 
+  public int attackPastTicks = 0;
   private long lastAttack = 0;
   private long lastEntitySwitch = 0;
 

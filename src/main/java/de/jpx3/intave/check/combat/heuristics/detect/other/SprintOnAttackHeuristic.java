@@ -7,15 +7,19 @@ import de.jpx3.intave.check.MetaCheckPart;
 import de.jpx3.intave.check.combat.Heuristics;
 import de.jpx3.intave.check.combat.heuristics.Anomaly;
 import de.jpx3.intave.check.combat.heuristics.Confidence;
+import de.jpx3.intave.math.Histogram;
 import de.jpx3.intave.math.MathHelper;
 import de.jpx3.intave.module.linker.packet.ListenerPriority;
 import de.jpx3.intave.module.linker.packet.PacketSubscription;
+import de.jpx3.intave.module.mitigate.AttackNerfStrategy;
 import de.jpx3.intave.packet.converter.PlayerAction;
 import de.jpx3.intave.packet.converter.PlayerActionResolver;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.meta.CheckCustomMetadata;
 import de.jpx3.intave.user.meta.MovementMetadata;
 import org.bukkit.entity.Player;
+
+import java.util.function.Predicate;
 
 import static de.jpx3.intave.check.combat.heuristics.Anomaly.AnomalyOption.DELAY_16s;
 import static de.jpx3.intave.check.combat.heuristics.Anomaly.AnomalyOption.LIMIT_1;
@@ -41,8 +45,49 @@ public final class SprintOnAttackHeuristic extends MetaCheckPart<Heuristics, Spr
 
     if (action == PlayerAction.START_SPRINTING) {
       meta.startSprint = true;
+      if (meta.lastSprintStopAttackPastTicks < 10 && user.meta().attack().attackPastTicks < 10) {
+        int difference = Math.abs(user.meta().attack().attackPastTicks - meta.lastSprintStopAttackPastTicks);
+        Histogram resprintDelayHistogram = meta.resprintDelayHistogram;
+        double var = resprintDelayHistogram.variance();
+        if (difference == 1) {
+          if (meta.continouslyInstantResprintVL++ > 5) {
+            user.nerfPermanently(AttackNerfStrategy.APPLY_LESS_KNOCKBACK, "SOA");
+            if (meta.continouslyInstantResprintVL > 10) {
+              user.nerfPermanently(AttackNerfStrategy.DMG_LIGHT, "SOA");
+              user.nerfPermanently(AttackNerfStrategy.CRITICALS, "SOA");
+            }
+          }
+        } else {
+          meta.continouslyInstantResprintVL = 0;
+        }
+        if (difference < 4) {
+          resprintDelayHistogram.add(difference);
+        } else {
+          resprintDelayHistogram.add(5);
+        }
+        Predicate<Double> binFilter = aDouble -> aDouble >= 0 && aDouble < 3.5;
+        double criticalVar = resprintDelayHistogram.variance(binFilter);
+        double uniformMse = resprintDelayHistogram.mseUniform(binFilter);
+
+        if (resprintDelayHistogram.size() > 40 && uniformMse < 4) {
+          user.nerfPermanently(AttackNerfStrategy.APPLY_LESS_KNOCKBACK, "SOA1");
+          if (uniformMse < 2) {
+            user.nerfPermanently(AttackNerfStrategy.DMG_LIGHT, "SOA1");
+          }
+        }
+
+        if (resprintDelayHistogram.size() > 30 && (var < 0.25 && criticalVar < 0.25)) {
+          user.nerfPermanently(AttackNerfStrategy.APPLY_LESS_KNOCKBACK, "SOA2");
+          if (var < 0.1 && criticalVar < 0.1) {
+            user.nerfPermanently(AttackNerfStrategy.DMG_LIGHT, "SOA2");
+          }
+        } else if (resprintDelayHistogram.size() > 10 && (var < 0.1 && criticalVar < 0.1)) {
+          user.nerfPermanently(AttackNerfStrategy.APPLY_LESS_KNOCKBACK, "SOA3");
+        }
+      }
     } else if (action == PlayerAction.STOP_SPRINTING) {
       meta.stopSprint = true;
+      meta.lastSprintStopAttackPastTicks = user.meta().attack().attackPastTicks;
     }
   }
 
@@ -122,5 +167,9 @@ public final class SprintOnAttackHeuristic extends MetaCheckPart<Heuristics, Spr
     private boolean startSprint;
     private boolean stopSprint;
     private int lastAttack;
+
+    private int lastSprintStopAttackPastTicks;
+    private int continouslyInstantResprintVL;
+    private final Histogram resprintDelayHistogram = new Histogram(1d, 5d, 1d, 100);
   }
 }
