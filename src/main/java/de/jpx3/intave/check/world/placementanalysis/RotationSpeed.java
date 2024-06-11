@@ -1,7 +1,6 @@
 package de.jpx3.intave.check.world.placementanalysis;
 
 import com.comphenix.protocol.events.PacketEvent;
-import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.access.player.trust.TrustFactor;
 import de.jpx3.intave.check.MetaCheckPart;
 import de.jpx3.intave.check.world.PlacementAnalysis;
@@ -28,11 +27,11 @@ import static de.jpx3.intave.module.linker.packet.PacketId.Client.POSITION_LOOK;
 import static de.jpx3.intave.module.violation.Violation.ViolationFlags.DISPLAY_IN_ALL_VERBOSE_MODES;
 
 public final class RotationSpeed extends MetaCheckPart<PlacementAnalysis, RotationSpeed.RotationSpeedMeta> {
-  private final IntavePlugin plugin;
+  private final int rotationLimit;
 
   public RotationSpeed(PlacementAnalysis parentCheck) {
     super(parentCheck, RotationSpeedMeta.class);
-    plugin = IntavePlugin.singletonInstance();
+    rotationLimit = (int) parentCheck.configuration().settings().doubleBy("rotation-limit", 3000);
   }
 
   @PacketSubscription(
@@ -76,9 +75,9 @@ public final class RotationSpeed extends MetaCheckPart<PlacementAnalysis, Rotati
         rotationSum += value;
       }
 
-      float limit = 3000;
+      float limit = rotationLimit;
       if (!user.trustFactor().atLeast(TrustFactor.ORANGE)) {
-        limit -= 750;
+        limit -= 500;
       }
 
       // check if past placements are in a straight line on one axis
