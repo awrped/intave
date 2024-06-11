@@ -13,6 +13,10 @@ final class Requirements {
     return requiresPlugin("ProtocolLib").and(() -> ProtocolLibrary.getProtocolManager() != null);
   }
 
+  public static Requirement protocolLib4() {
+    return protocolLib().and(() -> ProtocolLibrary.getPlugin().getDescription().getVersion().startsWith("4"));
+  }
+
   public static Requirement intaveEnabled() {
     return requiresPlugin("Intave");
   }

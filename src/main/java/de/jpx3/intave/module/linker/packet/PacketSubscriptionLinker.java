@@ -37,6 +37,7 @@ import static de.jpx3.intave.IntaveControl.IGNORE_CHUNK_PACKETS;
 @DoNotFlowObfuscate
 public final class PacketSubscriptionLinker extends Module {
   private static boolean IGNORE_CHAT_PACKETS = false;
+  private static boolean IGNORE_SCOREBOARD_TEAM_PACKETS = false;
   private final IntavePlugin plugin;
   private final Map<PacketType, SCOWAList<FilteringPacketAdapter>> customEngineListenerMappings = new ConcurrentHashMap<>();
   private final Map<PacketType, SCOWAList<FilteringPacketAdapter>> internalPacketListenerMappings = new ConcurrentHashMap<>();
@@ -51,6 +52,7 @@ public final class PacketSubscriptionLinker extends Module {
   @Override
   public void enable() {
     this.customInjector = new InjectionService(plugin);
+    IGNORE_CHAT_PACKETS = IGNORE_SCOREBOARD_TEAM_PACKETS = plugin.getConfig().getBoolean("compatibility.ignore-scoreboard-packets", false);
   }
 
   @Override
@@ -219,12 +221,15 @@ public final class PacketSubscriptionLinker extends Module {
 //    if (tabChatPacket) {
 //      Thread.dumpStack();
 //    }
-    if (IGNORE_CHAT_PACKETS) {
-      return tabChatPacket;
+    if (IGNORE_CHAT_PACKETS && tabChatPacket) {
+      return true;
     }
-    if (IGNORE_CHUNK_PACKETS) {
-      return packetType == PacketType.Play.Server.MAP_CHUNK ||
-        packetType == PacketType.Play.Server.MAP_CHUNK_BULK;
+    if (IGNORE_CHUNK_PACKETS && (packetType == PacketType.Play.Server.MAP_CHUNK ||
+      packetType == PacketType.Play.Server.MAP_CHUNK_BULK)) {
+      return true;
+    }
+    if (IGNORE_SCOREBOARD_TEAM_PACKETS && (packetType == PacketType.Play.Server.SCOREBOARD_TEAM)) {
+      return true;
     }
 
 //    if (
