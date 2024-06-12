@@ -110,8 +110,7 @@ public final class MiscBukkitEvents extends Module {
       problematic = true;
     }
     if (problematic) {
-      user.meta().inventory().releaseItemNextTick = true;
-      user.meta().inventory().releaseItemType = type;
+      user.meta().inventory().releaseItemNextTick();
     }
   }
 

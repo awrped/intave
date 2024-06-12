@@ -106,8 +106,12 @@ public class PlayerHandTracker extends Module {
     ItemStack item = player.getInventory().getItem(slot);
     inventoryData.pastSlotSwitch = 0;
     if (inventoryData.handActive() && !inventoryData.offhandItemPrimary()) {
-      inventoryData.deactivateHand();
-      inventoryData.activateHand();
+      inventoryData.releaseItemNextTick();
+      ItemStack itemStack = inventoryData.heldItem();
+      if (!ItemProperties.canItemBeUsed(player, itemStack)) {
+        inventoryData.blockNextArrow = true;
+        inventoryData.lastBlockArrowRequest = System.currentTimeMillis();
+      }
     }
     inventoryData.slotSwitchData = new InventoryMetadata.SlotSwitchData(slot, item);
   }

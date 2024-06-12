@@ -164,7 +164,7 @@ public class PlayerTime extends MetaCheckPart<Timer, PlayerTime.PlayerTimeMeta> 
       decrementer.decrement(user, 0.005);
     }
     int blinkLimit = parentCheck().blinkLimit();
-    if (!checkMeta.inTeleport && blinkLimit > 0 && diff < blinkLimit * -50_000L/*-2_500_000_000L*/) {
+    if (!checkMeta.inTeleport && !user.justJoined() && !user.meta().abilities().probablyFlying() && blinkLimit > 0 && diff < -Math.abs(blinkLimit * 50_000_000L)/*-2_500_000_000L*/) {
       checkMeta.inTeleport = true;
       user.tickFeedback(() -> {
         checkMeta.inTeleport = false;
@@ -174,7 +174,7 @@ public class PlayerTime extends MetaCheckPart<Timer, PlayerTime.PlayerTimeMeta> 
       Violation violation = Violation.builderFor(Timer.class).forPlayer(player)
         .withMessage("is halting game ticks")
         .withDetails(balanceAsString + " ticks behind")
-        .withVL(10)
+        .withVL(0)
         .build();
       ViolationContext violationContext = Modules.violationProcessor().processViolation(violation);
       Vector setback = new Vector(0, 0, 0);

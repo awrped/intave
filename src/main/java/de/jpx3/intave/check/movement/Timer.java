@@ -15,7 +15,7 @@ public final class Timer extends Check {
   private final boolean reverseBlink;
   private final boolean reverseLag;
   private final boolean lowTolerance;
-  private final int blinkLimit;
+  private int blinkLimit;
   private final int timerTolerance;
   private final boolean detectPulseBlink;
   private final PlayerTime playerTime;
@@ -34,7 +34,10 @@ public final class Timer extends Check {
     // reverse lag just sucks
     reverseLag = settings.boolBy("reverse-lag", false);
 
-    blinkLimit = Math.max(60, settings.intBy("blink-limit", (lowTolerance ? 100 : -1)));
+    blinkLimit = settings.intBy("blink-limit", (lowTolerance ? 100 : -1));
+    if (blinkLimit < 60 && blinkLimit >= 0) {
+      blinkLimit = 60;
+    }
     timerTolerance = settings.intBy("tolerance", 1);
     detectPulseBlink = settings.boolBy("block-pulse-blink", lowTolerance);
 
