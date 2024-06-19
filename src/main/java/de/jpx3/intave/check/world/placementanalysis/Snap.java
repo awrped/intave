@@ -133,7 +133,6 @@ public final class Snap extends MetaCheckPart<PlacementAnalysis, Snap.SnapMeta> 
     float yaw = location.getYaw();
     float pitch = location.getPitch();
 
-    double mitigationLevel = 0.0;
 
     if (System.currentTimeMillis() - meta.detectionTime < 2_500) {
       Violation violation = Violation.builderFor(PlacementAnalysis.class)
@@ -143,13 +142,7 @@ public final class Snap extends MetaCheckPart<PlacementAnalysis, Snap.SnapMeta> 
         .withDetails(asWord(meta.degree) + "-tick block-aligned snap")
         .withVL(meta.degree == 1 ? 20 : 2.5)
         .build();
-      mitigationLevel++;
-      if (mitigationLevel > 10) {
-        userOf(player).nerf(AttackNerfStrategy.GARBAGE_HITS, "123");
-      }
       return;
-    } else {
-      mitigationLevel = Math.ceil(mitigationLevel * (1.0 - 0.1));
     }
 
     if (meta.snapAge > 20) {

@@ -69,10 +69,10 @@ public final class Deviation extends MetaCheckPart<ClickPatterns, Deviation.Devi
 
             long length = System.currentTimeMillis() - meta.started;
 
-            if (std < 45 && length < 4000) {
+            if (std < 30 && length < 4000) {
                 int vlAdd = std < 10 ? 2 : 1;
                 meta.vl += vlAdd;
-                if (meta.vl > 2) {
+                if (meta.vl > 1) {
                     parentCheck().makeDetection(
                             player,
                             "low deviation",

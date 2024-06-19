@@ -96,13 +96,13 @@ public final class Fluctuation extends MetaCheckPart<ClickPatterns, Fluctuation.
         if (meta.spikeTimestamps.size() >= 3) {
             double std = standardDeviationOf(meta.spikeTimestamps);
             meta.spikeTimestamps.clear();
-            if (std < 2500) {
-                if (++meta.vl > 4) {
+            if (std < 1200) {
+                if (++meta.vl > 2) {
                     parentCheck().makeDetection(
                             player,
                             "balanced randomization",
                             "std:" + formatDouble(std / 1000, 3),
-                            meta.vl > 0 ? 10 : 0
+                            meta.vl > 0 ? 5 : 0
                     );
                 }
             } else if (meta.vl > 0) {
@@ -115,13 +115,13 @@ public final class Fluctuation extends MetaCheckPart<ClickPatterns, Fluctuation.
         if (meta.dropTimestamps.size() >= 3) {
             double std = standardDeviationOf(meta.dropTimestamps);
             meta.dropTimestamps.clear();
-            if (std < 2500) {
-                if (++meta.vl > 4) {
+            if (std < 1200) {
+                if (++meta.vl > 2) {
                     parentCheck().makeDetection(
                             player,
                             "balanced randomization",
                             "std:" + formatDouble(std / 1000, 3),
-                            meta.vl > 0 ? 10 : 0
+                            meta.vl > 0 ? 5 : 0
                     );
                 }
             } else if (meta.vl > 0) {
