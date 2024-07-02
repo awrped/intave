@@ -111,7 +111,7 @@ public final class AbilityMetadata {
         if (!modifiers.isEmpty()) {
           modifiers = new ArrayList<>(modifiers);
           modifiers.removeIf(filter.negate());
-          attribute = attribute.withModifiers(modifiers);
+          attribute = attribute.withModifiers(new HashSet<>(modifiers));
         }
         return attribute.getFinalValue();
       }
@@ -166,10 +166,10 @@ public final class AbilityMetadata {
     key = keyTranslation(key);
     WrappedAttribute attribute = findAttribute(key);
     if (attribute != null) {
-      attributes.put(key, WrappedAttribute.newBuilder(attribute).baseValue(baseValue).modifiers(Collections.emptyList()).build());
+      attributes.put(key, WrappedAttribute.newBuilder(attribute).baseValue(baseValue).build());
       List<WrappedAttributeModifier> modifiers = modifiersOf(attribute);
       attributeModifiers.remove(key);
-      attributeModifiers.put(key, modifiers);
+      attributeModifiers.put(key, new ArrayList<>(modifiers));
     }
   }
 

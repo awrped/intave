@@ -359,8 +359,9 @@ public final class PacketSubscriptionLinker extends Module {
           } catch (Exception e) {
 //            throw new RuntimeException("Failed to create packet reader for packet " + event.getPacketType() + " in " + subscriber.getClass().getCanonicalName(), e);
             block.set(true);
-            IntaveLogger.logger().error("Failed to create packet reader for packet " + event.getPacketType() + " in " + subscriber.getClass().getCanonicalName());
-            IntaveLogger.logger().error("This is probably because ProtocolLib has not caught up with the latest version of Minecraft.");
+//            IntaveLogger.logger().error("Failed to create packet reader for packet " + event.getPacketType() + " in " + subscriber.getClass().getCanonicalName());
+            IntaveLogger.logger().info(subscriber.getClass().getCanonicalName() + " skipped packet type due to ProtocolLib missing packet " + event.getPacketType().name());
+            return;
           }
         }
         if (packetEventParameterPosition != -1) {
