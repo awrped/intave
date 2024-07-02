@@ -129,6 +129,10 @@ public final class FeedbackReceiver extends Module {
   )
   public void receiveAcknowledgementPacket(PacketEvent event) {
     Player player = event.getPlayer();
+
+    // viaversion packet limit workaround
+    ViaVersionAdapter.decrementReceivedPackets(player, 2);
+
     User user = UserRepository.userOf(player);
     if (!user.hasPlayer()) {
       return;
@@ -166,9 +170,6 @@ public final class FeedbackReceiver extends Module {
       }
       user.noteFeedbackFault();
     }
-
-    // viaversion packet limit workaround
-    ViaVersionAdapter.decrementReceivedPackets(player, 1);
 
     if (IntaveControl.DEBUG_FEEDBACK_PACKETS) {
       System.out.println("Received " + userKey + "/" + response.num() + " from " + player.getName());

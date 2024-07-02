@@ -258,6 +258,10 @@ fun registerTestTask(serverVersion: String, javaVersion: Int) {
     dependsOn("build")
     pluginJars.from("build/libs/$simpleName.jar")
     minecraftVersion(serverVersion)
+    // Minecraft 1.8.8 requires special patches to work with Java 17
+    if (serverVersion == "1.8.8") {
+      serverJar(File("servers/panda-1.8.8.jar"))
+    }
     runDirectory(File("runs/test_${serverVersion}-j$javaVersion"))
     jvmArgs("-Dcom.mojang.eula.agree=true")
     jvmArgs("-Dintave.test.success=shutdown")
@@ -288,6 +292,10 @@ fun registerServerTask(serverVersion: String, javaVersion: Int) {
     dependsOn("build")
     pluginJars.from("build/libs/$simpleName.jar")
     minecraftVersion(serverVersion)
+    // Minecraft 1.8.8 requires special patches to work with Java 17
+    if (serverVersion == "1.8.8") {
+      serverJar(File("servers/panda-1.8.8.jar"))
+    }
     runDirectory(File("runs/paper_${serverVersion}-j$javaVersion"))
     jvmArgs("-Dcom.mojang.eula.agree=true")
     javaLauncher.set(

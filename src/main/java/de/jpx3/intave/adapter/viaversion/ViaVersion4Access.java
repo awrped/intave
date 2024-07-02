@@ -58,8 +58,7 @@ public final class ViaVersion4Access implements ViaVersionAccess {
       return;
     }
     PacketTracker packetTracker = connection.getPacketTracker();
-    packetTracker.setReceivedPackets(Math.max(0, packetTracker.getReceivedPackets() - amount));
-    packetTracker.setPacketsPerSecond(Math.max(0, packetTracker.getPacketsPerSecond() - amount));
+    packetTracker.setIntervalPackets(Math.max(packetTracker.getIntervalPackets() - amount, 0));
   }
 
   @Override
