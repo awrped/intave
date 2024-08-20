@@ -133,6 +133,11 @@ public final class StandardClientRetriever extends ChannelInboundHandlerAdapter 
   }
 
   @Override
+  public void onInquiryResponse(ClientboundInquiryResponse packet) {
+    session.serveInquiryResponse(packet.requestId(), packet.response());
+  }
+
+  @Override
   public void onLogReceive(ClientboundLogReceive packet) {
     session.serverUploadPlayerLogsRequest(packet.id(), packet.packetNonceResult(), packet.logId());
   }

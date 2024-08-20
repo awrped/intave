@@ -37,19 +37,36 @@ public final class CloudStage extends CommandStage {
       return;
     }
 
+//    commandSender.sendMessage(IntavePlugin.prefix() + ChatColor.GRAY + "Status");
+    commandSender.sendMessage(IntavePlugin.prefix() + ChatColor.GRAY + "Connection status");
+
     Map<Shard, Boolean> shardConnected = cloud.shardConnections();
     Map<Shard, Long> receivedBytes = cloud.receivedBytesPerShard();
     Map<Shard, Long> sentBytes = cloud.sentBytesPerShard();
 
     // connected to at least one
     boolean connectedToAtLeastOne = shardConnected.values().stream().anyMatch(b -> b);
-    commandSender.sendMessage(IntavePlugin.prefix() + ChatColor.GRAY + "Cloud is " + (connectedToAtLeastOne ? ChatColor.GREEN + "connected" : ChatColor.RED + "disconnected"));
+    commandSender.sendMessage(ChatColor.GRAY + " Cloud is " + (connectedToAtLeastOne ? ChatColor.GREEN + "connected" : ChatColor.RED + "disconnected"));
 
     for (Map.Entry<Shard, Boolean> entry : shardConnected.entrySet()) {
       Shard shard = entry.getKey();
       boolean connected = entry.getValue();
-      commandSender.sendMessage(IntavePlugin.prefix() + ChatColor.GRAY + "Shard " + ChatColor.GREEN + shard.name() + ChatColor.GRAY + " is " + (connected ? ChatColor.GREEN + "CONNECTED" : ChatColor.RED + "DISCONNECTED") + ChatColor.GRAY + " (" + ChatColor.GREEN + formatBytes(receivedBytes.get(shard)) + ChatColor.GRAY + " received, " + ChatColor.GREEN + formatBytes(sentBytes.get(shard)) + ChatColor.GRAY + " sent)");
+      commandSender.sendMessage(ChatColor.GRAY + " Shard " + ChatColor.GREEN + shard.name() + ChatColor.GRAY + " is " + (connected ? ChatColor.GREEN + "CONNECTED" : ChatColor.RED + "DISCONNECTED") + ChatColor.GRAY + " (" + ChatColor.GREEN + formatBytes(receivedBytes.get(shard)) + ChatColor.GRAY + " received, " + ChatColor.GREEN + formatBytes(sentBytes.get(shard)) + ChatColor.GRAY + " sent)");
     }
+
+    if (connectedToAtLeastOne) {
+//      commandSender.sendMessage(" ");
+      cloud.generalStatusInquiry(stringStringMap -> {
+        if (stringStringMap == null || stringStringMap.isEmpty()) {
+          commandSender.sendMessage(IntavePlugin.prefix() + ChatColor.RED + "General status inquiry failed");
+          return;
+        }
+        commandSender.sendMessage(IntavePlugin.prefix() + ChatColor.GRAY + "Remote status (sent from cloud)");
+        // sorted by key (alphabetical)
+        stringStringMap.forEach((key, value) -> commandSender.sendMessage(ChatColor.GRAY +" " + key + ": " + ChatColor.RED +  ChatColor.translateAlternateColorCodes('&', value)));
+      });
+    }
+
   }
 
   @SubCommand(

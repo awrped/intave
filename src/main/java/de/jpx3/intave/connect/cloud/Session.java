@@ -20,10 +20,7 @@ import javax.crypto.Cipher;
 import java.nio.ByteBuffer;
 import java.security.Key;
 import java.security.PublicKey;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Consumer;
 
@@ -146,6 +143,10 @@ public final class Session {
 
   public void serveStorageRequest(Identity id, ByteBuffer buffer) {
     cloud.serveStorageRequest(id, buffer);
+  }
+
+  public void serveInquiryResponse(UUID requestId, Map<String, String> properties) {
+    cloud.serveInquiryResponse(requestId, properties);
   }
 
   public void serverUploadPlayerLogsRequest(Identity id, int nonce, String logId) {

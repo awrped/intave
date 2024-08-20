@@ -26,6 +26,7 @@ public final class PacketRegistry {
     registerClientbound(ClientboundLogReceive.class);
     registerClientbound(ClientboundSampleTransmissionAcknowledgement.class);
     registerClientbound(ClientboundCommand.class);
+    registerClientbound(ClientboundInquiryResponse.class);
 
     registerServerbound(ServerboundConfirmEncryption.class);
     registerServerbound(ServerboundHello.class);
@@ -38,6 +39,7 @@ public final class PacketRegistry {
     registerServerbound(ServerboundUploadLogs.class);
     registerServerbound(ServerboundSampleTransmissionRequest.class);
     registerServerbound(ServerboundSampleCompleted.class);
+    registerServerbound(ServerboundStatusInquiry.class);
   }
   
   private static void registerClientbound(Class<? extends Packet<?>> packetClass) {

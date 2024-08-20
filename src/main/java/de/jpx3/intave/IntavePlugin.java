@@ -205,12 +205,14 @@ public final class IntavePlugin extends JavaPlugin {
 
     prefix = ChatColor.translateAlternateColorCodes('&', prefix);
 
-    SecurityManager securityManager = System.getSecurityManager();
-    if (securityManager != null) {
-      logger.error("A security manager of class " + securityManager.getClass().getName() + " is present, unable to start");
-      bootFailure("Internal failure");
-      return;
-    }
+    try {
+      SecurityManager securityManager = System.getSecurityManager();
+      if (securityManager != null) {
+        logger.error("A security manager of class " + securityManager.getClass().getName() + " is present, unable to start");
+        bootFailure("Internal failure");
+        return;
+      }
+    } catch (Exception e) {}
 
     InterceptorDetection.setup();
 

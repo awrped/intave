@@ -1,10 +1,9 @@
 package de.jpx3.intave.module.feedback;
 
-import de.jpx3.intave.IntavePlugin;
+import de.jpx3.intave.math.MathHelper;
 import de.jpx3.intave.module.Module;
 import de.jpx3.intave.module.linker.bukkit.BukkitEventSubscription;
 import de.jpx3.intave.user.User;
-import de.jpx3.intave.user.UserLocal;
 import de.jpx3.intave.user.UserRepository;
 import de.jpx3.intave.user.meta.CheckCustomMetadata;
 import de.jpx3.intave.user.storage.FeedbackAnalysisStorage;
@@ -12,7 +11,6 @@ import de.jpx3.intave.user.storage.LatencyStorage;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
-import java.io.File;
 import java.util.*;
 
 import static de.jpx3.intave.module.feedback.FeedbackAnalysis.FeedbackCategory.*;
@@ -62,81 +60,97 @@ public final class FeedbackAnalysis extends Module {
     // unimportant
   }
 
-  private UserLocal<File> latencyAnalysisFile = UserLocal.withInitial(user -> new File(IntavePlugin.singletonInstance().dataFolder(), user.id() + "-latency.csv"));
+//  private UserLocal<File> latencyAnalysisFile = UserLocal.withInitial(user -> new File(IntavePlugin.singletonInstance().dataFolder(), user.id() + "-latency.csv"));
 
   public void receivedTransaction(User user, FeedbackRequest<?> request) {
     FeedbackAnalysisMeta meta = metaOf(user);
-    FeedbackCategory category = fromFeedbackOptions(request.options());
+    int requestOptions = FeedbackOptions.onlyTracerOptions(request.options());
+    FeedbackCategory category = fromFeedbackOptions(requestOptions);
     Map<FeedbackCategory, LatencyAnalysis> latencyAnalysisMap = meta.latencyAnalysisMap;
-
     LatencyAnalysis analysis = latencyAnalysisMap.get(category);
     LatencyAnalysis combatNearAnalysis = latencyAnalysisMap.get(ENTITY_NEAR);
+    long transactionDelay = request.passedTime();
+    double averageGeneral = meta.shortLatencyAnalysis.averageLatency();
 
-    long passedTime = request.passedTime();
-    meta.fullLatencyAnalysis.addLatency(passedTime);
+    meta.fullLatencyAnalysis.addLatency(transactionDelay);
+    meta.shortLatencyAnalysis.addLatency(transactionDelay);
 
-    if (category == ENTITY_NEAR && user.meta().attack().recentlyAttacked(1000) && passedTime > 100) {
-      double probability = meta.fullLatencyAnalysis.biasedProbabilityOf(passedTime, 300);
+    boolean movedCloser = FeedbackOptions.matches(TRACER_ENTITY_MOVED_CLOSER, requestOptions);
+    boolean movedFarther = FeedbackOptions.matches(TRACER_ENTITY_MOVED_FARTHER, requestOptions);
+    boolean deviating = Math.abs(transactionDelay - averageGeneral) > 100;
+
+    meta.deviationTransactionType
+      .computeIfAbsent(DeviationCategory.fromFeedbackOptions(requestOptions), DeviationFrequency::new)
+      .add(deviating);
+
+    if (System.currentTimeMillis() - meta.lastDeviationRecheck > 4000) {
+      meta.lastDeviationRecheck = System.currentTimeMillis();
+      recheckDeviations(user);
+    }
+
+    if (category == ENTITY_NEAR && user.meta().attack().recentlyAttacked(1000) && transactionDelay > 100) {
+      double probability = meta.fullLatencyAnalysis.biasedProbabilityOf(transactionDelay, 300);
       // 1 in 150_000
       //                0.0000033976731
       if (probability < 0.0000033976731) {
-        meta.suspiciousLatencies.add(new FeedbackAnalysisMeta.LatencyInfo(passedTime));
+        meta.suspiciousLatencies.add(new FeedbackAnalysisMeta.LatencyInfo(transactionDelay, movedFarther));
       }
     }
-
-    /*
-    boolean attacked = FeedbackOptions.matches(TRACER_ENTITY_NEAR, request.options());
-    boolean exclude = !attacked && user.meta().attack().recentlyAttacked(500);
-
-    BackgroundExecutors.executeWhenever(() -> {
-      // append to file, [latency, combatNear]
-      File file = latencyAnalysisFile.get(user);
-      if (!file.exists()) {
-        try {
-          file.createNewFile();
-        } catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-        // write header
-        FileWriter writer = null;
-        try {
-          writer = new FileWriter(file);
-          writer.write("latency,combatNear\n");
-        } catch (IOException e) {
-          throw new RuntimeException(e);
-        } finally {
-          if (writer != null) {
-            try {
-              writer.close();
-            } catch (IOException e) {
-              e.printStackTrace();
-            }
-          }
-        }
-      }
-      if (!exclude) {
-        FileWriter writer = null;
-        try {
-          writer = new FileWriter(file, true);
-          writer.write(passedTime + "," + (attacked ? 1 : 0) + "\n");
-        } catch (IOException e) {
-          throw new RuntimeException(e);
-        } finally {
-          if (writer != null) {
-            try {
-              writer.close();
-            } catch (IOException e) {
-              e.printStackTrace();
-            }
-          }
-        }
-      }
-    });*/
 
     if (category == ENTITY_NEAR ||
       System.currentTimeMillis() - combatNearAnalysis.lastEntry() > 1500) {
-      analysis.addLatency(passedTime);
+      analysis.addLatency(transactionDelay);
     }
+  }
+
+  private void recheckDeviations(User user) {
+    FeedbackAnalysisMeta meta = metaOf(user);
+    {
+      DeviationCategory[] values = DeviationCategory.values();
+      long totalNat = 0, totalDev = 0;
+      for (DeviationCategory value : values) {
+        DeviationFrequency data = meta.deviationTransactionType.get(value);
+        if (data == null) {
+          continue;
+        }
+        totalNat += data.natural();
+        totalDev += data.deviating();
+      }
+
+      for (DeviationCategory category : values) {
+        DeviationFrequency data = meta.deviationTransactionType.get(category);
+        if (data == null) {
+          continue;
+        }
+        if (category == DeviationCategory.ENTITY_NEAR_FARING && totalDev > 0 && totalNat > 0) {
+          double naturalFrequency = data.natural() / (double) totalNat;
+          double deviatingFrequency = data.deviating() / (double) totalDev;
+          double rate = deviatingFrequency / naturalFrequency;
+          if (rate > 3 && data.natural() > 20 && data.deviating() > 10) {
+            meta.lastFrequencyMismatchReport = System.currentTimeMillis();
+            meta.lastDeviationMessage = "nat: " + MathHelper.formatDouble(naturalFrequency * 100, 2) +
+              " dev: " + MathHelper.formatDouble(deviatingFrequency * 100, 2) + "@" + data.natural()+"/"+data.deviating();
+          }
+        }
+      }
+      if (totalNat + totalDev > 10000) {
+        for (DeviationCategory category : values) {
+          DeviationFrequency data = meta.deviationTransactionType.get(category);
+          if (data == null) {
+            continue;
+          }
+          data.downscale(1.3333);
+        }
+      }
+    }
+  }
+
+  public boolean recentlyDetectedForFreqMisrep(User user) {
+    return System.currentTimeMillis() - metaOf(user).lastFrequencyMismatchReport < 8000;
+  }
+
+  public String lastFreqMisrepMessage(User user) {
+    return metaOf(user).lastDeviationMessage;
   }
 
   public long entityLatencyDiscrepancy(User user) {
@@ -196,6 +210,10 @@ public final class FeedbackAnalysis extends Module {
     return (FeedbackAnalysisMeta) user.checkMetadata(FeedbackAnalysisMeta.class);
   }
 
+//  public Map<DeviationCategory, DeviationFrequency> deviationFrequencyDataOf(User user) {
+//    return metaOf(user).deviationTransactionType;
+//  }
+
   public static class FeedbackAnalysisMeta extends CheckCustomMetadata {
     private final Map<FeedbackCategory, LatencyAnalysis> latencyAnalysisMap = new HashMap<>();
     {
@@ -204,14 +222,26 @@ public final class FeedbackAnalysis extends Module {
       latencyAnalysisMap.put(ENTITY_NEAR, new LatencyAnalysis(250));
       latencyAnalysisMap.put(ENTITY_NEAR_COMBAT, new LatencyAnalysis(250));
     }
+    private final LatencyAnalysis shortLatencyAnalysis = new LatencyAnalysis(500);
     private final LongLatencyAnalysis fullLatencyAnalysis = new LongLatencyAnalysis();
+    private final Map<DeviationCategory, DeviationFrequency> deviationTransactionType = new HashMap<>();
+    private long lastDeviationRecheck = System.currentTimeMillis();
+    private long lastFrequencyMismatchReport = System.currentTimeMillis();
+    private String lastDeviationMessage = "";
     private final List<LatencyInfo> suspiciousLatencies = new ArrayList<>(50);
+
     public static class LatencyInfo {
       private final long latency;
       private final long time = System.currentTimeMillis();
+      private final boolean faring;
 
-      public LatencyInfo(long latency) {
+      public LatencyInfo(long latency, boolean faring) {
         this.latency = latency;
+        this.faring = faring;
+      }
+
+      public boolean faring() {
+        return faring;
       }
 
       public long latency() {
@@ -221,6 +251,70 @@ public final class FeedbackAnalysis extends Module {
       public long issued() {
         return time;
       }
+    }
+  }
+
+  public static class DeviationFrequency {
+    private final DeviationCategory feedbackKey;
+    private long natualOccurences;
+    private long deviatingOccurences;
+
+    public DeviationFrequency(DeviationCategory feedbackKey) {
+      this.feedbackKey = feedbackKey;
+    }
+
+    public void add(boolean deviating) {
+      if (deviating) {
+        deviatingOccurences++;
+      } else {
+        natualOccurences++;
+      }
+    }
+
+    public long natural() {
+      return natualOccurences;
+    }
+
+    public long deviating() {
+      return deviatingOccurences;
+    }
+
+    public void downscale(double factor) {
+      natualOccurences = (long) (natualOccurences / factor);
+      deviatingOccurences = (long) (deviatingOccurences / factor);
+    }
+  }
+
+  public enum DeviationCategory {
+    GENERAL,
+    ENTITY_NEAR_NEARING,
+    ENTITY_NEAR_FARING,
+    ENTITY_FAR_NEARING,
+    ENTITY_FAR_FARING
+
+    ;
+
+    public static DeviationCategory fromFeedbackOptions(int options) {
+      boolean movedCloser = FeedbackOptions.matches(TRACER_ENTITY_MOVED_CLOSER, options);
+      boolean movedFarther = FeedbackOptions.matches(TRACER_ENTITY_MOVED_FARTHER, options);
+
+      boolean near = FeedbackOptions.matches(TRACER_ENTITY_IS_NEAR, options);
+      boolean far = FeedbackOptions.matches(TRACER_ENTITY_IS_FAR, options);
+
+      boolean general = !near && !far;
+
+      if (general) {
+        return GENERAL;
+      } else if (near && movedCloser) {
+        return ENTITY_NEAR_NEARING;
+      } else if (near && movedFarther) {
+        return ENTITY_NEAR_FARING;
+      } else if (far && movedCloser) {
+        return ENTITY_FAR_NEARING;
+      } else if (far && movedFarther) {
+        return ENTITY_FAR_FARING;
+      }
+      return GENERAL;
     }
   }
 
@@ -380,13 +474,13 @@ public final class FeedbackAnalysis extends Module {
     ;
 
     public static FeedbackCategory fromFeedbackOptions(int options) {
-      if (matches(TRACER_ENTITY_FAR, options)) {
+      if (matches(TRACER_ENTITY_IS_FAR, options)) {
         return ENTITY_FAR;
       }
-      if (matches(TRACER_ENTITY_NEAR, options)) {
+      if (matches(TRACER_ENTITY_IS_NEAR, options)) {
         return ENTITY_NEAR;
       }
-      if (matches(TRACER_ENTITY_NEAR_COMBAT, options)) {
+      if (matches(TRACER_ENTITY_IS_NEAR_IN_COMBAT, options)) {
         return ENTITY_NEAR_COMBAT;
       }
       return GENERAL;

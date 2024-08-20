@@ -57,6 +57,7 @@ public final class Cloud {
   private final Map<UUID, Request<TrustFactor>> trustfactorRequests = new HashMap<>();
   private final Map<UUID, Request<ByteBuffer>> storageRequests = new HashMap<>();
   private final Map<UUID, Request<Classifier>> sampleTransmissionRequests = new HashMap<>();
+  private final Map<UUID, Request<Map<String, String>>> statusInquiryRequests = new HashMap<>();
   private final Map<Integer, Request<String>> uploadLogRequests = new HashMap<>();
   private CloudConfig cloudConfig;
   private int taskId;
@@ -269,6 +270,7 @@ public final class Cloud {
     long now = System.currentTimeMillis();
     long timeout = 1000 * 60 * 5;
     sampleTransmissionRequests.entrySet().removeIf(entry -> now - entry.getValue().lastUpdate() > timeout);
+    statusInquiryRequests.entrySet().removeIf(entry -> now - entry.getValue().lastUpdate() > timeout && entry.getValue().publish(Map.of()));
     trustfactorRequests.entrySet().removeIf(entry -> now - entry.getValue().lastUpdate() > timeout);
     uploadLogRequests.entrySet().removeIf(entry -> now - entry.getValue().lastUpdate() > timeout);
     storageRequests.entrySet().removeIf(entry -> now - entry.getValue().lastUpdate() > timeout);
@@ -367,6 +369,47 @@ public final class Cloud {
 
   public void saveStorage(UUID id, ByteBuffer buffer) {
     sendPacket(new ServerboundUploadStorage(Identity.from(id), buffer));
+  }
+
+  public void generalStatusInquiry(
+    Consumer<Map<String, String>> callback
+  ) {
+    if (!available()) {
+      callback.accept(Map.of());
+      return;
+    }
+    if (statusInquiryRequests.size() > 100) {
+      callback.accept(Map.of());
+      return;
+    }
+    UUID id = UUID.randomUUID();
+    Request<Map<String, String>> request = statusInquiryRequests.computeIfAbsent(id, k -> new Request<>());
+    request.subscribe(callback);
+    sendPacket(new ServerboundStatusInquiry(id, ServerboundStatusInquiry.Type.GENERAL, null));
+  }
+
+  public void playerStatusInquiry(
+    Player player, Consumer<Map<String, String>> callback
+  ) {
+    if (!available()) {
+      callback.accept(Map.of());
+      return;
+    }
+    if (statusInquiryRequests.size() > 100) {
+      callback.accept(Map.of());
+      return;
+    }
+    UUID id = player.getUniqueId();// hehe
+    Request<Map<String, String>> request = statusInquiryRequests.computeIfAbsent(id, k -> new Request<>());
+    request.subscribe(callback);
+    sendPacket(new ServerboundStatusInquiry(id, ServerboundStatusInquiry.Type.PLAYER, Identity.from(player)));
+  }
+
+  public void serveInquiryResponse(UUID requestId, Map<String, String> status) {
+    Request<Map<String, String>> request = statusInquiryRequests.remove(requestId);
+    if (request != null) {
+      request.publish(status);
+    }
   }
 
   public void playerStateChange(

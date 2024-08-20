@@ -17,9 +17,10 @@ public final class Request<TARGET> {
     lastUpdate = System.currentTimeMillis();
   }
 
-  public void publish(TARGET target) {
+  public boolean publish(TARGET target) {
     subscribers.forEach(consumer -> consumer.accept(target));
     lastUpdate = System.currentTimeMillis();
+    return true;
   }
 
   public long lastUpdate() {

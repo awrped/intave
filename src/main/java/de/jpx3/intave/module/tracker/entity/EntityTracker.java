@@ -51,8 +51,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import static de.jpx3.intave.module.feedback.FeedbackOptions.TRACER_ENTITY_FAR;
-import static de.jpx3.intave.module.feedback.FeedbackOptions.TRACER_ENTITY_NEAR;
+import static de.jpx3.intave.module.feedback.FeedbackOptions.*;
 import static de.jpx3.intave.module.linker.packet.PacketId.Client.POSITION;
 import static de.jpx3.intave.module.linker.packet.PacketId.Client.*;
 import static de.jpx3.intave.module.linker.packet.PacketId.Server.*;
@@ -482,7 +481,11 @@ public final class EntityTracker extends Module {
       PacketSender.sendServerPacket(player, newPacket);
     }
 
+    MovementMetadata movement = user.meta().movement();
+    double distanceBefore = entity.distanceToPlayerCache > 8 ? 10 : entity.immediateServerPosition.distance(movement.positionX, movement.positionY, movement.positionZ);
     entity.immediateEntityTeleport(user, packet);
+    double distanceAfter = distanceBefore > 8 ? 10 : entity.immediateServerPosition.distance(movement.positionX, movement.positionY, movement.positionZ);
+
     if (entity.typeData().isLivingEntity() && entity.tracingEnabled()) {
       EmptyFeedbackCallback task = () -> {
         entity.verifiedPosition = false;
@@ -491,14 +494,11 @@ public final class EntityTracker extends Module {
         nayoroEntityPositionUpdate(player, entity);
       };
       FeedbackObserver observer = entity.feedbackTracker();
-////      if (entity.doubleVerification) {
-////        FeedbackCallback<PacketEvent> verificationTask = (x, theEvent) -> entity.verifiedPosition = true;
-////        Modules.feedback().tracedDoubleSynchronize(player, event, event, task, verificationTask, feedbackTracker, feedbackTracker);
-////      } else {
-//      Modules.feedback().tracedSingleSynchronize(player, event, task, observer);
-      int options = entity.distanceToPlayerCache < 6 ? TRACER_ENTITY_NEAR : TRACER_ENTITY_FAR;
+      int options = entity.distanceToPlayerCache < 6 ? TRACER_ENTITY_IS_NEAR : TRACER_ENTITY_IS_FAR;
+      if (distanceBefore < 8 && distanceAfter < 8 && distanceBefore != distanceAfter) {
+        options |= distanceAfter < distanceBefore ? TRACER_ENTITY_MOVED_CLOSER : TRACER_ENTITY_MOVED_FARTHER;
+      }
       user.tracedPacketTickFeedback(event, task, observer, options);
-////      }
     } else {
       entity.handleEntityTeleport(user, packet);
       entity.clientSynchronized = false;
@@ -550,7 +550,10 @@ public final class EntityTracker extends Module {
       PacketSender.sendServerPacket(player, newPacket);
     }
 
+    MovementMetadata movement = user.meta().movement();
+    double distanceBefore = entity.distanceToPlayerCache > 8 ? 10 : entity.immediateServerPosition.distance(movement.positionX, movement.positionY, movement.positionZ);
     entity.immediateEntityMovement(packet);
+    double distanceAfter = distanceBefore > 8 ? 10 : entity.immediateServerPosition.distance(movement.positionX, movement.positionY, movement.positionZ);
 
     if (entity.typeData().isLivingEntity() && entity.tracingEnabled()) {
       EmptyFeedbackCallback task = () -> {
@@ -565,7 +568,11 @@ public final class EntityTracker extends Module {
 ////      } else {
 //      Modules.feedback().tracedSingleSynchronize(player, event, task, tracker);
 
-      int options = entity.distanceToPlayerCache < 6 ? TRACER_ENTITY_NEAR : TRACER_ENTITY_FAR;
+      int options = entity.distanceToPlayerCache < 6 ? TRACER_ENTITY_IS_NEAR : TRACER_ENTITY_IS_FAR;
+      if (distanceBefore < 8 && distanceAfter < 8 && distanceBefore != distanceAfter) {
+//        System.out.println("distanceBefore: " + distanceBefore + " distanceAfter: " + distanceAfter);
+        options |= distanceAfter < distanceBefore ? TRACER_ENTITY_MOVED_CLOSER : TRACER_ENTITY_MOVED_FARTHER;
+      }
       user.tracedPacketTickFeedback(event, task, tracker, options);
 ////      }
     } else {

@@ -320,14 +320,25 @@ public final class AttackRaytrace extends MetaCheck<AttackRaytrace.AttackRaytrac
 
       if (!suspiciousLatencies.isEmpty()) {
         String entityName = attackedEntity.entityName();
-        long highest = suspiciousLatencies.get(0).latency();
+        LatencyInfo mostSuspiciousLatency = suspiciousLatencies.get(0);
+        boolean faring = mostSuspiciousLatency.faring();
+        long highest = mostSuspiciousLatency.latency();
         double mean = feedbackAnalysis.meanLatency(user);
         double stdDev = feedbackAnalysis.stdDev(user);
         double zScore = (highest - mean) / stdDev;
+        boolean frequencyMismatch = feedbackAnalysis.recentlyDetectedForFreqMisrep(user);
 //        double latencyProbability = feedbackAnalysis.latencyProbability(user, highest);
 //        player.sendMessage(violationLevel.backtrackVL + " | " + formatDouble(latencyProbability * 100, 8) + "%");
-        violationLevel.backtrackVL = Math.min(violationLevel.backtrackVL + (zScore > 4.5 ? 1 : 0.5), 13);
+        double addedVl = (zScore > 4.5 ? 1 : 0.5);
+        if (frequencyMismatch) {
+          addedVl += 0.5;
+        }
+        if (faring) {
+          addedVl += 0.25;
+        }
+        violationLevel.backtrackVL = Math.min(violationLevel.backtrackVL + addedVl, 13);
         if (violationLevel.backtrackVL > 3) {
+          String extras = ((faring || frequencyMismatch) ? ", " : "") + (faring ? "f" : "") + (frequencyMismatch ? "m-"+feedbackAnalysis.lastFreqMisrepMessage(user).replace(" ", "") : "");
           // Message: attacked expired position of <entity>
           // Details: Latency ~ N(μ, σ²) shows attack outlier probability of <probability>%
           Violation violation = Violation.builderFor(AttackRaytrace.class)
@@ -338,17 +349,28 @@ public final class AttackRaytrace extends MetaCheck<AttackRaytrace.AttackRaytrac
 //            .withDetails(((int) highest) + "ms unlikely: " + formatDouble(latencyProbability * 100, 9) + "%")
             .addGranular("EXPR", "N("+((int)highest)+" | " + ((int)mean) + ", " + ((int)stdDev) + ")")
             .addGranular("PROB", formatDouble(feedbackAnalysis.latencyProbability(user, highest) * 100, 12))
-            .withDetails(((int) highest) + ", "+((int) mean) + ", " + ((int) stdDev) + " = " + formatDouble(zScore, 2))
+            .addGranular("FREQ", feedbackAnalysis.recentlyDetectedForFreqMisrep(user) ? feedbackAnalysis.lastFreqMisrepMessage(user) : "NONE")
+            .withDetails(((int) highest) + ", "+((int) mean) + ", " + ((int) stdDev) + " = " + formatDouble(zScore, 2) + extras)
             .appendFlags(DISPLAY_IN_ALL_VERBOSE_MODES)
             .build();
 
+          boolean certain = faring && feedbackAnalysis.recentlyDetectedForFreqMisrep(user);
+
           ViolationContext violationContext = Modules.violationProcessor().processViolation(violation);
           double after = violationContext.violationLevelAfter();
+
+          if (certain && after > 5) {
+            entityHasTimedOut = true;
+            violationLevel.lastBacktrackHitCancelRequest = System.currentTimeMillis();
+            user.nerf(AttackNerfStrategy.CANCEL, "BCKTRK");
+          }
           if (after > 30 /*&& !IntaveControl.GOMME_MODE*/) {
             entityHasTimedOut = true;
             violationLevel.lastBacktrackHitCancelRequest = System.currentTimeMillis();
             user.nerf(AttackNerfStrategy.CANCEL, "67");
           }
+
+
           violationLevel.lastBacktrackVLChange = System.currentTimeMillis();
         }
       }

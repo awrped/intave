@@ -29,6 +29,8 @@ public interface Clientbound extends PacketListener {
       onLogReceive((ClientboundLogReceive) packet);
     } else if (packet instanceof ClientboundCommand) {
       onCommand((ClientboundCommand) packet);
+    } else if (packet instanceof ClientboundInquiryResponse) {
+      onInquiryResponse((ClientboundInquiryResponse) packet);
     } else {
       onUncaught(packet);
     }
@@ -75,6 +77,10 @@ public interface Clientbound extends PacketListener {
   }
 
   default void onLogReceive(ClientboundLogReceive packet) {
+    onUncaught(packet);
+  }
+
+  default void onInquiryResponse(ClientboundInquiryResponse packet) {
     onUncaught(packet);
   }
 

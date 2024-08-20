@@ -143,7 +143,7 @@ tasks.register<RunServer>("authtest") {
     project.javaToolchains.launcherFor {
       // Sets the JDK version for the Minecraft server, Intave is still built using Java
       // 1.8
-      languageVersion.set(JavaLanguageVersion.of(8))
+      languageVersion.set(JavaLanguageVersion.of(17))
     }
   )
 }
@@ -260,7 +260,7 @@ fun registerTestTask(serverVersion: String, javaVersion: Int) {
     minecraftVersion(serverVersion)
     // Minecraft 1.8.8 requires special patches to work with Java 17
     if (serverVersion == "1.8.8") {
-      serverJar(File("servers/panda-1.8.8.jar"))
+      serverJar(File("libs/servers/panda-1.8.8.jar"))
     }
     runDirectory(File("runs/test_${serverVersion}-j$javaVersion"))
     jvmArgs("-Dcom.mojang.eula.agree=true")
@@ -294,7 +294,7 @@ fun registerServerTask(serverVersion: String, javaVersion: Int) {
     minecraftVersion(serverVersion)
     // Minecraft 1.8.8 requires special patches to work with Java 17
     if (serverVersion == "1.8.8") {
-      serverJar(File("servers/panda-1.8.8.jar"))
+      serverJar(File("libs/servers/panda-1.8.8.jar"))
     }
     runDirectory(File("runs/paper_${serverVersion}-j$javaVersion"))
     jvmArgs("-Dcom.mojang.eula.agree=true")
@@ -311,7 +311,7 @@ fun registerServerTask(serverVersion: String, javaVersion: Int) {
 /*
  * Gradle Task Configuration
  */
-java.toolchain.languageVersion.set(JavaLanguageVersion.of(8))
+java.toolchain.languageVersion.set(JavaLanguageVersion.of(17))
 
 tasks {
   build { dependsOn(shadowJar) }
