@@ -19,6 +19,7 @@ public final class IntaveControl {
   public static final boolean DEBUG_INTERACTION_REFRESHES = false;
   public static final boolean DEBUG_INTERACTION_PACKET_ROUTING = false;
   public static final boolean DEBUG_INTERACTION_DISCREET = true;
+  public static final boolean REMOVE_PLACED_BLOCKS_WITH_DELAY = false;
   public static final List<String> INTERACTION_DEBUG_NAMES = Arrays.asList("Jpx3", "aesthatic", "Richy", "egirlAllergiker");
   public static final boolean DEBUG_STUCK_REVIVAL = false;
   public static final boolean LATENCY_PING_AS_XP_LEVEL = false;

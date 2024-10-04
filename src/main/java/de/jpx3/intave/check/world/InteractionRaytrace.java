@@ -88,7 +88,7 @@ public final class InteractionRaytrace extends MetaCheck<InteractionRaytrace.Int
   @PacketSubscription(
     priority = ListenerPriority.NORMAL,
     packetsIn = {
-      BLOCK_PLACE, USE_ITEM
+      BLOCK_PLACE, USE_ITEM, USE_ITEM_ON
     }
   )
   public void receiveInteractionAndPlace(PacketEvent event) {

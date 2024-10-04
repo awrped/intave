@@ -71,6 +71,7 @@ public final class PacketReaders {
     setup(CUSTOM_PAYLOAD_IN, PayloadInReader::new);
     setup(ENTITY_ACTION_IN, PlayerActionReader::new);
     setup(USE_ITEM, BlockInteractionReader::new);
+    setup(USE_ITEM_ON, BlockInteractionReader::new);
     setup(USE_ENTITY, EntityUseReader::new);
     setup(WINDOW_ITEMS, WindowBulkItemReader::new);
     setup(WINDOW_CLICK, WindowClickReader::new);

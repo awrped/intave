@@ -9,12 +9,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class MultiBlockChangeReader extends CompiledPacketReader implements BlockChanges {
-  private static final boolean USE_SELECTION_POSITION = MinecraftVersions.VER1_16_2.atOrAbove();
+  private static final boolean USE_SECTIONS = MinecraftVersions.VER1_16_2.atOrAbove();
   private List<BlockPosition> blockPositions;
   private List<WrappedBlockData> blockDataList;
 
   public void compile() {
-    if (USE_SELECTION_POSITION) {
+    if (USE_SECTIONS) {
       BlockPosition blockPosition = packet().getSectionPositions().readSafely(0);
       int chunkXBase = blockPosition.getX() << 4;
       int chunkYBase = blockPosition.getY() << 4;

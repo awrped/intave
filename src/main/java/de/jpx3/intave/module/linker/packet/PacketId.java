@@ -52,6 +52,7 @@ public final class PacketId {
     UPDATE_SIGN("UPDATE_SIGN"),
     USE_ENTITY("USE_ENTITY"),
     USE_ITEM("USE_ITEM"),
+    USE_ITEM_ON("USE_ITEM_ON"),
     VEHICLE_MOVE("VEHICLE_MOVE"),
     WINDOW_CLICK("WINDOW_CLICK"),
     ;

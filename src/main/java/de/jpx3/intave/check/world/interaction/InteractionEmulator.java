@@ -32,6 +32,7 @@ import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserRepository;
 import de.jpx3.intave.user.meta.MovementMetadata;
 import de.jpx3.intave.world.permission.WorldPermission;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -50,6 +51,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static de.jpx3.intave.IntaveControl.DUMP_BLOCK_HITBOX_ON_RIGHT_CLICK;
+import static de.jpx3.intave.IntaveControl.REMOVE_PLACED_BLOCKS_WITH_DELAY;
 
 @Relocate
 public final class InteractionEmulator implements EventProcessor {
@@ -71,6 +73,11 @@ public final class InteractionEmulator implements EventProcessor {
       BlockCache blockStateAccess = userOf(place.getPlayer()).blockCache();
       blockStateAccess.invalidateCacheAround(block.getX(), block.getY(), block.getZ());
       //      blockStateAccess.invalidateOverride(block.getX(), block.getY(), block.getZ());
+    }
+    if (REMOVE_PLACED_BLOCKS_WITH_DELAY) {
+      Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
+        place.getBlock().setType(Material.AIR);
+      }, 20 * 5);
     }
   }
 
@@ -109,7 +116,6 @@ public final class InteractionEmulator implements EventProcessor {
     interaction.setEmulated();
     Player player = interaction.player();
     InteractionType interactionType = interaction.type();
-//    player.sendMessage("Emulating " + interactionType);
     switch (interactionType) {
       case PLACE:
         return emulatePlacement(player, interaction);
