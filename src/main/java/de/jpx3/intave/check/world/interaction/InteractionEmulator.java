@@ -21,6 +21,7 @@ import de.jpx3.intave.block.variant.BlockVariant;
 import de.jpx3.intave.block.variant.BlockVariantRegister;
 import de.jpx3.intave.block.variant.BlockVariantReverseLookup;
 import de.jpx3.intave.check.EventProcessor;
+import de.jpx3.intave.executor.Synchronizer;
 import de.jpx3.intave.module.Modules;
 import de.jpx3.intave.module.linker.bukkit.BukkitEventSubscription;
 import de.jpx3.intave.module.nayoro.Nayoro;
@@ -31,6 +32,7 @@ import de.jpx3.intave.share.Position;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserRepository;
 import de.jpx3.intave.user.meta.MovementMetadata;
+import de.jpx3.intave.user.meta.ProtocolMetadata;
 import de.jpx3.intave.world.permission.WorldPermission;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -283,10 +285,19 @@ public final class InteractionEmulator implements EventProcessor {
       blockStates.override(world, blockX, blockY, blockZ, placedBlockType, variant, "PLACE");
       blockStates.invalidateCacheAround(blockX, blockY, blockZ);
       blockStates.lockOverride(blockX, blockY, blockZ);
-      if (user.meta().protocol().clientSpeculativeBlocks()) {
+      ProtocolMetadata protocol = user.meta().protocol();
+      int sequenceNumber = interaction.sequenceNumber();
+      if (protocol.clientSpeculativeBlocks()) {
         blockStates.setClientSpeculationValue(
-          world, blockX, blockY, blockZ, presentType, presentVariant, interaction.sequenceNumber()
+          world, blockX, blockY, blockZ, presentType, presentVariant, sequenceNumber
         );
+      }
+      if (protocol.selfAcknowledgePlacements()) {
+        Synchronizer.synchronize(() -> {
+          user.tickFeedback(() ->
+            user.blockCache().moveClientSpeculationsToOverride(player.getWorld(), sequenceNumber)
+          );
+        });
       }
 
       if (presentType != placedBlockType) {

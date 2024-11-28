@@ -13,6 +13,7 @@ import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.access.player.trust.TrustFactor;
 import de.jpx3.intave.adapter.MinecraftVersions;
 import de.jpx3.intave.annotate.DispatchTarget;
+import de.jpx3.intave.annotate.KeepEnumInternalNames;
 import de.jpx3.intave.annotate.Relocate;
 import de.jpx3.intave.block.access.BlockInteractionAccess;
 import de.jpx3.intave.block.access.VolatileBlockAccess;
@@ -101,7 +102,7 @@ public final class InteractionRaytrace extends MetaCheck<InteractionRaytrace.Int
     PacketContainer packet = event.getPacket();
     BlockInteractionReader reader = PacketReaders.readerOf(packet);
 
-    inventory.lastBlockSequenceNumber = reader.sequenceNumber();
+    inventory.lastBlockSequenceNumber = reader.sequenceNumber(user);
 
     try {
       com.comphenix.protocol.wrappers.BlockPosition blockPosition = reader.blockPosition();
@@ -204,7 +205,7 @@ public final class InteractionRaytrace extends MetaCheck<InteractionRaytrace.Int
             ? heldItem
             : inventory.offhandItem(),
           handSlot, null, facingX, facingY, facingZ,
-          reader.sequenceNumber()
+          reader.sequenceNumber(user)
         );
 
       boolean placementIs113Speculative = type == PLACE && meta.protocol().waterUpdate();
@@ -237,7 +238,7 @@ public final class InteractionRaytrace extends MetaCheck<InteractionRaytrace.Int
             Violation violation = Violation.builderFor(InteractionRaytrace.class)
               .forPlayer(player)
               .withVL(0)
-  //            .appendFlags(DISPLAY_IN_ALL_VERBOSE_MODES)
+              //            .appendFlags(DISPLAY_IN_ALL_VERBOSE_MODES)
               .withMessage("performed erroneous block placement")
               .withDetails("emulation failed for " + type + " with " + typeUsedInHand + " in hand, direction " + enumDirection + " at y " + blockPosition.getY())
               .build();
@@ -268,6 +269,28 @@ public final class InteractionRaytrace extends MetaCheck<InteractionRaytrace.Int
           break;
         default:
           break;
+      }
+      //       if (user.receives(MessageChannel.DEBUG_PACKET_HOLD)) {
+      //        if (resendLater) {
+      //          Synchronizer.synchronize(() -> {
+      //            player.sendMessage("%PH " + ChatColor.RED + "Await attack at " + (System.currentTimeMillis() % 1000) + " since prelim ray failed");
+      //          });
+      //        } else {
+      //          Synchronizer.synchronize(() -> {
+      //            player.sendMessage("%PH " + ChatColor.GREEN + "Allowing attack without hold at " + (System.currentTimeMillis() % 1000));
+      //          });
+      //        }
+      //      }
+      if (user.receives(MessageChannel.DEBUG_PACKET_HOLD)) {
+        if (!event.isCancelled()) {
+          Synchronizer.synchronize(() -> {
+            player.sendMessage("%PH " + ChatColor.GREEN + "Allowing " + interaction.type().name() + " without hold at " + (System.currentTimeMillis() % 1000));
+          });
+        } else {
+          Synchronizer.synchronize(() -> {
+            player.sendMessage("%PH " + ChatColor.RED + "Awaiting " + interaction.type().name() + " packet at " + (System.currentTimeMillis() % 1000) + ": prelim->"+ result);
+          });
+        }
       }
     } finally {
       reader.release();
@@ -345,7 +368,7 @@ public final class InteractionRaytrace extends MetaCheck<InteractionRaytrace.Int
 
     InteractionType type = breakBlock ? InteractionType.BREAK : InteractionType.START_BREAK;
     if (IntaveControl.DEBUG_INTERACTION) {
-      player.sendMessage(type + "@"+user.blockCache().typeAt(blockPosition.getX(), blockPosition.getY(), blockPosition.getZ()) + "/"+blockDamage+" " + heldItemType + " " + playerDigType);
+      player.sendMessage(type + "@" + user.blockCache().typeAt(blockPosition.getX(), blockPosition.getY(), blockPosition.getZ()) + "/" + blockDamage + " " + heldItemType + " " + playerDigType);
     }
 
     Interaction interaction = new Interaction(
@@ -389,7 +412,17 @@ public final class InteractionRaytrace extends MetaCheck<InteractionRaytrace.Int
         }
         break;
     }
-
+    if (user.receives(MessageChannel.DEBUG_PACKET_HOLD)) {
+      if (!event.isCancelled()) {
+        Synchronizer.synchronize(() -> {
+          player.sendMessage("%PH " + ChatColor.GREEN + "Allowing " + interaction.type().name() + " without hold at " + (System.currentTimeMillis() % 1000));
+        });
+      } else {
+        Synchronizer.synchronize(() -> {
+          player.sendMessage("%PH " + ChatColor.RED + "Awaiting " + interaction.type().name() + " packet at " + (System.currentTimeMillis() % 1000) + ": prelim->"+ preprocess);
+        });
+      }
+    }
     if (breakBlock || playerDigType == ABORT_DESTROY_BLOCK) {
       interactionMeta.isBreakingBlock = attack.inBreakProcess = false;
       attack.lastBreak = System.currentTimeMillis();
@@ -459,7 +492,7 @@ public final class InteractionRaytrace extends MetaCheck<InteractionRaytrace.Int
       } else {
         // placement but no animation, undo
         if (IntaveControl.DEBUG_INTERACTION) {
-          user.player().sendMessage(ChatColor.RED + "Speculative interaction failed was: "+debugMessage+", emulated: " + speculativeInteraction.hasBeenEmulated() + "/" + speculativeInteraction.wasPlacementEmulated());
+          user.player().sendMessage(ChatColor.RED + "Speculative interaction failed was: " + debugMessage + ", emulated: " + speculativeInteraction.hasBeenEmulated() + "/" + speculativeInteraction.wasPlacementEmulated());
         }
         if (speculativeInteraction.hasBeenEmulated()) {
           interactionEmulator.undo(speculativeInteraction);
@@ -506,8 +539,8 @@ public final class InteractionRaytrace extends MetaCheck<InteractionRaytrace.Int
         Location playerLocationmdf = playerLocation.clone();
         playerLocationmdf.setYaw(movementData.lastRotationYaw);
 
-        double[] possibleXDisplacements = new double[] { 0, 0.01, -0.01, 0.03, -0.03, 0.06, -0.06 };
-        double[] possibleZDisplacements = new double[] { 0, 0.01, -0.01, 0.03, -0.03, 0.06, -0.06 };
+        double[] possibleXDisplacements = new double[]{0, 0.01, -0.01, 0.03, -0.03, 0.06, -0.06};
+        double[] possibleZDisplacements = new double[]{0, 0.01, -0.01, 0.03, -0.03, 0.06, -0.06};
         int numChecks = possibleXDisplacements.length * possibleZDisplacements.length;
 
         boolean estimateMouseDelayFix = interactionMeta.estimateMouseDelayFix;
@@ -584,13 +617,12 @@ public final class InteractionRaytrace extends MetaCheck<InteractionRaytrace.Int
     return PreprocessResult.OK;
   }
 
+  @KeepEnumInternalNames
   private enum PreprocessResult {
     OK,
     FAILED_MINOR,
     FAILED_CRITICAL,
-    ENFORCE_ROUTING
-
-    ;
+    ENFORCE_ROUTING;
 
     public boolean checkPacketAfter() {
       return this == FAILED_MINOR || this == FAILED_CRITICAL || this == ENFORCE_ROUTING;
@@ -673,71 +705,78 @@ public final class InteractionRaytrace extends MetaCheck<InteractionRaytrace.Int
       return;
     }
 
+    if (interaction.shouldSendPacket() && user.receives(MessageChannel.DEBUG_PACKET_HOLD)) {
+      Synchronizer.synchronize(() -> {
+        player.sendMessage("%PH " + ChatColor.YELLOW + "Processing " + interaction.type().name() + " packet at " + (System.currentTimeMillis() % 1000));
+      });
+    }
+
     Pose currentPose = user.meta().movement().pose();
     boolean sneakUncertainty = user.meta().protocol().delayedSneak() && (currentPose == Pose.STANDING || currentPose == Pose.CROUCHING);
     List<RaytraceEvaluation> evaluations = new CopyOnWriteArrayList<>();
-    double[] possibleXDisplacements = new double[] { 0, 0.005, -0.005, 0.01, -0.01, 0.03, -0.03, 0.06, -0.06 };
-    double[] possibleZDisplacements = new double[] { 0, 0.005, -0.005, 0.01, -0.01, 0.03, -0.03, 0.06, -0.06 };
+    double[] possibleXDisplacements = new double[]{0, 0.005, -0.005, 0.01, -0.01, 0.03, -0.03, 0.06, -0.06};
+    double[] possibleZDisplacements = new double[]{0, 0.005, -0.005, 0.01, -0.01, 0.03, -0.03, 0.06, -0.06};
     boolean ratelimited = false;
     int numChecks = possibleXDisplacements.length * possibleZDisplacements.length;
 
     int index = 0;
     boolean estimateMouseDelayFix = interactionMeta.estimateMouseDelayFix;
-    for (int poses = 0; poses < (sneakUncertainty ? 2 : 1); poses++) POSE: {
-      Pose selectedPose = sneakUncertainty ? (poses == 0 ? Pose.STANDING : Pose.CROUCHING) : currentPose;
-      estimateMouseDelayFix = interactionMeta.estimateMouseDelayFix;
-      index = 0;
-      do {
-        double xDisplacement = possibleXDisplacements[index / possibleZDisplacements.length];
-        double zDisplacement = possibleZDisplacements[index % possibleZDisplacements.length];
-        Location shiftedPlayerLocation = playerLocation.clone();
-        Location shiftedPlayerLocationmdf = playerLocationmdf.clone();
-        if (xDisplacement != 0 || zDisplacement != 0) {
-          shiftedPlayerLocation.add(xDisplacement, 0, zDisplacement);
-          shiftedPlayerLocationmdf.add(xDisplacement, 0, zDisplacement);
-        }
-        RaytraceEvaluation evaluation = singleRaytrace(user, interaction, estimateMouseDelayFix ? shiftedPlayerLocationmdf : shiftedPlayerLocation, selectedPose);
-        if (evaluation == null) {
-          // critical error, ignore detection
-          if (interaction.targetBlock().toLocation(world).distance(player.getLocation()) < 6) {
-            forwardInteractionToServer(interaction, null, interaction.targetBlock().toLocation(world), interaction.targetBlock().toLocation(world), false, false, false);
+    for (int poses = 0; poses < (sneakUncertainty ? 2 : 1); poses++)
+      POSE:{
+        Pose selectedPose = sneakUncertainty ? (poses == 0 ? Pose.STANDING : Pose.CROUCHING) : currentPose;
+        estimateMouseDelayFix = interactionMeta.estimateMouseDelayFix;
+        index = 0;
+        do {
+          double xDisplacement = possibleXDisplacements[index / possibleZDisplacements.length];
+          double zDisplacement = possibleZDisplacements[index % possibleZDisplacements.length];
+          Location shiftedPlayerLocation = playerLocation.clone();
+          Location shiftedPlayerLocationmdf = playerLocationmdf.clone();
+          if (xDisplacement != 0 || zDisplacement != 0) {
+            shiftedPlayerLocation.add(xDisplacement, 0, zDisplacement);
+            shiftedPlayerLocationmdf.add(xDisplacement, 0, zDisplacement);
           }
-//          player.sendMessage(ChatColor.RED + "Critical error, interaction ignored");
-          return;
-        }
-        evaluations.add(evaluation);
-        if (evaluation.isInvalid()) {
-          // try again with mouse delay fix toggled differently
-          estimateMouseDelayFix = !estimateMouseDelayFix;
-          evaluation = singleRaytrace(user, interaction, estimateMouseDelayFix ? shiftedPlayerLocationmdf : shiftedPlayerLocation, selectedPose);
+          RaytraceEvaluation evaluation = singleRaytrace(user, interaction, estimateMouseDelayFix ? shiftedPlayerLocationmdf : shiftedPlayerLocation, selectedPose);
           if (evaluation == null) {
-            // critical error, ignore the detection
+            // critical error, ignore detection
             if (interaction.targetBlock().toLocation(world).distance(player.getLocation()) < 6) {
               forwardInteractionToServer(interaction, null, interaction.targetBlock().toLocation(world), interaction.targetBlock().toLocation(world), false, false, false);
             }
-//            player.sendMessage(ChatColor.RED + "Critical error, interaction ignored");
+//          player.sendMessage(ChatColor.RED + "Critical error, interaction ignored");
             return;
           }
           evaluations.add(evaluation);
-          if (evaluation.isValid()) {
-            interactionMeta.estimateMouseDelayFix = estimateMouseDelayFix;
+          if (evaluation.isInvalid()) {
+            // try again with mouse delay fix toggled differently
+            estimateMouseDelayFix = !estimateMouseDelayFix;
+            evaluation = singleRaytrace(user, interaction, estimateMouseDelayFix ? shiftedPlayerLocationmdf : shiftedPlayerLocation, selectedPose);
+            if (evaluation == null) {
+              // critical error, ignore the detection
+              if (interaction.targetBlock().toLocation(world).distance(player.getLocation()) < 6) {
+                forwardInteractionToServer(interaction, null, interaction.targetBlock().toLocation(world), interaction.targetBlock().toLocation(world), false, false, false);
+              }
+//            player.sendMessage(ChatColor.RED + "Critical error, interaction ignored");
+              return;
+            }
+            evaluations.add(evaluation);
+            if (evaluation.isValid()) {
+              interactionMeta.estimateMouseDelayFix = estimateMouseDelayFix;
+              break POSE;
+            }
+          } else {
             break POSE;
           }
-        } else {
-          break POSE;
-        }
-        index++;
-        // Limit the amount of shifted locations granted when they are used excessively
-        if (index > 8 && interactionMeta.speculativePositionsUsed > 8) {
-          ratelimited = true;
-          break;
-        }
-        if (index > 16 && interactionMeta.speculativePositionsUsed > 4) {
-          ratelimited = true;
-          break;
-        }
-      } while (index < numChecks);
-    }
+          index++;
+          // Limit the amount of shifted locations granted when they are used excessively
+          if (index > 8 && interactionMeta.speculativePositionsUsed > 8) {
+            ratelimited = true;
+            break;
+          }
+          if (index > 16 && interactionMeta.speculativePositionsUsed > 4) {
+            ratelimited = true;
+            break;
+          }
+        } while (index < numChecks);
+      }
 
     if (index > 1) {
       // used a shifted location
@@ -789,11 +828,11 @@ public final class InteractionRaytrace extends MetaCheck<InteractionRaytrace.Int
         Material type = blockStateAccess.typeAt(block.getX(), block.getY(), block.getZ());
         int variant = blockStateAccess.variantIndexAt(block.getX(), block.getY(), block.getZ());
         BlockVariant properties = BlockVariantRegister.variantOf(type, variant);
-        String propertyString = "{"+properties.propertyNames().stream().map(s -> s + ": " + properties.propertyOf(s)).collect(Collectors.joining(", ")) +"}";
+        String propertyString = "{" + properties.propertyNames().stream().map(s -> s + ": " + properties.propertyOf(s)).collect(Collectors.joining(", ")) + "}";
 
 //      Fluid fluid = Fluids.fluidAt(userOf(player), block.getX(), block.getY(), block.getZ());
         Fluid fluid = Fluids.fluidAt(userOf(player), block.getX(), block.getY(), block.getZ());
-        player.sendMessage(ChatColor.GOLD + "" + type + "/" + variant + "."+propertyString+" f"+ fluid +" -> " + blockStateAccess.collisionShapeAt(block.getX(), block.getY(), block.getZ()) +"/"+blockStateAccess.outlineShapeAt(block.getX(), block.getY(), block.getZ()));
+        player.sendMessage(ChatColor.GOLD + "" + type + "/" + variant + "." + propertyString + " f" + fluid + " -> " + blockStateAccess.collisionShapeAt(block.getX(), block.getY(), block.getZ()) + "/" + blockStateAccess.outlineShapeAt(block.getX(), block.getY(), block.getZ()));
       }
       mustCancelPacket = false;
       // As the interaction was not canceled for consumables, we have to do it now as the raytrace failed

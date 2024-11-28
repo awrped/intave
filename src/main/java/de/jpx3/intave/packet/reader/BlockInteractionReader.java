@@ -6,6 +6,7 @@ import com.comphenix.protocol.wrappers.MovingObjectPositionBlock;
 import de.jpx3.intave.adapter.MinecraftVersions;
 import de.jpx3.intave.annotate.Nullable;
 import de.jpx3.intave.share.Direction;
+import de.jpx3.intave.user.User;
 import org.bukkit.util.Vector;
 
 public final class BlockInteractionReader extends BlockPositionReader {
@@ -51,11 +52,24 @@ public final class BlockInteractionReader extends BlockPositionReader {
     }
   }
 
-  public int sequenceNumber() {
+  private int sequenceNumber = 0;
+  private boolean hasArtificialSequenceNumber = false;
+
+  public int sequenceNumber(User user) {
     if (HAS_SEQUENCE_NUMBER) {
       return packet().getIntegers().readSafely(0);
+    } else if (hasArtificialSequenceNumber) {
+      return sequenceNumber;
     } else {
-      return -1;
+      hasArtificialSequenceNumber = true;
+      return sequenceNumber = user.meta().connection().simulatedBlockAckNum++;
     }
+  }
+
+  @Override
+  public void release() {
+    sequenceNumber = 0;
+    hasArtificialSequenceNumber = false;
+    super.release();
   }
 }

@@ -207,6 +207,10 @@ public final class ProtocolMetadata {
     return protocolVersion >= VER_1_19_2;
   }
 
+  public boolean selfAcknowledgePlacements() {
+    return protocolVersion >= VER_1_19_2 && !MinecraftVersions.VER1_19_2.atOrAbove();
+  }
+
   public boolean supportsPacketBundles() {
     return protocolVersion >= VER_1_19_4;
   }

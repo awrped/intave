@@ -1,10 +1,12 @@
 package de.jpx3.intave.check.world.interaction;
 
+import de.jpx3.intave.annotate.KeepEnumInternalNames;
 import de.jpx3.intave.check.world.InteractionRaytrace;
 
 import static de.jpx3.intave.check.world.InteractionRaytrace.ResponseType.CANCEL;
 import static de.jpx3.intave.check.world.InteractionRaytrace.ResponseType.RAYTRACE_CAST;
 
+@KeepEnumInternalNames
 public enum InteractionType {
   BREAK(CANCEL, false),
   START_BREAK(RAYTRACE_CAST, false),

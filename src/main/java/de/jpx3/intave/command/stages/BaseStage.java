@@ -191,9 +191,9 @@ public final class BaseStage extends CommandStage {
     user.removeChannelConstraint(type.channel);
 
     if (receivesDebug) {
-      player.sendMessage(IntavePlugin.prefix() + "You are " + ChatColor.RED + "no longer " + IntavePlugin.defaultColor() + "receiving " + type.name().toLowerCase() + " debug messages");
+      player.sendMessage(IntavePlugin.prefix() + "You are " + ChatColor.RED + "no longer " + IntavePlugin.defaultColor() + "receiving " + ChatColor.RED + type.name().toLowerCase().replace("_", " ") + IntavePlugin.defaultColor() + " debug messages");
     } else {
-      player.sendMessage(IntavePlugin.prefix() + "You are " + ChatColor.GREEN + "now " + IntavePlugin.defaultColor() + "receiving " + type.name().toLowerCase() + " debug messages");
+      player.sendMessage(IntavePlugin.prefix() + "You are " + ChatColor.GREEN + "now " + IntavePlugin.defaultColor() + "receiving " + ChatColor.RED + type.name().toLowerCase().replace("_", " ") + IntavePlugin.defaultColor() + " debug messages");
       user.setChannelConstraint(type.channel, target != null ? player1 -> player1.getUniqueId().equals(target.getUniqueId()) : player1 -> true);
     }
   }
@@ -205,6 +205,7 @@ public final class BaseStage extends CommandStage {
     ITEM_RESETS(MessageChannel.DEBUG_ITEM_RESETS),
     BLOCK_CACHE(MessageChannel.DEBUG_BLOCK_CACHE),
     POSITION(MessageChannel.DEBUG_POSITION),
+    PACKET_HOLD(MessageChannel.DEBUG_PACKET_HOLD),
 
     ;
 

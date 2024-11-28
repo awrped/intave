@@ -67,6 +67,8 @@ public final class ConnectionMetadata {
   public int lastFeedbackUserKey = Integer.MIN_VALUE;
   public int generatorRunningNum = 0;
 
+  public int simulatedBlockAckNum;
+
   public int windowClickId;
   public int transactionKeepAliveInvalidOrderVL;
 

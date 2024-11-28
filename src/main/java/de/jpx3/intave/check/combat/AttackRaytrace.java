@@ -15,6 +15,7 @@ import de.jpx3.intave.diagnostic.LatencyStudy;
 import de.jpx3.intave.diagnostic.message.DebugBroadcast;
 import de.jpx3.intave.diagnostic.message.MessageCategory;
 import de.jpx3.intave.diagnostic.message.MessageSeverity;
+import de.jpx3.intave.executor.Synchronizer;
 import de.jpx3.intave.math.MathHelper;
 import de.jpx3.intave.module.Modules;
 import de.jpx3.intave.module.feedback.FeedbackAnalysis;
@@ -30,10 +31,12 @@ import de.jpx3.intave.packet.reader.EntityUseReader;
 import de.jpx3.intave.packet.reader.PacketReaders;
 import de.jpx3.intave.share.HistoryWindow;
 import de.jpx3.intave.share.Position;
+import de.jpx3.intave.user.MessageChannel;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.meta.*;
 import de.jpx3.intave.world.raytrace.Raytrace;
 import de.jpx3.intave.world.raytrace.Raytracing;
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
@@ -121,6 +124,17 @@ public final class AttackRaytrace extends MetaCheck<AttackRaytrace.AttackRaytrac
         }
         event.setCancelled(true);
       }
+      if (user.receives(MessageChannel.DEBUG_PACKET_HOLD)) {
+        if (resendLater) {
+          Synchronizer.synchronize(() -> {
+            player.sendMessage("%PH " + ChatColor.RED + "Await ATTACK at " + (System.currentTimeMillis() % 1000) + " since prelim ray failed");
+          });
+        } else {
+          Synchronizer.synchronize(() -> {
+            player.sendMessage("%PH " + ChatColor.GREEN + "Allowing ATTACK without hold at " + (System.currentTimeMillis() % 1000));
+          });
+        }
+      }
       // Only add attack to queue if queue size is small enough
       if (pendingPushable) {
         PacketContainer clone = packet.shallowClone();
@@ -191,6 +205,15 @@ public final class AttackRaytrace extends MetaCheck<AttackRaytrace.AttackRaytrac
         Attack pendingAttack = (Attack) pendingAction;
         float entityHealth = abilities.unsynchronizedHealth;
         Entity attackedEntity = EntityTracker.entityByIdentifier(user, pendingAttack.entityId);
+
+        if (user.receives(MessageChannel.DEBUG_PACKET_HOLD)) {
+          if (pendingAttack.shouldResend) {
+            Synchronizer.synchronize(() -> {
+              player.sendMessage("%PH " + ChatColor.YELLOW + "Processing ATTACK at " + (System.currentTimeMillis() % 1000));
+            });
+          }
+        }
+
         // Once again ignore invalid entity states to make sure nothing is processed wrongly
         if (entityHealth <= 0
           || attackedEntity == null

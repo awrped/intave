@@ -4,9 +4,7 @@ import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.wrappers.EnumWrappers;
 import com.comphenix.protocol.wrappers.Pair;
-import de.jpx3.intave.IntaveControl;
 import de.jpx3.intave.IntavePlugin;
-import de.jpx3.intave.adapter.MinecraftVersions;
 import de.jpx3.intave.module.linker.packet.PacketSubscription;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
@@ -98,9 +96,10 @@ public final class EquipmentFilter extends Filter {
 
   @Override
   protected boolean enabled() {
-    if (MinecraftVersions.VER1_19.atOrAbove()) {
-      return false;
-    }
-    return !IntaveControl.GOMME_MODE && super.enabled();
+//    if (MinecraftVersions.VER1_19.atOrAbove()) {
+//      return false;
+//    }
+//    return !IntaveControl.GOMME_MODE && super.enabled();
+    return false;
   }
 }
