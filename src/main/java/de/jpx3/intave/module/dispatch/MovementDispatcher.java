@@ -70,9 +70,9 @@ import java.util.stream.Collectors;
 import static de.jpx3.intave.IntaveControl.DEBUG_MOVEMENT_IGNORE;
 import static de.jpx3.intave.math.MathHelper.formatDouble;
 import static de.jpx3.intave.module.feedback.FeedbackOptions.SELF_SYNCHRONIZATION;
+import static de.jpx3.intave.module.linker.packet.PacketId.Client.*;
 import static de.jpx3.intave.module.linker.packet.PacketId.Client.POSITION;
 import static de.jpx3.intave.module.linker.packet.PacketId.Client.VEHICLE_MOVE;
-import static de.jpx3.intave.module.linker.packet.PacketId.Client.*;
 import static de.jpx3.intave.module.linker.packet.PacketId.Server.*;
 import static de.jpx3.intave.module.violation.Violation.ViolationFlags.DISPLAY_IN_ALL_VERBOSE_MODES;
 import static de.jpx3.intave.user.meta.ProtocolMetadata.VER_1_16;
@@ -97,35 +97,21 @@ public final class MovementDispatcher extends Module {
     this.teleportApplyEnforcer.setup();
   }
 
-  @BukkitEventSubscription
+  @BukkitEventSubscription(
+    priority = EventPriority.MONITOR
+  )
   public void receiveExternalTeleport(PlayerTeleportEvent event) {
     Player player = event.getPlayer();
     User user = UserRepository.userOf(player);
     PlayerTeleportEvent.TeleportCause cause = event.getCause();
-//    System.out.println("Teleport cause: " + cause);
-    if (cause == PlayerTeleportEvent.TeleportCause.NETHER_PORTAL/* || cause == PlayerTeleportEvent.TeleportCause.UNKNOWN*/) {
+    if (cause == PlayerTeleportEvent.TeleportCause.NETHER_PORTAL || event.isCancelled()) {
       return;
     }
     Location fromLocation = event.getFrom();
     Location toLocation = event.getTo();
-    World world = toLocation.getWorld();
     double teleportDistance = toLocation.getWorld() != player.getWorld() ? Double.MAX_VALUE : toLocation.distance(fromLocation);
-//    System.out.println("Teleport distance: " + teleportDistance);
     if (toLocation.getWorld() != player.getWorld() || teleportDistance > 8) {
-//      MovementMetadata movement = user.meta().movement();
-//      BoundingBox bb = BoundingBox.fromPosition(user, movement, toLocation);
-//      int shiftAllowed = 5;
-//      Location oldToLocation = toLocation.clone();
-//      while (toLocation.getY() < WorldHeight.UPPER_WORLD_LIMIT && shiftAllowed-- > 0 && Collision.unsafePresent(world, player, bb) && Collision.unsafeNonePresent(world, player, bb.offset(0, 0.5, 0))) {
-//        toLocation.add(0, 0.1, 0);
-//        bb = BoundingBox.fromPosition(user, movement, toLocation).expand(0.25, 0.5, 0.25);
-//      }
-//      if (IntaveControl.DEBUG_STUCK_REVIVAL) {
-//        player.sendMessage("SREV " + shiftAllowed + " " + toLocation.distance(oldToLocation) + " cause " + cause);
-//      }
       Location fixed = fixLocation(user, toLocation);
-//      event.setTo(fixed);
-//      event.getTo().setY(fixed.getY());
       Synchronizer.synchronize(() -> {
         player.teleport(fixed, PlayerTeleportEvent.TeleportCause.NETHER_PORTAL);
       });
