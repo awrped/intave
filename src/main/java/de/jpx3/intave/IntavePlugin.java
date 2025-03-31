@@ -66,6 +66,7 @@ import de.jpx3.intave.resource.Resources;
 import de.jpx3.intave.resource.legacy.EncryptedLegacyResource;
 import de.jpx3.intave.security.*;
 import de.jpx3.intave.security.letis.Letis;
+import de.jpx3.intave.share.FriendlyByteBuf;
 import de.jpx3.intave.share.link.WrapperConverter;
 import de.jpx3.intave.test.TestService;
 import de.jpx3.intave.trustfactor.TrustFactorService;
@@ -286,6 +287,8 @@ public final class IntavePlugin extends JavaPlugin {
 
       // we need to put this here
       BackgroundExecutors.start();
+
+      FriendlyByteBuf.setup();
 
       // stage 7
 
