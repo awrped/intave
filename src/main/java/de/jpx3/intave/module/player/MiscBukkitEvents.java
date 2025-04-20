@@ -12,6 +12,7 @@ import de.jpx3.intave.klass.trace.PluginInvocation;
 import de.jpx3.intave.module.Module;
 import de.jpx3.intave.module.linker.bukkit.BukkitEventSubscription;
 import de.jpx3.intave.player.ItemProperties;
+import de.jpx3.intave.user.MessageChannel;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserRepository;
 import de.jpx3.intave.user.meta.InventoryMetadata;
@@ -125,6 +126,9 @@ public final class MiscBukkitEvents extends Module {
       boolean applyArrowBlock = System.currentTimeMillis() - inventory.lastBlockArrowRequest < 800L;
       if (applyArrowBlock) {
         event.setCancelled(true);
+      }
+      if (user.receives(MessageChannel.DEBUG_ITEM_RESETS)) {
+        user.player().sendMessage(IntavePlugin.prefix() + " Cancelled your arrow shot to sync with the server");
       }
       inventory.blockNextArrow = false;
     }

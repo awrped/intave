@@ -6,6 +6,7 @@ import com.comphenix.protocol.reflect.StructureModifier;
 import com.comphenix.protocol.wrappers.BlockPosition;
 import com.comphenix.protocol.wrappers.EnumWrappers;
 import de.jpx3.intave.IntaveControl;
+import de.jpx3.intave.IntavePlugin;
 import de.jpx3.intave.adapter.MinecraftVersions;
 import de.jpx3.intave.klass.Lookup;
 import de.jpx3.intave.module.Module;
@@ -16,6 +17,7 @@ import de.jpx3.intave.module.linker.packet.PacketSubscription;
 import de.jpx3.intave.packet.PacketSender;
 import de.jpx3.intave.packet.converter.BlockPositionConverter;
 import de.jpx3.intave.player.ItemProperties;
+import de.jpx3.intave.user.MessageChannel;
 import de.jpx3.intave.user.User;
 import de.jpx3.intave.user.UserRepository;
 import de.jpx3.intave.user.meta.InventoryMetadata;
@@ -111,6 +113,9 @@ public class PlayerHandTracker extends Module {
       if (!ItemProperties.canItemBeUsed(player, itemStack)) {
         inventoryData.blockNextArrow = true;
         inventoryData.lastBlockArrowRequest = System.currentTimeMillis();
+        if (user.receives(MessageChannel.DEBUG_ITEM_RESETS)) {
+          user.player().sendMessage(IntavePlugin.prefix() + " Detected item switch on active item, released hand and blocking impending arrow shot");
+        }
       }
     }
     inventoryData.slotSwitchData = new InventoryMetadata.SlotSwitchData(slot, item);

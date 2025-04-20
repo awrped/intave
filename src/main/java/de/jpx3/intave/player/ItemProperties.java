@@ -16,6 +16,7 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
+import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -85,6 +86,9 @@ public final class ItemProperties {
     materialTrapdoorItems.addAll(materialsMatching("TRAPDOOR"));
     materialSwordItems.addAll(materialsMatching("SWORD"));
     materialUseItems.add(Material.BOW);
+    if (CROSSBOW != null) {
+      materialUseItems.add(CROSSBOW);
+    }
   }
 
   private static void loadPotions() {
@@ -105,13 +109,28 @@ public final class ItemProperties {
       return false;
     }
     if (type == CROSSBOW && !hasArrows) {
-      return false;
+      return crossbowLoaded(itemStack);
     }
-
     boolean useItem = materialUseItems.contains(type);
     boolean potion = materialPotionItems.contains(type);
     boolean sword = materialSwordItems.contains(type) && swordBlockable(player, type);
     return sword || useItem || potion || foodConsumable(player, type);
+  }
+
+  public static boolean crossbowLoaded(ItemStack itemStack) {
+    if (itemStack == null) {
+      return false;
+    }
+    if (itemStack.getType() != CROSSBOW) {
+      return false;
+    }
+    ItemMeta meta = itemStack.getItemMeta();
+    Class<?> clazz = meta.getClass();
+    try {
+      return (boolean) clazz.getMethod("hasChargedProjectiles").invoke(meta);
+    } catch (Exception e) {
+      return false;
+    }
   }
 
   public static boolean isBow(Material type) {
