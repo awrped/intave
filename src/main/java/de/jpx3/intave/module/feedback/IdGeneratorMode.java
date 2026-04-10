@@ -9,8 +9,9 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiFunction;
 
 public enum IdGeneratorMode {
-  RANDOM((user, last) -> (user.meta().connection().feedbackUserKeyRandom.nextInt(FeedbackSender.MAX_USER_KEY - FeedbackSender.MIN_USER_KEY) + FeedbackSender.MIN_USER_KEY)),
-  NEGATIVE_RANDOM((user, last) -> (user.meta().connection().feedbackUserKeyRandom.nextInt(FeedbackSender.MAX_USER_KEY)) * -1),
+  FULL_RANDOM((user, last) -> (user.meta().connection().feedbackUserKeyRandom.nextInt(FeedbackSender.MAX_USER_KEY - FeedbackSender.MIN_USER_KEY) + FeedbackSender.MIN_USER_KEY)),
+  POSITIVE_RANDOM((user, last) -> (user.meta().connection().feedbackUserKeyRandom.nextInt(FeedbackSender.MAX_USER_KEY))),
+  NEGATIVE_RANDOM(POSITIVE_RANDOM.generator.andThen(integer -> -integer)),
 //  INTAVE_VANILLA_POSITIVE((user, last) -> {
 //    ConnectionMetadata connection = user.meta().connection();
 //    FeedbackQueue feedbackQueue = connection.feedbackQueue();
@@ -56,7 +57,7 @@ public enum IdGeneratorMode {
   }
 
   public static IdGeneratorMode mostStableAndRobust() {
-    return RANDOM;
+    return FULL_RANDOM;
   }
 
   private static IdGeneratorMode modeOfTheDayCache;

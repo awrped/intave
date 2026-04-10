@@ -250,7 +250,7 @@ val serverVersions = mapOf(
   Pair("1.21.1", 21),
   Pair("1.21.3", 21),
   Pair("1.21.4", 21),
-  Pair("1.21.5", 21),
+  Pair("1.21.7", 21),
 )
 
 run {
@@ -269,6 +269,9 @@ fun registerTestTask(serverVersion: String, javaVersion: Int) {
     // Minecraft 1.8.8 requires special patches to work with Java 17
     if (serverVersion == "1.8.8") {
       serverJar(File("libs/servers/panda-1.8.8.jar"))
+    }
+    if (serverVersion == "1.21.7") {
+      serverJar(File("libs/servers/paper-1.21.7-15.jar"))
     }
     runDirectory(File("runs/test_${serverVersion}-j$javaVersion"))
     jvmArgs("-Dcom.mojang.eula.agree=true")
@@ -303,6 +306,9 @@ fun registerServerTask(serverVersion: String, javaVersion: Int) {
     // Minecraft 1.8.8 requires special patches to work with Java 17
     if (serverVersion == "1.8.8") {
       serverJar(File("libs/servers/panda-1.8.8.jar"))
+    }
+    if (serverVersion == "1.21.7") {
+      serverJar(File("libs/servers/paper-1.21.7-15.jar"))
     }
     runDirectory(File("runs/paper_${serverVersion}-j$javaVersion"))
     jvmArgs("-Dcom.mojang.eula.agree=true")

@@ -335,7 +335,7 @@ public final class VoxelShape implements BlockShape {
 
   @Override
   public BoundingBox outline() {
-    return boundingBoxes().stream().reduce(BoundingBox::union).orElse(BoundingBox.empty());
+    return collectBoxes(Collectors.reducing(BoundingBox::union)).orElse(BoundingBox.empty());
   }
 
   @Override
@@ -347,11 +347,12 @@ public final class VoxelShape implements BlockShape {
     Collector<? super BoundingBox, C, R> collector
   ) {
     Supplier<C> supplier = collector.supplier();
+    C container = supplier.get();
     forAllBoxes((minX, minY, minZ, maxX, maxY, maxZ) -> {
-      collector.accumulator().accept(supplier.get(), BoundingBox.fromBounds(minX, minY, minZ, maxX, maxY, maxZ));
+      collector.accumulator().accept(container, BoundingBox.fromBounds(minX, minY, minZ, maxX, maxY, maxZ));
       return true;
     }, true);
-    return collector.finisher().apply(supplier.get());
+    return collector.finisher().apply(container);
   }
 
   // cursed code

@@ -195,11 +195,10 @@ public final class FeedbackQueue {
     public void appendSameUserKey(FeedbackEntry entry) {
       if (sameUserKeyNext == null) {
         sameUserKeyNext = entry;
-        sameUserKeyTail = entry;
       } else {
         sameUserKeyTail.sameUserKeyNext = entry;
-        sameUserKeyTail = entry;
       }
+      sameUserKeyTail = entry;
     }
 
     public long globalIndex() {

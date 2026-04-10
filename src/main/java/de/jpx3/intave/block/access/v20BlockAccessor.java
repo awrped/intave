@@ -212,15 +212,20 @@ public final class v20BlockAccessor implements BlockAccessor {
     return new net.minecraft.core.BlockPosition(blockPosition.getX(), blockPosition.getY(), blockPosition.getZ());
   }
 
+  private Method providerMethodCache;
+
   @PatchyAutoTranslation
   @PatchyTranslateParameters
   private LightChunk findChunk(ChunkProviderServer server, int x, int z) {
-    Class<?> chunk = Lookup.serverClass("LightChunk");
-    Method providerMethod = Lookup.serverMethod("ChunkProviderServer", "c", new Type[]{Type.INT_TYPE, Type.INT_TYPE}, Type.getType(chunk));
+    Method providerMethod = providerMethodCache;
+    if (providerMethod == null) {
+      Class<?> chunk = Lookup.serverClass("LightChunk");
+      providerMethod = Lookup.serverMethod("ChunkProviderServer", "c", new Type[]{Type.INT_TYPE, Type.INT_TYPE}, Type.getType(chunk));
+      providerMethodCache = providerMethod;
+    }
     try {
       return (LightChunk) providerMethod.invoke(server, x, z);
-    } catch (IllegalAccessException | InvocationTargetException ignored) {
-    }
+    } catch (IllegalAccessException | InvocationTargetException ignored) {}
     return null;
   }
 }

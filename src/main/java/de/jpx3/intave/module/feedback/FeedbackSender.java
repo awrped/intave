@@ -51,7 +51,7 @@ public final class FeedbackSender extends Module {
     boolean disabledTransactionObfuscation = plugin.settings().getBoolean("compatibility.no-transaction-obfuscation", false);
     if (!disabledTransactionObfuscation && !shouldRefrainFromObfuscation()) {
       if (MinecraftVersions.VER1_17_1.atOrAbove()) {
-        activeGenerator = IdGeneratorMode.RANDOM;
+        activeGenerator = IdGeneratorMode.FULL_RANDOM;
       } else {
         activeGenerator = IdGeneratorMode.modeOfTheDay();
 //        activeGenerator = IdGeneratorMode.RANDOM;
@@ -316,7 +316,7 @@ public final class FeedbackSender extends Module {
     // if 100 searches are not enough
     if (attempts <= 0) {
       // relax uniqueness requirements
-      counter = (short) IdGeneratorMode.RANDOM.generate(user, connection.lastFeedbackUserKey);
+      counter = (short) IdGeneratorMode.FULL_RANDOM.generate(user, connection.lastFeedbackUserKey);
     }
     return (short) (connection.lastFeedbackUserKey = counter);
   }
