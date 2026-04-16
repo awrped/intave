@@ -51,9 +51,6 @@ public final class BlockShapePatcher {
 
   private static void add(BlockShapePatch patch) {
     List<Material> materials = Arrays.stream(Material.values()).filter(patch::appliesTo).collect(Collectors.toList());
-    if (materials.isEmpty() && IntaveControl.DISABLE_LICENSE_CHECK) {
-//      IntaveLogger.logger().info("[debug] no material matches patch " + patch.getClass().getName());
-    }
     materials.forEach(type -> patches.put(type, patch));
   }
 

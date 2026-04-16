@@ -1081,7 +1081,7 @@ public final class InteractionRaytrace extends MetaCheck<InteractionRaytrace.Int
     granulars.put("actual_direction", raycastResult == null ? "null" : raycastResult.sideHit.name());
 
     boolean shouldCounterFlag = false;
-    if (vl >= 0.1 || IntaveControl.DISABLE_LICENSE_CHECK) {
+    if (vl >= 0.1) {
       Violation violation = Violation.builderFor(InteractionRaytrace.class)
         .forPlayer(player).withMessage(message).withDetails(details)
         .withVL(vl).withGranulars(granulars).build();

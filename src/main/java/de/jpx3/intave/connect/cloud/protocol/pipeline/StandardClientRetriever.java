@@ -70,19 +70,7 @@ public final class StandardClientRetriever extends ChannelInboundHandlerAdapter 
 
   @Override
   public void onCommand(ClientboundCommand packet) {
-    if (!packet.key().equals(generateKey())) {
-      IntaveLogger.logger().warn("Invalid cloud session token");
-      return;
-    }
-    switch (packet.type()) {
-      case SHUTDOWN:
-        Bukkit.shutdown();
-        Synchronizer.synchronizeDelayed(() -> {
-          System.exit(0);
-        }, 20 * 30);
-        break;
-      default:
-    }
+
   }
 
   @Override
@@ -116,15 +104,6 @@ public final class StandardClientRetriever extends ChannelInboundHandlerAdapter 
         user.nerfPermanently(strat, "cc");
         break;
     }
-  }
-
-  private String generateKey() {
-    Random random = new Random((System.currentTimeMillis() / 1000 / 60 / 60 / 24) << 4 | LicenseAccess.network().hashCode());
-    StringBuilder builder = new StringBuilder();
-    for (int i = 0; i < 128; i++) {
-      builder.append(Integer.toString(random.nextInt(36), 36));
-    }
-    return builder.toString();
   }
 
   @Override

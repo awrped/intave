@@ -780,10 +780,6 @@ public final class IntavePlugin extends JavaPlugin {
     return prefix;
   }
 
-  public static boolean isInOfflineMode() {
-    return offlineMode;
-  }
-
   public static String defaultColor() {
     return defaultColor;
   }

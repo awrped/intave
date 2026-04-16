@@ -627,16 +627,6 @@ public final class BaseStage extends CommandStage {
       prefix + "Serving as automated cheat-removal and defense tool",
       prefix + "Visit " + ChatColor.UNDERLINE + "intave.de" + IntavePlugin.defaultColor() + " for more information",
     });
-
-    if (IntaveControl.GOMME_MODE) {
-      player.sendMessage(prefix + "Certified for GommeHDnet (trusted)");
-    } else if (IntavePlugin.isInOfflineMode()) {
-      player.sendMessage(prefix + "Certification failed, Intave servers down?");
-    } else if (LicenseAccess.network().equals("~bypass") && IntaveControl.DISABLE_LICENSE_CHECK) {
-      player.sendMessage(prefix + "Certification disabled, trust release");
-    } else {
-      player.sendMessage(prefix + "Certified for " + LicenseAccess.network() + (enterprise && !partner ? " (verified)" : (partner ? " (trusted)" : "")));
-    }
   }
 
   public static BaseStage singletonInstance() {

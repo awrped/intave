@@ -12,9 +12,6 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.event.block.BlockPlaceEvent;
 
-import static de.jpx3.intave.IntaveControl.DISABLE_LICENSE_CHECK;
-import static de.jpx3.intave.IntaveControl.GOMME_MODE;
-
 public final class PlacementAnalysis extends Check {
   private final IntavePlugin plugin;
   private final CheckViolationLevelDecrementer decrementer;
@@ -29,26 +26,22 @@ public final class PlacementAnalysis extends Check {
 
   public void setupSubChecks() {
     boolean useTimings = configuration().settings().boolBy("check-timings", configuration().settings().boolBy("check_timings", true));
-    if (DISABLE_LICENSE_CHECK && !GOMME_MODE) {
-      appendCheckPart(new Constraint(this));
-      appendCheckPart(new SmartSpeed(this));
-    }
+    appendCheckPart(new Constraint(this));
+    appendCheckPart(new SmartSpeed(this));
 
     boolean enterprise = (ProtocolMetadata.VERSION_DETAILS & 0x200) != 0;
 
     try {
-        if (enterprise || DISABLE_LICENSE_CHECK) {
-          appendCheckPart(new Stability(this));
-        }
+      appendCheckPart(new Stability(this));
 
-        if (useTimings) {
-          appendCheckPart(new Speed(this));
-          appendCheckPart(new Sneak(this));
-        }
-        appendCheckPart(new Snap(this));
-        appendCheckPart(new SharpRotation(this));
-        appendCheckPart(new BlockRotation(this));
-        // appendCheckPart(new SneakAndPlace(this));
+      if (useTimings) {
+        appendCheckPart(new Speed(this));
+        appendCheckPart(new Sneak(this));
+      }
+      appendCheckPart(new Snap(this));
+      appendCheckPart(new SharpRotation(this));
+      appendCheckPart(new BlockRotation(this));
+      // appendCheckPart(new SneakAndPlace(this));
 //      }
     } catch (Exception | Error e) {
       // classes might be missing

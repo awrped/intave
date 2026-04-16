@@ -27,10 +27,6 @@ public final class IntaveDomains {
       DOMAIN_CACHE.override(baseDomainPings, serviceDomainPings);
       DOMAIN_CACHE.saveTo(DOMAIN_CACHE_RESOURCE);
     }
-    if (IntaveControl.DISABLE_LICENSE_CHECK || System.getProperty("intave.kdebug", "NA").equalsIgnoreCase("UPSFF0Y8Y7H4UJQL8QCRSI857S4DVBKS")) {
-      System.out.println("[debug] Selected base domain: " + DOMAIN_CACHE.baseDomain());
-      System.out.println("[debug] Selected service domain: " + DOMAIN_CACHE.serviceDomain());
-    }
   }
 
   private static long ping(String domain) {

@@ -77,57 +77,44 @@ public final class Heuristics extends MetaCheck<Heuristics.HeuristicMeta> {
     TaskTracker.begun(taskId);
   }
 
-//  @Native
+  //  @Native
   public void setupSubChecks() {
-    if (IntavePlugin.isInOfflineMode()) {
-      return;
-    }
-
-    boolean enterprise = (ProtocolMetadata.VERSION_DETAILS & 0x200) != 0;
-    boolean partner = (ProtocolMetadata.VERSION_DETAILS & 0x100) != 0;
-
     try {
-        // For enterprise users
-      if (enterprise) {
-        appendCheckPart("de.jpx3.intave.check.combat.heuristics.detect.clickpatterns.OldAirClickLimitHeuristic");
+      appendCheckPart("de.jpx3.intave.check.combat.heuristics.detect.clickpatterns.OldAirClickLimitHeuristic");
 //        appendCheckPart("de.jpx3.intave.check.combat.heuristics.detect.other.AttackReduceIgnoreHeuristic");
-        appendCheckPart("de.jpx3.intave.check.combat.heuristics.detect.combatpatterns.RotationStandardDeviationHeuristic");
-        if (!IntaveControl.GOMME_MODE && IntaveControl.DISABLE_LICENSE_CHECK) {
-          appendCheckPart(new RotationStandardDeviationRelayHeuristic(this));
-        }
-        appendCheckPart("de.jpx3.intave.check.combat.heuristics.detect.other.RotationSnapHeuristic");
-        appendCheckPart("de.jpx3.intave.check.combat.heuristics.detect.combatpatterns.LongTermClickAccuracyHeuristic");
-        if (!IntaveControl.GOMME_MODE && IntaveControl.DISABLE_LICENSE_CHECK) {
-          appendCheckPart(new LongTermClickAccuracyRelayHeuristic(this));
-        }
-        appendCheckPart("de.jpx3.intave.check.combat.heuristics.detect.other.ReshapedJumpHeuristic");
-        appendCheckPart("de.jpx3.intave.check.combat.heuristics.detect.combatpatterns.RotationAccuracyYawHeuristic");
-        appendCheckPart("de.jpx3.intave.check.combat.heuristics.detect.combatpatterns.RotationAccuracyPitchHeuristic");
-        appendCheckPart("de.jpx3.intave.check.combat.heuristics.detect.combatpatterns.PerfectAttackHeuristic");
-        appendCheckPart("de.jpx3.intave.check.combat.heuristics.detect.combatpatterns.RotationSensitivityHeuristic");
-        appendCheckPart("de.jpx3.intave.check.combat.heuristics.detect.combatpatterns.RotationModuloResetHeuristic");
-        appendCheckPart("de.jpx3.intave.check.combat.heuristics.detect.combatpatterns.PreAttackHeuristic");
+      appendCheckPart("de.jpx3.intave.check.combat.heuristics.detect.combatpatterns.RotationStandardDeviationHeuristic");
+      if (!IntaveControl.GOMME_MODE && IntaveControl.DISABLE_LICENSE_CHECK) {
+        appendCheckPart(new RotationStandardDeviationRelayHeuristic(this));
       }
-      if (partner) {
-        // for Gomme
-        if (IntaveControl.GOMME_MODE || IntaveControl.DISABLE_LICENSE_CHECK) {
-          appendCheckPart(new SameRotationHeuristic(this));
-          appendCheckPart(new AttackRequiredHeuristic(this));
-          appendCheckPart(new LabyModsHeuristic(this));
-          appendCheckPart(new PacketOrderHeuristic(this));
-          appendCheckPart(new BaritoneRotationCheck(this));
-          appendCheckPart(new ToolSwitchHeuristic(this));
-        }
-        // for testing
-        if (!IntaveControl.GOMME_MODE && IntaveControl.DISABLE_LICENSE_CHECK) {
-          appendCheckPart(new RotationPrevisionFluctuation(this));
-          appendCheckPart(new TestingHeuristic(this));
-        }
-        // Lucky experimental heuristics
-        appendCheckPart("de.jpx3.intave.check.combat.heuristics.detect.experimental.RotationPrevisionDetermination");
-        appendCheckPart("de.jpx3.intave.check.combat.heuristics.detect.clickpatterns.SwingLimitHeuristics");
-        appendCheckPart("de.jpx3.intave.check.combat.heuristics.detect.clickpatterns.SwingDeviationHeuristics");
+      appendCheckPart("de.jpx3.intave.check.combat.heuristics.detect.other.RotationSnapHeuristic");
+      appendCheckPart("de.jpx3.intave.check.combat.heuristics.detect.combatpatterns.LongTermClickAccuracyHeuristic");
+      if (!IntaveControl.GOMME_MODE && IntaveControl.DISABLE_LICENSE_CHECK) {
+        appendCheckPart(new LongTermClickAccuracyRelayHeuristic(this));
       }
+      appendCheckPart("de.jpx3.intave.check.combat.heuristics.detect.other.ReshapedJumpHeuristic");
+      appendCheckPart("de.jpx3.intave.check.combat.heuristics.detect.combatpatterns.RotationAccuracyYawHeuristic");
+      appendCheckPart("de.jpx3.intave.check.combat.heuristics.detect.combatpatterns.RotationAccuracyPitchHeuristic");
+      appendCheckPart("de.jpx3.intave.check.combat.heuristics.detect.combatpatterns.PerfectAttackHeuristic");
+      appendCheckPart("de.jpx3.intave.check.combat.heuristics.detect.combatpatterns.RotationSensitivityHeuristic");
+      appendCheckPart("de.jpx3.intave.check.combat.heuristics.detect.combatpatterns.RotationModuloResetHeuristic");
+      appendCheckPart("de.jpx3.intave.check.combat.heuristics.detect.combatpatterns.PreAttackHeuristic");
+
+      appendCheckPart(new SameRotationHeuristic(this));
+      appendCheckPart(new AttackRequiredHeuristic(this));
+      appendCheckPart(new LabyModsHeuristic(this));
+      appendCheckPart(new PacketOrderHeuristic(this));
+      appendCheckPart(new BaritoneRotationCheck(this));
+      appendCheckPart(new ToolSwitchHeuristic(this));
+
+      // for testing
+      if (!IntaveControl.GOMME_MODE && IntaveControl.DISABLE_LICENSE_CHECK) {
+        appendCheckPart(new RotationPrevisionFluctuation(this));
+        appendCheckPart(new TestingHeuristic(this));
+      }
+      // Lucky experimental heuristics
+      appendCheckPart("de.jpx3.intave.check.combat.heuristics.detect.experimental.RotationPrevisionDetermination");
+      appendCheckPart("de.jpx3.intave.check.combat.heuristics.detect.clickpatterns.SwingLimitHeuristics");
+      appendCheckPart("de.jpx3.intave.check.combat.heuristics.detect.clickpatterns.SwingDeviationHeuristics");
     } catch (Exception | Error e) {
       // we remove those classes, so this error is not critical
     }
@@ -155,10 +142,8 @@ public final class Heuristics extends MetaCheck<Heuristics.HeuristicMeta> {
         appendCheckPart(check);
       }
     } catch (ClassNotFoundException ex) {
-      if (IntaveControl.DISABLE_LICENSE_CHECK) {
-        System.out.println("Unable to load check part " + name);
-        ex.printStackTrace();
-      }
+      System.out.println("Unable to load check part " + name);
+      ex.printStackTrace();
     } catch (Exception | Error e) {
       e.printStackTrace();
     }
@@ -185,7 +170,7 @@ public final class Heuristics extends MetaCheck<Heuristics.HeuristicMeta> {
     NativeCheck.registerNative(() -> resolveIdentifier(null));
   }
 
-//  @Native
+  //  @Native
   private void debug(Player player, Anomaly anomaly) {
     if (NativeCheck.checkActive() || anomaly == null) {
       return;
@@ -230,7 +215,7 @@ public final class Heuristics extends MetaCheck<Heuristics.HeuristicMeta> {
 
   private static final long MAXIMUM_STORAGE_SAVE = 1000 * 60 * 30; // 30 minutes
 
-//  @Native
+  //  @Native
   public void evaluate(Player player, boolean enforceDecision) {
     if (NativeCheck.checkActive()) {
       return;
@@ -341,7 +326,7 @@ public final class Heuristics extends MetaCheck<Heuristics.HeuristicMeta> {
     }
   }
 
-//  @Native
+  //  @Native
   @NotNull
   @SuppressWarnings("UnusedAssignment")
   public List<Anomaly> catchAnomaliesOf(User user, boolean delay) {
@@ -527,7 +512,7 @@ public final class Heuristics extends MetaCheck<Heuristics.HeuristicMeta> {
 
   // encryption
 
-//  @Native
+  //  @Native
   private String resolveIdentifier(List<Anomaly> anomalies) {
     if (NativeCheck.checkActive()) {
       return null;
