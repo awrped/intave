@@ -55,6 +55,7 @@ dependencies {
   compileOnly("org.bytedeco:javacpp-presets:1.5.9")
 
   compileOnly("org.spigotmc:spigot-api:1.21.1-R0.1-SNAPSHOT")
+  compileOnly("com.github.retrooper:packetevents-api:2.12.1")
   compileOnly("com.github.retrooper:packetevents-spigot:2.12.1")
 
   // pcap
